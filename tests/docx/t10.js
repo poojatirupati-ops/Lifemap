@@ -1,0 +1,12 @@
+const { open } = require('./lib');
+(async () => { const { browser, page } = await open(); const d = require('./drive')(page);
+  await d.base('fresh'); await d.calc('repayment'); await page.click('#co-rate'); await page.keyboard.type('4'); await page.evaluate(() => document.activeElement.blur());
+  console.log('tap away:', await page.evaluate(() => [!!document.getElementById('c-rate'), (document.querySelector('#cl-rate .tag')||{}).textContent, document.querySelector('#cout').innerText.slice(0,60)]));
+  await d.base('fresh'); await d.calc('repayment'); await page.click('#co-rate'); await page.keyboard.type('4'); await page.keyboard.press('Enter');
+  console.log('enter:', await page.evaluate(() => [!!document.getElementById('c-rate'), (document.querySelector('#cl-rate .tag')||{}).textContent]));
+  await page.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'me'; S.me = 'asm'; S.asmOpen = 'retire'; lastId = null; render(); });
+  await page.click('[data-nb="asm|retireMult"]'); await page.keyboard.type('30'); await page.evaluate(() => document.activeElement.blur());
+  console.log('asm tap away:', await page.evaluate(() => [document.querySelector('[data-k="retireMult"] .tag').textContent, S.asm.retireMult]));
+  await page.evaluate(() => { loadSample(); S.tab='explore'; S.xs=[]; render(); }); const g = await page.evaluate(() => CALCS.map(c => [c.id, calcMissing(c).join(', ')]).filter(x => x[1]));
+  console.log('sample gated:', JSON.stringify(g));
+  await browser.close(); })();

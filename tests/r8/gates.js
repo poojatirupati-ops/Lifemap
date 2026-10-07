@@ -1,0 +1,4 @@
+const { chromium } = require('playwright');
+(async () => { const b = await chromium.launch(); const p = await (await b.newContext()).newPage(); await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html'); await p.waitForTimeout(300);
+  const r = await p.evaluate(() => { S = fresh(); const out = []; CALCS.forEach(c => { c.inputs.forEach(i => { const s = calcA(c.id, i.k); const c2 = {id:c.id, inputs:[i]}; out.push(c.id + '.' + i.k + ' → ' + missTxt(s ? ((GATE_N[c.id] || {})[i.k] && s.ty === 2 && !s.a ? GATE_N[c.id][i.k] : s.n) : 'add:' + gateName(c.id, i)) + ' to see this'); }); (CALC_X[c.id] || []).forEach(k => out.push(c.id + ' [tool] ' + k + ' → ' + missTxt(ASM[k].n) + ' to see this')); }); return out; });
+  console.log(r.join('\n')); await b.close(); })();

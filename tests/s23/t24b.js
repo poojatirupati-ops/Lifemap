@@ -1,0 +1,12 @@
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:900}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html');await p.waitForTimeout(400);
+await p.evaluate(()=>{loadSample();S.tab='plan';S.planSeg='main';S.planGo='wi';lastId=null;render();});await p.waitForTimeout(500);
+const t=()=>p.evaluate(()=>({live:document.getElementById('wi-live').innerText,over:document.getElementById('wi-live').className,h:document.getElementById('wi-extra-h').textContent,base:document.querySelector('#r-save .nb').value}));
+console.log(await t());
+await p.click('[data-a=wim][data-p="25"]');for(let i=0;i<28;i++)await p.click('[data-a=wim][data-p="25"]');
+console.log(await t());
+await p.click('[data-a=wim][data-p="-25"]');await p.evaluate(()=>{S.wi.m=-200;liveUpdate()});console.log(await t());
+await p.evaluate(()=>{S.wi.m=725;liveUpdate()});await p.waitForTimeout(100);
+await p.locator('#r-wi').scrollIntoViewIfNeeded();await p.locator('#r-wi').screenshot({path:'shots/whatif.png'});
+console.log(errs);await b.close();})();

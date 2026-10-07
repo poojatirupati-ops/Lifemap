@@ -1,0 +1,29 @@
+// "What your plan assumes" (§14): every row says which of the three types it is. No "default" anywhere.
+const TAG_CLS = t => t === T_GOV ? 'none' : t === T_MINE ? 'doc' : t === T_HOW ? 'typed' : 'pre';
+function assumeRows(){ applyAssume(); const F = finNums(), mine = k => asmMine(k), ch = k => asmFmt(ASM[k], asmGet(k)), NC = 'Not chosen yet', ready = planReady(), P = ready ? project() : null, k6 = S.ans['6'], q6 = DQ_BY('6');
+  const R = [['Rules', RULES_VERSION, T_GOV]].concat(govRows().map(x => [x[0], x[1], T_GOV]));
+  R.push(['Prices rise (inflation)', inflSet() ? pc(AS.infl) + ' a year (ECB target ' + pcs(INFL_STD) + '; Ireland now ' + pcs(INFL_IE) + ', ' + INFL_SRC + ')' : NC, T_MINE]);
+  [['Pay rises', 'wage'], ['Cash savings grow (after DIRT)', 'cash'], ['Investments grow (after charges and exit tax)', 'inv'], ['Pensions grow while you work (after charges)', 'pen'], ['Pensions grow once retired (after charges)', 'penRet']].forEach(([l, k]) => R.push([l, mine(k) ? ch(k) + ' a year' : NC, T_MINE]));
+  const yrsSP = S.fin.spYears != null && S.fin.spYears !== '' ? +S.fin.spYears : asmGet('spYears');
+  R.push(['Your State Pension', F.spKnown ? eur(AS.sp * F.sp) + ' a year from ' + AS.spAge + ' (' + (yrsSP != null ? 'from your ' + yrsSP + ' years of PRSI' : S.fin.sp === 'Expect full' ? 'you expect the full rate' : 'your figure: ' + eurW(asmV('spWeek')) + ' a week') + '); taxable, no USC' : 'Not given yet', tRange(ASM.spWeek) + ' a week']);
+  if (S.about.partner) R.push(['Your partner\'s State Pension', F.pSp === 'qa' ? 'Qualified Adult rate, ' + eurW(RI.sp.qa66) + ' a week' : F.pSp === 1 ? 'Full rate' : F.pSpO === 'None' ? 'None' : mine('pSpWeek') ? eurW(asmGet('pSpWeek')) + ' a week (your figure)' : 'Not given yet', tRange(ASM.pSpWeek) + ' a week']);
+  R.push(['State Pension in future', mine('spGrow') ? ch('spGrow') : NC, T_MINE], ['Tax bands in future', mine('bands') ? ch('bands') : NC, T_MINE]);
+  R.push([retireGoal() ? 'Retirement age' : 'Work income stops at', S.retireSet ? 'Age ' + S.retireAge : NC, T_MINE], ['Plan until age', mine('planEnd') ? 'Age ' + AS.end : NC, T_MINE], ['Plan starts', mine('startYear') ? '' + YEAR0 : NC, T_MINE]);
+  R.push(['Lump sum at retirement', mine('lumpSum') ? (asmV('lumpSum') > 0 ? Math.round(asmV('lumpSum') * 100) + '% of your pension (tax as set by law, above)' : 'None') : NC, T_MINE]);
+  R.push(['Pension drawdown', mine('drawRule') ? {spread:'Spread to the end of the plan, at least the legal minimum', min:'The legal minimum only', fixed:(mine('drawFixed') ? eur(asmV('drawFixed')) : 'A fixed amount') + ' a year (today\'s money), at least the legal minimum'}[asmV('drawRule')] : NC, T_MINE]);
+  if (ASM.ownShare.need()) R.push(['Share of your pension you pay', mine('ownShare') ? ch('ownShare') : NC, T_MINE]);
+  if (F.mortBal > 0) R.push(['Mortgage rate', finN('mortRate') > 0 ? pcs(finN('mortRate') / 100) + ' (from your statement)' : mine('mortRate') ? ch('mortRate') + ' (your figure)' : 'Not given yet', tRange(ASM.mortRate)]);
+  if (F.cardBal > 0) R.push(['Credit-card rate', finN('cardRate') > 0 ? pcs(finN('cardRate') / 100) + ' (from your statement)' : mine('cardRate') ? ch('cardRate') + ' (your figure)' : 'Not given yet', tRange(ASM.cardRate)]);
+  if (F.loanBal > 0) R.push(['Other loans rate', finN('loanRate') > 0 ? pcs(finN('loanRate') / 100) + ' (from your statement)' : mine('loanRate') ? ch('loanRate') + ' (your figure)' : 'Not given yet', tRange(ASM.loanRate)]);
+  R.push(['What you save', S.saveM != null ? eur(S.saveM) + ' a month (your choice)' : !mine('saveShare') ? NC : (P ? 'About ' + eur(P.save.saveM) + ' a month towards your goals, ' : '') + 'at most ' + pc(SAVE.share) + ' of your spare money' + (typeof k6 === 'number' ? ' (from your answer: ' + q6.o[k6].t + ')' : mine('noAnswer') ? ', ' + eur(SAVE.noAnswer) + ' a month until you tell us how much you could invest' : ''), T_MINE]);
+  R.push(['Spare money not saved', 'Assumed spent', T_HOW]);
+  R.push(['Safety net', S.goals.some(g => g.k === 'safety') ? 'Your safety-net goal is your emergency fund' : mine('safetyMonths') ? ch('safetyMonths') + ' of essential spending kept aside' : NC, T_MINE]);
+  R.push(['Money for goals sooner than', mine('cashYears') ? ch('cashYears') + ': kept as cash' : NC, T_MINE], ['Spare savings invested', mine('investShare') ? ch('investShare') + ' (the rest in cash)' : NC, T_MINE]);
+  R.push(['Order your savings go to goals', 'Safety net first, then must-haves, then nice-to-haves, soonest first', T_HOW]);
+  R.push(['Tax for couples', S.about.partner && S.about.married === true ? 'Joint assessment (married / civil partners), also once retired' : 'Taxed as individuals', T_GOV]);
+  if (S.needs && (S.needs.life || S.needs.ip)) R.push(['Protection needs noted for your adviser', [S.needs.life ? 'life cover ' + eur(S.needs.life) : '', S.needs.ip ? 'income protection ' + eur(S.needs.ip) + ' a month' : ''].filter(Boolean).join(', '), T_MINE]);
+  R.push(['Known limits', 'Living costs stay the same through the plan; your partner\'s own pension and retirement age aren\'t modelled; drawdown assumed from an ARF / vested PRSA; the reduced USC rate for medical-card holders under 70 isn\'t applied; auto-enrolment rates after 2028 are held at the 2026 rates', T_HOW]);
+  return R; }
+const rowHTML = x => '<div class="mini"><span>' + esc(x[0]) + '<br><span class="tag ' + TAG_CLS(x[2]) + '">' + esc(x[2]) + '</span></span><b>' + esc(x[1]) + '</b></div>';
+function assumeSheet(){ const R = assumeRows(), gov = R.filter(x => x[2] === T_GOV), rest = R.filter(x => x[2] !== T_GOV);
+  return rest.map(rowHTML).join('') + '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:800;min-height:32px">' + T_GOV + ' (' + gov.length + ')</summary>' + gov.map(rowHTML).join('') + '</details>'; }

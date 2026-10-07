@@ -1,0 +1,15 @@
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const f=process.argv[2];
+(async()=>{const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:2200}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file://'+f);await p.waitForTimeout(400);
+await p.evaluate(()=>{loadSample();S.app=false;S.pb=true;S.tab='plan';S.scr='P4';S.retireSet=false;S.infl=null;S.asm={};render();});await p.waitForTimeout(300);
+await p.screenshot({path:'shots/p4a.png'});
+console.log(await p.evaluate(()=>({dis:document.getElementById('seeres').disabled,need:document.getElementById('p4-need').textContent,cnt:document.getElementById('p4-count').textContent})));
+await p.click('[data-a=useall][data-p=p4]');await p.waitForTimeout(200);
+console.log(await p.evaluate(()=>({infl:S.infl,ret:S.retireSet,pe:S.asm.planEnd,miss:planMissing().map(m=>m.k)})));
+await p.evaluate(()=>{S.retireSet=true;S.retireAge=65;S.infl=0.02;S.asm.planEnd=90;render();});
+console.log(await p.evaluate(()=>({dis:document.getElementById('skipres').disabled,miss:planMissing().map(m=>m.k)})));
+await p.click('#skipres');await p.waitForTimeout(2200);
+console.log(await p.evaluate(()=>({tab:S.tab,b:(document.getElementById('miss-banner')||{}).textContent,flags:missingFlags().length})));
+await p.screenshot({path:'shots/p4res.png'});
+console.log(errs);await b.close();})();

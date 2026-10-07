@@ -1,0 +1,18 @@
+const { open } = require('./lib');
+(async () => { const { browser, page, errors } = await open();
+  const T = () => page.evaluate(() => document.querySelector('#main').innerText.replace(/\n+/g,' | ').slice(0, 900));
+  await page.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = []; render(); ACT.calc('goalplanner'); });
+  await page.click('[data-a="infl"][data-p="other"]'); console.log('OTHER:', await T());
+  await page.click('[data-a="infledit"]'); console.log('CHANGE:', await T());
+  await page.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = []; render(); ACT.calc('riskreturn'); });
+  await page.fill('#co-s', '2.5'); await page.press('#co-s', 'Enter'); console.log('RISK2.5:', await T());
+  await page.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = []; render(); ACT.calc('repayment'); });
+  await page.click('[data-a="expertfor"]'); console.log('EXPERT:', await T());
+  await page.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = []; render(); ACT.cat('retire'); });
+  console.log('CAT:', await T());
+  await page.click('[data-a="pstup"]'); console.log('GATE:', await page.evaluate(() => document.querySelector('#screen').innerText.replace(/\n+/g,' | ').slice(0, 900)));
+  await page.evaluate(() => { loadSample(); S.tab = 'explore'; S.xs = []; render(); ACT.cat('retire'); });
+  await page.click('[data-a="pstup"]'); console.log('SCAN:', await page.evaluate(() => document.querySelector('#screen').innerText.replace(/\n+/g,' | ').slice(0, 400)));
+  await page.waitForTimeout(1600); console.log('CONFIRM:', await page.evaluate(() => document.querySelector('#screen').innerText.replace(/\n+/g,' | ')));
+  await page.click('[data-a="pstok"]'); console.log('AFTER:', await page.evaluate(() => document.querySelector('#screen').innerText.replace(/\n+/g,' | ')));
+  console.log(errors); await browser.close(); })();

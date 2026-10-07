@@ -1,0 +1,10 @@
+const { chromium } = require('playwright');
+(async () => { const b = await chromium.launch(); const p = await (await b.newContext({viewport:{width:390, height:844}, deviceScaleFactor:1})).newPage();
+  await p.route('**/fonts.googleapis.com/**', r => r.fulfill({status:200, contentType:'text/css', body:''})); await p.route('**/fonts.gstatic.com/**', r => r.abort());
+  await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html'); await p.waitForTimeout(300);
+  await p.evaluate(() => { S = fresh(); Object.assign(S.ans, {'2':0, '4':1, '7':1, '8':2, '9':2, '12':1}); S.about = {age:40, partner:false, deps:0, married:null}; ['travel', 'retire'].forEach(k => S.goals.push(mkGoal(k))); const put = (k, v) => { S.fin[k] = v; S.src[k] = 'typed'; }; put('work', 'Employed'); put('income', 50000); put('costsM', 2000); put('home', 'Rent'); put('cash', 5000); put('pension', 30000); put('pensionM', 400); put('sp', 'Not sure'); S.shell = true; S.pb = true; S.scr = 'P4'; S.checked = true; lastId = null; render(); }); await p.waitForTimeout(400); await p.evaluate(() => document.getElementById('p4-asm').scrollIntoView()); await p.waitForTimeout(300);
+  await p.locator('#screen').screenshot({path:__dirname + '/p4.png'});
+  await p.evaluate(() => document.getElementById('main').scrollBy(0, 700)); await p.locator('#screen').screenshot({path:__dirname + '/p4b.png'});
+  await p.evaluate(() => { loadSample(); S.sheet = 'assume'; render(); }); await p.waitForTimeout(900); await p.locator('#screen').screenshot({path:__dirname + '/sheet.png'});
+  await p.evaluate(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'rentbuy'}]; lastId = null; render(); }); await p.locator('#screen').screenshot({path:__dirname + '/calc.png'});
+  await b.close(); })();

@@ -1,0 +1,4 @@
+const { chromium } = require('playwright');
+(async () => { const b = await chromium.launch(); const p = await (await b.newContext()).newPage(); await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html'); await p.waitForTimeout(300);
+  console.log(JSON.stringify(await p.evaluate(() => { const t = {1:0, 2:0, 3:0}; Object.values(ASM).forEach(d => t[d.ty]++); const cx = {}; Object.entries(CALC_A).forEach(([id, m]) => Object.entries(m).forEach(([k]) => { const s = calcA(id, k); const ty = s.ret ? 'ret' : s.ty; cx[ty] = (cx[ty] || 0) + 1; }));
+    return {rules:ruleCount(), groups:Object.keys(RULES_IE_2026), gov:govRows().length, asm:t, asmN:Object.keys(ASM).length, std:Object.keys(ASM).filter(asmStd).length, own:Object.keys(ASM).filter(k => ASM[k].own), calcInputs:cx, calcX:Object.values(CALC_X).flat().length}; }))); await b.close(); })();

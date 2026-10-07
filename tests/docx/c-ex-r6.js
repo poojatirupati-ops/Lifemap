@@ -1,0 +1,44 @@
+  // ---------- §15 Your finances and §16 LifeMap (independent: re-driven live, compared with the docx) ----------
+  { const s4 = secs.find(s => s.title === '4. Your finances: "Not sure? See an example"'), s5 = secs.find(s => s.title === '5. LifeMap name and cover'), p4 = R.pass, f4 = R.fail.length;
+    if (ok(s4 && s5, 'sections 4 and 5 present')) {
+    const cardT = s4.blocks.filter(b => b.t === 'tbl' && b.rows[0][0] === 'Card title').flatMap(b => b.rows.slice(1));
+    const keys = await page.evaluate(() => Object.keys(EXAMPLES)); ok(cardT.length === keys.length, 'card table has ' + cardT.length + ' rows for ' + keys.length + ' cards');
+    for (const k of keys) { await page.evaluate(k => { loadSample(); if (k === 'ae') { delete S.fin.pensionM; delete S.src.pensionM; delete S.fin.pensionOwnM; delete S.src.pensionOwnM; } lastId = null; render(); openSec(FSEC.findIndex(s => s.f.includes(k))); }, k);
+      const before = await page.evaluate(k => JSON.stringify([S.fin[k], S.src[k]]), k); const link = page.locator('[data-a="fex"][data-p="' + k + '"]');
+      if (!ok(await link.count() === 1 && norm(await link.textContent()) === 'Not sure? See an example', 'card ' + k + ': link')) continue; await link.click();
+      const c = await page.evaluate(() => { const sh = document.querySelector('.sheet'), t = e => e ? e.textContent.replace(/\s+/g, ' ').trim() : null, ps = [...sh.querySelectorAll(':scope > p')];
+        return { title: t(sh.querySelector('#ex-t')), opts: [...sh.querySelectorAll('ul li')].map(li => t(li).replace(/: /, ': ')).join(' · ') || '—', sentence: t(sh.querySelector('#ex-s')), where: t(ps.find(p => /Where to find yours/.test(p.textContent))).replace(/^📍 Where to find yours: /, ''), zero: ps.some(p => /Nothing to add\? Enter 0\./.test(p.textContent)) ? 'Yes' : '—', small: t(ps.find(p => /Example only/.test(p.textContent))), btn: t(sh.querySelector('.btn')), role: sh.getAttribute('role'), lb: sh.getAttribute('aria-labelledby'), db: sh.getAttribute('aria-describedby') }; });
+      const r = cardT.find(x => x[0] === c.title);
+      ok(r && r[1] === c.opts && r[2] === c.sentence && r[3] === c.where && r[4] === c.zero, 'card ' + k + ': doc row ' + JSON.stringify(r) + ' vs live ' + JSON.stringify([c.title, c.opts, c.sentence, c.where, c.zero]));
+      ok(s4.text.includes(c.small) && s4.text.includes('"' + c.btn + '"') && c.role === 'dialog' && c.lb === 'ex-t' && c.db === 'ex-s', 'card ' + k + ': small print, button, dialog semantics');
+      await page.keyboard.press('Escape'); const after = await page.evaluate(k => JSON.stringify([S.fin[k], S.src[k], !!document.querySelector('.sheet'), document.activeElement.dataset.p]), k);
+      ok(after === JSON.stringify(JSON.parse(before).concat([false, k])), 'card ' + k + ': Escape closes, focus back on the link, field unchanged'); }
+    const tg = await page.evaluate(() => { const r = []; const t = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; }; S.src.zz = 'doc'; S.conf.zz = 95; r.push(t(tagFor('zz'))); S.fix.zz = 1; r.push(t(tagFor('zz'))); delete S.fix.zz; S.src.zz = 'typed'; r.push(t(tagFor('zz'))); S.src.zz = 'pre'; r.push(t(tagFor('zz'))); delete S.src.zz; r.push(t(tagFor('zz'))); S.look.zz = 'x'; r.push(t(tagFor('zz'))); delete S.look.zz; return r; });
+    const stT = s4.blocks.find(b => b.t === 'tbl' && b.rows[0][0] === 'Tag (verbatim)'); tg.forEach(x => ok(stT && stT.rows.some(r => r[0] === x), 'status tag "' + x + '"'));
+    ok(!/≈ Estimated|Confirmed none/.test(await page.evaluate(() => document.documentElement.innerHTML.replace(/<script[\s\S]*?<\/script>/g, ''))), 'no removed statuses on screen');
+    await page.evaluate(() => { loadSample(); delete S.fin.mortPayM; delete S.src.mortPayM; delete S.fin.ip; delete S.src.ip; S.look.homeValue = 'This looks high for the area'; S.app = false; S.pb = true; S.tab = 'plan'; S.scr = 'P4'; S.checked = false; lastId = null; render(); });
+    const ck = await page.evaluate(() => [...document.querySelectorAll('#main .ck')].map(c => { const t = e => e ? e.textContent.replace(/\s+/g, ' ').trim() : null; return [t(c.querySelector('.i')), t(c.querySelector('b')), t(c.querySelector(':scope > div > div.small'))]; }));
+    const ckT = s4.blocks.find(b => b.t === 'tbl' && b.rows[0][0] === 'Icon'); ck.forEach(r => ok(ckT && ckT.rows.some(x => x[0] === r[0] && x[1] === r[1] && x[3] === r[2]), 'checklist row "' + r[1] + '"'));
+    ok(ck.every(r => ['⚠️', '❓'].includes(r[0])), 'checklist only ⚠️ / ❓');
+    for (const id of ['repayment', 'overpay', 'ratechange', 'term', 'mortgageprotect']) { await page.evaluate(id => { loadSample(); delete S.fin.mortYears; delete S.src.mortYears; delete S.conf.mortYears; S.tab = 'explore'; S.xs = []; lastId = null; render(); ACT.calc(id); }, id); const g = await page.evaluate(() => ({ b: document.querySelector('#cgate b').textContent, f: (document.querySelector('.field .tag.look') || {}).textContent }));
+      const N = 'C' + String(calcs.findIndex(c => c.id === id) + 1).padStart(2, '0'), sec = secs.find(s => s.title.startsWith(N + ' '));
+      ok(/^Add .+ to see this$/.test(g.b) && s4.text.includes(g.b) && sec.text.includes(g.b), N + ': missing years gate "' + g.b + '" in 4.7 and the calculator section'); }
+    for (const [id, del] of [['surplus', ['mortPayM', 'cardPayM']], ['debtpay', ['cardPayM']]]) { await page.evaluate(([id, del]) => { loadSample(); del.forEach(k => { delete S.fin[k]; delete S.src[k]; delete S.conf[k]; }); S.tab = 'explore'; S.xs = []; lastId = null; render(); ACT.calc(id); }, [id, del]);
+      const w = await page.evaluate(() => [...document.querySelectorAll('#main .field')].filter(f => f.querySelector('.tag.pre')).map(f => [f.querySelector('.tag.pre').textContent, [...f.querySelectorAll(':scope > span.small')].map(x => x.textContent).join(' ')]));
+      const N = 'C' + String(calcs.findIndex(c => c.id === id) + 1).padStart(2, '0'), sec = secs.find(s => s.title.startsWith(N + ' '));
+      ok(w.length > 0, N + ': worked-out tag shown'); w.forEach(([tag, line]) => ok(tag === 'Worked out from your figures' && s4.text.includes(norm(line)) && sec.text.includes(norm(line)), N + ': worked-out line "' + line + '"')); }
+    // §16
+    await page.evaluate(() => { S = fresh(); lastId = null; render(); });
+    const cv = await page.evaluate(() => ({ els: [...document.querySelectorAll('.cover .brand, .cover-inv, .cover h2, .cover-line, .cover .wbtn, .cover-under, .cover .link')].map(e => e.textContent.trim()), all: document.querySelector('.cover').innerText.replace(/\s+/g, ' ').trim(), title: document.title }));
+    const cvT = s5.blocks.find(b => b.t === 'tbl' && b.rows[0][0] === 'Part');
+    cv.els.forEach(t => ok(cvT && cvT.rows.some(r => r[1] === t || r[1].startsWith(t + ' (') || r[1].startsWith('"' + t + '"')), 'cover text "' + t + '" in 5.1'));
+    ok(cv.all === cv.els.join(' '), 'cover shows only the agreed copy'); ok(!/Guidance, not advice|Free · About a minute/.test(cv.all), 'no trust line or disclaimer on the cover');
+    ok(secs.find(s => s.title === 'Appendix A. Copy deck').text.includes(cv.els.join(' · ')), 'cover strings in Appendix A');
+    await page.evaluate(() => { S = fresh(); S.scr = 'D5'; S.di = 3; lastId = null; render(); }); const q8 = await page.evaluate(() => [document.querySelector('#screen h2').textContent, document.querySelector('.qsub').textContent].concat([...document.querySelectorAll('.opt')].map(e => e.querySelector('.em').textContent + ' ' + e.querySelector('.tx').textContent + ' (' + e.querySelector('.otag').textContent.replace(/^◆ /, '') + ')')));
+    q8.forEach(t => ok(s5.text.includes(t), 'Q8 "' + t + '"'));
+    await page.evaluate(() => { S = fresh(); S.shell = true; S.pb = true; S.tab = 'plan'; S.scr = 'F1'; lastId = null; render(); }); const tile = await page.evaluate(() => document.querySelector('.gtile[data-p="safety"] .nm').textContent); ok(tile === 'Emergency fund' && s5.text.includes('🪂 ' + tile), 'goal tile "' + tile + '"');
+    await page.evaluate(() => { S = fresh(); S.scr = 'D1'; lastId = null; render(); }); const d1 = await page.evaluate(() => document.querySelector('#screen h2').textContent); ok(s5.text.includes(d1), 'D1 title "' + d1 + '"');
+    const all = secs.map(s => s.title + ' ' + s.text).join(' '), stray = (all.match(/LifeGoals(?!-Customer-Journey-Prototype\.html|-Calculators\.xlsx|-Calculators-UIUX-Spec)[^ ]{0,20}/g) || []).filter(x => !/^LifeGoals" for now/.test(x));
+    ok(stray.length === 0, 'no customer-facing "LifeGoals" in the docx: ' + stray.slice(0, 5).join(', '));
+    ok(!/Start · about 1 min|Your life\. Your plan\.|Pick a forecast|Build a safety net"? ?\(C|≈ Estimated ·|Also still to choose:/.test(all), 'no old wording in the docx'); }
+    R.perCalc.push(['§15 / §16', 'Example cards, statuses, checklist, gaps in calculators; LifeMap cover, Q8, tile', R.pass - p4, R.fail.length - f4]); }

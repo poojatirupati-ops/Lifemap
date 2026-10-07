@@ -1,0 +1,14 @@
+const { chromium } = require('playwright');
+(async () => { const b = await chromium.launch(); const errs = []; const p = await (await b.newContext({viewport:{width:390,height:844}, hasTouch:true})).newPage();
+  p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+  await p.route('**/fonts.gstatic.com/**', r => r.abort());
+  await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html'); await p.waitForTimeout(300);
+  await p.click('text=Start · about 2 min'); await p.click('[data-a="why"][data-p="5"]'); await p.fill('#why-note', 'Moving abroad next year and want to know if we can afford it for real'); 
+  console.log('note', await p.evaluate(() => S.whyNote), 'chips', await p.locator('[data-a="why"]').count());
+  await p.screenshot({path: __dirname + '/build/m-03b-why-something-else.png'});
+  await p.click('[data-a="why"][data-p="5"]'); console.log('field gone', await p.locator('#why-note').count(), JSON.stringify(await p.evaluate(() => [S.why, S.whyNote])));
+  await p.click('[data-a="why"][data-p="5"]'); await p.fill('#why-note', 'Moving abroad'); await p.click('.qfoot .wbtn'); console.log('next ->', await p.evaluate(() => S.scr), JSON.stringify(await p.evaluate(() => [S.why, S.whyNote])));
+  await p.evaluate(() => { loadSample(); S.app = true; lastId = null; render(); openReport(); }); await p.waitForTimeout(200);
+  await p.setViewportSize({width:1000, height:900}); await p.waitForTimeout(100);
+  await p.locator('#report').screenshot({path: __dirname + '/build/d-report-full.png'}).catch(e => console.log('rep shot', e.message.slice(0,80)));
+  console.log('ERRORS', errs.length, JSON.stringify(errs)); await b.close(); })();

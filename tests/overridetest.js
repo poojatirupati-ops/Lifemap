@@ -1,0 +1,6 @@
+const { chromium } = require('playwright'); const { execSync } = require('child_process');
+(async () => { const x = JSON.parse(execSync('python3 ' + __dirname + '/overridetest.py').toString().trim().split('\n').pop()); const b = await chromium.launch(); const p = await b.newPage(); await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html'); await p.waitForTimeout(300);
+  const app = await p.evaluate(() => { const o = {}, rd = () => ({inv:SV('inv'), cautious:SET.inv.vc, label:SET.inv.by});
+    o.base = rd(); SET.fundChg.pv = 0.015; o.partnerCharges = rd(); delete SET.fundChg.pv; const v = SET.fundChg.v; SET.fundChg.v = 0.015; o.standardCharges = rd(); SET.fundChg.v = v; SET.invGross.pv = 0.06; o.gross6 = rd(); delete SET.invGross.pv; return o; });
+  let fails = 0, n = 0; for (const k of Object.keys(x)) { for (const f of ['inv', 'cautious', 'label']) { n++; const a = app[k][f], w = x[k][f], ok = f === 'label' ? a === w : Math.abs(a - w) < 1e-9; if (!ok) { fails++; console.log('FAIL |', k, f, 'app', a, 'xlsx', w); } } }
+  console.log(JSON.stringify({base:x.base, partnerCharges:x.partnerCharges})); console.log('OVERRIDE FAILS', fails, 'of', n); await b.close(); })();
