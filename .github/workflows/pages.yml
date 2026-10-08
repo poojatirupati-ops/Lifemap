@@ -20,7 +20,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build site (single source: LifeGoals-Customer-Journey-Prototype.html)
+      - name: Build site from the single source file
         run: python3 build-site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
