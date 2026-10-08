@@ -20,12 +20,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Assemble site
-        run: |
-          mkdir _site
-          cp index.html manifest.webmanifest sw.js _site/
-          cp -r icons media _site/
-          touch _site/.nojekyll
+      - name: Build site (single source: LifeGoals-Customer-Journey-Prototype.html)
+        run: python3 build-site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

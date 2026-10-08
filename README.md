@@ -20,8 +20,8 @@ Once GitHub Pages is switched on (see below) the app lives at:
 ## What is in here
 | Path | What |
 |---|---|
-| `index.html` | The web app (a single file; same as `LifeGoals-Customer-Journey-Prototype.html`) |
-| `manifest.webmanifest`, `sw.js`, `icons/` | Make it installable on a phone and work offline |
+| `LifeGoals-Customer-Journey-Prototype.html` | **The web app (edit this file only).** `build-site.py` turns it into the published `index.html` and adds the phone-install tags |
+| `build-site.py`, `manifest.webmanifest`, `sw.js`, `icons/` | Make it installable on a phone and work offline |
 | `media/` | Photos and the two pension videos (auto-enrolment, how your retirement plan works) |
 | `deliverables/` | Excel workbook for the engineer (28 calculators), Word UI/UX spec, check reports |
 | `docs/` | The journey spec with every decision (§10 to §26), reviews, copy audit, the pre-release checklist |
