@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch();const p=await b.newPage();await p.route('https://fonts.*/**',r=>r.abort());
+await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html');await p.waitForTimeout(300);
+const out=await p.evaluate(()=>{const o={asm:{},ff:{}};
+ Object.keys(ASM).forEach(k=>{const d=ASM[k];o.asm[k]={t:d.t,min:d.min,max:d.max,step:d.step,opts:d.o?d.o.map(x=>x[0]):null,ty:d.ty};});
+ Object.keys(FF).forEach(k=>{const d=FF[k];o.ff[k]={type:d.type,min:d.min,max:d.max,o:d.o||null};});
+ o.misc={ret:[50,75],age:[18,80],pAge:[18,85],infl:[0,10]};
+ return o;});
+fs.writeFileSync('ranges.json',JSON.stringify(out,null,1));
+console.log(JSON.stringify(out.asm).slice(0,3000));
+await b.close();})();

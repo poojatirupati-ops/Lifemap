@@ -44,7 +44,7 @@ const { chromium } = require('playwright');
     const exp0 = fx(F.mortBal, F.mortRate, F.mortPayM) + fx(F.cardBal, 0, F.cardPayM, iAPR(F.cardRate)) + fx(F.loanBal, 0, F.loanPayM, iAPR(F.loanRate));
     const liab = FSEC.find(s => s.id === 'liab'); const items = checkItems().filter(x => x.s.id === 'liab').map(x => FF[x.k].l);
     return {fields:liab.f, F:{card:[F.cardBal, F.cardPayM, F.cardRate], loan:[F.loanBal, F.loanPayM, F.loanRate], debt:F.debt, pay:F.debtPayM}, fixed0:Math.round(P.rows[0].fixed), exp0:Math.round(exp0), chartFixed0:Math.round(P.rows[0].fixed), parts:rowParts(P.rows[0]), needs:P.rows[0].needs, p4:items, lvl3:foundations()[2]}; });
-  ok('Liabilities fields split (card + loan, each with a repayment)', ds.fields.join() === 'mortYN,mortBal,mortPayM,mortYears,mortRate,cardBal,cardPayM,loanBal,loanPayM', ds.fields);
+  ok('Liabilities fields split (card + loan, each with a repayment)', ds.fields.join() === 'mortYN,mortBal,mortPayM,mortYears,mortRate,cardBal,cardPayM,cardRate,loanBal,loanPayM,loanRate,mort2', ds.fields);
   ok('rates: card 20%, loan 8%', ds.F.card[2] === 0.2 && ds.F.loan[2] === 0.08, ds.F);
   ok('sample: small card balance + car loan', ds.F.card[0] === 400 && ds.F.loan[0] === 3500, ds.F);
   ok('engine year-1 repayments = mortgage + card + loan amortised separately (no double counting)', Math.abs(ds.fixed0 - ds.exp0) <= 1, {fixed0:ds.fixed0, exp0:ds.exp0});

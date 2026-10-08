@@ -29,6 +29,13 @@ Once GitHub Pages is switched on (see below) the app lives at:
 | `tests/` | The automated test scripts used to check the prototype against the workbook |
 | `.claude/agents/` | The team roles used while building |
 
+## Final deliverables (v2.7, 8 Oct 2026)
+- `deliverables/LifeMap-Calculators-Complete.xlsx`: **the one workbook for both UI/UX and the developer** (47 sheets): the 28 calculators with formulas, the Make my plan engine, the Calculation register, the tax engine, Settings and lists, and the UI/UX screen guide (UI sheets with pictures of every screen).
+- `deliverables/LifeGoals-Calculators.xlsx`: the same without the UI sheets (the sheets the checking tools run on).
+- `deliverables/LifeGoals-Calculators-UIUX-Spec.docx`: the Word UI/UX spec (335 pages).
+- `docs/pre-release-verify.md`: figures and rates a person must check on official pages before launch.
+- `tools/`: `build_ui_sheets.py` (adds the UI sheets), `plan-vs-xlsx/` and `calc-vs-xlsx/` (prove the workbook matches the app), `finalize_workbook.py`.
+
 ## Before real customers use it
 See `docs/pre-release-verify.md`. Rates and tax figures must be checked on official pages (Revenue, Central Bank, CSO, DSP). Nothing from Budget 2027 is used until it is final and official. The prototype gives guidance, not advice.
 

@@ -20,27 +20,28 @@ const { chromium } = require('playwright');
   const p4 = await ev(() => ({dis:document.getElementById('seeres').disabled, need:(document.getElementById('p4-need') || {}).textContent || '', asm:!!document.getElementById('p4-asm'), infl:!!document.querySelector('#p4-infl [data-a="infl"]'), ret:document.querySelector('[data-nb="ret|a"]') ? document.querySelector('[data-nb="ret|a"]').value : 'none', end:document.querySelector('[data-nb="asm|planEnd"]') ? document.querySelector('[data-nb="asm|planEnd"]').value : 'none'}));
   chk('Step 7 has the "Your assumptions" step next to the inflation choice', p4.asm && p4.infl, p4);
   chk('Step 7: retirement-age and plan-until boxes are blank', p4.ret === '' && p4.end === '', p4);
-  chk('Step 7: "See my results" locked, says "Choose your inflation rate"', p4.dis && /^Choose your inflation rate/.test(p4.need), p4.need);
-  const g = await ev(() => ({res:resultsHTML().includes('Choose your'), strip:tlStrip().includes('Choose your'), boxes:[...document.querySelectorAll('#p4-asm [data-nb^="asm|"]')].every(i => i.value === '')}));
-  chk('Results and goal strip show "Choose your …" instead of numbers', g.res && g.strip, g);
-  chk('Every type-3 number box in step 7 starts blank', g.boxes);
+  chk('[s27] Step 7: "See my results" locked, says "Choose your retirement age above" (the first of the 3)', p4.dis && /^Choose your retirement age/.test(p4.need), p4.need);
+  const g = await ev(() => ({res:/To see your results we need 3 things/.test(resultsHTML()), strip:/we need 3 things|Choose your/.test(tlStrip()), boxes:[document.querySelector('#p4-3 [data-nb="asm|planEnd"]'), document.querySelector('#p4-3 [data-nb="ret|a"]')].every(i => i && i.value === ''), std:[...document.querySelectorAll('#p4-rest [data-nb^="asm|"]')].filter(i => asmKind(i.dataset.nb.split('|')[1]) === 'std').every(i => i.value !== '')}));
+  chk('[s27] Results show the card "To see your results we need 3 things" instead of numbers; goal strip also asks', g.res && g.strip, g);
+  chk('[s27] Step 7: the 3 choice boxes start blank; every LifeMap-standard box under "What we\'ve set for you" is already filled', g.boxes && g.std, g);
   const noSel = await ev(() => [...document.querySelectorAll('#p4-asm [data-a="asmset"]')].filter(x => x.classList.contains('sel')).length);
-  chk('No choice chip pre-selected', noSel === 0, noSel);
-  // 3. one standard chip fills its item (and counts as the customer's choice)
-  await ev(() => { S.asmOpen = 'p4'; render(); }); await click('#p4-asm [data-a="asmstd"][data-p="cash"]');
-  const c1 = await ev(() => ({v:asmGet('cash'), std:ASM.cash.sug(), tag:document.querySelector('[data-k="cash"] .tag').textContent}));
-  chk('"Use the standard (1%)" chip fills cash growth and tags it "Your choice"', c1.v === c1.std && c1.tag === 'Your choice', c1);
-  const chipTxt = await ev(() => document.querySelector('#p4-asm [data-a="asmstd"][data-p="wage"]').textContent);
-  chk('Standard chip wording: "Use the standard (3%)"', chipTxt === 'Use the standard (3%)', chipTxt);
+  chk('[s27] No chip pre-selected among the 3 required choices (inflation)', await ev(() => !document.querySelector('#p4-3 .chip.sel')), noSel);
+  // 3. [s27] LifeMap standards are automatic: "Set by LifeMap"; changing one reads "Your choice" with "Back to LifeMap's figure"
+  await ev(() => { S.asmOpen = 'p4'; render(); });
+  const c1 = await ev(() => ({v:asmV('cash'), std:ASM.cash.sug(), tag:document.querySelector('[data-k="cash"] .tag').textContent, chip:!!document.querySelector('[data-a="asmstd"]'), back:!!document.querySelector('[data-k="cash"] [data-a="asmback"]')}));
+  chk('[s27] Cash growth already has the standard, tagged "Set by LifeMap"; no "Use the standard" chip, no back button yet', c1.v === c1.std && c1.tag === 'Set by LifeMap' && !c1.chip && !c1.back, c1);
+  await p.fill('#p4-asm [data-nb="asm|cash"]', '2'); await p.press('#p4-asm [data-nb="asm|cash"]', 'Enter'); await p.waitForTimeout(100);
+  const c2 = await ev(() => ({v:asmGet('cash'), tag:document.querySelector('[data-k="cash"] .tag').textContent, back:(document.querySelector('[data-k="cash"] [data-a="asmback"]') || {}).textContent}));
+  chk('[s27] Typing 2% → "Your choice" and "Back to LifeMap\'s figure (1%)"', Math.abs(c2.v - 0.02) < 1e-9 && c2.tag === 'Your choice' && /^Back to LifeMap's figure \(1%\)$/.test(c2.back), c2);
+  await click('#p4-asm [data-a="asmback"][data-p="cash"]');
+  chk('[s27] Back to LifeMap\'s figure restores the standard and the "Set by LifeMap" tag', await ev(() => asmV('cash') === ASM.cash.sug() && !asmMine('cash') && document.querySelector('[data-k="cash"] .tag').textContent === 'Set by LifeMap'));
   const guide = await ev(() => document.querySelector('[data-k="wage"] .small').textContent);
-  chk('Type-3 wording: "Generally the standard is 3% (…). Choose what you want to use."', /^Generally the standard is 3% \(.+\)\. Choose what you want to use\./.test(guide), guide);
-  // 4. "Use the standard for all of these" never sets retirement age or plan-until age
-  await click('#p4-asm [data-a="useall"]');
-  const ua = await ev(() => ({left:ASM_KEYS().filter(k => asmStd(k) && !asmMine(k)), infl:S.infl, retireSet:S.retireSet, planEnd:asmGet('planEnd'), miss:planMissing().map(x => x.k), dis:document.getElementById('seeres').disabled, need:(document.getElementById('p4-need') || {}).textContent}));
-  chk('[§22] Standards for the rest: every other type-3 item chosen; inflation (one of the 3 choices) NOT set', ua.left.length === 0 && ua.infl == null, ua.left);
-  chk('Use all: retirement age and plan-until age still blank', ua.retireSet === false && ua.planEnd == null, ua);
-  chk('[§22] After the standards button: still locked, "Choose your inflation rate" (3 choices still open)', ua.dis && /^Choose your inflation rate/.test(ua.need), ua.need);
-  chk('After use all: the type-2 State Pension is still for the customer to enter', ua.miss.includes('spWeek'), ua.miss);
+  chk('[s27] Standard wording: "LifeMap uses 3% (…). Change it if you want to use your own."', /^LifeMap uses 3% \(.+\)\. Change it if you want to use your own\./.test(guide), guide);
+  // 4. [s27] no "Use the standard for all of these" button; retirement age and plan-until age still blank
+  const ua = await ev(() => ({btn:!!document.querySelector('[data-a="useall"]'), infl:S.infl, retireSet:S.retireSet, planEnd:asmGet('planEnd'), miss:planMissing().map(x => x.k), dis:document.getElementById('seeres').disabled, need:(document.getElementById('p4-need') || {}).textContent}));
+  chk('[s27] No "use all" button; the 3 choices stay open: retirement age, plan-until age, inflation', !ua.btn && ua.infl == null && ua.retireSet === false && ua.planEnd == null && JSON.stringify(ua.miss.map(x => x.replace('spWeek', 'x'))).includes('retireAge'), ua);
+  chk('[s27] Locked while the 3 are open; the text names the first (retirement age)', ua.dis && /^Choose your retirement age/.test(ua.need), ua.need);
+  chk('[s27] The type-2 State Pension no longer blocks results (assumed, counted as missing)', !ua.miss.includes('spWeek'), ua.miss);
   // 5. retirement age, plan-until age and the State Pension, typed by the customer
   const type = async (sel, v) => { await p.fill(sel, String(v)); await p.press(sel, 'Enter'); await p.waitForTimeout(80); };
   await click('#p4-infl [data-a="infl"][data-p="0.02"]'); await type('[data-nb="ret|a"]', 64); await type('[data-nb="asm|planEnd"]', 92); await type('[data-nb="asm|spWeek"]', 250);
@@ -53,9 +54,10 @@ const { chromium } = require('playwright');
   chk('See my results works once every choice is made', r1.app && !r1.gate, r1);
   // 6. a later change makes a new choice necessary: results go back to "Choose your …"
   const later = await ev(() => { S.fin.home = 'Own with mortgage'; S.fin.mortBal = 200000; S.src.mortBal = 'typed'; S.fin.mortPayM = 1000; S.fin.mortYears = 20; S.tab = 'plan'; render(); return {gate:(document.getElementById('gate-res') || {}).textContent || '', home:(S.tab = 'home', render(), (document.getElementById('gate-home') || {}).textContent || '')}; });
-  chk('Adding a mortgage without its rate → "Choose your mortgage rate to see this" on My Plan and Home', /Choose your mortgage rate to see this/.test(later.gate) && /Choose your mortgage rate/.test(later.home), later);
+  const lm = await ev(() => ({miss:planMissing().map(x => x.k), flags:missingFlags().map(x => x.k), banner:(S.tab = 'plan', render(), (document.getElementById('miss-banner') || {}).textContent || ''), rate:asmV('mortRate')}));
+  chk('[s27] Adding a mortgage without its rate does not block results: the CBI suggestion (3.48%) is used, labelled "Assumed: add yours", and counted in the "N details missing" banner', !later.gate && !later.home && !lm.miss.includes('mortRate') && lm.flags.includes('mortRate') && /details? missing/.test(lm.banner) && lm.rate === 0.0348, {later, lm});
   const mr = await ev(() => { S.tab = 'me'; S.me = 'asm'; S.asmOpen = 'safety'; render(); const f = document.querySelector('[data-k="mortRate"]'); return {txt:f.textContent, chip:!!f.querySelector('[data-a="asmstd"]')}; });
-  chk('[r12 §18] Mortgage rate: no range; chip "Use the suggested rate (3.48%) · Central Bank of Ireland: average rate on new mortgages, Jul 2026"; typing is fine, no upload needed', !/Usually between/.test(mr.txt) && !mr.chip && /Use the suggested rate \(3\.48%\) · Central Bank of Ireland: average rate on new mortgages, Jul 2026/.test(mr.txt) && /no upload needed/.test(mr.txt), mr.txt.slice(0, 260));
+  chk('[s27] Mortgage rate: no range; "Assumed: add yours"; "We are using 3.48% (Central Bank of Ireland: average rate on new mortgages, Jul 2026) until you add yours."; typing is fine, no upload needed', !/Usually between/.test(mr.txt) && !mr.chip && /Assumed: add yours/.test(mr.txt) && /We are using 3\.48% \(Central Bank of Ireland: average rate on new mortgages, Jul 2026\) until you add yours/.test(mr.txt) && /no upload needed/.test(mr.txt), mr.txt.slice(0, 260));
   // 7. type 1 is shown, not editable
   const law = await ev(() => { S.asmOpen = 'law'; render(); const d = document.querySelector('details[data-g="law"]'); return {sum:d.querySelector('summary').textContent, inputs:d.querySelectorAll('input,button,select,textarea').length, rows:d.querySelectorAll('.mini').length}; });
   chk('Type 1: "Set by Government · 2026" group, ' + law.rows + ' rows, nothing editable', law.sum === 'Set by Government · 2026' && law.inputs === 0 && law.rows >= 12, law);
@@ -63,21 +65,23 @@ const { chromium } = require('playwright');
   chk('No law value (tax, USC, PRSI, relief, DIRT, CBI limits, Illness Benefit) is an editable assumption', lawKeys);
   // 8. Explore calculators: blank type-3 inputs with the standard chip; "Choose your …" until chosen
   const cx = await ev(() => { S = fresh(); Object.assign(S.ans, {'2':0, '4':1, '7':1, '8':2, '9':2, '12':1}); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'compound'}]; lastId = null; render();
-    const box = document.getElementById('co-r'); return {val:box ? box.value : 'none', chip:(document.querySelector('[data-a="ckstd"][data-p="r"]') || {}).textContent, gate:(document.getElementById('cgate') || {}).textContent || ''}; });
-  chk('Explore compound growth: growth box blank, chip "Use the standard (5%)", result "Choose your growth before fees to see this"', cx.val === '' && cx.chip === 'Use the standard (5%)' && /Choose your growth before fees to see this/.test(cx.gate), cx);
-  await click('[data-a="ckstd"][data-p="r"]');
-  const cx2 = await ev(() => ({v:calcVals(C('compound')).r, gate:!!document.getElementById('cgate'), slider:!!document.getElementById('c-r'), plan:asmGet('invGross')}));
-  chk('Tool chip fills the tool\'s input (5%), shows the slider and the result', cx2.v === 5 && !cx2.gate && cx2.slider, cx2);
-  const allCalc = await ev(() => CALCS.map(c => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:c.id}]; lastId = null; render(); const t3 = c.inputs.filter(i => { const s = calcA(c.id, i.k); return s && s.a && ASM[s.a].ty === 3; });
-    return {id:c.id, blank3:t3.every(i => (document.getElementById('co-' + i.k) || {}).value === '' && !!document.querySelector('[data-a="ckstd"][data-p="' + i.k + '"]')), gate:t3.length || (CALC_X[c.id] || []).some(k => !ASM[k].opt) ? !!document.getElementById('cgate') : true, x:(CALC_X[c.id] || []).every(k => { const f = document.querySelector('.asmg [data-k="' + k + '"]'); return f && (ASM[k].t === 'choice' ? !f.querySelector('.chip.sel[data-a="asmset"]') : f.querySelector('input').value === ''); })}; }));
-  const badC = allCalc.filter(x => !x.blank3 || !x.gate || !x.x);
-  chk('All 28 calculators: type-3 inputs blank with the standard chip; tool assumptions blank; "Choose your …" until chosen', allCalc.length === 28 && !badC.length, badC);
+    const box = document.getElementById('co-r'); return {val:box ? box.value : 'none', chip:!!document.querySelector('[data-a="ckstd"]'), tag:(box ? box.closest('.field').querySelector('.tag') || {} : {}).textContent, gate:(document.getElementById('cgate') || {}).textContent || ''}; });
+  chk('[s27] Explore compound growth starts from the LifeMap standard (5), tagged "Set by LifeMap", no chip, no "Choose your" gate', cx.val === '5' && !cx.chip && cx.tag === 'Set by LifeMap' && !cx.gate, cx);
+  await p.fill('#co-r', '6'); await p.press('#co-r', 'Enter'); await p.waitForTimeout(100);
+  const cx2 = await ev(() => ({v:calcVals(C('compound')).r, gate:!!document.getElementById('cgate'), slider:!!document.getElementById('c-r'), tag:document.getElementById('co-r').closest('.field').querySelector('.tag').textContent, back:(document.querySelector('[data-a="ckback"],[data-a="asmback"]') || {}).textContent}));
+  chk('[s27] Typing 6 in the tool → "Your choice", result shown', cx2.v === 6 && !cx2.gate && cx2.slider && cx2.tag === 'Your choice', cx2);
+  const allCalc = await ev(() => CALCS.map(c => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:c.id}]; lastId = null; render(); const v = calcVals(c); const bad = [];
+    c.inputs.forEach(i => { const s = calcA(c.id, i.k); if (s && calcStdItem(s) && v[i.k] == null) bad.push('std blank ' + i.k); if (s && !calcStdItem(s) && !s.a && v[i.k] != null && s.ty === 2) bad.push('own prefilled ' + i.k); });
+    (CALC_X[c.id] || []).forEach(k => { if (asmStd(k) && calcMissing(c).includes(ASM[k].n)) bad.push('std tool item gated ' + k); });
+    const gated = calcMissing(c).length > 0; return {id:c.id, bad, gate:gated === !!document.getElementById('cgate')}; }));
+  const badC = allCalc.filter(x => x.bad.length || !x.gate);
+  chk('[s27] All 28 calculators: LifeMap standards start filled and never gate; the customer\'s own figures (market rates, age, State Pension, Illness Benefit) still gate; gate shown exactly when something is missing', allCalc.length === 28 && !badC.length, badC);
   const retC = await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'retirement'}]; lastId = null; render(); return {ra:(document.getElementById('co-ra') || {}).value, chip:!!document.querySelector('[data-a="ckstd"][data-p="ra"]'), txt:(document.getElementById('co-ra') || {}).closest ? document.getElementById('co-ra').closest('.field').textContent : ''}; });
   chk('Explore retirement projection: retirement age blank, no standard chip, with the §14 guidance', retC.ra === '' && !retC.chip && /usually draw a pension from 60 \(some occupational schemes from 50\); State Pension is paid from 66/.test(retC.txt), retC);
   const ib = await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'incomegap'}]; lastId = null; render(); const f = document.getElementById('co-ib'); return {val:f ? f.value : 'none', txt:f ? f.closest('.field').textContent : '', chip:!!document.querySelector('[data-a="ckstd"][data-p="ib"]')}; });
   chk('Illness Benefit is type 2 (as in the workbook): blank, "Usually between €0 a week and €254 a week (DSP 2026 maximum …)", no chip', ib.val === '' && /Usually between €0 a week and €254 a week \(DSP 2026 maximum/.test(ib.txt) && !ib.chip, ib);
-  const st2 = await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'riskreturn'}]; lastId = null; render(); return {sel:document.querySelectorAll('[data-a="ckset"].sel').length, chip:(document.querySelector('[data-a="ckstd"][data-p="s"]') || {}).textContent, w:(S.xs = [{v:'CALC', p:'lumpsum'}], lastId = null, render(), (document.querySelector('[data-a="ckstd"][data-p="wait"]') || {}).textContent)}; });
-  chk('C20 style and C10 waiting years are type 3: blank, "Use the standard (2 · Balanced)" / "(5 years)"', st2.sel === 0 && st2.chip === 'Use the standard (2 · Balanced)' && st2.w === 'Use the standard (5 years)', st2);
+  const st2 = await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'riskreturn'}]; lastId = null; render(); return {sel:(document.querySelector('[data-a="ckset"].sel') || {}).textContent, chip:!!document.querySelector('[data-a="ckstd"]'), w:(S.xs = [{v:'CALC', p:'lumpsum'}], lastId = null, render(), (document.getElementById('co-wait') || {}).value)}; });
+  chk('[s27] C20 style and C10 waiting years start from the LifeMap standard (2 · Balanced selected / 5 years), no chip', /Balanced/.test(st2.sel || '') && !st2.chip && st2.w === '5', st2);
   // 8b. tap-away: typing into a blank box and leaving it (no Enter) commits and redraws like Enter
   await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'loan'}]; lastId = null; render(); });
   await p.fill('#co-apr', '7.5'); await p.click('h2, .sky'); await p.waitForTimeout(120);
@@ -94,7 +98,7 @@ const { chromium } = require('playwright');
   chk('Sample customer has every choice made (no "Choose your …" anywhere)', smp.ready && !smp.gate && smp.ret && smp.end === 95, smp);
   // 10. "What your plan assumes": no DEFAULT / YOURS / Suggested; three types only
   const tb = await ev(() => { S.sheet = 'assume'; render(); const sh = document.querySelector('.sheet'); const tags = [...sh.querySelectorAll('.tag')].map(t => t.textContent); return {h:sh.querySelector('h2').textContent, tags:[...new Set(tags)], txt:sh.innerText}; });
-  const okTag = t => t === 'Set by Government · 2026' || t === 'Your choice' || t === 'How the plan works' || /^Usually .+–.+/.test(t) || /^Suggested \d/.test(t) || t === 'Your figure';   // r12 §18: market rates show their suggestion, or Your figure
+  const okTag = t => t === 'Set by LifeMap' || t === 'Assumed: add yours' || t === 'Set by Government · 2026' || t === 'Your choice' || t === 'How the plan works' || /^Usually .+–.+/.test(t) || /^Suggested \d/.test(t) || t === 'Your figure';   // r12 §18: market rates show their suggestion, or Your figure
   chk('"What your plan assumes": every row tagged Set by Government / Usually X–Y / Your choice', tb.h === 'What your plan assumes' && tb.tags.every(okTag) && tb.tags.includes('Set by Government · 2026') && tb.tags.includes('Your choice') && tb.tags.some(t => /^Usually/.test(t)), tb.tags);
   chk('No "Default", "Yours" or old "Suggested · change if you like" label left [r12: §18 "Suggested 3.48%" market-rate tags are allowed]', !/\bdefault\b|\byours\b|suggested · change/i.test(tb.txt), (tb.txt.match(/.{0,30}(default|yours|suggested · change).{0,30}/i) || [''])[0]);
   // 11. one "Ireland today" figure: 3.9% CSO HICP flash, Sep 2026, from the register
@@ -142,7 +146,7 @@ const { chromium } = require('playwright');
     if (o.penM) put('pension', 30000); lastId = null; render(); }, o);
   const cardRes = [], linkRes = [];
   for (const o of [{penM:0}, {penM:400}]) { await setup(o);
-    const keys = await ev(() => FSEC.flatMap((s, i) => s.f.filter(k => fieldVisible(k) && FF[k].type !== 'text' && !(k in LISTKEY)).map(k => [i, k])));
+    const keys = await ev(() => FSEC.flatMap((s, i) => s.f.filter(k => fieldVisible(k) && FF[k].type !== 'text' && !(k in LISTKEY) && !FF[k].list).map(k => [i, k])));
     for (const [i, k] of keys) {
       if (o.penM && cardRes.some(x => x.k === k)) continue;
       await ev(([i, k]) => { S.fmode = {}; openSec(i); S.fmode[FSEC[i].id] = 'type'; lastId = null; render(); }, [i, k]);
@@ -165,7 +169,7 @@ const { chromium } = require('playwright');
       await p.waitForTimeout(40);
       const after = await ev(k => ({v:S.fin[k], src:S.src[k], sheet:!!document.querySelector('#screen .sheet'), focus:document.activeElement && document.activeElement.dataset.a === 'fex' && document.activeElement.dataset.p === k}), k);
       c.unchanged = after.v === before.v && after.src === before.src; c.closed = !after.sheet; c.focusBack = after.focus; cardRes.push(c); } }
-  const want = await ev(() => Object.keys(FF).filter(k => FF[k].type !== 'text' && !(k in LISTKEY)));
+  const want = await ev(() => Object.keys(FF).filter(k => FF[k].type !== 'text' && !(k in LISTKEY) && !FF[k].list));
   const badCards = cardRes.filter(c => c.bad || !(c.dialog && c.title && c.where && c.small && c.got === 'Got it' && c.focusIn && c.trap && c.opts && c.figure && c.unchanged && c.closed && c.focusBack && (c.eur ? c.zero : !c.zero) && c.words <= 45));
   // §19: the per-item list fields (cards, loans, pensions, policies) carry the same example cards
   const itemEx = []; for (const [sec, lk, fld] of [['liab', 'cards', 'owed'], ['liab', 'cards', 'pay'], ['liab', 'loans', 'owed'], ['liab', 'loans', 'pay'], ['pension', 'pens', 'value'], ['pension', 'pens', 'monthly']]) { await setup({penM:400}); await ev(id => { const i = FSEC.findIndex(x => x.id === id); S.fmode = {}; openSec(i); S.fmode[FSEC[i].id] = 'type'; lastId = null; render(); }, sec);
@@ -192,11 +196,11 @@ const { chromium } = require('playwright');
   chk('Mortgage repayment worked out from balance, rate and years: "Worked out from your figures … from your balance, rate and years left"', /^Worked out from your figures: about €1,212 a month, from your balance, rate and years left\./.test(wo.mort), wo.mort);
   chk('Card with no repayment: "Worked out from your figures: … clears it in 5 years, because no repayment was given"', /^Worked out from your figures: €\d+ a month clears it in 5 years, because no repayment was given\./.test(wo.card), wo.card);
   // silent fallbacks now ask instead: partner's age, mortgage years, work
-  const fb = await ev(() => { delete S.fin.mortYears; delete S.src.mortYears; const m1 = planMissing().map(x => x.k); S.fin.pAge = null; delete S.src.pAge; const m2 = planMissing(); S.fin.work = undefined; delete S.src.work; const m3 = planMissing().map(x => x.k);
-    S.tab = 'explore'; S.xs = [{v:'CALC', p:'repayment'}]; S.app = true; lastId = null; render(); const pa = m2.find(x => x.k === 'pAge'); return {m1, pAge:pa, pAgeTxt:pa ? chooseTxt(pa) : '', mortTxt:chooseTxt({n:'mortgage years left (or your monthly repayment)', add:true}), m3, calc:(document.getElementById('cgate') || {}).textContent || ''}; });
-  chk('No years left and no repayment → "Add your mortgage years left (or your monthly repayment) to see this" (no 25-year default)', fb.m1.includes('mortYears') && fb.mortTxt === 'Add your mortgage years left (or your monthly repayment) to see this', fb.m1);
-  chk('Partner\'s age missing → "Add your partner\'s age to see this" (no fallback to your age)', fb.pAgeTxt === 'Add your partner\'s age to see this', fb.pAge);
-  chk('Work missing with income typed → "Add your work …" (no silent "Employed")', fb.m3.includes('work'), fb.m3);
+  const fb = await ev(() => { delete S.fin.mortYears; delete S.src.mortYears; const m1 = missingFlags().map(x => x.k); const mp1 = planMissing().map(x => x.k); S.fin.pAge = null; delete S.src.pAge; const m2 = missingFlags(); S.fin.work = undefined; delete S.src.work; const m3 = missingFlags().map(x => x.k);
+    S.tab = 'explore'; S.xs = [{v:'CALC', p:'repayment'}]; S.app = true; lastId = null; render(); const pa = m2.find(x => x.k === 'pAge'); return {mp1, m1, pAge:pa, pAgeTxt:pa ? chooseTxt(pa) : '', mortTxt:chooseTxt({n:'mortgage years left (or your monthly repayment)', add:true}), m3, calc:(document.getElementById('cgate') || {}).textContent || ''}; });
+  chk('[s27] No years left and no repayment → counted in the "N details missing" list, never blocks results; the tool still says "Add your mortgage years left (or your monthly repayment) to see this"', fb.m1.includes('mortYears') && !fb.mp1.includes('mortYears') && fb.mortTxt === 'Add your mortgage years left (or your monthly repayment) to see this', fb);
+  chk('[s27] Partner\'s age missing → listed in "N details missing" (not blocking; counted as the customer\'s own age until added)', !!fb.pAge, fb.pAge);
+  chk('[s27] Work missing with income typed → listed in "N details missing" (no silent "Employed" tick)', fb.m3.includes('work'), fb.m3);
   chk('Mortgage tool with no years left: "Add your mortgage years left to see this" (no 25-year default) [r10: natural gate name]', /^Your resultAdd your mortgage years left to see this/.test(fb.calc), fb.calc);
   // r10 (Appendix B): personal figure blank in a tool → "Not added yet"; §14 assumption → "Not chosen yet"; C06 gate reads naturally
   const tg = await ev(() => { const tagOf = id => (document.getElementById(id) || {closest:() => null}).closest('.field').querySelector('.tag').textContent; S.xs = [{v:'CALC', p:'repayment'}]; lastId = null; render(); const a = tagOf('co-term');
@@ -204,7 +208,7 @@ const { chromium } = require('playwright');
     S = fresh(); S.shell = true; S.tab = 'explore'; S.xs = [{v:'CALC', p:'compound'}]; lastId = null; render(); const c2 = tagOf('co-r');
     const all = []; CALCS.forEach(c => { c.inputs.forEach(i => { const s2 = calcA(c.id, i.k); all.push(missTxt(s2 ? ((GATE_N[c.id] || {})[i.k] && s2.ty === 2 && !s2.a ? GATE_N[c.id][i.k] : s2.n) : 'add:' + gateName(c.id, i))); }); (CALC_X[c.id] || []).forEach(k => all.push(missTxt(ASM[k].n))); });
     return {a, b, tA, c2, bad:all.filter(t => /your your|\?|your what|your is|\b[a-z]+ [ab]$|\(%\)$/i.test(t) && !/\(%\)/.test(t)), n:all.length}; });
-  chk('Blank personal figure in a tool is tagged "Not added yet"; a blank §14 choice "Not chosen yet"', tg.a === 'Not added yet' && tg.tA === 'Not added yet' && tg.c2 === 'Not chosen yet', tg);
+  chk('[s27] Blank personal figure in a tool is tagged "Not added yet"; a LifeMap standard starts filled and tagged "Set by LifeMap"', tg.a === 'Not added yet' && tg.tA === 'Not added yet' && tg.c2 === 'Set by LifeMap', tg);
   chk('C06 gate reads "Add the first term (your mortgage years left) to see this" (not "term a")', /Add the first term \(your mortgage years left\) to see this/.test(tg.b) && !/term a /i.test(tg.b), tg.b);
   chk('All ' + tg.n + ' calculator gate strings read naturally (no "your your", "?", "term a")', !tg.bad.length, tg.bad);
   // r10: worked-out reason: blank / a typed €0 / too small to cover the interest
@@ -232,7 +236,7 @@ const { chromium } = require('playwright');
   chk('[§18] Credit card: only the Central Bank 23% cap note, no suggestion', /New credit cards can't charge more than 23% APR \(Central Bank of Ireland\); some older cards are higher/.test(cd.txt) && !cd.chip, cd.txt.slice(0, 200));
   const rb = await ev(() => { S = fresh(); S.shell = true; S.tab = 'explore'; S.asm = {houseGrow:0.02, rentRise:0.03, upkeep:0.01}; S.calcV.rentbuy = {rate:3.5}; S.calcT = {rentbuy:{rate:true}}; S.xs = [{v:'CALC', p:'rentbuy'}]; lastId = null; render();
     const r = C('rentbuy').run(calcVals(C('rentbuy'))); return {gate:!!document.getElementById('cgate'), fees:asmV('buyFees'), dep:asmV('depEarn'), opp:r.num.Opportunity_Cost, tags:[...document.querySelectorAll('.asmg .tag')].map(t => t.textContent)}; });
-  chk('[§18] Buying fees and deposit earnings are optional: left blank they count €0 / 0% and the result still shows ("Optional" tag)', !rb.gate && rb.fees === 0 && rb.dep === 0 && rb.opp === 0 && rb.tags.filter(t => t === 'Optional').length === 2, rb);
+  chk('[§18/§27.6] Buying fees are optional (blank = €0, "Optional" tag); an unchosen deposit-earn rate uses the suggested 1.29% after DIRT ("Assumed: add yours") and the result still shows', !rb.gate && rb.fees === 0 && Math.abs(rb.dep - 0.0129) < 1e-9 && rb.opp > 0 && rb.tags.filter(t => t === 'Optional').length === 1 && rb.tags.includes('Assumed: add yours'), rb);
   const pe = await ev(() => { S = fresh(); S.tab = 'me'; S.me = 'asm'; S.shell = true; S.asmOpen = 'length'; lastId = null; render(); return document.querySelector('[data-k="planEnd"]').textContent; });
   chk('[§18] Plan-until age: CSO averages only (Irish Life Tables No. 17), no "plan to 90–95"', /about 83 for men and 86 for women \(CSO, Irish Life Tables No\. 17, 2015–2017\)/.test(pe) && !/90/.test(pe), pe.slice(0, 200));
   res.forEach(r => console.log(r.join(' | ')));

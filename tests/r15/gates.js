@@ -1,0 +1,12 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch();const p=await b.newPage();await p.route('https://fonts.*/**',r=>r.abort());
+await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html');await p.waitForTimeout(300);
+const out=await p.evaluate(()=>{const o={};CALCS.forEach(c=>{S=fresh();S.shell=true;S.app=false;S.tab='explore';
+ const v=calcVals(c);const items=[];
+ c.inputs.forEach(i=>{ if(v[i.k]==null){const s=calcA(c.id,i.k);const txt=s?((GATE_N[c.id]||{})[i.k]&&s.ty===2&&!s.a?(GATE_N[c.id]||{})[i.k]:s.n):'add:'+gateName(c.id,i);items.push({kind:'input',key:i.k,asm:s?(s.a||s.n):null,text:missTxt(txt)});}});
+ (CALC_X[c.id]||[]).forEach(k=>{ if(!asmMine(k)&&!ASM[k].opt) items.push({kind:'asm',key:k,text:missTxt(ASM[k].n)});});
+ o[c.id]={items,all:c.inputs.map(i=>({k:i.k,l:i.l,blank:v[i.k]==null})),x:CALC_X[c.id]||[]};});
+ return o;});
+fs.writeFileSync('gates_app.json',JSON.stringify(out,null,1));
+for(const [id,v] of Object.entries(out)) console.log(id, v.items.map(x=>x.key+':'+x.text).join(' | '));
+await b.close();})();

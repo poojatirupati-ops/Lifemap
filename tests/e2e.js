@@ -52,7 +52,7 @@ const W = +process.argv[2] || 390;
   await click('[data-a="cat"][data-p="retire"]'); log('at', await cur()); await click('[data-a="calc"][data-p="retirement"]'); log('at', await cur(), 'age prefilled', await p.inputValue('#c-age'));
   // FP round 8 (§14): the tool's choices start blank. Make them as a customer would: the standards, then retirement age and State Pension typed.
   log('calc gate before choices', await p.locator('#cgate').innerText().catch(() => 'none'));
-  await click('[data-a="useall"]'); log('growth filled by use all', await p.locator('#co-g').inputValue());
+  log('growth starts from the LifeMap standard [s27]', await p.locator('#co-g').inputValue());
   for (const [k, v] of [['ra', '66'], ['o', '15564']]) { await p.fill('#co-' + k, v); await p.press('#co-' + k, 'Enter'); await p.waitForTimeout(80); }
   log('calc gate after choices', await p.locator('#cgate').count());
   const o0 = await p.locator('#cout').innerText(); await p.evaluate(() => { const r = document.querySelector('#c-m'); r.value = 900; r.dispatchEvent(new Event('input', {bubbles:true})); }); log('calc live update', o0 !== await p.locator('#cout').innerText(), await p.locator('#co-m').inputValue()); await shot('calc');
@@ -115,7 +115,6 @@ const W = +process.argv[2] || 390;
   log('step-7 gate: results disabled before inflation choice', await p.locator('#seeres').isDisabled()); await click('#p4-infl [data-a="infl"][data-p="0.039"]'); log('step-7 still to choose after inflation', JSON.stringify(await p.evaluate(() => planMissing().map(x => x.k))), 'locked', await p.locator('#seeres').isDisabled());
   // FP round 8 (§14): retirement age and plan-until age typed; the standard for the rest; type-2 values typed
   for (const [sel, v] of [['[data-nb="ret|a"]', '65'], ['[data-nb="asm|planEnd"]', String(await p.evaluate(() => ASM.planEnd.fb()))], ['[data-nb="pret|a"]', '66']]) { if (!(await p.locator(sel).count())) continue; await p.fill(sel, v); await p.press(sel, 'Enter'); await p.waitForTimeout(80); }
-  if (await p.locator('#p4-asm [data-a="useall"]').count()) await click('#p4-asm [data-a="useall"]');
   for (const k of await p.evaluate(() => planMissing().filter(x => x.ty === 2).map(x => x.k))) { const sel = '[data-nb="asm|' + k + '"]', v = await p.evaluate(k => String(+(ASM[k].t === 'pct' ? ASM[k].fb() * 100 : ASM[k].fb()).toFixed(2)), k); await p.fill(sel, v); await p.press(sel, 'Enter'); await p.waitForTimeout(80); }
   log('after choice enabled', !(await p.locator('#seeres').isDisabled()), 'S.infl', await p.evaluate(() => S.infl)); await click('#seeres'); await p.waitForTimeout(1800); log('at', await cur());
   await shot('results-top'); log('plan order', await p.evaluate(() => ['.tl-board','#tl-strip','#r-res','#r-goals','#r-found','#r-wi','#r-glancec'].map(q => { const e = document.querySelector(q); return e ? Math.round(e.getBoundingClientRect().top + document.getElementById('main').scrollTop) : 'x'; }).join(' < ')));

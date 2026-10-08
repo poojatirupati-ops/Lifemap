@@ -1,0 +1,13 @@
+const {chromium}=require('/opt/node22/lib/node_modules/playwright');
+(async()=>{const b=await chromium.launch();
+const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('file:///home/user/lifegoals-prototype/LifeGoals-Customer-Journey-Prototype.html');await p.waitForTimeout(250);
+await p.evaluate(()=>{loadSample();S.app=false;S.shell=true;S.pb=true;S.tab='plan';S.scr='P4';S.retireSet=false;S.infl=null;S.asm={};S.fin.pIncome=0;S.pRetSet=false;S.checked=false;render();});
+await p.waitForTimeout(300);
+await p.screenshot({path:'shots/step7-top.png'});
+await p.evaluate(()=>{document.querySelector('#p4-rest').open=true; document.querySelector('#p4-rest').scrollIntoView();});
+await p.waitForTimeout(200); await p.screenshot({path:'shots/step7-rest.png'});
+await p.evaluate(()=>{loadSample(); S.infl=null; S.retireSet=false; delete S.asm.planEnd; S.tab='home'; render();});
+await p.waitForTimeout(300); await p.screenshot({path:'shots/home-gate.png'});
+console.log(JSON.stringify(errs));
+await b.close();})();

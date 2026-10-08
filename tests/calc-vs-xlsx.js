@@ -97,20 +97,29 @@ Object.assign(RULEMAP, {"Set_infl": "SV(\"infl\")", "Set_wage": "SV(\"wage\")", 
     for (let r = 0; r < 3; r++) L.push(Object.fromEntries(d.ins.map(i => { const n = Math.round((i.max - i.min) / i.step); return [i.k, +(i.min + Math.floor(rnd() * (n + 1)) * i.step).toFixed(4)]; })));
     L.push(EDGE[d.id]); cases[d.id] = L; });
   // validity: Rent vs buy deposit 10%–100% of price; Term B ≥ 5; Deposit monthly ≥ 50 (already); Retirement age above age
-  cases.rentbuy.forEach(c => { c.dep = Math.max(c.dep, Math.ceil(c.price * 0.1)); c.dep = Math.min(c.dep, c.price); });
-  cases.retirement.forEach(c => { if (c.ra <= c.age) c.ra = Math.min(75, c.age + 5); });
+  // audit fix round (8 Oct 2026): the random cases keep valid values, and the extra cases below test the audited edges (deposit outside 10%–100%, retirement age at or before the age, bridge years, lump sum above €500k, Illness Benefit cap, withdrawal above the pot)
+  cases.rentbuy.slice(0, 4).forEach(c => { c.dep = Math.max(c.dep, Math.ceil(c.price * 0.1)); c.dep = Math.min(c.dep, c.price); });
+  cases.retirement.slice(0, 4).forEach(c => { if (c.ra <= c.age) c.ra = Math.min(75, c.age + 5); });
+  const base = id => Object.fromEntries(defs.find(d => d.id === id).ins.map(i => [i.k, i.v]));
+  const EXTRA = {
+    retirement:[{age:40, ra:60, d:20000, o:10000}, {age:40, ra:60, d:20000, o:20000}, {age:40, ra:60, d:20000, o:30000}, {age:40, ra:60, d:20000, o:45000}, {age:70, ra:50}, {age:40, ra:40}, {age:30, ra:65, pot:1500000, m:5000, d:150000, g:7}, {age:55, ra:65, pot:1500000, m:5000, d:60000, g:7, less:5000}].map(o => Object.assign(base('retirement'), o, {_infl:0.02})),
+    incomegap:[{e:200, sp:3, s:8000, inc:60000, ib:254}, {e:2500, sp:3, s:200000, inc:60000, ib:254}, {e:2500, sp:12, s:1000, inc:60000, ib:254}].map(o => Object.assign(base('incomegap'), o)),
+    lastmoney:[{pot:10000, w:24000, g:3, age:66}, {pot:10000, w:24000, g:3, age:55}].map(o => Object.assign(base('lastmoney'), o, {_infl:0.02})),
+    rentbuy:[{dep:0, price:350000}, {dep:350000, price:350000}, {dep:5000, price:200000}].map(o => Object.assign(base('rentbuy'), o))};
+  Object.entries(EXTRA).forEach(([id, L]) => { cases[id] = cases[id].concat(L); });
+  const NR = Math.max(...Object.values(cases).map(a => a.length)), cs = (id, k) => cases[id][Math.min(k, cases[id].length - 1)];
   // per-case assumption values (case 1 = suggested, 2–4 random, 5 = the other end)
   const asmSug = await p.evaluate(keys => { S = fresh(); applyAssume(); return Object.fromEntries(keys.map(k => [k, asmV(k)])); }, Object.keys(ASMR));   // FP round 8: the standard (type 3) or the mid-range figure (type 2)
   const FIXED = await p.evaluate(() => ({'C01 Borrowing':{Home_Goal_Years:HOME_GOAL_YEARS}, 'C02 Mortgage repayment':{Home_Goal_Years:HOME_GOAL_YEARS}, 'C07 Rent vs buy':{Home_Goal_Years:HOME_GOAL_YEARS}, 'C11 Emergency fund':{Safety_Goal_Years:SAFETY_GOAL_YEARS}, 'C23 Mortgage protection':{Actual_Repayment:0}}));
   const ASMC = [0, 1, 2, 3, 4].map(k => Object.fromEntries(Object.entries(ASMR).map(([a, r]) => { if (k === 0) return [a, asmSug[a]]; if (typeof r[0] === 'string') return [a, r[k % 2]]; if (k === 4) return [a, r[1]]; const n = Math.round((r[1] - r[0]) / r[2]); return [a, +(r[0] + Math.floor(rnd() * (n + 1)) * r[2]).toFixed(6)]; })));
   // 2. workbook rounds
-  const spec = {rounds:[0, 1, 2, 3, 4].map(k => { const R = {}; MAP.forEach(([id, sheet, ins, outs, infl, adj]) => { const c = cases[id][k], o = {};
+  const spec = {rounds:Array.from({length:NR}, (_, k) => { const R = {}; MAP.forEach(([id, sheet, ins, outs, infl, adj]) => { const c = cs(id, k), o = {};
       ins.forEach(([pk, wn, kind]) => { const v = c[pk] == null ? 0 : c[pk]; o[wn] = kind === P ? +(v / 100).toFixed(8) : kind === YN ? (v ? 'Yes' : 'No') : v; });
-      if (infl) o.Inflation_Choice = k < 4 ? INFL[k] : (c._infl === undefined ? null : c._infl);
+      if (infl) o.Inflation_Choice = k < 4 ? INFL[k] : (c._infl === undefined ? (k < 5 ? null : 0.02) : c._infl);
       if (adj) o.Adjust_For_Inflation = k < 4 ? (k % 2 ? 'Yes' : 'No') : (c._adj || 'No');
-      (MAP.find(x => x[0] === id)[6] || []).forEach(([ak, wn, kind]) => { const v = ASMC[k][ak]; o[wn] = kind === 'T' ? (v === 'end' ? 'End of year' : 'Start of year') : v; });
+      (MAP.find(x => x[0] === id)[6] || []).forEach(([ak, wn, kind]) => { const v = ASMC[Math.min(k, 4)][ak]; o[wn] = kind === 'T' ? (v === 'end' ? 'End of year' : 'Start of year') : v; });
       if (c._stmt) Object.assign(o, c._stmt.wb); Object.assign(o, FIXED[sheet] || {});
-      R[sheet] = o; }); R['Tax engine'] = TEC[k]; R.README = {Fill_Example:'No'}; return R; }),
+      R[sheet] = o; }); R['Tax engine'] = TEC[Math.min(k, TEC.length - 1)]; R.README = {Fill_Example:'No'}; return R; }),
     read:Object.assign(Object.fromEntries(MAP.map(([id, sheet, ins, outs]) => [sheet, outs])), {'Tax engine':['TE_Income_Tax','TE_USC','TE_PRSI','TE_Take_Home','TE_Marginal_Rate']}),
     assumptions:Object.keys(RULEMAP)};
   fs.writeFileSync(DIR + '/xlsx_spec.json', JSON.stringify(spec));
@@ -119,7 +128,7 @@ Object.assign(RULEMAP, {"Set_infl": "SV(\"infl\")", "Set_wage": "SV(\"wage\")", 
   const A = X.assumptions;
   // 3. prototype: same inputs, with the workbook's assumption values for the judgement settings the formulas read
   const PR = await p.evaluate(({MAP, cases, INFL, ASMC}) => { const out = {};
-    MAP.forEach(([id, sheet, ins, outs, infl, adj]) => { out[id] = cases[id].map((c, k) => { S = fresh(); const asm = ASMC[k]; S.asm = Object.assign({}, asm); S.infl = !infl ? 0.02 : k < 4 ? INFL[k] : (c._infl === undefined ? null : c._infl); S.adjInfl = {}; if (adj) S.adjInfl[id] = (k < 4 ? (k % 2 ? 'Yes' : 'No') : (c._adj || 'No')) === 'Yes';
+    MAP.forEach(([id, sheet, ins, outs, infl, adj]) => { out[id] = cases[id].map((c, k) => { S = fresh(); const asm = ASMC[Math.min(k, 4)]; S.asm = Object.assign({}, asm); S.infl = !infl ? 0.02 : k < 4 ? INFL[k] : (c._infl === undefined ? (k < 5 ? null : 0.02) : c._infl); S.adjInfl = {}; if (adj) S.adjInfl[id] = (k < 4 ? (k % 2 ? 'Yes' : 'No') : (c._adj || 'No')) === 'Yes';
         if (c._stmt && c._stmt.fin) Object.entries(c._stmt.fin).forEach(([kk, vv]) => { S.fin[kk] = vv; S.src[kk] = 'doc'; });
         if (c._stmt && c._stmt.proj) S.pdocs = {retire:{v:c._stmt.proj}};
         const v = Object.fromEntries(ins.map(([pk]) => [pk, c[pk] == null ? 0 : c[pk]]));

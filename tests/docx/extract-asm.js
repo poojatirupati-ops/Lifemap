@@ -7,6 +7,6 @@ module.exports = () => { const txt = e => e ? e.textContent.replace(/\s+/g, ' ')
       const us = [...f.querySelectorAll('.nbu')].map(u => ({ t: u.textContent, before: box && !!(u.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING) }));
       return { k: f.dataset.k, label: txt(lt), tag: txt(lab.querySelector('.tag')), chips: [...f.querySelectorAll('[data-a="asmset"]')].map(c => ({ t: txt(c), pressed: c.getAttribute('aria-pressed') })),
         box: box ? { val: box.value, pre: (us.find(u => u.before) || {}).t || '', suf: (us.find(u => !u.before) || {}).t || '', inputmode: box.getAttribute('inputmode'), labelledby: box.getAttribute('aria-labelledby') } : null,
-        std: txt(f.querySelector('[data-a="asmstd"], [data-a="asmsug"]')), guide: txt(f.querySelector(':scope > span.small')) }; }) }));
+        std: txt(f.querySelector('[data-a="asmback"], [data-a="asmsug"]')), guide: txt(f.querySelector(':scope > span.small')) }; }) }));
   return { top: top ? { b: txt(top.querySelector('b')), p: txt(top.querySelector('p.small')), btn: txt(top.querySelector('[data-a="useall"]')), note: txt(top.querySelector('.btn + p.small')) } : null, groups,
     foot: [...main.querySelectorAll(':scope > p.small, :scope > .btn')].map(txt) }; };
