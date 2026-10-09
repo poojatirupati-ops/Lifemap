@@ -2,11 +2,11 @@
 
 A frozen copy of the final, fully checked version of the web app. **Do not edit anything in this folder.**
 
-- Git tag: `v2.7-final` (restores everything: app, media, the complete Excel workbook, the Word spec, docs, tools and tests).
-- This folder holds the app itself (single HTML file), the phone-install files and the build script. The photos and videos are in `media/` at the tag.
+- Git branch: `archive-v2.7-final` (a frozen, never-edited copy of the whole repository at this version: app, media, the complete Excel workbook, the Word spec, docs, tools and tests). Commit `90a5fd3`.
+- This folder holds the app itself (single HTML file), the phone-install files and the build script. The photos and videos are in `media/` on the archive branch.
 
 ## If an update goes wrong, go back to this version
-1. Whole repository: `git checkout v2.7-final` (look around) or `git revert`/`git reset` to it on a branch.
+1. Whole repository: `git checkout archive-v2.7-final` (look around) or `git revert`/`git reset` to it on a branch.
 2. Just the app: copy `LifeGoals-Customer-Journey-Prototype.html` from this folder over the one in the repository root, then push; the web app republishes by itself.
 3. To open it directly: build with `python3 build-site.py` from a folder that has `media/`, `icons/`, `manifest.webmanifest` and `sw.js`, or open the HTML file in a browser.
 
