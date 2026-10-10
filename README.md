@@ -43,5 +43,5 @@ See `docs/pre-release-verify.md`. Rates and tax figures must be checked on offic
 - The `tests/` scripts were written for the build environment and use absolute paths; adjust the paths at the top of each script to run them elsewhere.
 - Both videos are H.264 MP4 and have no captions yet.
 
-## Archive (rollback point)
-`archive/v2.7-2026-10-08/` and the branch `archive-v2.7-final` hold a frozen copy of the final v2.7 version (8 Oct 2026). Never edit them. See `archive/v2.7-2026-10-08/ARCHIVE-README.md` to go back to it if an update goes wrong.
+## Archive (rollback points)
+`archive/v2.8-2026-10-10/` and the branch `archive-v2.8-final` hold a frozen copy of the final v2.8.2 version (10 Oct 2026). Never edit them. See `archive/v2.8-2026-10-10/ARCHIVE-README.md`. Older: `archive/v2.7-2026-10-08/` and the branch `archive-v2.7-final` hold a frozen copy of the final v2.7 version (8 Oct 2026). Never edit them. See `archive/v2.7-2026-10-08/ARCHIVE-README.md` to go back to it if an update goes wrong.
