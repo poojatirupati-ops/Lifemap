@@ -12,7 +12,7 @@ SRC = 'LifeGoals-Customer-Journey-Prototype.html'
 OUT = '_site'
 
 VIEWPORT = '<meta name="viewport" content="width=device-width,initial-scale=1">'
-HEAD_ADD = ('\n<meta name="theme-color" content="#0B2545"><link rel="manifest" href="manifest.webmanifest">'
+HEAD_ADD = ('\n<meta name="theme-color" content="#182A54"><link rel="manifest" href="manifest.webmanifest">'
             '<link rel="icon" type="image/png" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">'
             '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">'
             '<meta name="apple-mobile-web-app-title" content="LifeMap"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">')
