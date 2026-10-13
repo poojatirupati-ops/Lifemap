@@ -2173,6 +2173,9 @@ body.desk #main > .card{max-width:820px}
 .mp-cam input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .mp-cam:focus-within{outline:3px solid #08D9B8;outline-offset:2px}
 .topbar.hdr .avb span.ph,.avb span.ph{background:var(--ph) center/cover no-repeat!important}
+
+/* a11y: text over photos always sits on a dark scrim (white on >=60% dark never drops below 5:1) */
+.xh-tx{isolation:isolate}.xh-tx::before{content:"";position:absolute;left:-18px;right:-18px;top:-70px;bottom:-92px;background:linear-gradient(180deg,rgba(8,24,40,0),rgba(8,24,40,.66) 40%,rgba(8,24,40,.78));z-index:-1;pointer-events:none}.xh-tx small{opacity:1;color:#fff}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -6359,4 +6362,7 @@ addEventListener('resize', () => { fit(); const l = phoneLandscape(); if (wasLan
 S = fresh(); side(); document.body.classList.toggle('desk', isDesk()); if (deskPref){ document.getElementById('vphone').setAttribute('aria-pressed','false'); document.getElementById('vdesk').setAttribute('aria-pressed','true'); } fit(); render();
 new MutationObserver(() => setBg(document.getElementById('report').classList.contains('on'))).observe(document.getElementById('report'), {attributes:true, attributeFilter:['class']});   // the page behind the report is inert while it is open, however it was opened or closed
 ['screen', 'report'].forEach(id => emoObs.observe(document.getElementById(id), {childList:true, subtree:true, characterData:false}));
+
+/* a11y: sideways-scrolling strips can be reached and scrolled with the keyboard */
+(function(){const fix=()=>document.querySelectorAll('.hstrip:not([tabindex])').forEach(e=>{e.tabIndex=0;e.setAttribute('role','group');if(!e.getAttribute('aria-label'))e.setAttribute('aria-label','Scrollable list. Use the arrow keys to see more.')});new MutationObserver(fix).observe(document.body,{childList:true,subtree:true});fix()})();
 </script></body></html>
