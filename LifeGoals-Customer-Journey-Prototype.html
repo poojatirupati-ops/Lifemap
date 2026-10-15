@@ -2193,6 +2193,88 @@ body.desk #main > .card{max-width:820px}
 .qcenter .opt.row1:has(> .otag) > .em{grid-row:1 / span 2}
 .qcenter .opt.row1:has(> .otag) > .tx{align-self:end}
 .qcenter .opt.row1:has(> .otag) > .otag{align-self:start;justify-self:start}
+
+/* ---- Mortgages topic page (Pooja, 15 Oct 2026): situation buttons, expanding calculator cards, story videos, floating expert button. Reference: docs/design/mortgage-page-reference.html ---- */
+.mp{padding-bottom:96px}
+.mp-sit{display:flex;gap:4px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;margin:4px 0 10px}
+.mp-sit button{flex:1;min-height:44px;border:0;border-radius:999px;background:transparent;font-weight:700;font-size:13.5px;color:var(--ink);cursor:pointer;padding:0 4px}
+.mp-sit button[aria-pressed=true]{background:var(--ink);color:#fff}
+.mp-jump{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -2px 12px;padding:2px}
+.mp-jump::-webkit-scrollbar{display:none}
+.mp-jump button{flex:1 0 auto;min-height:44px;padding:0 10px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13px;color:var(--ink);cursor:pointer}
+.mp-up{display:flex;gap:12px;align-items:center;border-radius:20px;padding:14px;background:var(--sea-l);border:1.5px dashed var(--sea-d);margin-bottom:6px}
+.mp-up .ic{flex:0 0 44px;height:44px;border-radius:14px;background:var(--sea-d);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px}
+.mp-up b{display:block;font-size:15px;line-height:1.3}.mp-up small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.mp-up .row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mp-up .btn{width:auto;min-height:44px;font-size:14px;padding:0 16px}
+.mp-sec{display:flex;justify-content:space-between;align-items:baseline;margin:20px 2px 8px;scroll-margin-top:8px}
+.mp-sec h3{margin:0;font-size:18px}.mp-sec span{font-size:12.5px;color:var(--muted);font-weight:700}
+.mp-cal{display:flex;flex-direction:column;gap:6px}
+.mp-c{position:relative;border-radius:16px;overflow:hidden;color:#fff;background:var(--c);flex:0 0 auto;filter:grayscale(1);transition:min-height .4s ease,filter .4s ease;min-height:48px}
+.mp-c.on{filter:none;min-height:170px}
+.mp-c .ph{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.35;mix-blend-mode:luminosity}
+.mp-c.on .ph{opacity:.5}
+.mp-c .sh{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,37,69,.15),rgba(11,37,69,.78))}
+.mp-ch{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 14px;border:0;background:transparent;color:#fff;font-weight:800;font-size:14px;text-align:left;cursor:pointer}
+.mp-c.on .mp-ch{cursor:default;min-height:44px}
+.mp-ch .e{font-size:18px}.mp-ch .n{margin-left:auto;font-size:11.5px;font-weight:700;opacity:.85}
+.mp-cb{position:relative;display:none;padding:0 14px 14px;flex-direction:column;justify-content:flex-end;min-height:120px}
+.mp-c.on .mp-cb{display:flex}
+.mp-cb p{margin:0 0 3px;font-size:12px;opacity:.9}.mp-cb strong{font-family:var(--fh);font-size:20px;line-height:1.2;margin-bottom:10px}
+.mp-cb .btn{width:auto;align-self:flex-start;min-height:44px;font-size:14px;padding:0 18px}
+.mp-bub{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px}
+.mp-bub::-webkit-scrollbar{display:none}
+.mp-bu{flex:0 0 74px;text-align:center;background:none;border:0;padding:0;cursor:pointer;color:var(--ink)}
+.mp-rg{width:64px;height:64px;border-radius:50%;position:relative;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;border:3px solid var(--sea);padding:3px}
+.mp-bu.cur .mp-rg{border-color:var(--ink)}.mp-bu.done .mp-rg{border-color:var(--line)}
+.mp-rg i{display:flex;width:100%;height:100%;border-radius:50%;align-items:center;justify-content:center;font-style:normal;font-size:22px;color:#fff;background:var(--c)}
+.mp-rg b{position:absolute;right:-3px;bottom:-3px;width:22px;height:22px;border-radius:50%;background:#fff;border:1.5px solid var(--sea-d);color:var(--sea-d);font-size:13px;display:none;align-items:center;justify-content:center}
+.mp-bu.done .mp-rg b{display:flex}
+.mp-bu small{display:block;font-size:11.5px;line-height:1.25;font-weight:700}
+.mp-st{position:relative;border-radius:20px;min-height:200px;overflow:hidden;color:#fff;background:var(--c);display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+.mp-st.real{padding:0;background:#000;min-height:0;display:block}
+.mp-st.real video{display:block;width:100%;max-height:420px;background:#000}
+.mp-st .art{position:absolute;right:-6px;top:-10px;font-size:130px;opacity:.16}
+.mp-st .tp{font-size:11.5px;opacity:.9;margin-bottom:4px}
+.mp-st h4{margin:0;font-family:var(--fh);font-size:18px;line-height:1.25}
+.mp-st .soon{display:inline-block;margin-top:8px;align-self:flex-start;padding:4px 12px;border-radius:999px;background:rgba(255,255,255,.2);font-weight:800;font-size:12.5px}
+.mp-cap{margin:8px 2px 0;font-size:13.5px;min-height:20px;color:var(--ink)}
+.mp-chap{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+.mp-chap span{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--muted)}
+.mp-chap span.on{background:var(--sky-l);border-color:var(--sky);color:var(--ink)}
+.mp-next{margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-radius:16px;background:var(--sea-l);color:var(--ink);padding:10px 12px;font-weight:700;font-size:13.5px}
+.mp-next[hidden]{display:none}
+.mp-next .btn{width:auto;min-height:44px;font-size:13.5px;padding:0 16px;flex:0 0 auto}
+.mp-rd{display:flex;flex-direction:column;gap:6px}
+.mp-rd details{border-radius:16px;background:#fff;border:1px solid var(--line);overflow:hidden}
+.mp-rd summary{display:flex;align-items:center;gap:10px;padding:0 14px;font-weight:800;font-size:14px;cursor:pointer;list-style:none}
+.mp-rd summary::-webkit-details-marker{display:none}
+.mp-rd summary::after{content:'+';margin-left:auto;font-size:20px;color:var(--sea-d)}
+.mp-rd details[open] summary::after{content:'–'}
+.mp-rd .bd{padding:0 14px 14px;font-size:13.5px;color:var(--muted)}
+.mp-seat{min-height:44px;padding:0 14px;border-radius:999px;border:1.5px solid var(--sea-d);background:#fff;color:var(--sea-d);font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+.mp-seat[aria-pressed=true]{background:var(--sea-d);color:#fff}
+.lv2 .mp-seat{grid-area:b;align-self:center}
+.xfab{position:absolute;left:12px;right:12px;bottom:92px;z-index:14;width:auto;height:52px;min-height:52px;border-radius:999px;overflow:hidden;white-space:nowrap;padding:0;gap:8px;transition:left .35s ease,width .35s ease;font-size:15px}
+.xfab .tx{transition:opacity .2s,max-width .3s;max-width:260px}
+.xfab.mini{left:auto;right:16px;width:52px}
+.xfab.mini .tx{opacity:0;max-width:0}
+.xfab.hid{display:none}
+.xsh .xo{display:flex;gap:12px;align-items:center;width:100%;min-height:56px;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 12px;margin-top:8px;text-align:left;cursor:pointer;font-size:15px}
+.xsh .xo:hover{border-color:var(--ink)}.xsh .xo .e{font-size:22px}.xsh .xo small{display:block;color:var(--muted);font-size:12.5px;font-weight:600}
+.xsh .xwho{display:flex;align-items:center;gap:10px;margin-bottom:6px}.xsh .xwho .av{width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.xsh .xtag{display:inline-block;background:var(--sea-l);color:var(--sea-d);font-weight:800;font-size:11.5px;padding:2px 10px;border-radius:999px}
+body.desk .mp-cal{flex-direction:row;height:240px;gap:8px}
+body.desk .mp-c{flex:1 1 0;min-height:0;min-width:0;transition:flex-grow .4s ease,filter .4s ease}
+body.desk .mp-c.on{flex-grow:5;min-height:0}
+body.desk .mp-ch{flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:12px 10px;min-height:0;font-size:12.5px;height:100%}
+body.desk .mp-c:not(.on) .mp-ch .n{display:none}
+body.desk .mp-c:not(.on) .mp-ch .t{writing-mode:vertical-rl;transform:rotate(180deg);align-self:center;margin-top:8px;font-size:13px}
+body.desk .mp-c.on .mp-ch{height:auto}
+body.desk .mp-cb{position:absolute;left:0;right:0;bottom:0;min-height:0}
+body.desk .xfab{left:auto;right:150px;bottom:28px;width:300px}
+body.desk .xfab.mini{width:52px;right:150px}
+@media (prefers-reduced-motion:reduce){.mp-c,.xfab,.xfab .tx{transition:none!important}}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5631,7 +5713,77 @@ function pstConfirm(){ const u = S.pst, T = DOCT[u.cat], all = T.f.concat(T.extr
   toast(S.app ? 'Added to your plan too (' + where + ')' : 'Saved. Your plan will use it when you make it'); }
 const aExp = k => { const x = EXPERT_FOR[k].toLowerCase(); return (/^[aeiou]/.test(x) ? 'an ' : 'a ') + x; };
 const TOPIC_TOOLS = {Mortgages:['repayment','borrow','overpay','deposit'], Pensions:['retirement','contrib','lastmoney'], Protection:['lifecover','incomegap','mortgageprotect'], Investing:['regularinvest','lumpsum','realreturn','fees'], Savings:['goalplanner','emergency','compound'], 'Everyday money':['budget','surplus','debtpay']};
-V.XTOPIC = p => { const t = TOPICS.find(x => x[1] === p), tools = (TOPIC_TOOLS[p] || []).map(C).filter(Boolean), live = LIVE.filter(x => x[2] === t[3]);
+
+/* ================= MORTGAGES TOPIC PAGE (Pooja, 15 Oct 2026) ================= */
+const MP_SIT = [['Buying','🏡'], ['Switching','🔄'], ['Borrowing more','➕']];
+const MP_CAL = {borrow:['Borrow','house-for-sale','borrow','🏡','#0A7068'], repay:['Repayment','home-keys','repayment','🧾','#0B2545'], deposit:['Deposit','savings-jar','deposit','🐷','#5E548E'], overpay:['Overpay','money-plant','overpay','⏩','#13315C'], rate:['Rate change','invest-charts','ratechange','📊','#A8432B'], term:['Term','couple-planning','term','⚖️','#0A7068'], rent:['Rent vs buy','family-couch','rentbuy','🔄','#5E548E'], topup:['Top-up','car-key','repayment','🧾','#0B2545']};
+const MP_TOPUPNAME = 'Repayment with a top-up';
+const MP_DATA = [
+ {c:['borrow','deposit','repay','rent','term','rate','overpay'],
+  v:[{s:'Deposit to keys', t:'Your first home: deposit to keys', d:'0:53', bg:'#0A7068', ic:'🔑', cl:'deposit', ch:['Deposit','Costs','Schemes'], vid:'v1'},
+     {s:'How much can I get?', t:'How much mortgage can I get?', d:'1:10', bg:'#0B2545', ic:'🏡', cl:'borrow', ch:['The limit','Exceptions','Your budget']},
+     {s:'Help to Buy 2027', t:'Help to Buy: what changed for 2027', d:'1:20', bg:'#5E548E', ic:'🎁', cl:'deposit', ch:['The change','Who gains','How to claim']},
+     {s:'Fixed or variable?', t:'Fixed or variable: which suits you?', d:'1:05', bg:'#13315C', ic:'🔒', cl:'ratechange', ch:['Fixed','Variable','Choosing']}],
+  r:[['Articles','Help to Buy and First Home Scheme: 2027','📄'], ['FAQs','Can I get help with my deposit?','❓'], ['Links','Help to Buy on Revenue','🔗']],
+  l:[['Thu 7pm','First-time buyers: your questions answered'], ['Tue 1pm','Help to Buy and First Home Scheme in 20 minutes']]},
+ {c:['rate','repay','overpay','term','borrow','deposit','rent'],
+  v:[{s:'Should I switch?', t:'Should I switch my mortgage?', d:'1:30', bg:'#A8432B', ic:'🔄', cl:'ratechange', ch:['Why switch','Costs','Steps']},
+     {s:'Fixed rate ending', t:'Your fixed rate is ending: what now?', d:'1:00', bg:'#0B2545', ic:'📅', cl:'ratechange', ch:['Timing','Your lender','Compare']},
+     {s:'Tax credit', t:'Are you owed the mortgage interest tax credit?', d:'0:55', bg:'#0A7068', ic:'🧾', cl:'repayment', ch:['Who qualifies','How much','How to claim']},
+     {s:'Overpaying', t:'Is it worth overpaying my mortgage?', d:'1:15', bg:'#13315C', ic:'⏩', cl:'overpay', ch:['How it works','Limits','Or pension?']}],
+  r:[['Articles','Are you owed the mortgage interest tax credit?','📄'], ['FAQs','My fixed rate is ending: should I switch?','❓'], ['Links','CCPC mortgage comparison','🔗']],
+  l:[['Wed 1pm','Switching in 2026: is now the time?'], ['Mon 7pm','Fixed rate ending? Ask us anything']]},
+ {c:['topup','term','overpay','rate','borrow','deposit','rent'],
+  v:[{s:'Top-up costs', t:'What a top-up really costs', d:'1:10', bg:'#0B2545', ic:'🔨', cl:'repayment', ch:['How it works','Monthly','Total cost']},
+     {s:'Top-up or loan?', t:'Top-up, loan or savings?', d:'1:05', bg:'#A8432B', ic:'⚖️', cl:'term', ch:['Rates','Terms','Choosing']},
+     {s:'Helping your child', t:'Helping your child buy a home', d:'1:20', bg:'#5E548E', ic:'🤝', cl:'repayment', ch:['Gifts','Lenders','Your plan']}],
+  r:[['Articles','Helping your child buy a home','📄'], ['FAQs','Can I borrow against my home?','❓'], ['Links','CCPC: mortgage top-up','🔗']],
+  l:[['Sat 11am','Extensions and top-ups: what to know']]}];
+const MPQ = () => { S.mps = S.mps || 0; S.mpv = S.mpv || 0; S.mpd = S.mpd || {}; S.mpseat = S.mpseat || {}; return MP_DATA[S.mps]; };
+const mpPhoto = n => 'media/' + n + '.jpg';
+function expertFab(type){ return '<button class="btn xfab" id="xfab" data-a="xfab" data-p="' + type + '" aria-haspopup="dialog"><span aria-hidden="true">💬</span><span class="tx">Talk to ' + aExp(type) + '</span></button>'; }
+function expertSheet(type){ const nm = EXPERT_FOR[type];
+  return '<div class="xsh"><div class="xwho"><span class="av" aria-hidden="true">' + (type === 'mortgage' ? 'MS' : nm[0]) + '</span><div><h2 class="t" style="margin:0;font-size:20px">' + (type === 'mortgage' ? 'MortgageStop broker' : esc(nm)) + '</h2><div class="small">QFA · Regulated by the Central Bank</div></div></div><span class="xtag">First call free</span>' +
+   [['📞','Call me back','Usually within 2 hours','call'], ['📹','Book a video call','Pick a time that suits you','video'], ['✉️','Send a message','Reply within one working day','msg']].map(o => '<button class="xo" data-a="xcontact" data-p="' + type + '|' + o[3] + '"><span class="e" aria-hidden="true">' + o[0] + '</span><span><b>' + o[1] + '</b><small>' + o[2] + '</small></span></button>').join('') +
+   '<p class="small" style="margin:12px 0 0">🔒 You choose what to share before anyone sees your plan.</p></div>'; }
+function mpVideoBlock(){ const d = MPQ(), v = d.v[S.mpv], real = v.vid && VID(v.vid) && VID(v.vid).src ? VID(v.vid) : null, c = C(v.cl);
+  const stage = real ? '<div class="mp-st real" style="--c:' + v.bg + '">' + videoReal(real).replace('class="player real"', 'class="mpplayer"') + '</div>'
+    : '<div class="mp-st" style="--c:' + v.bg + '"><span class="art" aria-hidden="true">' + v.ic + '</span><div class="tp">Video ' + (S.mpv + 1) + ' of ' + d.v.length + ' · ' + v.d + '</div><h4>' + esc(v.t) + '</h4><span class="soon">Coming soon</span></div>';
+  return stage + '<p class="mp-cap" id="mp-cap" aria-live="polite">' + (real ? '' : 'We are filming this one. Check back soon.') + '</p>' +
+   '<div class="mp-chap" id="mp-chap" aria-label="Chapters">' + v.ch.map((x, j) => '<span' + (j ? '' : ' class="on"') + '>' + esc(x) + '</span>').join('') + '</div>' +
+   '<div class="mp-next" id="mp-next"' + (real ? ' hidden' : '') + '><span>Up next: try it with your numbers</span><button class="btn sm" data-a="calc" data-p="' + v.cl + '">' + esc(c.name) + ' →</button></div>'; }
+V.MORT = () => { const d = MPQ(), t = TOPICS.find(x => x[1] === 'Mortgages'), pd = S.pdocs.home, ncal = d.c.length, open = S.mpc && d.c.includes(S.mpc) ? S.mpc : d.c[0];
+  const doneN = d.v.filter((_, i) => S.mpd[S.mps + '-' + i]).length;
+  return {id:'XPL-TOPIC', note:'Mortgages topic page (Pooja, 15 Oct): your situation, upload, all 7 calculators as expanding cards, story videos, read and ask, live sessions, and a floating expert button.', head:'',
+  html:'<div class="mp"><div class="dhero2" style="--art:var(--art-mortgage);--pos:' + TOPIC_PHOTO.mortgage + '"><span class="art" aria-hidden="true"></span><button class="dcirc" data-a="xback" aria-label="Back">‹</button></div>' +
+   '<div class="dsheet2"><span class="dgrab" aria-hidden="true"></span><h2 class="t" tabindex="-1" style="margin:0">Mortgages</h2><div class="small" style="margin-top:4px">' + esc(t[2]) + '</div></div>' +
+   '<div class="mp-sit" role="group" aria-label="Your situation">' + MP_SIT.map((x, i) => '<button data-a="mpsit" data-p="' + i + '" aria-pressed="' + (i === S.mps) + '">' + x[0] + '</button>').join('') + '</div>' +
+   '<nav class="mp-jump" aria-label="On this page">' + [['mp-up','Upload'], ['mp-calc','Calculators'], ['mp-watch','Watch'], ['mp-read','Read'], ['mp-live','Live']].map(j => '<button data-a="mpjump" data-p="' + j[0] + '">' + j[1] + '</button>').join('') + '</nav>' +
+   '<div class="mp-up" id="mp-up"><span class="ic" aria-hidden="true">📄</span><div style="flex:1;min-width:0"><b>Upload your mortgage statement or payslip</b><small>Every calculator below fills in for you</small>' +
+    (pd ? '<div class="row2"><span class="small">✅ Uploaded: <b>' + esc(pd.name) + '</b></span><button class="link" data-a="pstup" data-p="home">Replace</button></div>' : '<div class="row2"><label class="btn sm" style="cursor:pointer">Upload<input type="file" class="sr" data-pfile="home" accept=".pdf,.jpg,.jpeg,.png,.heic"></label><button class="btn sm ghost" data-a="pstup" data-p="home">Use a sample</button></div>') + '</div></div>' +
+   '<div class="mp-sec" id="mp-calc"><h3>Calculators for you</h3><span>' + ncal + ' of ' + ncal + '</span></div><div class="mp-cal">' + d.c.map((id, i) => { const m = MP_CAL[id], nm = id === 'topup' ? MP_TOPUPNAME : C(m[2]).name, q = C(m[2]).q, on = id === open;
+      return '<div class="mp-c' + (on ? ' on' : '') + '" style="--c:' + m[4] + '"><span class="ph" style="background-image:url(\'' + mpPhoto(m[1]) + '\')" aria-hidden="true"></span><span class="sh" aria-hidden="true"></span><button class="mp-ch" data-a="mpcal" data-p="' + id + '" aria-expanded="' + on + '" aria-label="' + esc(nm) + ', calculator ' + (i + 1) + ' of ' + ncal + (on ? '' : ', tap to open') + '"><span class="e" aria-hidden="true">' + m[3] + '</span><span class="t">' + esc(m[0]) + '</span><span class="n">' + (i + 1) + ' of ' + ncal + '</span></button><div class="mp-cb"><p>Calculator ' + (i + 1) + ' of ' + ncal + '</p><strong>' + esc(nm) + '</strong><button class="btn" data-a="calc" data-p="' + m[2] + '">Open calculator →</button></div></div>'; }).join('') + '</div>' +
+   '<div class="mp-sec" id="mp-watch"><h3>Watch</h3><span id="mp-wc">' + doneN + ' of ' + d.v.length + ' watched</span></div><div class="mp-bub" role="group" aria-label="Videos">' + d.v.map((v, i) => '<button class="mp-bu' + (i === S.mpv ? ' cur' : '') + (S.mpd[S.mps + '-' + i] ? ' done' : '') + '" data-a="mpvid" data-p="' + i + '" aria-label="' + esc(v.t) + (S.mpd[S.mps + '-' + i] ? ', watched' : '') + '"' + (i === S.mpv ? ' aria-current="true"' : '') + '><span class="mp-rg" style="--c:' + v.bg + '"><i aria-hidden="true">' + v.ic + '</i><b aria-hidden="true">✓</b></span><small>' + esc(v.s) + '</small></button>').join('') + '</div><div id="mp-player">' + mpVideoBlock() + '</div>' +
+   '<div class="mp-sec" id="mp-read"><h3>Read and ask</h3></div><div class="mp-rd">' + d.r.map(x => '<details><summary style="min-height:48px"><span aria-hidden="true">' + x[2] + '</span>' + x[0] + '</summary><div class="bd"><b style="color:var(--ink)">' + esc(x[1]) + '</b><br>TODO: content to come from docs/content/mortgage/ (not added yet).</div></details>').join('') + '</div>' +
+   '<div class="mp-sec" id="mp-live"><h3>Live sessions</h3><span>Free · ask experts live</span></div>' + d.l.map((x, i) => { const k = S.mps + '-' + i, on = !!S.mpseat[k], [dd, ...tt] = x[0].split(' ');
+      return '<div class="card lv2" style="margin-bottom:8px"><span class="lv2-d" aria-hidden="true"><small>' + esc(dd) + '</small><b>' + esc(tt.join(' ')) + '</b></span><span class="lv2-m"><span class="lv2-tags"><span class="lv2-live">Live</span><span class="lv2-free">Free</span></span><b>' + esc(x[1]) + '</b><small>With a mortgage broker · ' + esc(x[0]) + '</small></span><button class="mp-seat" data-a="mpseat" data-p="' + k + '" aria-pressed="' + on + '">' + (on ? '✓ Seat saved' : 'Save seat') + '</button></div>'; }).join('') +
+   '<p class="disc">Topics explain general ideas. They are not advice.</p></div>' + expertFab('mortgage')}; };
+/* after every render of the Mortgages page: the floating button shrinks while scrolling and grows back, hides for the keyboard and full screen video; the real video drives chapters, captions-line and Up next */
+let mpCleanup = null;
+function mpAfter(){ if (mpCleanup){ mpCleanup(); mpCleanup = null; } const sc = document.querySelector('#screen .scroll'), fab = document.getElementById('xfab'); if (!sc || !fab) return;
+  let last = sc.scrollTop, tm = null; const onS = () => { const y = sc.scrollTop; if (!RM()){ if (y > last + 2 && y > 40) fab.classList.add('mini'); else if (y < last - 2) fab.classList.remove('mini'); } last = y; clearTimeout(tm); tm = setTimeout(() => fab.classList.remove('mini'), 900); };
+  sc.addEventListener('scroll', onS, {passive:true});
+  const hide = () => { const kb = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && document.activeElement.type !== 'file', fs = !!document.fullscreenElement || !!document.webkitFullscreenElement; fab.classList.toggle('hid', kb || fs); };
+  document.addEventListener('focusin', hide); document.addEventListener('focusout', () => setTimeout(hide, 50)); document.addEventListener('fullscreenchange', hide); document.addEventListener('webkitfullscreenchange', hide);
+  const vv = window.visualViewport, onV = () => { if (vv) fab.classList.toggle('hid', vv.height < innerHeight * .75); }; if (vv) vv.addEventListener('resize', onV);
+  const el = document.getElementById('vid-el'), d = MPQ(), v = d.v[S.mpv];
+  if (el){ const ch = [...document.querySelectorAll('#mp-chap span')], nx = document.getElementById('mp-next'), cap = document.getElementById('mp-cap'), tr = () => { const q = el.textTracks && el.textTracks[0]; if (q){ q.mode = 'hidden'; q.oncuechange = () => { const c = q.activeCues && q.activeCues[0]; cap.textContent = c ? c.text.replace(/<[^>]+>/g, '') : ''; }; } };
+    el.addEventListener('loadedmetadata', tr); tr();
+    el.addEventListener('timeupdate', () => { const f = el.duration ? el.currentTime / el.duration : 0, ci = Math.min(ch.length - 1, Math.floor(f * ch.length)); ch.forEach((c, j) => c.classList.toggle('on', j === ci)); if (f > .65 && nx) nx.hidden = false; });
+    el.addEventListener('ended', () => { S.mpd[S.mps + '-' + S.mpv] = true; if (nx) nx.hidden = false; const wc = document.getElementById('mp-wc'); if (wc) wc.textContent = d.v.filter((_, i) => S.mpd[S.mps + '-' + i]).length + ' of ' + d.v.length + ' watched'; const b = document.querySelector('.mp-bu[data-p="' + S.mpv + '"]'); if (b) b.classList.add('done'); }); }
+  mpCleanup = () => { sc.removeEventListener('scroll', onS); document.removeEventListener('focusin', hide); document.removeEventListener('fullscreenchange', hide); document.removeEventListener('webkitfullscreenchange', hide); if (vv) vv.removeEventListener('resize', onV); clearTimeout(tm); };
+}
+V.XTOPIC = p => { if (p === 'Mortgages') return V.MORT(); const t = TOPICS.find(x => x[1] === p), tools = (TOPIC_TOOLS[p] || []).map(C).filter(Boolean), live = LIVE.filter(x => x[2] === t[3]);
   return {id:'XPL-TOPIC', note:'Topic page (Pooja, 1 Oct): actions first, then videos. (a) Try the calculator (2–4 most relevant), (b) Talk to the matching expert, (c) Upload a statement where it applies, (d) videos and live sessions.', head:'',
   foot:'<button class="btn" data-a="expertfor" data-p="' + t[3] + '">Talk to ' + aExp(t[3]) + '</button>',
   html:'<div class="dhero2" style="--art:var(--art-' + TOPIC_ART[t[1]] + ')' + (TOPIC_PHOTO[TOPIC_ART[t[1]]] ? ';--pos:' + TOPIC_PHOTO[TOPIC_ART[t[1]]] : '') + '"><span class="art" aria-hidden="true"></span><button class="dcirc" data-a="xback" aria-label="Back">‹</button></div>' +
@@ -5858,6 +6010,7 @@ function sheetHTML(sid){ const s = S.sheet; if (!s) return ''; let h = '';
   if (s === 'ask') h = askHTML(sid);
   const [t, p] = s.split('|');
   if (t === 'fnd') h = fndSheet(p);
+  if (t === 'xpert') h = expertSheet(p);
   if (t === 'ex') h = exHTML(p);
   if (t === 'calcadd' && !(S.about.age >= 18)) h = '<h2 class="t">Add your age first</h2><p class="sub">A goal sits on your timeline at an age, so we need yours. It is step 1 of Make my plan, and the figures you tried here stay as they are.</p><button class="btn" data-a="makeplan">Add my age</button><button class="btn ghost" style="margin-top:10px" data-a="closesheet">Not now</button>';
   else if (t === 'calcadd'){ const c = C(p), m = calcMissing(c); h = m.length ? '<h2 class="t">' + esc(missTxt(m[0]) + ' first') + '</h2><p class="sub">This result needs your choices before it can go in your plan.</p><button class="btn" data-a="closesheet">OK</button>' : handoffHTML(p, c.run(calcVals(c)).goal); }
@@ -6022,6 +6175,7 @@ function render(){ syncAges(); syncLists(); syncSafety();
   const sc = scr.querySelector('.scroll,.qbody'); if (sc && same) sc.scrollTop = top0;
   lastId = s.id;
   bind();
+  if (s.id === 'XPL-TOPIC' && scr.querySelector('#xfab')) mpAfter(); else if (mpCleanup){ mpCleanup(); mpCleanup = null; }
   let closing = false; if (!S.sheet && sheetFrom !== null){ closing = true; if (!focusKey && sheetFrom && same) focusKey = sheetFrom; sheetFrom = null; }
   let fk = null; try { fk = focusKey && scr.querySelector(focusKey); } catch (e) {}
   if (fk) fk.focus({preventScroll:!S.sheet});
@@ -6108,6 +6262,13 @@ const ACT = {
   vretry:() => { const el = document.getElementById('vid-el'), f = document.getElementById('vid-fail'); if (!el) return; el.hidden = false; if (f) f.hidden = true; el.load(); },
   vplay:() => { S.play = !S.play; focusKey = '[data-a="vplay"]'; render(); }, vfilter:p => { S.vf = p; focusKey = '[data-a="vfilter"][data-p="' + p + '"]'; render(); },
   remind:() => toast('We\'ll remind you before it starts'), xfeat:p => { S.xf = +p; focusKey = '[data-a="xfeat"][data-p="' + p + '"]'; render(); }, topic:p => { S.xs.push({v:'XTOPIC', p}); lastId = null; render(); },
+  mpsit:p => { S.mps = +p; S.mpv = 0; S.mpc = null; focusKey = '[data-a="mpsit"][data-p="' + p + '"]'; render(); },
+  mpcal:p => { S.mpc = p; focusKey = '[data-a="mpcal"][data-p="' + p + '"]'; render(); },
+  mpvid:p => { S.mpv = +p; focusKey = '[data-a="mpvid"][data-p="' + p + '"]'; render(); },
+  mpjump:p => { const e = document.getElementById(p); if (e) e.scrollIntoView({behavior:RM() ? 'auto' : 'smooth', block:'start'}); },
+  mpseat:k => { S.mpseat[k] = !S.mpseat[k]; focusKey = '[data-a="mpseat"][data-p="' + k + '"]'; render(); toast(S.mpseat[k] ? 'Seat saved. We\'ll remind you before it starts' : 'Seat released'); },
+  xfab:p => { S.sheet = 'xpert|' + p; render(); },
+  xcontact:p => { const [t, m] = p.split('|'); S.sheet = null; if (m === 'video') S.book.mode = 'Video'; ACT.expertfor(t); toast(m === 'call' ? 'Pick an expert and a time and we\'ll call you back' : m === 'msg' ? 'Pick an expert to send your message to' : 'Pick a time for your video call'); },
   expertfor:p => { S.tab = 'exp'; S.exp = 'home'; S.xs = []; S.play = false; if (EXPERT_FOR[p]) S.book.spec = p; S.sheet = null; lastId = null; render(); },
   spec:p => { S.book.spec = S.book.spec === p ? null : p; focusKey = '[data-a="spec"][data-p="' + p + '"]'; render(); },
   savem:p => { const P = project(), cur = S.saveM != null ? S.saveM : P.save.saveM, max = Math.max(0, P.save.surplusM); let v = Math.max(0, Math.round((cur + +p) / 25) * 25); S.saveNote = ''; S.saveUp = v >= P.save.autoM - 0.5;

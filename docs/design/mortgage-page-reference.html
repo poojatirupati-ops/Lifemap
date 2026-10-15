@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LifeMap · Mortgages page · approved design reference</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{--surface-1:#f6f6f4;--surface-2:#ffffff;--text-primary:#1a1a1a;--text-secondary:#5f5e5a;--text-muted:#888780;--border:rgba(0,0,0,.1);--border-strong:rgba(0,0,0,.18);--bg-accent:#E6F1FB;--text-accent:#185FA5;--bg-success:#EAF3DE;--text-success:#3B6D11;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--surface-1:#262624;--surface-2:#30302e;--text-primary:#f1efe8;--text-secondary:#b4b2a9;--text-muted:#888780;--border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.2);--bg-accent:#0C447C;--text-accent:#B5D4F4;--bg-success:#27500A;--text-success:#C0DD97}}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 12px;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--surface-1);color:var(--text-primary)}
+button{font:inherit;background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;padding:6px 12px;color:var(--text-primary);cursor:pointer}
+.ph{max-width:370px;margin:0 auto;background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:30px;position:relative;overflow:hidden;height:640px;font-size:12px}
+.scr{position:absolute;inset:0 0 54px 0;overflow-y:auto;padding:12px 14px 80px;scrollbar-width:none}
+.scr::-webkit-scrollbar{display:none}
+.sg{display:flex;background:var(--surface-1);border-radius:999px;padding:3px;gap:3px;margin:8px 0}
+.sg button{flex:1;border:none;border-radius:999px;font-size:11.5px;padding:7px 2px;background:transparent}
+.sg button.on{background:var(--surface-2);font-weight:500;box-shadow:0 0 0 0.5px var(--border-strong)}
+.jp{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px}
+.jp button{flex:0 0 auto;font-size:11px;border-radius:999px;padding:3px 10px}
+.lb{font-size:11px;color:var(--text-muted);margin:14px 0 6px;display:flex;justify-content:space-between}
+.vx{display:flex;flex-direction:column;gap:5px}
+.vx .c{flex:0 0 32px;border-radius:12px;color:#fff;filter:grayscale(1);cursor:pointer;overflow:hidden;position:relative;transition:flex-basis .4s ease,filter .4s}
+.vx .c.on{flex-basis:118px;filter:none;cursor:default}
+.vx .c.mo{display:none}
+.vx.all .c.mo{display:block}
+.vx .sm{position:absolute;left:12px;top:8px;font-size:11.5px;font-weight:500;transition:opacity .2s}
+.vx .c.on .sm{opacity:0}
+.vx .fl{position:absolute;inset:0;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;opacity:0;transition:opacity .3s}
+.vx .c.on .fl{opacity:1;transition-delay:.15s}
+.vx .fl p{margin:0}
+.vx .ic{position:absolute;right:12px;top:10px;font-size:32px;opacity:.25}
+.vm{width:100%;margin-top:6px;font-size:11.5px;padding:7px;border-radius:12px}
+.bb{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 4px}
+.bu{flex:0 0 62px;text-align:center;cursor:pointer;background:none;border:none;padding:0}
+.rg{width:58px;height:58px;border-radius:50%;position:relative;margin:0 auto 4px;display:flex;align-items:center;justify-content:center}
+.rg .in{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
+.rg .ri{position:absolute;inset:0;border-radius:50%;border:2.5px solid #1D9E75}
+.bu.cur .ri{border-color:#1D9E75 #1D9E75 transparent transparent;animation:spin 1.6s linear infinite}
+.bu.done .ri{border-color:var(--border-strong)}
+.bu .ck{position:absolute;right:-1px;bottom:-1px;width:18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--text-success);font-size:12px;display:none;align-items:center;justify-content:center;border:0.5px solid var(--border)}
+.bu.done .ck{display:flex}
+.bu small{font-size:11px;color:var(--text-secondary);display:block;line-height:1.25}
+.st{border-radius:18px;height:185px;position:relative;overflow:hidden;color:#fff;cursor:pointer}
+.st .art{position:absolute;right:-10px;top:-6px;font-size:150px;opacity:.16;animation:kb 9s ease-in-out infinite alternate}
+.st .co{position:absolute;bottom:-20px;font-size:18px;opacity:0;animation:rise 3.2s ease-in infinite}
+.st .tp{position:absolute;left:14px;top:12px;font-size:11px;opacity:.85}
+.st .ttl{position:absolute;left:14px;top:30px;right:14px;font-size:16px;font-weight:500;line-height:1.3}
+.st .pb{position:absolute;left:14px;right:14px;bottom:12px;height:3px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden}
+.st .pb i{display:block;height:100%;width:0;background:#fff}
+.st .cap{position:absolute;left:14px;right:60px;bottom:24px;font-size:13px;line-height:1.4;transition:opacity .35s,transform .35s}
+.st .pl{position:absolute;right:14px;bottom:24px;width:38px;height:38px;border-radius:50%;background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:17px;animation:pulse 2s ease-in-out infinite}
+.st.pz *{animation-play-state:paused!important}
+.ch{display:flex;gap:5px;margin:8px 0 0;flex-wrap:wrap}
+.ch span{font-size:11px;padding:3px 9px;border-radius:999px;background:var(--surface-1);color:var(--text-secondary);transition:background .3s,color .3s}
+.ch span.on{background:var(--bg-accent);color:var(--text-accent)}
+.tr{margin-top:8px;border-radius:12px;background:var(--bg-success);color:var(--text-success);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px;opacity:0;transform:translateY(10px);transition:all .45s ease}
+.tr.show{opacity:1;transform:none}
+.lv{border:0.5px solid var(--border);border-radius:14px;padding:11px 12px;display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.lv .dt{width:46px;flex:0 0 46px;text-align:center;border-radius:10px;background:var(--surface-1);padding:5px 0}
+.lv .dt b{display:block;font-size:15px;font-weight:500;color:var(--text-primary)}
+.lv .dt small{font-size:11px;color:var(--text-secondary)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#E24B4A;margin-right:4px;animation:blink 1.4s ease-in-out infinite}
+.fab{position:absolute;right:14px;bottom:66px;width:calc(100% - 28px);height:48px;border-radius:999px;background:#0F6E56;color:#fff;border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:500;overflow:hidden;white-space:nowrap;transition:width .35s ease,height .35s ease;z-index:3;padding:0}
+.fab .tx{transition:opacity .2s;max-width:220px}
+.fab.mini{width:52px;height:52px}
+.fab.mini .tx{opacity:0;max-width:0}
+.nav{position:absolute;left:0;right:0;bottom:0;height:54px;border-top:0.5px solid var(--border);background:var(--surface-2);display:flex;justify-content:space-around;align-items:center;font-size:11px;color:var(--text-muted);z-index:4}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:1px}
+.nav .on{color:var(--text-primary)}
+.bd{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .3s;z-index:5}
+.bd.open{opacity:1;pointer-events:auto}
+.sh{position:absolute;left:0;right:0;bottom:0;background:var(--surface-2);border-radius:22px 22px 0 0;padding:10px 16px 18px;transform:translateY(105%);transition:transform .38s cubic-bezier(.2,.8,.2,1);z-index:6}
+.sh.open{transform:none}
+.op{display:flex;gap:10px;align-items:center;border:0.5px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:6px;color:var(--text-primary);cursor:pointer}
+.op i{font-size:20px;color:var(--text-accent)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.18) translate(-14px,10px)}}
+@keyframes rise{0%{opacity:0;transform:translateY(0)}20%{opacity:.7}100%{opacity:0;transform:translateY(-180px)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div style="text-align:center;margin-bottom:10px"><button id="demo"><i class="ti ti-player-play" aria-hidden="true"></i> Play scroll demo</button></div>
+<div class="ph">
+<div class="scr" id="scr">
+<p style="margin:0;font-size:11px;color:var(--text-muted)">9:41</p>
+<p style="margin:4px 0 0;font-size:18px;font-weight:500;color:var(--text-primary)">Mortgages</p>
+<div class="sg" id="sg"><button class="on" data-k="0">Buying</button><button data-k="1">Switching</button><button data-k="2">Borrowing more</button></div>
+<div class="jp" id="jp"><button data-t="a-up">Upload</button><button data-t="a-cal">Calculators</button><button data-t="a-w">Watch</button><button data-t="a-r">Read</button><button data-t="a-l">Live</button></div>
+<div id="a-up" style="background:var(--bg-accent);border-radius:14px;padding:11px 12px;display:flex;gap:9px;align-items:center;color:var(--text-accent)"><i class="ti ti-file-upload" aria-hidden="true" style="font-size:20px"></i><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500">Upload your mortgage statement or payslip</p><p style="margin:0;font-size:11px">Every calculator below fills in for you</p></div><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+<p class="lb" id="a-cal"><span>Calculators for you</span><span id="cn"></span></p>
+<div class="vx" id="cal"></div>
+<button class="vm" id="vm"></button>
+<p class="lb" id="a-w"><span>Watch</span><span id="wc"></span></p>
+<div class="bb" id="bb"></div>
+<div class="st" id="st" role="button" aria-label="Play or pause preview">
+<i class="ti art" id="art" aria-hidden="true"></i>
+<i class="ti ti-coin co" aria-hidden="true" style="left:30%"></i>
+<i class="ti ti-coin co" aria-hidden="true" style="left:52%;animation-delay:1.1s"></i>
+<i class="ti ti-coin co" aria-hidden="true" style="left:72%;animation-delay:2.2s"></i>
+<span class="tp" id="tp"></span><span class="ttl" id="tt"></span><span class="cap" id="cap"></span>
+<span class="pl" id="pl"><i class="ti ti-player-pause" aria-hidden="true"></i></span>
+<span class="pb"><i id="pg"></i></span>
+</div>
+<div class="ch" id="ch"></div>
+<div class="tr" id="tr"><span id="trt"></span><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+<p class="lb" id="a-r"><span>Read and ask</span></p>
+<div class="vx" id="rd"></div>
+<p class="lb" id="a-l"><span>Live sessions</span><span><span class="dot"></span>Free · ask experts live</span></p>
+<div id="lv"></div>
+</div>
+<button class="fab" id="fab" aria-label="Talk to a mortgage expert"><i class="ti ti-headset" aria-hidden="true" style="font-size:20px"></i><span class="tx">Talk to a mortgage expert</span></button>
+<div class="nav"><span><i class="ti ti-home" aria-hidden="true" style="font-size:18px"></i>Home</span><span class="on"><i class="ti ti-compass" aria-hidden="true" style="font-size:18px"></i>Explore</span><span><i class="ti ti-map" aria-hidden="true" style="font-size:18px"></i>My Plan</span><span><i class="ti ti-user" aria-hidden="true" style="font-size:18px"></i>Me</span><span><i class="ti ti-users" aria-hidden="true" style="font-size:18px"></i>Experts</span></div>
+<div class="bd" id="bd"></div>
+<div class="sh" id="sh">
+<div style="width:36px;height:4px;border-radius:2px;background:var(--border-strong);margin:0 auto 12px"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><p style="margin:0;font-size:15px;font-weight:500;color:var(--text-primary)">Talk to a mortgage expert</p><button id="cx" aria-label="Close" style="border:none;padding:4px"><i class="ti ti-x" aria-hidden="true" style="font-size:18px"></i></button></div>
+<div style="display:flex;gap:10px;align-items:center;background:var(--surface-1);border-radius:14px;padding:10px 12px;margin-bottom:10px"><div style="width:40px;height:40px;border-radius:50%;background:var(--bg-accent);color:var(--text-accent);display:flex;align-items:center;justify-content:center;font-weight:500">MS</div><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500;color:var(--text-primary)">MortgageStop broker</p><p style="margin:0;font-size:11px;color:var(--text-secondary)">QFA · Regulated by the Central Bank</p></div><span style="font-size:11px;background:var(--bg-success);color:var(--text-success);padding:3px 8px;border-radius:999px">First call free</span></div>
+<div class="op"><i class="ti ti-phone-call" aria-hidden="true"></i><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500">Call me back</p><p style="margin:0;font-size:11px;color:var(--text-secondary)">Usually within 2 hours</p></div><i class="ti ti-chevron-right" aria-hidden="true" style="font-size:16px;color:var(--text-muted)"></i></div>
+<div class="op"><i class="ti ti-video" aria-hidden="true"></i><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500">Book a video call</p><p style="margin:0;font-size:11px;color:var(--text-secondary)">Pick a time that suits you</p></div><i class="ti ti-chevron-right" aria-hidden="true" style="font-size:16px;color:var(--text-muted)"></i></div>
+<div class="op"><i class="ti ti-message-circle" aria-hidden="true"></i><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500">Send a message</p><p style="margin:0;font-size:11px;color:var(--text-secondary)">Reply within one working day</p></div><i class="ti ti-chevron-right" aria-hidden="true" style="font-size:16px;color:var(--text-muted)"></i></div>
+<p style="margin:8px 0 0;font-size:11px;color:var(--text-muted)"><i class="ti ti-lock" aria-hidden="true"></i> You choose what to share before anyone sees your plan.</p>
+</div>
+</div>
+<script>
+var C={borrow:['Borrow','How much could I borrow?','#0F6E56','ti-home'],repay:['Repayment','Monthly mortgage repayment','#182A54','ti-receipt'],deposit:['Deposit','Deposit calculator','#534AB7','ti-pig-money'],overpay:['Overpay','Mortgage overpayment','#185FA5','ti-player-track-next'],rate:['Rate change','Interest-rate impact','#993C1D','ti-chart-line'],term:['Term','Mortgage term comparison','#085041','ti-scale'],rent:['Rent vs buy','Rent vs buy','#3C3489','ti-arrows-exchange'],topup:['Top-up','Repayment with a top-up','#182A54','ti-receipt']};
+var S=[
+{c:['borrow','deposit','repay','rent','term','rate','overpay'],
+v:[{s:'Deposit to keys',t:'Your first home: deposit to keys',d:'0:53',bg:'#0F6E56',ic:'ti-key',cl:'Deposit calculator',cp:['Most buyers need a 10% deposit','Add stamp duty and legal fees','Claim Help to Buy if you can','Then get approval in principle'],ch:['Deposit','Costs','Schemes']},
+{s:'How much can I get?',t:'How much mortgage can I get?',d:'1:10',bg:'#182A54',ic:'ti-home',cl:'Borrow calculator',cp:['First-time buyers: up to 4x income','Lenders can make some exceptions','What you can repay matters more','Try it with your own numbers'],ch:['The limit','Exceptions','Your budget']},
+{s:'Help to Buy 2027',t:'Help to Buy: what changed for 2027',d:'1:20',bg:'#534AB7',ic:'ti-gift',cl:'Deposit calculator',cp:['Now up to €35,000, was €30,000','Only for new homes up to €500k','Capped at the tax you paid','Check before you sign'],ch:['The change','Who gains','How to claim']},
+{s:'Fixed or variable?',t:'Fixed or variable: which suits you?',d:'1:05',bg:'#185FA5',ic:'ti-lock',cl:'Rate change calculator',cp:['Fixed means certainty for a few years','Variable can move up or down','Think about breakage fees','Pick what you can sleep on'],ch:['Fixed','Variable','Choosing']}],
+r:[['Articles','Help to Buy and First Home Scheme: 2027','#0F6E56','ti-article'],['FAQs','Can I get help with my deposit?','#534AB7','ti-help-circle'],['Links','Help to Buy on Revenue ↗','#993C1D','ti-link']],
+l:[['Thu','22','7pm','First-time buyers: your questions answered'],['Tue','27','1pm','Help to Buy and First Home Scheme in 20 minutes']]},
+{c:['rate','repay','overpay','term','borrow','deposit','rent'],
+v:[{s:'Should I switch?',t:'Should I switch my mortgage?',d:'1:30',bg:'#993C1D',ic:'ti-arrows-exchange',cl:'Rate change calculator',cp:['Your rate may be higher than it needs to be','Switching takes about 6 to 8 weeks','Count the costs against the savings','See what you could save'],ch:['Why switch','Costs','Steps']},
+{s:'Fixed rate ending',t:'Your fixed rate is ending: what now?',d:'1:00',bg:'#182A54',ic:'ti-calendar',cl:'Rate change calculator',cp:['Start looking 4 months before','Ask your lender for their best rate','Compare with other lenders',"Don't roll onto a higher rate"],ch:['Timing','Your lender','Compare']},
+{s:'Tax credit',t:'Are you owed the mortgage interest tax credit?',d:'0:55',bg:'#0F6E56',ic:'ti-receipt-tax',cl:'Repayment calculator',cp:['Interest went up after 2022?','You may get up to €1,250 a year','Claim on Revenue myAccount','You need two lender letters'],ch:['Who qualifies','How much','How to claim']},
+{s:'Overpaying',t:'Is it worth overpaying my mortgage?',d:'1:15',bg:'#185FA5',ic:'ti-player-track-next',cl:'Overpayment calculator',cp:['A little extra cuts years off',"Check your lender's overpay limits",'Keep an emergency fund first','Compare with your pension'],ch:['How it works','Limits','Or pension?']}],
+r:[['Articles','Are you owed the mortgage interest tax credit?','#0F6E56','ti-article'],['FAQs','My fixed rate is ending: should I switch?','#534AB7','ti-help-circle'],['Links','CCPC mortgage comparison ↗','#993C1D','ti-link']],
+l:[['Wed','21','1pm','Switching in 2026: is now the time?'],['Mon','2','7pm','Fixed rate ending? Ask us anything']]},
+{c:['topup','term','overpay','rate','borrow','deposit','rent'],
+v:[{s:'Top-up costs',t:'What a top-up really costs',d:'1:10',bg:'#182A54',ic:'ti-hammer',cl:'Repayment calculator',cp:['Borrow more against your home','Your monthly repayment goes up','So does the total interest','See your own numbers'],ch:['How it works','Monthly','Total cost']},
+{s:'Top-up or loan?',t:'Top-up, loan or savings?',d:'1:05',bg:'#993C1D',ic:'ti-scale',cl:'Term calculator',cp:['A top-up has a lower rate','But you pay it for longer','A short loan can cost less overall','Match the term to the purpose'],ch:['Rates','Terms','Choosing']},
+{s:'Helping your child',t:'Helping your child buy a home',d:'1:20',bg:'#534AB7',ic:'ti-heart-handshake',cl:'Repayment calculator',cp:['Gifts to children: €420,000 tax-free limit','Lenders want a gift letter','Check your own retirement first','See the effect on your plan'],ch:['Gifts','Lenders','Your plan']}],
+r:[['Articles','Helping your child buy a home','#0F6E56','ti-article'],['FAQs','Can I borrow against my home?','#534AB7','ti-help-circle'],['Links','CCPC: mortgage top-up ↗','#993C1D','ti-link']],
+l:[['Sat','24','11am','Extensions and top-ups: what to know']]}];
+var K=0,V=0,P=0,run=true,done={},open=false;
+function $(i){return document.getElementById(i)}
+function wire(r){var cs=[].slice.call(r.querySelectorAll('.c'));cs.forEach(function(c){c.onclick=function(){cs.forEach(function(x){x.classList.remove('on')});c.classList.add('on')}})}
+function calcs(){var ids=S[K].c,n=ids.length;$('cal').className='vx'+(open?' all':'');
+$('cal').innerHTML=ids.map(function(id,i){var x=C[id];return '<div class="c'+(i?'':' on')+(i>2?' mo':'')+'" style="background:'+x[2]+'"><span class="sm">'+x[0]+'</span><i class="ti '+x[3]+' ic" aria-hidden="true"></i><div class="fl"><p style="font-size:10.5px;opacity:.85">Calculator '+(i+1)+' of '+n+'</p><p style="font-size:14.5px;font-weight:500">'+x[1]+'</p><p style="font-size:11px;opacity:.85;margin-top:3px">Open calculator →</p></div></div>'}).join('');wire($('cal'));
+$('cn').textContent=(open?n:3)+' of '+n;$('vm').innerHTML=open?'Show fewer <i class="ti ti-chevron-up" aria-hidden="true"></i>':'View all '+n+' calculators <i class="ti ti-chevron-down" aria-hidden="true"></i>'}
+$('vm').onclick=function(){open=!open;calcs()};
+function reads(){$('rd').innerHTML=S[K].r.map(function(x,i){return '<div class="c'+(i?'':' on')+'" style="background:'+x[2]+'"><span class="sm">'+x[0]+'</span><i class="ti '+x[3]+' ic" aria-hidden="true"></i><div class="fl"><p style="font-size:10.5px;opacity:.85">'+x[0]+'</p><p style="font-size:14.5px;font-weight:500">'+x[1]+'</p><p style="font-size:11px;opacity:.85;margin-top:3px">Open →</p></div></div>'}).join('');wire($('rd'))}
+function lives(){$('lv').innerHTML=S[K].l.map(function(x){return '<div class="lv"><div class="dt"><small>'+x[0]+'</small><b>'+x[1]+'</b><small>'+x[2]+'</small></div><div style="flex:1"><p style="margin:0;font-size:12.5px;font-weight:500;color:var(--text-primary)">'+x[3]+'</p><p style="margin:2px 0 0;font-size:11px;color:var(--text-secondary)">With a mortgage broker · Oct</p></div><button style="font-size:11px;padding:5px 9px;border-radius:999px">Save seat</button></div>'}).join('')}
+function bubbles(){var vs=S[K].v;$('bb').innerHTML=vs.map(function(v,i){return '<button class="bu'+(i===V?' cur':'')+(done[K+'-'+i]?' done':'')+'" data-i="'+i+'"><span class="rg"><span class="ri"></span><span class="in" style="background:'+v.bg+'"><i class="ti '+v.ic+'" aria-hidden="true"></i></span><span class="ck"><i class="ti ti-check" aria-hidden="true"></i></span></span><small>'+v.s+'</small></button>'}).join('');
+[].slice.call(document.querySelectorAll('#bb .bu')).forEach(function(b){b.onclick=function(){pick(+b.dataset.i)}});
+var n=0;vs.forEach(function(_,i){if(done[K+'-'+i])n++});$('wc').textContent=n+' of '+vs.length+' watched'}
+function cap(j){var c=$('cap');c.style.opacity=0;c.style.transform='translateY(6px)';setTimeout(function(){c.textContent=S[K].v[V].cp[j];c.style.opacity=1;c.style.transform='none'},300)}
+function pick(i){V=i;P=0;run=true;var v=S[K].v[i];$('st').style.background=v.bg;$('art').className='ti art '+v.ic;$('tp').textContent='Video '+(i+1)+' of '+S[K].v.length+' · '+v.d;$('tt').textContent=v.t;$('st').classList.remove('pz');$('pl').innerHTML='<i class="ti ti-player-pause" aria-hidden="true"></i>';
+$('ch').innerHTML=v.ch.map(function(c,j){return '<span'+(j?'':' class="on"')+'>'+c+'</span>'}).join('');$('trt').textContent='Up next: try it with your numbers · '+v.cl;$('tr').classList.remove('show');cap(0);bubbles()}
+function setK(k){K=k;open=false;calcs();reads();lives();pick(0)}
+$('st').onclick=function(){run=!run;$('st').classList.toggle('pz',!run);$('pl').innerHTML='<i class="ti ti-player-'+(run?'pause':'play')+'" aria-hidden="true"></i>'};
+setInterval(function(){if(!run)return;var lp=P;P+=0.9;
+if(Math.floor(P/25)!==Math.floor(lp/25)&&P<100)cap(Math.floor(P/25));
+var cs=[].slice.call($('ch').children);var ci=Math.min(cs.length-1,Math.floor(P/(100/cs.length)));cs.forEach(function(s,j){s.classList.toggle('on',j===ci)});
+if(P>65)$('tr').classList.add('show');
+if(P>=100){done[K+'-'+V]=true;var nx=(V+1)%S[K].v.length;P=100;run=false;setTimeout(function(){pick(nx)},600)}
+$('pg').style.width=Math.min(100,Math.round(P))+'%'},100);
+[].slice.call(document.querySelectorAll('#sg button')).forEach(function(b){b.onclick=function(){[].slice.call(document.querySelectorAll('#sg button')).forEach(function(x){x.classList.remove('on')});b.classList.add('on');setK(+b.dataset.k)}});
+var scr=$('scr'),fab=$('fab'),last=0,tm;
+scr.addEventListener('scroll',function(){var y=scr.scrollTop;if(y>last+2&&y>40)fab.classList.add('mini');else if(y<last-2)fab.classList.remove('mini');last=y;clearTimeout(tm);tm=setTimeout(function(){fab.classList.remove('mini')},900)});
+[].slice.call(document.querySelectorAll('#jp button')).forEach(function(b){b.onclick=function(){var t=$(b.dataset.t);scr.scrollTo({top:t.offsetTop-10,behavior:'smooth'})}});
+function sheet(o){$('sh').classList.toggle('open',o);$('bd').classList.toggle('open',o)}
+fab.onclick=function(){sheet(true)};$('cx').onclick=function(){sheet(false)};$('bd').onclick=function(){sheet(false)};
+$('demo').onclick=function(){sheet(false);scr.scrollTo({top:0});var t=0,max=scr.scrollHeight-scr.clientHeight;var iv=setInterval(function(){t+=1;if(t<=60){scr.scrollTop=max*t/60}else if(t===75){clearInterval(iv);setTimeout(function(){sheet(true)},400)}},70)};
+setK(0);
+</script>
+</body>
+</html>
