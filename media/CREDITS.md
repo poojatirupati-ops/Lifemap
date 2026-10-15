@@ -18,3 +18,10 @@ Photos added 11 Oct 2026 from Unsplash (free Unsplash License: free to use, incl
 | invest-charts.jpg | Investing, Grow wealth | Jakub Żerdzicki | https://unsplash.com/photos/heiYgqp0Tsk |
 | umbrella.jpg | Emergency fund | C T | https://unsplash.com/photos/50YFv7iN118 |
 | map-woman.jpg | Up next banner, quiz | Leio McLaren | https://unsplash.com/photos/jEgQpfkHEWY |
+
+## Videos
+
+| File | Notes |
+|---|---|
+| auto-enrolment-explained.mp4, retirement-plan-how-it-works.mp4 | Pensions explainers (see earlier notes). |
+| first-home-deposit-to-keys.mp4 (+ .vtt captions, poster .jpg) | Example video for the Watch section (15 Oct 2026). AI-generated presenter (HeyGen), LifeMap graphics, generated background music. Not a real adviser: do not name one. Captions are in first-home-deposit-to-keys.vtt. |
