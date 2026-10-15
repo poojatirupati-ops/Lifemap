@@ -41,7 +41,7 @@ See `docs/pre-release-verify.md`. Rates and tax figures must be checked on offic
 
 ## Notes
 - The `tests/` scripts were written for the build environment and use absolute paths; adjust the paths at the top of each script to run them elsewhere.
-- Both videos are H.264 MP4 and have no captions yet.
+- The two pension videos are H.264 MP4 and have no captions yet. The first-home example video (`media/first-home-deposit-to-keys.mp4`, 0:53) has captions (`.vtt`) and a transcript, and an AI-generated presenter, so no adviser is named under it.
 
 ## Redesign (working version from 13 Oct 2026)
 Public link: https://tejalsakpal66-tech.github.io/lifemap-redesign/ . Details in `docs/redesign-link.md`.
