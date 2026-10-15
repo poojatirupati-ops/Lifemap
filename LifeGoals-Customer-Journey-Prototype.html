@@ -2406,11 +2406,11 @@ const DQ = [
     {e:'🏃', tag:'FOMO \u00b7 Herd behaviour', t:'Buy in quickly, before I miss out', w:{E:1}}, {e:'🔎', tag:'Due diligence', t:'Research it before I decide', w:{A:1}}, {e:'🧑‍💼', tag:'Advice-seeker', t:'Ask an expert first', w:{B:1}}, {e:'🙅', tag:'Loss aversion', t:'Stay away. Sounds too risky', w:{B:1, C:1}}]},
   {id:'6', act:3, q:'How much could you comfortably invest each month?', sub:'Without cutting back on everyday life.', type:'cards', o:[
     {e:'🪙', tag:'Starter capacity', t:'Under €100', s:1}, {e:'💶', tag:'Moderate capacity', t:'€100 to €300', s:2}, {e:'💰', tag:'Good capacity', t:'€300 to €750', s:3}, {e:'🏦', tag:'High capacity', t:'Over €750', s:4}, {e:'🎢', tag:'Variable income', t:'It changes month to month', s:2}]},
-  {id:'7', act:3, q:'A €1,000 bill arrives tomorrow. How do you pay it?', sub:'', type:'cards', o:[
-    {e:'✅', tag:'Emergency fund', t:'From my emergency savings', s:4}, {e:'🐷', tag:'Thin buffer', t:'From money saved for something else', s:2}, {e:'💳', tag:'Relies on credit', t:'Credit card or a loan', s:1}, {e:'😬', tag:'No safety net', t:"I'm not sure", s:1}]},
+  {id:'7', act:3, q:'Your car needs a €1,000 repair tomorrow. How would you cover it?', sub:'', type:'cards', o:[
+    {e:'✅', tag:'Liquidity reserve', t:'From my emergency savings', s:4}, {e:'🐷', tag:'Goal leakage', t:'From savings meant for something else', s:2}, {e:'💳', tag:'Credit-funded', t:'Put it on a card or borrow it', s:1}, {e:'😬', tag:'Not planned yet', t:"I'm not sure I could", s:1}]},
   {id:'8', act:4, q:'Which road would you enjoy most for your long-term money?', sub:'', type:'ride', o:[
-    {e:'🛣️', tag:'Low volatility', t:'Motorway: smooth and straight', s:1, path:'M0 40 L140 28'}, {e:'🏞️', tag:'Cautious', t:'Country road: gentle bends', s:2, path:'M0 42 L20 36 L40 40 L60 30 L80 34 L100 26 L120 28 L140 20'},
-    {e:'🌊', tag:'Balanced', t:'Coast road: waves and views', s:3, path:'M0 44 L20 26 L40 44 L60 18 L80 36 L100 12 L120 28 L140 8'}, {e:'🏔️', tag:'Growth', t:'Mountain pass: steep climbs, big views', s:4, path:'M0 46 L20 20 L40 48 L60 10 L80 42 L100 4 L120 30 L140 2'}]},
+    {e:'🛣️', tag:'Low volatility', t:'Motorway', s:1, path:'M0 40 L140 28'}, {e:'🏞️', tag:'Cautious', t:'Country road', s:2, path:'M0 42 L20 36 L40 40 L60 30 L80 34 L100 26 L120 28 L140 20'},
+    {e:'🌊', tag:'Balanced', t:'Coast road', s:3, path:'M0 44 L20 26 L40 44 L60 18 L80 36 L100 12 L120 28 L140 8'}, {e:'🏔️', tag:'Growth', t:'Mountain pass', s:4, path:'M0 46 L20 20 L40 48 L60 10 L80 42 L100 4 L120 30 L140 2'}]},
   {id:'9', act:4, q:'Your €10,000 investment drops to €8,500. What do you do?', sub:'', type:'scenario', from:10000, to:8500, o:[
     {e:'😱', tag:'Panic selling', t:'Sell before it drops more', s:1}, {e:'😬', tag:'Anchoring', t:"Wait until it's back to €10,000, then sell", s:2}, {e:'😌', tag:'Long-term investor', t:'Stay calm and hold on', s:3}, {e:'🛒', tag:'Buy the dip', t:"Buy more while it's cheaper", s:4}]},
   {id:'12', act:5, q:'How do you feel about your financial future?', sub:'Every answer is normal.', type:'cards', o:[
