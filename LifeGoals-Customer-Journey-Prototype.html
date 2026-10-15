@@ -2435,9 +2435,10 @@ const TYPES = {A:{name:'Achiever', e:'🎯', strap:'In control, goal-driven, dis
   E:{name:'Explorer', e:'🧭', strap:'Curious, open to new ideas, comfortable with risk.', str:['Open to new ideas','Comfortable with change'], watch:'Jumping in before your emergency fund is in place.'},
   C:{name:'Contented', e:'🛋️', strap:'Comfortable, steady, low-maintenance with money.', str:['Calm about money','Not easily rattled'], watch:'Putting off decisions, such as pension top-ups.'}};
 // D1 chips (Pooja, 1 Oct 2026). Keys are stored in S.why; goals = tiles moved to the front of "Suggested for you" (quietly)
-const WHY = [{k:'track', e:'🧭', t:"Seeing if I'm on track"}, {k:'enough', e:'😊', t:'Making sure I have enough to live well', goals:['wealth','safety']},
-  {k:'retire', e:'🌅', t:'Getting ready for retirement', goals:['retire']}, {k:'safety', e:'🛟', t:'Building a safety net for emergencies', goals:['safety']},
-  {k:'change', e:'🔄', t:'A big life change is coming', goals:['home','family','business']}, {k:'curious', e:'👀', t:'Just curious'}, {k:'other', e:'✏️', t:'Something else'}];
+const WHY = [{k:'track', e:'🧭', t:'Where I stand'}, {k:'home', e:'🏡', t:'Home & mortgage', goals:['home']},
+  {k:'safety', e:'🛟', t:'Emergency fund', goals:['safety']}, {k:'retire', e:'🌅', t:'Retirement plan', goals:['retire']},
+  {k:'invest', e:'📈', t:'Save & invest', goals:['wealth']}, {k:'change', e:'🔄', t:'Big life change', goals:['home','family','business']},
+  {k:'curious', e:'👀', t:'Just exploring'}];
 const DISC_FORMAL = 'This tool is designed to help you explore your preferences. It does not replace a formal suitability or risk assessment where financial advice is provided.';
 
 /* Goal tiles: DISC Q11 order, word for word */
@@ -3395,10 +3396,10 @@ V.D0 = () => ({id:'D0', note:'Cover (layout v21, 11 Oct 2026): calm, round. Bran
   '<h2 tabindex="-1">The life you\'d like, mapped out.</h2><p class="cover-line">A life map that guides you, step by step.</p>' +
   '<button class="wbtn" data-a="go" data-p="D1">Let\'s start</button><p class="cover-under c3links"><button class="link" data-a="sheet" data-p="invite">I have an invite</button><span aria-hidden="true">·</span><button class="link" data-a="sheet" data-p="whyask">Why we ask</button></p></div></div>'});
 V.D1 = () => ({id:'D1', note:'Optional, multi-select life-moment chips (MASTER B5; Pooja 1 Oct). They quietly reorder the suggested goal tiles. “Something else” opens an optional few-words field (max 60). One skippable screen.', kind:'quiz', html:
-  '<div class="qtop"><button class="qx" data-a="go" data-p="D0" aria-label="Back">‹</button><span style="flex:1"></span></div><div class="qbody"><div class="qeye">Before we start</div><h2 tabindex="-1">What brings you to LifeMap today?</h2><p class="qsub">Pick any that fit. We\'ll shape your plan around them.</p><div class="chips" role="group" aria-label="What brings you to LifeMap today?">' +
+  '<div class="qtop"><button class="qx" data-a="go" data-p="D0" aria-label="Back">‹</button><span style="flex:1"></span></div><div class="qbody"><div class="qeye">Before we start</div><h2 tabindex="-1">What brings you to LifeMap?</h2><p class="qsub">Choose what fits. We\'ll build your plan around your goals.</p><div class="chips" role="group" aria-label="What brings you to LifeMap?">' +
   WHY.map(w => '<button class="chip' + (S.why.includes(w.k) ? ' sel' : '') + '" aria-pressed="' + S.why.includes(w.k) + '" data-a="why" data-p="' + w.k + '"><span aria-hidden="true">' + w.e + '</span>' + esc(w.t) + '</button>').join('') + '</div>' +
   (S.why.includes('other') ? '<div class="field" style="margin:14px 0 0"><label for="why-note">Tell us in a few words <span class="small" style="font-weight:600">Optional</span></label><input class="in" id="why-note" data-whynote="1" maxlength="60" autocomplete="off" placeholder="e.g. Planning a move abroad" value="' + esc(S.whyNote) + '"></div>' : '') + '</div>' +
-  '<div class="qfoot"><button class="qback" data-a="dstart">Skip</button><button class="wbtn" data-a="dstart"' + (S.why.length ? '' : ' disabled') + '>Next</button></div>'});
+  '<div class="qfoot"><button class="qback" data-a="dstart">Skip for now</button><button class="wbtn" data-a="dstart"' + (S.why.length ? '' : ' disabled') + '>Continue</button></div>'});
 /* v14: small illustrated scenes for the road question (motorway → Healy Pass), drawn in the app colours */
 const ROAD_ART = [
   '<svg viewBox="0 0 56 56" width="56" height="56"><rect width="56" height="56" rx="16" fill="#E3F2F5"/><circle cx="43" cy="14" r="5" fill="#7DEBD8"/><path d="M0 34h56v22H0z" fill="#BFE3D6"/><path d="M22 34h12l10 22H12z" fill="#5B6B76"/><path d="M28 36v3M28 42v4M28 49v5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
