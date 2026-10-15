@@ -309,7 +309,6 @@ input[type=range]{width:100%;accent-color:var(--sea-d);height:32px}
 .term .tg{font-size:12px;font-weight:800;color:var(--storm-t);letter-spacing:.01em}.term .tm{font-size:13.5px;color:var(--ink);line-height:1.4}
 .tsec{margin-top:10px}.tsec:first-child{margin-top:4px}
 .opt.row1 .rcol{display:flex;flex-direction:column;align-items:flex-start;gap:6px;flex:1;min-width:0}.opt.row1 .rcol svg{width:100%;max-width:220px;height:24px}
-.opt:not(.sel) .otag{display:none}   /* usability review 11 Oct 2026: labels like 'Panic selling' steer answers */
 .opt .otag{font-size:11.5px;font-weight:800;color:var(--storm-t);background:var(--storm-l);border-radius:999px;padding:2px 8px;line-height:1.3}
 /* §12 plan builder + Explore (ported from Lifecast, restyled in our tokens) */
 .pbbar{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:10px 0 2px}.pbbar i{height:5px;border-radius:3px;background:rgba(11,37,69,.12)}.pbbar i.done{background:var(--sea-d)}.pbbar i.on{background:var(--sun)}.pbbar i.skip{background:repeating-linear-gradient(90deg,var(--sea-d) 0 3px,transparent 3px 6px)}
@@ -2182,6 +2181,15 @@ body.desk #main > .card{max-width:820px}
 .chips.wgrid .chip.wtile{height:clamp(116px,19dvh,164px);min-height:0;border-radius:22px;padding:14px 14px 13px;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;font-size:16px;line-height:1.2;font-weight:600;text-align:left;position:relative;white-space:normal;display:flex}
 .wtile .wem{font-size:34px;line-height:1}
 .wtile.sel::after{content:"✓";position:absolute;top:11px;right:11px;width:22px;height:22px;border-radius:11px;background:#fff;color:var(--black,#0E1A23);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+/* discover questions: the 'tap to continue' line sits right under the question; behaviour terms stay visible under each answer */
+.qtap{margin:2px 0 12px;font-size:13px;font-weight:600;color:var(--muted,#5B6B76);text-align:center;letter-spacing:.01em}
+.qtap::before{content:"👆";margin-right:6px}
+/* behaviour terms sit under the answer on every row, selected or not */
+.qcenter .opt.row1:has(> .otag){display:grid!important;grid-template-columns:auto minmax(0,1fr);column-gap:14px;row-gap:3px;align-items:center;text-align:left}
+.qcenter .opt.row1:has(> .otag) > .em{grid-row:1 / span 2}
+.qcenter .opt.row1:has(> .otag) > .tx{align-self:end}
+.qcenter .opt.row1:has(> .otag) > .otag{align-self:start;justify-self:start}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3420,8 +3428,8 @@ V.DQ = () => { const q = DISC6[S.di], v = S.ans[q.id];
   body += '<div class="opts' + (long ? '' : ' two') + '" role="group" aria-label="Answers">' + q.o.map((o, k) => '<button class="opt' + (long ? ' row1' : '') + (v === k ? ' sel' : '') + '" aria-pressed="' + (v === k) + '" data-a="dpick" data-p="' + k + '">' + (q.type === 'ride' && ROAD_ART[k] ? '<span class="em road" aria-hidden="true">' + ROAD_ART[k] + '</span>' : '<span class="em" style="background:' + ['var(--sun-l)','var(--sky-l)','var(--sea-l)','var(--storm-l)','#FDE3DC'][k % 5] + '" aria-hidden="true">' + o.e + '</span>') + (long && q.type === 'ride' ? '<span class="rcol">' : '') + '<span class="tx">' + esc(o.t) + '</span>' + (o.tag ? '<span class="otag">◆ ' + esc(o.tag) + '</span>' : '') +
     (q.type === 'ride' ? '<svg width="100%" height="30" viewBox="0 0 140 50" preserveAspectRatio="none" aria-hidden="true"><path d="' + o.path + '" fill="none" stroke="var(--sea-d)" stroke-width="3" stroke-linecap="round"/></svg>' : '') + (long && q.type === 'ride' ? '</span>' : '') + '</button>').join('') + '</div>';
   return {id:'D' + (S.di + 2), note:'Discover question ' + (S.di + 1) + ' of 6 (DISC Q' + q.id + ', verbatim). One tap advances. Lifecast term shown as a tag on each answer (§12).', kind:'quiz', html:
-    '<div class="qtop">' + chapBar() + '<button class="qx" data-a="go" data-p="D0" aria-label="Close and go to start">✕</button></div><div class="qbody qcenter"><div class="qmeta"><div class="qcount">Question <b>' + (S.di + 1) + ' of 6</b></div><div class="qeye">' + CHAPTERS[q.act] + '</div></div><div class="qart" aria-hidden="true" style="background-image:var(--' + ({1:'art-savings', 2:'art-investing', 3:'art-rain', 4:'art-map', 5:'art-pension'}[q.act] || 'art-savings') + ')"><i></i><i></i><i></i></div><h2 tabindex="-1">' + esc(q.q) + '</h2><p class="qsub">' + esc(q.sub) + '</p>' + body + '</div>' +
-    '<div class="qfoot"><button class="qback" data-a="dprev">← Back</button><span class="qhint">Tap an answer to continue</span><button class="qback" data-a="dnext">Skip</button></div>'};
+    '<div class="qtop">' + chapBar() + '<button class="qx" data-a="go" data-p="D0" aria-label="Close and go to start">✕</button></div><div class="qbody qcenter"><div class="qmeta"><div class="qcount">Question <b>' + (S.di + 1) + ' of 6</b></div><div class="qeye">' + CHAPTERS[q.act] + '</div></div><div class="qart" aria-hidden="true" style="background-image:var(--' + ({1:'art-savings', 2:'art-investing', 3:'art-rain', 4:'art-map', 5:'art-pension'}[q.act] || 'art-savings') + ')"><i></i><i></i><i></i></div><h2 tabindex="-1">' + esc(q.q) + '</h2><p class="qsub">' + esc(q.sub) + '</p><p class="qtap">Tap an answer to continue</p>' + body + '</div>' +
+    '<div class="qfoot"><button class="qback" data-a="dprev">← Back</button><span class="qhint"></span><button class="qback" data-a="dnext">Skip</button></div>'};
 };
 function stepper(a, p, value, label){ return '<div class="stepper" role="group" aria-label="' + esc(label) + '"><button data-a="' + a + '" data-p="' + p + '|-1" aria-label="Less">−</button><output aria-live="polite">' + value + '</output><button data-a="' + a + '" data-p="' + p + '|1" aria-label="More">+</button></div>'; }
 V.DR = () => { if (!discEnough()){ const first = DISC6.findIndex(q => typeof S.ans[q.id] !== 'number');
