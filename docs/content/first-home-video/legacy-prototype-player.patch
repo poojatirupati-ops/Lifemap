@@ -1,0 +1,199 @@
+diff --git a/Lifecast User Jouney Prototype.html b/Lifecast User Jouney Prototype.html
+index f947da8..2cf024b 100644
+--- a/Lifecast User Jouney Prototype.html	
++++ b/Lifecast User Jouney Prototype.html	
+@@ -1,4 +1,4 @@
+-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lifecast Prototype</title>
++<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LifeMap Prototype</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+ <style>:root{
+   --ink:#0E2F33;--ink2:#1B4A50;--muted:#4A6568;--line:#DCE6E1;--mist:#F2F6F3;--card:#FFFFFF;
+@@ -170,6 +170,19 @@ input[type=range]{width:100%;accent-color:var(--sea);height:30px}
+ .player.on .ctl .tr i{animation:vp 30s linear forwards}
+ @keyframes vp{from{width:8%}to{width:100%}}
+ @media (prefers-reduced-motion:reduce){.player.on .ctl .tr i{animation:none;width:40%}}
++.player.real{background:#0B1F22;box-shadow:0 10px 26px rgba(14,47,51,.22)}
++.player.real video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0B1F22;cursor:pointer}
++.player.real video::cue{background:rgba(8,24,27,.78);color:#fff;font-family:Figtree,system-ui,sans-serif;font-size:13px;line-height:1.3}
++.player.real .play{position:relative;z-index:2;transition:opacity .2s,transform .2s}
++.player.real:hover .play{transform:scale(1.05)}
++.player.real.playing .play{opacity:0;pointer-events:none}
++.player.real .ctl{z-index:3;left:0;right:0;bottom:0;padding:22px 12px 9px;background:linear-gradient(180deg,rgba(8,24,27,0),rgba(8,24,27,.7))}
++.player.real .ctl .tr{position:relative;height:5px;overflow:visible;cursor:pointer;outline-offset:6px}
++.player.real .ctl .tr::before{content:'';position:absolute;left:0;right:0;top:-9px;bottom:-9px}
++.player.real .ctl .tr i{width:0%;border-radius:3px}
++.player.real .cbtn{background:none;border:0;color:#fff;font:inherit;font-weight:800;cursor:pointer;padding:3px 4px;border-radius:6px;min-width:28px}
++.player.real .cbtn[aria-pressed="false"]{opacity:.5;text-decoration:line-through}
++.player.real .cbtn:focus-visible,.player.real .play:focus-visible,.player.real .tr:focus-visible{outline:2px solid var(--sun)}
+ .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#fff;background:var(--coral);border-radius:999px;padding:3px 9px}
+ .live::before{content:'';width:7px;height:7px;border-radius:4px;background:#fff}
+ .side .thm{display:flex;align-items:center;gap:10px}
+@@ -202,7 +215,7 @@ input[type=range]{width:100%;accent-color:var(--sea);height:30px}
+ .side .big{background:var(--ink);color:#fff;text-align:center;font-weight:700;margin-bottom:6px}.side .big:hover{background:var(--ink2)}
+ .side .big.alt{background:var(--sun);color:var(--ink)}
+ </style></head><body><aside class="side">
+-<h1><span class="mark"></span><span id="brandname">Lifecast</span></h1>
++<h1><span class="mark"></span><span id="brandname">LifeMap</span></h1>
+ <p><b>See your future. Fix the gaps.</b><br>Clickable prototype. Screen IDs match the user manual (Word) and screen list (Excel).</p>
+ <button class="big" id="startnew">▶ Start as a new customer</button>
+ <button class="big alt" id="startret">↺ Open as returning customer (Aoife, 32)</button>
+@@ -495,11 +508,11 @@ const ASSESS = [
+       {t:"I'd rather not set them", em:'🌀', w:{avoid:1}} ]}
+   ],
+   profiles:{
+-    organised:{name:'Organised Planner', line:'You stay on top of money admin and plan ahead. Things rarely catch you by surprise.', strengths:['Consistent','Prepared for the unexpected'], watch:'A very tidy system can make it easy to miss the bigger picture, like whether your goals still fit your life.', tryThis:'Book one annual LifeGoals review to check the big picture.', tool:'goalplanner'},
++    organised:{name:'Organised Planner', line:'You stay on top of money admin and plan ahead. Things rarely catch you by surprise.', strengths:['Consistent','Prepared for the unexpected'], watch:'A very tidy system can make it easy to miss the bigger picture, like whether your goals still fit your life.', tryThis:'Book one annual LifeMap review to check the big picture.', tool:'goalplanner'},
+     goal:{name:'Goal Driven', line:'You set clear goals with dates and amounts, and you work towards them.', strengths:['Motivated by clear targets','Great at following through'], watch:'Goals need protecting too. Check that illness or a job change would not derail them.', tryThis:'Check your income protection gap.', tool:'incomegap'},
+     ontrack:{name:'Mostly on Track', line:'You keep a reasonable eye on things, with a few areas that could use a little attention.', strengths:['Aware of your money','Adaptable'], watch:'Reviews of pensions or insurance can slip down the list.', tryThis:'Find your monthly surplus: it is the base for every goal.', tool:'surplus'},
+     flex:{name:'Flexible Spender', line:'You enjoy spending in the moment and adapt as you go.', strengths:['Enjoys life','Responds quickly to change'], watch:'Without a plan, saving can end up as "whatever is left".', tryThis:'Try "save first": see what a small automatic amount grows into.', tool:'compound'},
+-    reactive:{name:'Reactive Manager', line:'You tend to deal with financial decisions when they become relevant, rather than planning far ahead.', strengths:['Flexible','Responsive'], watch:'Important financial reviews can be delayed.', tryThis:'Set one annual LifeGoals review.', tool:'emergency'},
++    reactive:{name:'Reactive Manager', line:'You tend to deal with financial decisions when they become relevant, rather than planning far ahead.', strengths:['Flexible','Responsive'], watch:'Important financial reviews can be delayed.', tryThis:'Set one annual LifeMap review.', tool:'emergency'},
+     avoid:{name:'Financial Avoider', line:'Money admin is not your favourite thing, so it often waits until it is pressing. That is very common.', strengths:['Calm under pressure','Not driven by money worries day to day'], watch:'Small things left alone, like old pensions or renewals, can quietly cost more over time.', tryThis:'Take one small step: know your monthly number.', tool:'surplus'}
+   },
+   compute(ans){
+@@ -633,7 +646,7 @@ const ASSESS = [
+ // ---------------------------------------------------------------- 7
+ { id:'resilience', name:'Financial Resilience', short:'Financial resilience', group:'Where I stand', mins:2, em:'🧱', color:'var(--c7)', kind:'custom',
+   why:'How prepared are you for the unexpected? This checks your financial foundations. It is not a credit score.',
+-  get:['Your LifeGoals Financial Foundations','What is strong and what needs attention','The one foundation to focus on first'],
++  get:['Your LifeMap Financial Foundations','What is strong and what needs attention','The one foundation to focus on first'],
+   qs:[
+     { h:'How many months could you cover essential bills from savings?', f:'ef', o:[{t:'Less than 1',em:'🥚',sc:0},{t:'1–3',em:'🐣',sc:1},{t:'3–6',em:'🐥',sc:2},{t:'6+',em:'🦅',sc:3}]},
+     { h:'At the end of a typical month, you have…', f:'cf', o:[{t:'Less than nothing',em:'📉',sc:0},{t:'About nothing',em:'➖',sc:1},{t:'A little left over',em:'👍',sc:2},{t:'A healthy amount left',em:'💪',sc:3}]},
+@@ -719,15 +732,15 @@ const ASSESS = [
+   } },
+ // ---------------------------------------------------------------- 10
+ { id:'planning', name:'Decision Style', short:'Planning style', group:'Who I am', mins:2, em:'🗺️', color:'var(--c2)', kind:'blend',
+-  why:'How do you like to make financial decisions? Your answer changes how LifeGoals presents things to you.',
+-  get:['Your planning and decision style','How LifeGoals will adapt to it','The right mix of tools, guidance and experts'],
++  why:'How do you like to make financial decisions? Your answer changes how LifeMap presents things to you.',
++  get:['Your planning and decision style','How LifeMap will adapt to it','The right mix of tools, guidance and experts'],
+   dims:[{k:'ind',label:'Independent'},{k:'guided',label:'Guided'},{k:'detail',label:'Detail'},{k:'quick',label:'Quick'},{k:'collab',label:'Collaborative'}],
+   qs:[
+     { h:'When making an important financial decision, do you prefer to…', o:[{t:'Research everything myself',em:'🔬',w:{ind:2}},{t:'Understand the basics, then speak to an expert',em:'🧑‍🏫',w:{guided:2}},{t:'Speak to an expert first',em:'📞',w:{guided:1,collab:1}},{t:'Compare several options carefully',em:'⚖️',w:{detail:2}},{t:'Keep things as simple as possible',em:'✨',w:{quick:2}}]},
+-    { h:'When LifeGoals shows you a result, what do you want first?', o:[{t:'The headline answer',em:'📰',w:{quick:2}},{t:'A clear explanation with an example',em:'💡',w:{guided:2}},{t:'All the numbers and assumptions',em:'📊',w:{detail:2}},{t:'Tools to explore it myself',em:'🧰',w:{ind:2}}]},
++    { h:'When LifeMap shows you a result, what do you want first?', o:[{t:'The headline answer',em:'📰',w:{quick:2}},{t:'A clear explanation with an example',em:'💡',w:{guided:2}},{t:'All the numbers and assumptions',em:'📊',w:{detail:2}},{t:'Tools to explore it myself',em:'🧰',w:{ind:2}}]},
+     { h:'Who else is involved in your money decisions?', o:[{t:'Just me',em:'🙋',w:{ind:1}},{t:'My partner and I decide together',em:'👫',w:{collab:2}},{t:'Family or friends I trust',em:'👪',w:{collab:1}},{t:'A professional adviser',em:'🤝',w:{guided:1}}]},
+     { h:'How long do you usually take over a big money decision?', o:[{t:'I decide quickly',em:'⚡',w:{quick:2}},{t:'A few days',em:'📆',w:{guided:1}},{t:'Weeks. I like to be sure',em:'🧐',w:{detail:2}},{t:'Until someone helps me decide',em:'🤲',w:{collab:1,guided:1}}]},
+-    { h:'Which would you use most in LifeGoals?', o:[{t:'Calculators and tools',em:'🧮',w:{ind:2}},{t:'Step-by-step guidance',em:'👣',w:{guided:2}},{t:'Detailed reports',em:'📑',w:{detail:2}},{t:'Talking to an expert',em:'💬',w:{collab:1,guided:1}}]}
++    { h:'Which would you use most in LifeMap?', o:[{t:'Calculators and tools',em:'🧮',w:{ind:2}},{t:'Step-by-step guidance',em:'👣',w:{guided:2}},{t:'Detailed reports',em:'📑',w:{detail:2}},{t:'Talking to an expert',em:'💬',w:{collab:1,guided:1}}]}
+   ],
+   profiles:{
+     ind:{name:'Independent Explorer', line:'You like to explore and work things out yourself.', strengths:['Self-motivated','Comfortable with tools'], watch:'Doing it all yourself can mean missing a blind spot an expert would catch.', tryThis:'Jump into the calculators. We will put tools first for you.', tool:'compound', ux:'We will put tools and calculators first.'},
+@@ -741,8 +754,8 @@ const ASSESS = [
+ ];
+ const A = id => ASSESS.find(a => a.id === id);
+ 
+-// ===== Lifecast prototype · core =====
+-let BRAND = 'Lifecast';
++// ===== LifeMap prototype · core =====
++let BRAND = 'LifeMap';
+ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const WX = {sunny:'☀️', showers:'🌦️', storm:'⛈️'};
+ const WXL = {sunny:'On track', showers:'Needs a nudge', storm:'Needs attention'};
+@@ -1116,7 +1129,7 @@ function sheet(){ const s = S.sheet; if (!s) return ''; let h = '';
+   return '<div class="sheet-bg" data-a="closesheet"><div class="sheet" data-a="noop"><div class="grab"></div><button class="sx" data-a="closesheet" aria-label="Close">✕</button>' + h + '</div></div>';
+ }
+ function aiAnswer(q){ const t = q.toLowerCase(), fc = forecast(S.plan), w = worstGoal(), r = fc.g[w.id], l = levers(w)[0];
+-  if (/should i|shares|which fund|invest in/.test(t)) return 'Lifecast never recommends. Only a qualified adviser who knows your full situation can do that. I can show what your forecast looks like, or <b>match you with an investment expert</b>.';
++  if (/should i|shares|which fund|invest in/.test(t)) return 'LifeMap never recommends. Only a qualified adviser who knows your full situation can do that. I can show what your forecast looks like, or <b>match you with an investment expert</b>.';
+   if (/lever|what-if/.test(t)) return 'The what-if with the biggest effect: <b>' + esc(l.label) + '</b>. It would take ' + esc(w.name.toLowerCase()) + ' from ' + l.from + '% to ' + l.to + '% ready.';
+   if (/mean|money story|explorer|achiever|balancer|contented/.test(t) && S.dres) return '<b>' + S.dres.P.name + '</b>: ' + S.dres.P.strap + ' Your answers also showed ' + (S.dres.traits.join(', ') || 'balanced decision patterns') + '. It shapes the tools and tone you see, not the numbers.';
+   return esc(w.name) + ' is ' + r.pct + '% ready because about ' + eur(r.monthly) + ' a month is going towards it and ' + whenText(w, r).toLowerCase() + ', later than your target of age ' + w.age + '. ' + (l ? 'The what-if with the biggest effect: ' + esc(l.label.toLowerCase()) + ' (' + l.from + '% → ' + l.to + '%).' : '');
+@@ -1127,6 +1140,24 @@ function screen(){
+   if (S.onb) { const fn = ONB[S.onb]; return fn(); }
+   const c = cur(); return (V[c.v] || V.home)(c.p);
+ }
++function initPlayer(){
++  const v = document.getElementById('vid'); if (!v) return;
++  const pl = document.getElementById('pl'), big = document.getElementById('vbig'), tt = document.getElementById('vt'), tr = document.getElementById('vtr'), pr = document.getElementById('vpr'), du = document.getElementById('vd'), cc = document.getElementById('vcc'), sp = document.getElementById('vsp');
++  const fm = x => { x = Math.max(0, Math.floor(x || 0)); return Math.floor(x / 60) + ':' + String(x % 60).padStart(2, '0'); };
++  const speeds = [1, 1.25, 1.5, 0.75]; let si = 0;
++  const toggle = () => { if (v.paused) { if (v.ended) v.currentTime = 0; v.play(); } else v.pause(); };
++  big.addEventListener('click', toggle); v.addEventListener('click', toggle);
++  v.addEventListener('play', () => { pl.classList.add('playing'); big.setAttribute('aria-label', 'Pause video'); });
++  v.addEventListener('pause', () => { pl.classList.remove('playing'); big.setAttribute('aria-label', 'Play video'); });
++  v.addEventListener('ended', () => { pl.classList.remove('playing'); });
++  v.addEventListener('loadedmetadata', () => { du.textContent = fm(v.duration); });
++  v.addEventListener('timeupdate', () => { const p = v.duration ? v.currentTime / v.duration * 100 : 0; pr.style.width = p + '%'; tt.textContent = fm(v.currentTime); tr.setAttribute('aria-valuenow', Math.round(p)); });
++  tr.addEventListener('click', e => { const r = tr.getBoundingClientRect(); if (v.duration) v.currentTime = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * v.duration; });
++  tr.addEventListener('keydown', e => { if (e.key === 'ArrowRight') { v.currentTime = Math.min(v.duration || 0, v.currentTime + 5); e.preventDefault(); } if (e.key === 'ArrowLeft') { v.currentTime = Math.max(0, v.currentTime - 5); e.preventDefault(); } });
++  const setCC = on => { for (const t of v.textTracks) t.mode = on ? 'showing' : 'hidden'; cc.setAttribute('aria-pressed', on ? 'true' : 'false'); };
++  cc.addEventListener('click', () => setCC(cc.getAttribute('aria-pressed') !== 'true')); setCC(true);
++  sp.addEventListener('click', () => { si = (si + 1) % speeds.length; v.playbackRate = speeds[si]; sp.textContent = speeds[si] + '×'; });
++}
+ function render(resetScroll){
+   const ph = document.getElementById('phone'), sc0 = ph.querySelector('.scroll,.qbody'), top0 = sc0 ? sc0.scrollTop : 0, lw0 = ph.querySelector('#lmwrap'), lx = lw0 ? lw0.scrollLeft : 0;
+   const s = screen(); let html;
+@@ -1140,13 +1171,15 @@ function render(resetScroll){
+   ph.innerHTML = html;
+   const sc = ph.querySelector('.scroll,.qbody'); if (sc && !resetScroll) sc.scrollTop = top0;
+   const lw = ph.querySelector('#lmwrap'); if (lw) lw.scrollLeft = resetScroll ? 0 : lx;
+-  bind(); document.querySelectorAll('[data-jump]').forEach(b => b.classList.toggle('on', b.dataset.id === s.id));
++  bind(); initPlayer(); document.querySelectorAll('[data-jump]').forEach(b => b.classList.toggle('on', b.dataset.id === s.id));
+   document.getElementById('curid').textContent = s.id + ' · ' + s.note;
+ }
+ 
+ // ===== Watch: short videos + live expert sessions =====
+ const VIDEOS = [
+-  {id:'v1', t:'Your first home: deposit to keys', mins:3, kind:'mortgage', who:'Niamh Byrne · Mortgage expert', tool:'deposit', cc:'Most buyers need a 10% deposit. Here’s how to get there faster…'},
++  {id:'v1', t:'Your first home: deposit to keys', mins:1, kind:'mortgage', who:'Example video · Mortgage guide', tool:'deposit', cc:'Most buyers need a 10% deposit. Here’s how to get there faster…',
++   src:'videos/first-home-deposit-to-keys.mp4', webm:'videos/first-home-deposit-to-keys.webm', poster:'videos/first-home-deposit-to-keys-poster.jpg', vtt:'videos/first-home-deposit-to-keys.vtt', dur:'0:53',
++   transcript:'Buying your first home in Ireland? Stop. Watch this before you sign anything. One. You can borrow up to four times your income, with a ten percent deposit. But choose a repayment you can sleep on. Two. Add stamp duty, legal fees and a survey to your budget. Three. Claim every benefit: Help to Buy, and the First Home Scheme. Four. Fixed gives certainty, variable can move. Five. Get approval in principle before you view a single house. Six. Protect your family with mortgage protection. Do this, and eight months later, you’re holding the keys. Time to put the kettle on.'},
+   {id:'v2', t:'Pensions made simple: tax relief explained', mins:3, kind:'pension', who:'Conor Walsh · Pension expert', tool:'retirement', cc:'For every €100 you pay in, the real cost to you can be much less…'},
+   {id:'v3', t:'How much emergency money do you need?', mins:2, kind:'planner', who:'Aisling Doyle · Financial planner', tool:'emergency', cc:'A simple rule: three to six months of your essential spending…'},
+   {id:'v4', t:'Protecting your family, simply', mins:3, kind:'protection', who:'Mark Byrne · Protection expert', tool:'lifecover', cc:'If your income stopped tomorrow, what would keep your plan going?…'},
+@@ -1157,10 +1190,11 @@ const LIVE = [['Thu 7pm','First-time buyers: your questions answered','mortgage'
+ const VKIND = {mortgage:'Mortgages', pension:'Pensions', planner:'Savings & money', protection:'Protection', investment:'Investing'};
+ const VID = id => VIDEOS.find(v => v.id === id);
+ function videosForYou(){ const kinds = S.plan.goals.map(g => g.kind), w = worstGoal(); return VIDEOS.slice().sort((a, b) => (b.kind === w.kind) * 2 + kinds.includes(b.kind) - ((a.kind === w.kind) * 2 + kinds.includes(a.kind))); }
+-function vThumb(v, grid){ return '<button class="vthumb" style="' + (grid ? 'min-height:150px' : 'flex-shrink:0;width:172px;min-height:150px') + '" data-a="video" data-p="' + v.id + '"><span class="play">▶</span><span class="len">' + v.mins + ' min</span><b>' + esc(v.t) + '</b><small>' + esc(v.who.split(' · ')[1]) + '</small></button>'; }
++const POSTERBG = v => v.poster ? ';background:linear-gradient(180deg,rgba(14,47,51,.05) 30%,rgba(14,47,51,.9)),url(' + v.poster + ') center/cover' : '';
++function vThumb(v, grid){ return '<button class="vthumb" style="' + (grid ? 'min-height:150px' : 'flex-shrink:0;width:172px;min-height:150px') + POSTERBG(v) + '" data-a="video" data-p="' + v.id + '"><span class="play">▶</span><span class="len">' + v.mins + ' min</span><b>' + esc(v.t) + '</b><small>' + esc(v.who.split(' · ')[1]) + '</small></button>'; }
+ function watchHTML(){ const vs = videosForYou(), f = vs[0], w = worstGoal();
+   return '<div class="sec"><h3>Watch · picked for you</h3><button class="link" data-a="videos">All videos</button></div>' +
+-   '<button class="vthumb" style="width:100%;min-height:180px" data-a="video" data-p="' + f.id + '"><span class="play">▶</span><span class="len">' + f.mins + ' min</span><small style="margin:0 0 4px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px">Because ' + esc(w.name.toLowerCase()) + ' needs a nudge</small><b style="font-size:18px">' + esc(f.t) + '</b><small>' + esc(f.who) + '</small></button>' +
++   '<button class="vthumb" style="width:100%;min-height:180px' + POSTERBG(f) + '" data-a="video" data-p="' + f.id + '"><span class="play">▶</span><span class="len">' + f.mins + ' min</span><small style="margin:0 0 4px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px">Because ' + esc(w.name.toLowerCase()) + ' needs a nudge</small><b style="font-size:18px">' + esc(f.t) + '</b><small>' + esc(f.who) + '</small></button>' +
+    '<div class="hstrip" style="margin-top:10px">' + vs.slice(1, 5).map(v => vThumb(v)).join('') + '</div>' +
+    '<div class="card row" style="margin-top:10px"><span class="live">LIVE</span><span style="flex:1;min-width:0"><b style="font-size:14px">' + LIVE[0][1] + '</b><br><span style="font-size:12.5px;color:var(--muted)">' + LIVE[0][0] + ' · with a ' + EXPERT_FOR[LIVE[0][2]].toLowerCase() + ' · free</span></span><button class="link" data-a="remind">Remind me</button></div>';
+ }
+@@ -1173,12 +1207,12 @@ V.videos = () => { const f = S.vf || 'all', list = VIDEOS.filter(v => f === 'all
+ };
+ V.video = id => { const v = VID(id), c = C(v.tool), g = S.plan.goals.find(x => x.kind === v.kind), r = g ? forecast(S.plan).g[g.id] : null, next = VIDEOS.filter(x => x.id !== id).slice(0, 3);
+   return {id:'VID-01', note:'Video player: captions on by default, speed control, transcript. Under the video: why it was picked, the matching tool (pre-filled from the plan) and an expert door. Up next keeps it short.', back:true,
+-  head:'<div class="player' + (S.play ? ' on' : '') + '" style="margin-top:10px"><button class="play" data-a="vplay" aria-label="' + (S.play ? 'Pause' : 'Play') + '">' + (S.play ? '❚❚' : '▶') + '</button>' + (S.play ? '<div class="cc">' + esc(v.cc) + '</div>' : '') + '<div class="ctl"><span>' + (S.play ? '0:14' : '0:00') + '</span><span class="tr"><i></i></span><span>' + v.mins + ':00</span><span>CC</span><span>1×</span></div></div>',
+-  html:'<h2 class="t" style="font-size:22px;margin:4px 0">' + esc(v.t) + '</h2><div style="font-size:13.5px;color:var(--muted)">' + esc(v.who) + ' · ' + v.mins + ' min · ' + VKIND[v.kind] + '</div>' +
++  head:v.src ? '<div class="player real" id="pl" style="margin-top:10px"><video id="vid" playsinline preload="metadata" poster="' + v.poster + '" aria-label="' + esc(v.t) + '"><source src="' + v.src + '" type="video/mp4"><source src="' + v.webm + '" type="video/webm"><track kind="captions" srclang="en" label="English" src="' + v.vtt + '" default></video><button class="play" id="vbig" aria-label="Play video">▶</button><div class="ctl"><span id="vt">0:00</span><span class="tr" id="vtr" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="vpr"></i></span><span id="vd">' + v.dur + '</span><button class="cbtn" id="vcc" aria-pressed="true" aria-label="Captions">CC</button><button class="cbtn" id="vsp" aria-label="Playback speed">1×</button></div></div>' : '<div class="player' + (S.play ? ' on' : '') + '" style="margin-top:10px"><button class="play" data-a="vplay" aria-label="' + (S.play ? 'Pause' : 'Play') + '">' + (S.play ? '❚❚' : '▶') + '</button>' + (S.play ? '<div class="cc">' + esc(v.cc) + '</div>' : '') + '<div class="ctl"><span>' + (S.play ? '0:14' : '0:00') + '</span><span class="tr"><i></i></span><span>' + v.mins + ':00</span><span>CC</span><span>1×</span></div></div>',
++  html:'<h2 class="t" style="font-size:22px;margin:4px 0">' + esc(v.t) + '</h2><div style="font-size:13.5px;color:var(--muted)">' + esc(v.who) + ' · ' + (v.dur ? '53 sec' : (v.mins + ' min')) + ' · ' + VKIND[v.kind] + '</div>' +
+    (g ? '<div class="card" style="margin-top:12px;background:var(--sea-l)"><b style="font-size:14px">Why this is for you</b><div style="font-size:14px;margin-top:4px">Your ' + esc(g.name.toLowerCase()) + ' is ' + r.pct + '% ready ' + WX[r.st] + '. This video shows the quickest ways to improve it.</div></div>' : '') +
+    '<div class="row" style="margin-top:12px"><button class="btn" style="flex:1" data-a="calc" data-p="' + v.tool + '">' + c.em + ' Try ' + esc(c.name) + '</button></div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn ghost" style="flex:1" data-a="expertfor">Talk to an expert</button><button class="btn ghost" style="flex:1" data-a="toast" data-p="Saved to watch later">Save for later</button></div>' +
+-   '<details class="card" style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">Transcript</summary><p style="font-size:14px;line-height:1.55;margin:8px 0 0">' + esc(v.cc) + ' [Full transcript appears here.]</p></details>' +
++   '<details class="card" style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">Transcript</summary><p style="font-size:14px;line-height:1.55;margin:8px 0 0">' + esc(v.transcript || (v.cc + ' [Full transcript appears here.]')) + '</p></details>' +
+    '<div class="sec"><h3>Up next</h3></div><div class="hstrip">' + next.map(x => vThumb(x)).join('') + '</div><p class="disc">Videos explain general topics. They are not personal advice.</p>'};
+ };
+ const ACT_EXTRA = ({
+@@ -1380,12 +1414,12 @@ const JUMPS = [
+     ['EXPT-05', 'Expert recommendations', () => { loadReturning(); S.tab = 'experts'; S.exp.stage = 3; S.stack = [{v:'experts'}, {v:'recs'}]; }],
+     ['EXPT-06', 'Action list', () => { loadReturning(); S.tab = 'experts'; S.stack = [{v:'experts'}]; S.exp.stage = 4; S.exp.actions = RECS.map(r => ({t:r.t, who:r.who, by:r.by, done:false})); }]]],
+   ['Sheets & overlays', [
+-    ['SHT-ASK', 'Ask Lifecast (AI)', () => { loadReturning(); S.sheet = {t:'ask'}; }],
++    ['SHT-ASK', 'Ask LifeMap (AI)', () => { loadReturning(); S.sheet = {t:'ask'}; }],
+     ['SHT-LEVER', 'Try a lever', () => { loadReturning(); S.sheet = {t:'lever', g:1, k:0}; }],
+     ['SHT-EDIT', 'Edit goal', () => { loadReturning(); S.sheet = {t:'edit', g:1}; }],
+     ['SHT-DEL', 'Delete plan', () => { loadReturning(); S.tab = 'plan'; S.stack = [{v:'plan'}]; S.seg = 'hist'; S.sheet = {t:'delplan'}; }],
+     ['SHT-PROFILE', 'Profile & privacy', () => { loadReturning(); S.sheet = {t:'profile'}; }],
+-    ['SHT-MONEY', 'How Lifecast makes money', () => { loadReturning(); S.sheet = {t:'money'}; }]]]
++    ['SHT-MONEY', 'How LifeMap makes money', () => { loadReturning(); S.sheet = {t:'money'}; }]]]
+ ];
+ function side(){
+   document.getElementById('jumps').innerHTML = JUMPS.map((g, gi) => '<div class="grp">' + g[0] + '</div>' + g[1].map((j, k) => '<button data-jump="' + gi + '.' + k + '" data-id="' + j[0] + '"><b style="font-size:11px;opacity:.7;display:inline-block;width:74px">' + j[0] + '</b>' + j[1] + '</button>').join('')).join('');
+@@ -1423,7 +1457,7 @@ const THEMES = [
+   ,{id:'oxblood', name:'Oxblood & Cream', why:'Rich heritage. Deep burgundy with gold on cream.',
+    v:{ink:'#3A0F16',ink2:'#5A1A24',muted:'#6E5A5C',line:'#EEDFDC',mist:'#FAF4F2',sea:'#7A1F2B','sea-d':'#5A1520','sea-l':'#F4E4E4',sun:'#D1A55C','sun-l':'#F6EBD7','acc-d':'#7E5418',sand:'#FCF6EC',q1:'#3A0F16',q2:'#4E1520',q3:'#7A1F2B',qsub:'#E4CFCF',plain1:'#F4E4E4',plain2:'#F8F4EC',mark1:'#EFD29A',mark2:'#D1A55C',mark3:'#7A1F2B'}}
+ ];
+-const NAMES = [['Lifecast','A forecast for your life'],['Plotline','Plot the story of your life'],['Harbour','A safe place for your plans'],['Even Keel','Steady money, whatever comes'],['Yonder','Plan for what’s up ahead'],['Tideway','Go with the flow of life'],['Milemark','Every milestone, mapped']];
++const NAMES = [['LifeMap','Your life, mapped'],['Lifecast','A forecast for your life'],['Plotline','Plot the story of your life'],['Harbour','A safe place for your plans'],['Even Keel','Steady money, whatever comes'],['Yonder','Plan for what’s up ahead'],['Tideway','Go with the flow of life'],['Milemark','Every milestone, mapped']];
+ let THEME = 'navy';
+ function applyTheme(id){ const t = THEMES.find(x => x.id === id); THEME = id; Object.entries(t.v).forEach(([k, v]) => document.documentElement.style.setProperty('--' + k, v)); drawSwitchers(); }
+ function setName(n){ BRAND = n; document.getElementById('brandname').textContent = n; drawSwitchers(); render(); }
