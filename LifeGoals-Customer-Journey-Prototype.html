@@ -2317,6 +2317,19 @@ body.desk .app > .foot > .btn{width:auto!important;min-width:220px;padding-left:
 body.desk .app > .foot > :not(.btn){flex:1 1 100%}
 body.desk .hstrip:has(> .pcard){display:grid!important;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px!important;overflow:visible!important;margin-left:0!important;margin-right:0!important;padding-left:0!important;padding-right:0!important}
 body.desk .hstrip:has(> .pcard) > .pcard{width:auto!important;min-width:0!important}
+/* v101: swipeable focus-area card */
+.xh-card{touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}
+.xh-card.xin-r{animation:xinr .42s var(--ease)}.xh-card.xin-l{animation:xinl .42s var(--ease)}
+@keyframes xinr{from{opacity:0;transform:translateX(40px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes xinl{from{opacity:0;transform:translateX(-40px) scale(.96)}to{opacity:1;transform:none}}
+.xh-back{transition:transform .3s var(--ease)}
+.xh-nav{display:flex;align-items:center;gap:10px;margin:-4px 0 18px}
+.xh-arr{width:36px;height:36px;border-radius:50%;border:1px solid rgba(8,106,116,.14);background:rgba(255,255,255,.85);color:#086A74;font-size:20px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s,transform .2s}
+.xh-arr:hover{background:#EAF7F6;transform:scale(1.06)}
+.xh-dots{display:flex;gap:5px}.xh-dots i{width:6px;height:6px;border-radius:3px;background:rgba(8,106,116,.2);transition:width .3s var(--ease),background .3s}
+.xh-dots i.on{width:18px;background:linear-gradient(90deg,#08D9B8,#0A7A85)}
+.xh-hint{flex:1;text-align:right;font-size:12px;color:#5B6B76;font-weight:600}
+@media (prefers-reduced-motion:reduce){.xh-card.xin-r,.xh-card.xin-l{animation:none}}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5682,7 +5695,22 @@ const TOPIC_PHOTO = {mortgage:'50% 45%', pension:'50% 35%', investing:'50% 50%',
 function xFeature(){ const i = S.xf || 0, t = TOPICS[i], k = TOPIC_ART[t[1]], nx = TOPICS[(i + 1) % TOPICS.length], nk = TOPIC_ART[nx[1]], nt = (TOPIC_TOOLS[t[1]] || []).length, nv = VIDEOS.filter(v => v.kind === t[3]).length;
   return '<div class="chips xchips" role="group" aria-label="Choose an area">' + TOPICS.map((x, j) => '<button class="chip' + (j === i ? ' sel' : '') + '" aria-pressed="' + (j === i) + '" data-a="xfeat" data-p="' + j + '">' + x[1] + '</button>').join('') + '</div>' +
     '<div class="xhero"><span class="xh-back" aria-hidden="true" style="background-image:var(--art-' + nk + ')"></span><button class="xh-card" data-a="topic" data-p="' + t[1] + '" style="--art:var(--art-' + k + ')' + (TOPIC_PHOTO[k] ? ';--pos:' + TOPIC_PHOTO[k] : '') + '"><span class="art" aria-hidden="true"></span><span class="scrim" aria-hidden="true"></span>' +
-    '<span class="xh-tx"><small>' + t[0] + ' Focus area</small><b>' + t[1] + '</b><span class="xh-meta"><span class="xh-pill">' + nt + ' tool' + (nt === 1 ? '' : 's') + '</span>' + (nv ? nv + ' video' + (nv === 1 ? '' : 's') : esc(t[2])) + '</span></span><span class="xh-more"><span>See more</span><span class="xh-go" aria-hidden="true">›</span></span></button></div>'; }
+    '<span class="xh-tx"><small>' + t[0] + ' Focus area</small><b>' + t[1] + '</b><span class="xh-meta"><span class="xh-pill">' + nt + ' tool' + (nt === 1 ? '' : 's') + '</span>' + (nv ? nv + ' video' + (nv === 1 ? '' : 's') : esc(t[2])) + '</span></span><span class="xh-more"><span>See more</span><span class="xh-go" aria-hidden="true">›</span></span></button></div>' +
+    '<div class="xh-nav"><button class="xh-arr" data-a="xswipe" data-p="-1" aria-label="Previous area">‹</button><span class="xh-dots" aria-hidden="true">' + TOPICS.map((x, j) => '<i' + (j === i ? ' class="on"' : '') + '></i>').join('') + '</span><span class="xh-hint" aria-hidden="true">Swipe to explore</span><button class="xh-arr" data-a="xswipe" data-p="1" aria-label="Next area">›</button></div>'; }
+// v101: swipeable focus-area card - drag/swipe, arrows, dots, arrow keys
+function xSwipe(d, fromDrag){ const n = TOPICS.length, c = document.querySelector('.xh-card'); const go = () => { S.xf = ((S.xf || 0) + d + n) % n; render(); const k = document.querySelector('.xh-card'); if (k && !RM()){ k.classList.add(d > 0 ? 'xin-r' : 'xin-l'); setTimeout(() => k.classList.remove('xin-r', 'xin-l'), 450); } };
+  if (!c || RM()) return go(); c.style.transition = 'transform .28s ease, opacity .28s ease'; c.style.transform = 'translateX(' + (d > 0 ? -130 : 130) + '%) rotate(' + (d > 0 ? -14 : 14) + 'deg)'; c.style.opacity = '0'; setTimeout(go, fromDrag ? 220 : 240); }
+(() => { let st = null;
+  document.addEventListener('pointerdown', e => { const c = e.target.closest && e.target.closest('.xh-card'); if (!c || e.button > 0) return; st = {x:e.clientX, y:e.clientY, c, dx:0, drag:false, id:e.pointerId}; });
+  document.addEventListener('pointermove', e => { if (!st || e.pointerId !== st.id) return; const dx = e.clientX - st.x, dy = e.clientY - st.y;
+    if (!st.drag){ if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) { if (Math.abs(dy) > 12) st = null; return; } st.drag = true; st.c.style.transition = 'none'; try { st.c.setPointerCapture(e.pointerId); } catch (_) {} }
+    st.dx = dx; st.c.style.transform = 'translateX(' + dx + 'px) rotate(' + dx / 22 + 'deg)'; const b = document.querySelector('.xh-back'); if (b) b.style.transform = 'rotate(' + Math.max(0, 4 - Math.abs(dx) / 30) + 'deg) scale(' + Math.min(1, .96 + Math.abs(dx) / 3000) + ')'; });
+  const end = e => { if (!st) return; const s0 = st; st = null; if (!s0.drag) return; const b = document.querySelector('.xh-back'); if (b) b.style.transform = '';
+    document.addEventListener('click', ev => { ev.stopPropagation(); ev.preventDefault(); }, {capture:true, once:true});   // a drag is not a tap
+    if (Math.abs(s0.dx) > 70) xSwipe(s0.dx < 0 ? 1 : -1, true); else { s0.c.style.transition = 'transform .35s cubic-bezier(.2,.9,.3,1.2)'; s0.c.style.transform = ''; } };
+  document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
+  document.addEventListener('keydown', e => { if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && document.activeElement && document.activeElement.closest && document.activeElement.closest('.xhero')) { e.preventDefault(); xSwipe(e.key === 'ArrowRight' ? 1 : -1); setTimeout(() => { const k = document.querySelector('.xh-card'); if (k) k.focus(); }, 300); } });
+})();
 function topicTile(t){ const k = TOPIC_ART[t[1]]; return '<button class="ttile' + (TOPIC_PHOTO[k] ? ' ph' : '') + '" data-a="topic" data-p="' + t[1] + '" style="--art:var(--art-' + k + ')' + (TOPIC_PHOTO[k] ? ';--pos:' + TOPIC_PHOTO[k] + ';--fx:none' : '') + '"><span class="art" aria-hidden="true"></span>' + TOPIC_FX[k] + '<span class="scrim" aria-hidden="true"></span><span class="em" aria-hidden="true">' + t[0] + '</span><span class="go" aria-hidden="true">›</span><span class="tx"><b>' + t[1] + '</b><span class="s">' + t[2] + '</span></span></button>'; }
 const xTop = () => S.xs[S.xs.length - 1];
 function exploreScreen(){ const t = xTop(); if (!t) return V.XPL(); return V[t.v](t.p); }
@@ -6303,7 +6331,7 @@ const ACT = {
   video:p => { S.play = false; if (S.tab !== 'explore'){ S.tab = 'explore'; S.xs = []; } S.xs.push({v:'VID', p}); lastId = null; render(); },
   vretry:() => { const el = document.getElementById('vid-el'), f = document.getElementById('vid-fail'); if (!el) return; el.hidden = false; if (f) f.hidden = true; el.load(); },
   vplay:() => { S.play = !S.play; focusKey = '[data-a="vplay"]'; render(); }, vfilter:p => { S.vf = p; focusKey = '[data-a="vfilter"][data-p="' + p + '"]'; render(); },
-  remind:() => toast('We\'ll remind you before it starts'), xfeat:p => { S.xf = +p; focusKey = '[data-a="xfeat"][data-p="' + p + '"]'; render(); }, topic:p => { S.xs.push({v:'XTOPIC', p}); lastId = null; render(); },
+  remind:() => toast('We\'ll remind you before it starts'), xfeat:p => { S.xf = +p; focusKey = '[data-a="xfeat"][data-p="' + p + '"]'; render(); }, xswipe:p => xSwipe(+p), topic:p => { S.xs.push({v:'XTOPIC', p}); lastId = null; render(); },
   mpsit:p => { S.mps = +p; S.mpv = 0; S.mpc = null; focusKey = '[data-a="mpsit"][data-p="' + p + '"]'; render(); },
   mpcal:p => { S.mpc = p; focusKey = '[data-a="mpcal"][data-p="' + p + '"]'; render(); },
   mpvid:p => { S.mpv = +p; focusKey = '[data-a="mpvid"][data-p="' + p + '"]'; render(); },
