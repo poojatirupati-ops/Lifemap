@@ -2333,6 +2333,23 @@ body.desk .hstrip:has(> .pcard) > .pcard{width:auto!important;min-width:0!import
 /* v102: smoother swipe */
 .xh-card{backface-visibility:hidden;transform:translate3d(0,0,0)}
 .xh-card:active .art{transform:none}
+/* v103: Experts - compact reminders, adviser profile card */
+.nudge{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px 12px;padding:10px 10px 10px 10px!important;border-radius:18px!important;background:rgba(255,255,255,.78)!important;border:1px solid rgba(8,106,116,.1)!important;color:#182A54!important;font-size:13.5px!important;font-weight:600!important;box-shadow:0 8px 20px -16px rgba(24,42,84,.45)}
+.nudge > span[aria-hidden="true"]:first-child{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#EAF7F6}
+.nudge > span:nth-child(2){min-width:0}
+.nudge .link{margin:0!important;padding:7px 12px!important;border-radius:999px;background:linear-gradient(90deg,#079E98,#0A7A85);color:#fff!important;text-decoration:none!important;font-size:12.5px!important;font-weight:700;white-space:nowrap;min-height:0!important}
+@media (max-width:380px){.nudge{grid-template-columns:auto minmax(0,1fr)}.nudge .link{grid-column:2;justify-self:start}}
+.card.adv2{padding:16px!important}
+.av2-top{display:flex;align-items:center;gap:14px}
+.av2-face{position:relative;width:64px;height:64px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;background:linear-gradient(145deg,#08D9B8,#0B5880);box-shadow:0 0 0 4px #fff,0 0 0 6px rgba(8,217,184,.35),0 10px 22px -10px rgba(24,42,84,.5)}
+.av2-on{position:absolute;right:2px;bottom:2px;width:13px;height:13px;border-radius:50%;background:#16B47E;border:2.5px solid #fff}
+.av2-id{display:flex;flex-direction:column;gap:2px;min-width:0}
+.av2-tag{font:700 10.5px/1.2 var(--fm);letter-spacing:.08em;text-transform:uppercase;color:#086A74}
+.av2-id b{font-size:18px;color:#182A54}
+.av2-id > span:last-child{font-size:13px;color:#5B6B76}
+.av2-chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+.av2-chips span{padding:5px 10px;border-radius:999px;background:#F2F8F8;color:#182A54;font-size:12.5px;font-weight:600}
+.av2-why{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;padding:10px 12px;border-radius:14px;background:#EAF7F6;font-size:13px;color:#182A54}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -6009,7 +6026,9 @@ function specialist(){ const P = project(), w = S.goals.slice().sort((a, b) => P
 const EXPERT_BLURB = {mortgage:'Buying, switching or paying off a home loan', pension:'Pensions, tax relief and retirement income', protection:'Life cover, income protection, serious illness', investment:'Risk, charges and long-term investing', planner:'Your whole picture: goals, money and plans'}, EXPERT_ICON = {mortgage:'🏡', pension:'🌅', protection:'🛡️', investment:'📈', planner:'🧭'};
 function specBoxes(sp){ return '<div class="sec"><h3>Talk to a specialist</h3></div><div role="group" aria-label="Talk to a specialist">' + Object.entries(EXPERT_FOR).map(([k, x]) => '<button class="goal spec' + (sp.key === k ? ' sel' : '') + '" aria-pressed="' + (sp.key === k) + '" data-a="spec" data-p="' + k + '"><span class="ic" aria-hidden="true">' + EXPERT_ICON[k] + '</span><span style="flex:1;min-width:0"><b>' + x + '</b><br><span class="small">' + EXPERT_BLURB[k] + '</span></span><span class="ck2" aria-hidden="true">✓</span><span class="chev" aria-hidden="true">›</span></button>').join('') + '</div>'; }
 V.EXP = () => { const b = S.book, st = S.exp, A = ADVISERS[b.adv], sp = specialist();
-  const advCard = '<div class="card"><div class="adv"><span class="face" aria-hidden="true">' + A.ini + '</span><div><b style="font-size:17px">' + A.n + '</b><div class="small">' + sp.type + ' · ' + A.q + '</div><div class="small">🗣️ ' + A.lang + ' · 📍 ' + A.loc + ' · ' + A.mode + '</div></div></div><p class="small" style="margin:10px 0 0">' + (sp.picked ? 'You chose a <b>' + sp.type.toLowerCase() + '</b>.' : sp.goal ? 'Matched because <b>' + esc(sp.goal.name.toLowerCase()) + '</b> is where you could gain most.' : 'A financial planner looks at your whole picture.') + ' <span class="pill grey">Sample adviser</span></p></div>';
+  const advCard = '<div class="card adv2"><div class="av2-top"><span class="av2-face" aria-hidden="true">' + A.ini + '<i class="av2-on"></i></span><div class="av2-id"><span class="av2-tag">Your match · sample adviser</span><b>' + A.n + '</b><span>' + sp.type + ' · ' + A.q + '</span></div></div>' +
+      '<div class="av2-chips"><span>🗣️ ' + A.lang + '</span><span>📍 ' + A.loc + '</span><span>💻 ' + A.mode + '</span></div>' +
+      '<p class="av2-why"><span aria-hidden="true">✨</span>' + (sp.picked ? 'You chose a <b>' + sp.type.toLowerCase() + '</b>.' : sp.goal ? 'Matched because <b>' + esc(sp.goal.name.toLowerCase()) + '</b> is where you could gain most.' : 'A financial planner looks at your whole picture.') + '</p></div>';
   const specRow = specBoxes(sp);
   const liveRow = '<div class="sec"><h3>What\'s on · live with experts</h3></div>' + LIVE.map(x => liveCard(x, 'With a ' + EXPERT_FOR[x[2]].toLowerCase(), 'margin-bottom:8px')).join('');
   const planNudge = S.app ? '' : nudge('🗺️', 'Make your plan first so your adviser can see it. You can still book now.', 'Make my plan', 'makeplan');
