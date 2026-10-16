@@ -2286,6 +2286,16 @@ body.desk .xfab.mini{width:52px;right:150px}
 .wgrid .chip.wtile.sel .wem{background:linear-gradient(145deg,#08D9B8,#0B5880)!important}
 .wtile.sel::after{background:linear-gradient(145deg,#08D9B8,#0A7A85)!important;color:#fff!important;top:10px!important;right:10px!important;width:20px!important;height:20px!important;border-radius:10px!important}
 .wgrid .chip.wtile .wtx{text-align:left!important;width:100%}
+/* v99: D1 - calmer two-column rows instead of nine heavy squares */
+.wgrid{grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:18px!important}
+.wgrid .chip.wtile{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;min-height:54px!important;padding:8px 12px 8px 8px!important;gap:10px!important;border-radius:16px!important;background:rgba(255,255,255,.7)!important;border:1px solid rgba(8,106,116,.08)!important;box-shadow:none!important}
+.wgrid .chip.wtile .wem{width:36px!important;height:36px!important;border-radius:11px!important;font-size:18px!important;flex-shrink:0}
+.wgrid .chip.wtile .wtx{font-size:13.5px!important;font-weight:600!important;text-align:left!important}
+.wgrid .chip.wtile.sel{background:#EAF7F6!important;border:1.5px solid #079E98!important;padding:7.5px 11.5px 7.5px 7.5px!important;box-shadow:none!important}
+.wgrid .chip.wtile.sel .wem{background:#fff!important}
+.wtile.sel::after{top:50%!important;right:10px!important;transform:translateY(-50%);width:18px!important;height:18px!important;font-size:10px!important}
+.wgrid .chip.wtile.sel .wtx{padding-right:20px}
+.wgrid .chip.wtile:last-child:nth-child(odd){grid-column:1 / -1}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
