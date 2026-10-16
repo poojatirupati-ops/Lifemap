@@ -2109,9 +2109,9 @@ body:not(.desk) .c3 .c2body > .brand{margin:22px auto 26px!important}
   .askfab{right:max(12px,calc((100% - 600px) / 2))}
 }
 /* desktop quiz: content sits in the vertical middle */
-body.desk .quiz .qbody:not(.c2body){display:flex;flex-direction:column;justify-content:center}
+body.desk .quiz .qbody:not(.c2body){display:flex;flex-direction:column;justify-content:flex-start}
 @media (min-width:561px) and (min-height:760px){
-  .quiz .qbody:not(.c2body):not(.dpage){display:flex;flex-direction:column;justify-content:center}
+  .quiz .qbody:not(.c2body):not(.dpage){display:flex;flex-direction:column;justify-content:flex-start}
   .qcenter .qart{height:180px!important}
   .qcenter:has(.em.road) .qart,.qcenter:has(.opts > .opt:nth-child(5)) .qart,.qcenter:has(.opts.two) .qart{height:150px!important}
 }
@@ -2350,6 +2350,13 @@ body.desk .hstrip:has(> .pcard) > .pcard{width:auto!important;min-width:0!import
 .av2-chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
 .av2-chips span{padding:5px 10px;border-radius:999px;background:#F2F8F8;color:#182A54;font-size:12.5px;font-weight:600}
 .av2-why{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;padding:10px 12px;border-radius:14px;background:#EAF7F6;font-size:13px;color:#182A54}
+/* v104: safe vertical centring - long pages start at the top and scroll, never cut off */
+body.desk .quiz .qbody:not(.c2body) > :first-child{margin-top:auto}
+body.desk .quiz .qbody:not(.c2body) > :last-child{margin-bottom:auto}
+@media (min-width:561px) and (min-height:760px){.quiz .qbody:not(.c2body):not(.dpage) > :first-child{margin-top:auto}.quiz .qbody:not(.c2body):not(.dpage) > :last-child{margin-bottom:auto}}
+body.desk .quiz .qbody.dpage > :first-child,body.desk .quiz .qbody.dpage > :last-child{margin-top:0;margin-bottom:0}
+.quiz .qbody > *{flex-shrink:0}
+.qcenter > .panel{padding-top:104px!important}.qcenter > .panel::before{height:90px!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
