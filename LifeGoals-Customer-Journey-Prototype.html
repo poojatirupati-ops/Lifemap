@@ -2719,6 +2719,37 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .umq .opt .tx br{display:none}
 .umq .opt.sel{background:#EAF7F6!important;border-color:#079E98!important;box-shadow:0 0 0 1px #079E98!important}
 .umq .opt.sel .em{background:#fff!important}
+/* v135: calmer Understand Me question */
+.umq .opt:not(.sel) .otag{display:none!important}
+.umq .opt.row1{min-height:52px!important;padding:7px 12px 7px 8px!important}
+.umq .opt .em{width:36px!important;height:36px!important}
+.umq .opt.sel::after{width:20px!important;height:20px!important;top:50%!important;right:12px!important;transform:translateY(-50%);background:linear-gradient(145deg,#08D9B8,#0A7A85)!important;font-size:11px!important}
+.umq .opt.sel{padding-right:40px!important}
+.umq-what{display:none}
+.umq-q{font-size:17px!important;margin-top:4px!important}
+.card.umq > p.small{color:#5B6B76}
+.umq-fall{padding:12px 14px!important}
+.umq-fall b{font-size:20px!important}
+/* v136: money profile overview */
+.card.ump-hero{padding:16px!important;background:linear-gradient(135deg,#0B5880,#079E98)!important;color:#fff!important;border:0!important;box-shadow:0 18px 36px -20px rgba(7,158,152,.7)!important}
+.ump-top{display:flex;justify-content:space-between;align-items:flex-end}
+.ump-top small{display:block;font-size:12px;opacity:.85;font-weight:600}
+.ump-top b{font-size:30px;font-weight:800;letter-spacing:-.02em}.ump-top b span{font-size:14px;font-weight:600;opacity:.9;margin-left:4px}
+.ump-pct{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.2);font-size:13px;font-weight:800}
+.ump-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.2);margin:10px 0;overflow:hidden}
+.ump-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#B8FFF1,#fff)}
+.card.ump-hero p{margin:0;font-size:13px;opacity:.9;line-height:1.45}
+.ump-s{display:flex;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px;border-radius:20px;border:1px solid rgba(8,106,116,.08);background:rgba(255,255,255,.9);box-shadow:0 10px 24px -18px rgba(24,42,84,.45);font:inherit;text-align:left;cursor:pointer;color:#182A54;transition:transform .2s var(--ease)}
+.ump-s:hover{transform:translateY(-2px)}
+.ump-e{width:44px;height:44px;flex-shrink:0;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;background:#EAF7F6}
+.ump-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ump-m small{font-size:11.5px;font-weight:700;color:#086A74}
+.ump-m b{font-size:15px}
+.ump-sb{display:block;height:5px;border-radius:3px;background:rgba(8,106,116,.12);overflow:hidden;margin-top:3px}
+.ump-sb i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#08D9B8,#0A7A85)}
+.ump-m em{font-style:normal;font-size:12px;color:#5B6B76}
+.ump-st{flex-shrink:0;padding:6px 12px;border-radius:999px;background:linear-gradient(90deg,#079E98,#0A7A85);color:#fff;font-size:12.5px;font-weight:700}
+.ump-s.done .ump-st{background:#EAF7F6;color:#086A74}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5586,10 +5617,9 @@ V.ME = () => { const m = S.me;
   if (m === 'terms') return {id:'ME-TERMS', note:'Your money terms: the Lifecast financial / behavioural terms from your answers, each with a plain-English meaning (§12).', head:appHead('Your money terms', 'The words an adviser would use, and what they mean for you.', 'meback'),
     html:'<div class="card">' + (myTerms().length ? termsHTML() : '<p class="small">Answer your first questions to see your terms.</p>') + '</div><p class="disc">These describe how you answered. They are not advice. ' + DISC_FORMAL + '</p>'};
   if (m === 'um') return {id:'ME-UM', note:'Understand Me = your money profile: 13 questions in 3 sections, each named with the term + a plain label (§12). 6 pre-filled from Discover, 7 to answer.', head:appHead('Your money profile', umLeftTxt() + '.', 'meback'),
-      html:'<div class="card row">' + ring(Math.round(umCount() / 13 * 100), 64, 'var(--sea-d)') + '<div><b>' + umCount() + ' of 13 answered</b><div class="small">' + discCount() + ' came from your first answers</div></div></div>' +
-        '<p class="small" style="margin:12px 2px 0">Three things make up your risk profile. ' + sectLbl('appetite') + '. ' + sectLbl('capacity') + '. ' + sectLbl('horizon') + '.</p>' +
+      html:'<div class="card ump-hero"><div class="ump-top"><div><small>Your progress</small><b>' + umCount() + '<span> of 13 answered</span></b></div><span class="ump-pct">' + Math.round(umCount() / 13 * 100) + '%</span></div><div class="ump-bar"><i style="width:' + Math.round(umCount() / 13 * 100) + '%"></i></div><p>' + discCount() + ' came from your first answers. Three short sections make up your risk profile.</p></div>' +
         UM.map(s => { const tot = s.qs.length, got = s.qs.filter(q => q.d ? typeof S.ans[q.d] === 'number' : typeof S.um.a[q.u] === 'number').length, st = S.um.done[s.n] ? 'done' : got ? 'part' : 'none';
-          return '<button class="goal" style="margin-top:10px" data-a="umsec" data-p="' + s.n + '"><span class="ic" aria-hidden="true">' + s.e + '</span><span style="flex:1"><b>' + s.n + ' · ' + s.t + '</b><br><span class="small">' + s.term + ': ' + s.plain + ' · ' + got + ' of ' + tot + ' answered</span></span><span class="sr">' + statusWord(st) + '</span>' + statIcon(st) + '</button>'; }).join('') +
+          return '<button class="ump-s ' + st + '" data-a="umsec" data-p="' + s.n + '"><span class="ump-e" aria-hidden="true">' + s.e + '</span><span class="ump-m"><small>' + s.term + '</small><b>' + s.t + '</b><span class="ump-sb"><i style="width:' + Math.round(got / tot * 100) + '%"></i></span><em>' + got + ' of ' + tot + ' answered</em></span><span class="ump-st">' + (st === 'done' ? '✓ Done' : got === tot ? 'Review' : 'Continue') + '</span><span class="sr">' + statusWord(st) + '</span></button>'; }).join('') +
         (umCount() === 13 ? '<button class="btn" data-a="me" data-p="umr" style="margin-top:6px">See my profile</button>' : '') + retBtn()};
   if (m === 'ums') { const s = UM.find(x => x.n === S.um.sec), off = UM.slice(0, s.n - 1).reduce((a, x) => a + x.qs.length, 0);
     return {id:'ME-UM' + s.n, note:'Understand Me section ' + s.n + ' · ' + s.t + '. Pre-filled answers shown selected, with Change.', head:appHead(s.e + ' ' + s.term, s.plain.charAt(0).toUpperCase() + s.plain.slice(1) + '.', 'me|um'),
