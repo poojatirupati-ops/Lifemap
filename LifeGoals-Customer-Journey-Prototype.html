@@ -2696,6 +2696,29 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .rank .rk-r.drag{transition:none!important;border-radius:16px;box-shadow:0 18px 34px -14px rgba(24,42,84,.45)!important;border-top-color:transparent!important}
 .rank .rk-r.drag.settle{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s!important;box-shadow:0 4px 10px -8px rgba(24,42,84,.3)!important}
 .rank.dragging{cursor:grabbing}
+/* v134: Understand Me question cards */
+.card.umq{padding:16px!important}
+.umq-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.umq-new{padding:3px 9px;border-radius:999px;background:#EAF7F6;color:#086A74;font-size:11.5px;font-weight:700}
+.umq-sec{padding:3px 9px;border-radius:999px;background:#F2F4F8;color:#182A54;font-size:11.5px;font-weight:700}
+.umq-what{margin:0 0 4px;font-size:12.5px;color:#5B6B76}
+.umq-q{font-size:18px!important;line-height:1.3!important;margin:0 0 6px!important;color:#182A54}
+.card.umq > p.small{margin:0 0 12px!important;font-size:13px}
+.umq-fall{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:8px;margin:4px 0 14px;padding:14px;border-radius:18px;background:#F4F9F9;border:1px solid rgba(8,106,116,.08)}
+.umq-fall small{display:block;font-size:12px;color:#5B6B76}
+.umq-fall b{font-size:22px;font-weight:800;color:#182A54;letter-spacing:-.02em}
+.umq-fall b.dn{color:#C9472B}
+.umq-drop{align-self:center;padding:4px 10px;border-radius:999px;background:#FDECE8;color:#C9472B;font-size:12.5px;font-weight:800}
+.umq-bar{grid-column:1 / -1;height:6px;border-radius:3px;background:rgba(8,106,116,.12);overflow:hidden}
+.umq-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#08D9B8,#0A7A85)}
+.umq .opts{gap:8px!important}
+.umq .opt.row1{min-height:58px;padding:8px 12px!important;border-radius:16px!important;background:#fff!important;border:1px solid rgba(8,106,116,.1)!important;box-shadow:none!important;text-align:left;gap:12px!important}
+.umq .opt .em{width:38px!important;height:38px!important;border-radius:12px!important;background:#F4F9F9!important;font-size:18px!important;box-shadow:none!important}
+.umq .opt .tx{font-size:14px;font-weight:700;color:#182A54;line-height:1.3}
+.umq .opt .otag{display:block!important;margin-top:3px!important;padding:0!important;background:none!important;border:0!important;color:#086A74!important;font-size:12px!important;font-weight:600}
+.umq .opt .tx br{display:none}
+.umq .opt.sel{background:#EAF7F6!important;border-color:#079E98!important;box-shadow:0 0 0 1px #079E98!important}
+.umq .opt.sel .em{background:#fff!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5466,8 +5489,8 @@ function retBtn(){ const r = S.um.ret; return r === 'c1' ? '<button class="btn '
 function umQCard(q, label){ const d = q.d ? DQ_BY(q.d) : q, key = q.d ? 'd' + q.d : q.u, sug = suggestU9(); let sel = q.d ? S.ans[q.d] : S.um.a[q.u]; const sugg = q.u === 'u9' && typeof sel !== 'number'; if (sugg) sel = sug;
   const pre = false, compact = false;
   const sc = qSec(q.d ? q : d), pn = d.panel || (q.d === '9' ? [10000, 8500] : null);
-  return '<div class="card"><div class="small" style="font-weight:800">' + label + (sc ? ' · <span style="color:var(--storm-t)">' + sc[0] + '</span> · ' + sc[1] : '') + '</div><h3 class="h" style="font-size:17px;margin:4px 0 6px">' + esc(d.q) + '</h3>' + (d.help || q.help ? '<p class="small" style="margin:0 0 8px">' + esc(d.help || q.help) + '</p>' : '') +
-    (pn ? '<div class="panel" style="margin:4px 0 10px"><div class="scn"><div><small>You put in</small><b>' + eur(pn[0]) + '</b></div><div style="text-align:right"><small>' + (q.d ? 'A month later' : 'A year later') + '</small><b style="color:var(--storm-t)">' + eur(pn[1]) + '</b></div></div><div class="pbar" style="margin-top:10px"><i style="width:' + Math.round(pn[1] / pn[0] * 100) + '%;background:var(--sun)"></i></div></div>' : '') +
+  return '<div class="card umq"><div class="umq-tags"><span class="umq-new">' + label + '</span>' + (sc ? '<span class="umq-sec">' + sc[0] + '</span>' : '') + '</div>' + (sc ? '<p class="umq-what">' + esc(sc[1].charAt(0).toUpperCase() + sc[1].slice(1)) + '</p>' : '') + '<h3 class="h umq-q">' + esc(d.q) + '</h3>' + (d.help || q.help ? '<p class="small" style="margin:0 0 8px">' + esc(d.help || q.help) + '</p>' : '') +
+    (pn ? '<div class="umq-fall"><div><small>You put in</small><b>' + eur(pn[0]) + '</b></div><span class="umq-drop">−' + Math.round((1 - pn[1] / pn[0]) * 100) + '%</span><div style="text-align:right"><small>' + (q.d ? 'A month later' : 'A year later') + '</small><b class="dn">' + eur(pn[1]) + '</b></div><div class="umq-bar"><i style="width:' + Math.round(pn[1] / pn[0] * 100) + '%"></i></div></div>' : '') +
     (pre ? '<span class="pill mint" style="margin-bottom:8px">✓ From your first answers — change if you like</span>' : '') + (sugg ? '<span class="pill sunny" style="margin-bottom:8px">Suggested from your timeline — confirm or change</span>' : '') +
     (compact ? '<div class="opt row1 sel" style="cursor:default"><span class="em" style="background:var(--sand)" aria-hidden="true">' + d.o[sel].e + '</span><span class="tx">' + esc(d.o[sel].t) + '</span></div><button class="link" data-a="umedit" data-p="' + key + '" aria-label="Change your answer to: ' + esc(d.q) + '">Change</button>'
       : '<div class="opts" role="group" aria-label="' + esc(d.q) + '">' + d.o.map((o, k) => '<button class="opt row1' + (sel === k ? ' sel' : '') + '" aria-pressed="' + (sel === k) + '" data-a="umpick" data-p="' + key + '|' + k + '"><span class="em" style="background:var(--sand)" aria-hidden="true">' + o.e + '</span><span class="tx">' + esc(o.t) + (o.tag ? '<br><span class="otag" style="display:inline-block;margin-top:4px">◆ ' + esc(o.tag) + '</span>' : '') + '</span></button>').join('') + '</div>') +
