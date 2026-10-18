@@ -6324,7 +6324,7 @@ function render(){ syncAges(); syncLists(); syncSafety();
   if (!same && !RM()) countUp(scr);
   fndWatch(scr);   // v13: big figures count up when a screen opens
   if (!same && scr.querySelector('.ro.live')) orbitSpin(scr.querySelector('.ro.live'));   // v23: the cover wheel turns smoothly, photos stay upright
-  const sc = scr.querySelector('.scroll,.qbody'); if (sc && same) sc.scrollTop = top0;
+  const sc = scr.querySelector('.scroll,.qbody'); if (sc && same){ sc.style.scrollBehavior = 'auto'; sc.scrollTop = top0; requestAnimationFrame(() => { sc.style.scrollBehavior = ''; }); }   // keep the reader's place instantly: no jump to the top and glide back
   lastId = s.id;
   bind();
   if (s.id === 'XPL-TOPIC' && scr.querySelector('#xfab')) mpAfter(); else if (mpCleanup){ mpCleanup(); mpCleanup = null; }
