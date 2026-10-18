@@ -2656,6 +2656,25 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .gr-tm{font-size:11.5px;font-weight:600;color:#5B6B76;padding:3px 9px;border-radius:999px;background:#F2F6F7}
 .gr-more{border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:#079E98;cursor:pointer;padding:4px 0}
 .grow .more{margin-top:8px}
+/* v130: Your LifeMap check page */
+.card.lmrec .h{margin:0 0 12px;font-size:17px}
+.lmt{list-style:none;margin:0;padding:0;position:relative}
+.lmt::before{content:'';position:absolute;left:20px;top:22px;bottom:22px;width:2px;background:linear-gradient(180deg,#08D9B8,#0B5880);opacity:.35;border-radius:1px}
+.lmt li{position:relative;display:flex;align-items:center;gap:12px;padding:8px 0}
+.lmt-e{position:relative;z-index:1;width:42px;height:42px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;background:#fff;border:1.5px solid rgba(8,106,116,.12);box-shadow:0 6px 14px -10px rgba(24,42,84,.45)}
+.lmt-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lmt-m b{font-size:14.5px;color:#182A54}
+.lmt-m small{font-size:12.5px;color:#5B6B76}
+.lmt-v{flex-shrink:0;text-align:right;font-size:15px;font-weight:800;color:#086A74;display:flex;flex-direction:column;line-height:1.15}
+.lmt-v small{font-size:11px;font-weight:600;color:#5B6B76}
+.rank .rk-r{gap:10px;padding:10px 0!important}
+.rk-n{width:24px;height:24px;flex-shrink:0;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#08D9B8,#0A7A85);color:#fff;font-size:12px;font-weight:800}
+.rk-e{width:36px;height:36px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#EAF7F6}
+.rk-t{display:block;font-size:14px;color:#182A54}
+.rank .small{display:block;font-size:12px}
+.rank .chip.sm{width:32px!important;height:32px!important;min-height:0!important;padding:0!important;border-radius:10px!important;background:#F4F9F9!important;border:1px solid rgba(8,106,116,.1)!important;color:#086A74!important;font-size:11px!important;box-shadow:none!important}
+.rank .chip.sm[aria-disabled="true"]{opacity:.35}
+#rank-f4 .h{font-size:17px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3973,7 +3992,7 @@ V.F2 = () => ({id:'F2', note:'Timeline: drag chips (touch, mouse, keyboard), sna
   foot:'<button class="btn" data-a="f2next">Next</button>'});
 V.F4 = () => { const ok = S.goals.some(g => g.age && g.amount > 0);
   return {id:'F4', note:'Confirm my LifeMap: recap, and "Which goal first?" ranking (journey-spec §19.8; Emergency fund first by default). Needs ≥1 goal with a when and an amount.', head:flowHead(2, 'Step 2 · Define', 'Your LifeMap', 'A quick check before we add your money.', 'go|F2'),
-  html:'<div class="card">' + S.goals.slice().sort((a, b) => a.age - b.age).map(g => '<div class="mini" style="flex-wrap:wrap"><span><span aria-hidden="true">' + g.e + '</span> <b>' + esc(g.name) + '</b><br><span class="small">' + whenTxt(g) + ' · ' + eur(g.amount) + (g.kind === 'retire' ? ' a year' : '') + '</span>' + dateBtn(g) + '</span></div>').join('') + '</div>' + rankHTML('f4') +
+  html:'<div class="card lmrec"><h3 class="h">Your goals</h3><ol class="lmt">' + S.goals.slice().sort((a, b) => a.age - b.age).map(g => '<li><span class="lmt-e" aria-hidden="true">' + g.e + '</span><span class="lmt-m"><b>' + esc(g.name) + '</b><small>' + whenTxt(g) + '</small>' + dateBtn(g) + '</span><span class="lmt-v">' + eur(g.amount) + (g.kind === 'retire' ? '<small>a year</small>' : '') + '</span></li>').join('') + '</ol></div>' + rankHTML('f4') +
     (ok ? '' : '<p class="note" style="margin-top:12px">Add an amount to at least one goal.</p>') + '<p class="disc">Next: your money profile, a few quick questions about risk.</p>',
   foot:'<button class="btn" data-a="f4ok"' + (ok ? '' : ' disabled') + '>This looks right</button>'};
 };
@@ -6614,7 +6633,7 @@ let toastT = null;
 function toast(msg){ const t = document.getElementById('toast'); t.innerHTML = '<div class="t"><span aria-hidden="true">✨</span>' + esc(msg) + '</div>'; clearTimeout(toastT); toastT = setTimeout(() => { t.innerHTML = ''; }, /couldn't|can't|blocked|nothing opened|first\b/i.test(msg) ? 8000 : 2800); }   // problems stay longer so they can be read
 function rankHTML(ctx){ const gs = rankList(); if (gs.length < 2) return '';
   return '<div' + (ctx === 'plan' ? '' : ' class="card"') + ' id="rank-' + ctx + '"><h3 class="h" style="margin:0 0 2px' + (ctx === 'plan' ? ';position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)' : '') + '" id="rank-h-' + ctx + '">Which goal first?</h3><p class="small" style="margin:0 0 8px">Your savings go to the goal at the top first. We start with your Emergency fund; move it if you like.' + (S.rank ? '' : ' (Not changed yet.)') + '</p>' +
-    '<ol class="rank" aria-labelledby="rank-h-' + ctx + '" style="list-style:none;margin:0;padding:0">' + gs.map((g, i) => '<li class="mini" style="align-items:center"><span style="flex:1;min-width:0"><b>' + (i + 1) + '.</b> <span aria-hidden="true">' + g.e + '</span> ' + esc(g.name) + '<br><span class="small">' + (g.kind === 'retire' ? 'Paid from your pension, so its place here doesn\'t change how your savings are shared' : g.kind === 'legacy' ? 'What is left at the end of your plan' : whenTxt(g)) + '</span></span>' +
+    '<ol class="rank" aria-labelledby="rank-h-' + ctx + '" style="list-style:none;margin:0;padding:0">' + gs.map((g, i) => '<li class="mini rk-r" style="align-items:center"><span class="rk-n">' + (i + 1) + '</span><span class="rk-e" aria-hidden="true">' + g.e + '</span><span style="flex:1;min-width:0"><b class="rk-t">' + esc(g.name) + '</b><span class="small">' + (g.kind === 'retire' ? 'Paid from your pension, so its place here doesn\'t change how your savings are shared' : g.kind === 'legacy' ? 'What is left at the end of your plan' : whenTxt(g)) + '</span></span>' +
       '<span class="row" style="gap:6px"><button class="chip sm" data-a="grank" data-p="' + g.id + '|up" aria-label="Move ' + esc(g.name) + ' up, now ' + (i + 1) + ' of ' + gs.length + '"' + (i === 0 ? ' aria-disabled="true"' : '') + '>▲</button><button class="chip sm" data-a="grank" data-p="' + g.id + '|down" aria-label="Move ' + esc(g.name) + ' down, now ' + (i + 1) + ' of ' + gs.length + '"' + (i === gs.length - 1 ? ' aria-disabled="true"' : '') + '>▼</button></span></li>').join('') + '</ol>' +
     '<p class="small" role="status" id="rank-msg-' + ctx + '" style="margin:6px 0 0">' + esc(S.rankMsg || '') + '</p>' + (S.rank ? '<button class="link" data-a="grankreset">Back to our suggested order</button>' : '') + '</div>'; }
 function version(note){ S.versions.push({note, date:'29 Sep 2026'}); }
