@@ -2689,6 +2689,13 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .rank .rk-r:hover .rk-grip{opacity:1}
 .rank .rk-arr .chip.sm{width:26px!important;height:22px!important;opacity:.7}
 .pghead .pbrow{display:none}
+/* v133: smoother drag */
+.rank .rk-r{border:0!important;box-shadow:none!important;will-change:transform}
+.rank .rk-r + .rk-r{border-top:1px solid rgba(8,106,116,.08)!important}
+.rank.dragging .rk-r:not(.drag){transition:transform .22s cubic-bezier(.2,.8,.2,1)!important}
+.rank .rk-r.drag{transition:none!important;border-radius:16px;box-shadow:0 18px 34px -14px rgba(24,42,84,.45)!important;border-top-color:transparent!important}
+.rank .rk-r.drag.settle{transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s!important;box-shadow:0 4px 10px -8px rgba(24,42,84,.3)!important}
+.rank.dragging{cursor:grabbing}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3843,16 +3850,25 @@ document.addEventListener('change', e => { const f = e.target.id === 'avup' && e
   const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { const z = 240, c = document.createElement('canvas'), k = Math.min(im.width, im.height); c.width = c.height = z; c.getContext('2d').drawImage(im, (im.width - k) / 2, (im.height - k) / 2, k, k, 0, 0, z, z); S.acct.photo = c.toDataURL('image/jpeg', .85); render(); toast('Photo updated'); }; im.src = r.result; }; r.readAsDataURL(f); });
 // v121: default profile picture - a soft illustrated portrait in the app colours (no photo needed)
 const AV_ILL = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="avbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7CF3DC"/><stop offset=".55" stop-color="#08D9B8"/><stop offset="1" stop-color="#0B5880"/></linearGradient><linearGradient id="avsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset="1" stop-color="#E6F6F4" stop-opacity=".9"/></linearGradient></defs><rect width="100" height="100" fill="url(#avbg)"/><circle cx="78" cy="22" r="18" fill="#fff" opacity=".18"/><path d="M18 100c2-20 15-31 32-31s30 11 32 31z" fill="url(#avsh)"/><circle cx="50" cy="44" r="17" fill="url(#avsh)"/><path d="M33 42c0-12 8-19 17-19s17 7 17 18c-5-6-11-8-17-8-7 0-12 3-17 9z" fill="#0B5880" opacity=".55"/></svg>';
-// v132: drag-and-drop goal priority (arrows remain for keyboard and screen readers)
-(() => { let d = null;
-  document.addEventListener('pointerdown', e => { const li = e.target.closest && e.target.closest('.rank .rk-r'); if (!li || e.target.closest('button') || e.button > 0) return;
-    const ol = li.parentElement, items = [...ol.children], r = li.getBoundingClientRect();
-    d = {li, ol, items, y0:e.clientY, h:r.height + 0, from:items.indexOf(li), to:items.indexOf(li), id:e.pointerId}; li.classList.add('drag'); ol.classList.add('dragging'); try { li.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
-  document.addEventListener('pointermove', e => { if (!d || e.pointerId !== d.id) return; const dy = e.clientY - d.y0; d.li.style.transform = 'translateY(' + dy + 'px) scale(1.02)';
-    const to = Math.max(0, Math.min(d.items.length - 1, d.from + Math.round(dy / d.h))); d.to = to;
-    d.items.forEach((it, k) => { if (it === d.li) return; let sh = 0; if (d.from < to && k > d.from && k <= to) sh = -d.h; if (d.from > to && k < d.from && k >= to) sh = d.h; it.style.transform = sh ? 'translateY(' + sh + 'px)' : ''; }); });
-  const end = e => { if (!d) return; const x = d; d = null; x.items.forEach(it => { it.style.transform = ''; }); x.li.classList.remove('drag'); x.ol.classList.remove('dragging');
-    if (x.to === x.from) return; const list = rankList().map(g => g.id), [mv] = list.splice(x.from, 1); list.splice(x.to, 0, mv); S.rank = list; const g = gById(mv); S.rankMsg = g.name + ' is now ' + (x.to + 1) + ' of ' + list.length; version('Goal priority changed'); render(); };
+// v133: smooth drag-and-drop goal priority (arrows remain for keyboard and screen readers)
+(() => { let d = null, raf = 0;
+  const paint = () => { raf = 0; if (!d) return; const dy = d.dy; d.li.style.transform = 'translate3d(0,' + dy + 'px,0) scale(1.03)';
+    const to = Math.max(0, Math.min(d.items.length - 1, d.from + Math.round(dy / d.step))); if (to === d.to) return; d.to = to;
+    d.items.forEach((it, k) => { if (it === d.li) return; let sh = 0; if (d.from < to && k > d.from && k <= to) sh = -d.step; if (d.from > to && k < d.from && k >= to) sh = d.step; it.style.transform = sh ? 'translate3d(0,' + sh + 'px,0)' : ''; }); };
+  document.addEventListener('pointerdown', e => { const li = e.target.closest && e.target.closest('.rank .rk-r'); if (!li || e.target.closest('button') || e.button > 0 || d) return;
+    const ol = li.parentElement, items = [...ol.children], r0 = items[0].getBoundingClientRect(), r1 = items[1] ? items[1].getBoundingClientRect() : r0;
+    d = {li, ol, items, y0:e.clientY, dy:0, step:(r1.top - r0.top) || r0.height, from:items.indexOf(li), to:items.indexOf(li), id:e.pointerId};
+    li.classList.add('drag'); ol.classList.add('dragging'); try { li.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); });
+  document.addEventListener('pointermove', e => { if (!d || e.pointerId !== d.id) return; d.dy = e.clientY - d.y0; if (!raf) raf = requestAnimationFrame(paint); });
+  const end = e => { if (!d || (e.pointerId != null && e.pointerId !== d.id)) return; const x = d; d = null; if (raf){ cancelAnimationFrame(raf); raf = 0; }
+    x.li.classList.add('settle'); x.li.style.transform = 'translate3d(0,' + (x.to - x.from) * x.step + 'px,0) scale(1)';
+    setTimeout(() => { x.items.forEach(it => { it.style.transition = 'none'; it.style.transform = ''; }); x.li.classList.remove('drag', 'settle'); x.ol.classList.remove('dragging');
+      if (x.to !== x.from){ const list = rankList().map(g => g.id), [mv] = list.splice(x.from, 1); list.splice(x.to, 0, mv); S.rank = list; const g = gById(mv); S.rankMsg = g.name + ' is now ' + (x.to + 1) + ' of ' + list.length; version('Goal priority changed');
+        if (x.to > x.from) x.items[x.to].after(x.li); else x.items[x.to].before(x.li);   // move in place: no full re-render, no jump
+        [...x.ol.children].forEach((it, k) => { const n = it.querySelector('.rk-n'); if (n) n.textContent = k + 1; it.querySelectorAll('[data-a="grank"]').forEach((bt, j) => { const last = k === x.ol.children.length - 1; if (j === 0) bt.toggleAttribute('aria-disabled', k === 0); else bt.toggleAttribute('aria-disabled', last); if (bt.hasAttribute('aria-disabled')) bt.setAttribute('aria-disabled', 'true'); }); });
+        const m = x.ol.parentElement.querySelector('[id^="rank-msg-"]'); if (m) m.textContent = S.rankMsg;
+        if (!x.ol.parentElement.querySelector('[data-a="grankreset"]') && m) m.insertAdjacentHTML('afterend', '<button class="link" data-a="grankreset">Back to our suggested order</button>'); }
+      requestAnimationFrame(() => x.items.forEach(it => { it.style.transition = ''; })); }, RM() ? 0 : 220); };
   document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
 })();
 const brand2 = () => '<div class="brand brand2"><span class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M2.5 7l5.5-2.2 8 2.6 5.5-2.2v13.6L16 21l-8-2.6-5.5 2.2z" fill="#fff" fill-opacity=".22" stroke="#fff" stroke-opacity=".75" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 4.8v13.6M16 7.4V21" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M5 16.5c2.2-.2 2.6-3 5.6-3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2"/><path d="M14.5 1.8a4.7 4.7 0 0 1 4.7 4.7c0 3.4-4.7 7.6-4.7 7.6S9.8 9.9 9.8 6.5a4.7 4.7 0 0 1 4.7-4.7z" fill="#fff"/><circle cx="14.5" cy="6.5" r="1.8" fill="#079E98"/></svg></span><span class="bt"><b>Life<em>Map</em></b><small>by DigiPro.AI</small></span></div>';
