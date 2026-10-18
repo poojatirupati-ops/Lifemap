@@ -2624,6 +2624,18 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .pd-r em{font-style:normal;font-size:13px;font-weight:700;color:#079E98}
 .pd-c{color:#9DB3B8;font-size:18px;margin-left:2px}
 .pdpro h2.mp-name{font-size:22px!important;line-height:1.2!important}
+/* v128: timeline step polish */
+.banner.sbn{display:flex!important;align-items:center;gap:8px;width:100%;padding:6px 6px 6px 10px!important;border-radius:14px!important;background:rgba(255,255,255,.7)!important;border:1px solid rgba(8,106,116,.08)!important;font-size:13px;color:#5B6B76}
+.banner.sbn .sbn-i{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#EAF7F6;font-size:14px}
+.banner.sbn .link{margin-left:auto!important;padding:6px 12px!important;border-radius:999px;background:#EAF7F6;color:#086A74!important;text-decoration:none!important;font-size:12.5px!important;font-weight:700;min-height:0!important}
+.tl-board{border-radius:22px!important;padding:16px 14px 10px!important;border-color:rgba(8,106,116,.08)!important;box-shadow:0 14px 30px -22px rgba(24,42,84,.45)!important}
+.tl-head b{font-size:15px!important;font-weight:700!important;color:#182A54!important}
+.tl-chip{border:1px solid rgba(8,106,116,.12)!important;box-shadow:0 6px 14px -10px rgba(24,42,84,.4)!important;font-weight:600}
+.tl-chip:hover{border-color:#079E98!important;box-shadow:0 8px 18px -10px rgba(7,158,152,.55)!important}
+.tl-chip .yr{background:linear-gradient(90deg,#E3F6F3,#D9EFF0)!important;color:#086A74!important}
+.tl-chip.ret{background:linear-gradient(135deg,#0B5880,#079E98)!important;border-color:transparent!important;color:#fff}
+.tl-chip.ret .yr{background:rgba(255,255,255,.2)!important;color:#fff!important}
+.tl-hint{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;padding:8px 10px;border-radius:12px;background:#F4F9F9;font-size:12px!important;color:#5B6B76}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3901,7 +3913,7 @@ function flowHead(n, eye, title, sub, back){ const pb = !S.app && S.shell && S.t
   if (pb && !back) back = 'pbexit';   // no tab bar in the builder, so always offer a way out
   if (pb) return '<div class="pbrow"><button class="pbback" data-a="' + back + '" aria-label="Back">‹</button>' + pbBar() + '<span class="pbn" aria-hidden="true">' + k + '/8</span><button class="pbask" data-a="ask" aria-label="Ask: help and plain-English explanations">?</button></div><h2 class="t" tabindex="-1">' + title + '</h2>' + (sub ? '<p class="sub" style="margin:0">' + sub + '</p>' : '');   // v25: slim builder header
   return brandBar(back) + (pb ? pbBar() : '') + '<div class="eyebrow" style="margin-top:8px">' + eye + '</div><h2 class="t" tabindex="-1">' + title + '</h2>' + (sub ? '<p class="sub" style="margin:0">' + sub + '</p>' : ''); }
-function saveBanner(){ return S.save.done ? '<div class="banner">✅ <span>Progress saved to ' + esc(S.save.email) + '</span></div>' : '<div class="banner">💾 <span>Want a break?</span><button class="link" data-a="sheet" data-p="save">Save and come back later</button></div>'; }
+function saveBanner(){ return S.save.done ? '<div class="banner">✅ <span>Progress saved to ' + esc(S.save.email) + '</span></div>' : '<div class="banner sbn"><span class="sbn-i" aria-hidden="true">☁️</span><span>Want a break?</span><button class="link" data-a="sheet" data-p="save">Save and come back later</button></div>'; }
 V.F1 = () => { let sug = SUGGEST(S.about.age).slice(); const wg = WHY.filter(w => S.why.includes(w.k)).flatMap(w => w.goals || []); sug = [...new Set(wg.concat(sug))];   // D1 answers first
   const order = sug.concat(GOALCAT.map(g => g.k).filter(k => !sug.includes(k))), have = k => S.goals.some(g => g.k === k);
   const n = S.goals.filter(g => g.kind !== 'retire').length;
