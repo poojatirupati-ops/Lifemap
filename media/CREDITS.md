@@ -25,3 +25,4 @@ Photos added 11 Oct 2026 from Unsplash (free Unsplash License: free to use, incl
 |---|---|
 | auto-enrolment-explained.mp4, retirement-plan-how-it-works.mp4 | Pensions explainers (see earlier notes). |
 | first-home-deposit-to-keys.mp4 (+ .vtt captions, poster .jpg) | Example video for the Watch section (15 Oct 2026). AI-generated presenter (HeyGen), LifeMap graphics, generated background music. Not a real adviser: do not name one. Captions are in first-home-deposit-to-keys.vtt. |
+| profile-photo.jpg | Default profile picture (Me, header avatar) | Nolan Manning | https://unsplash.com/photos/Ll9YOG20UFI |
