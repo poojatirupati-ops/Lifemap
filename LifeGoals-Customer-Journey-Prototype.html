@@ -3896,7 +3896,7 @@ const PHASES = ['Discover','Define','Prepare','Understand'];
 function phaseBar(n){ return '<div class="phasebar" aria-label="Step ' + n + ' of 4: ' + PHASES[n - 1] + '">' + PHASES.map((_, k) => '<i class="' + (k < n ? 'on' : '') + '"></i>').join('') + '</div>'; }
 // v62: live session card - date tile, title, who, free tag and a clear Remind me button
 function liveCard(x, who, st){ const [d, ...t] = String(x[0]).split(' ');
-  return '<div class="card lv2" style="' + (st || '') + '"><span class="lv2-d" aria-hidden="true"><small>' + esc(d) + '</small><b>' + esc(t.join(' ')) + '</b></span><span class="lv2-m"><span class="lv2-tags"><span class="lv2-live">Live</span><span class="lv2-free">Free</span></span><b>' + x[1] + '</b><small>' + esc(who) + ' · ' + esc(x[0]) + '</small></span><button class="lv2-btn" data-a="remind" aria-label="Remind me: ' + esc(x[1]) + '"><span aria-hidden="true">🔔</span> Remind me</button></div>'; }
+  return '<div class="card lv3" style="' + (st || '') + '"><span class="lv2-d" aria-hidden="true"><small>' + esc(d) + '</small><b>' + esc(t.join(' ')) + '</b></span><span class="lv3-m"><b>' + x[1] + '</b><small><i class="lv3-dot" aria-hidden="true"></i>Live · free · ' + esc(who.replace(/^With /, 'with ')) + '</small></span><button class="mp-seat" data-a="remind" aria-label="Remind me: ' + esc(x[1]) + '"><span aria-hidden="true">🔔</span> Remind me</button></div>'; }
 // v64: living hero background - drifting light orbs, a winding route with a traveller dot, twinkles
 const HFX = '<span class="hfx" aria-hidden="true"><i class="o1"></i><i class="o2"></i></span>';
 // v97: profile photo - picked from the device, shrunk to 240px in the browser, kept in memory only
