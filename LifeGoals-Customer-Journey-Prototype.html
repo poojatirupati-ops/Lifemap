@@ -2636,6 +2636,26 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .tl-chip.ret{background:linear-gradient(135deg,#0B5880,#079E98)!important;border-color:transparent!important;color:#fff}
 .tl-chip.ret .yr{background:rgba(255,255,255,.2)!important;color:#fff!important}
 .tl-hint{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px;padding:8px 10px;border-radius:12px;background:#F4F9F9;font-size:12px!important;color:#5B6B76}
+/* v129: goal cards in Your goals */
+.grow{padding:14px!important;border-radius:22px!important;background:rgba(255,255,255,.9)!important;border:1px solid rgba(8,106,116,.08)!important;box-shadow:0 12px 28px -22px rgba(24,42,84,.45)!important;margin-bottom:12px!important}
+.grow .hd{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.grow .hd .e{width:42px;height:42px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(145deg,#E3F6F3,#D4EEF0)!important}
+.grow .hd input{flex:1;min-width:0;font:inherit;font-size:16px!important;font-weight:700;color:#182A54;border:0!important;border-bottom:1.5px dashed transparent!important;background:transparent!important;padding:4px 0!important}
+.grow .hd input:focus{border-bottom-color:#079E98!important;outline:0}
+.gdel2{width:34px;height:34px;flex-shrink:0;border-radius:11px;border:0;background:#F4F6F7;color:#8A9AA2;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.gdel2:hover{background:#FDECE8;color:#C9472B}
+.grow .fl{display:block;font:600 12.5px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#5B6B76!important;margin:0 0 6px!important}
+.grow .flds{gap:12px!important}
+.grow .stepper{border-radius:999px!important;background:#F4F9F9!important;border:1px solid rgba(8,106,116,.1)!important;padding:4px!important;min-height:0!important}
+.grow .stepper button{width:38px!important;height:38px!important;border-radius:50%!important;background:#fff!important;color:#086A74!important;font-size:18px!important;box-shadow:0 2px 8px -4px rgba(24,42,84,.35)!important}
+.grow .stepper output{font-size:14px!important;font-weight:700;color:#182A54}
+.grow .in{min-height:46px!important;border-radius:14px!important;background:#fff!important;border:1.5px solid #DCE9EA!important;font-weight:600}
+.grow .in:focus{border-color:#079E98!important;box-shadow:0 0 0 4px rgba(8,217,184,.14)!important}
+.grow label.full .small{display:block;margin-top:6px;font-size:12px;color:#5B6B76}
+.gr-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid rgba(8,106,116,.08)}
+.gr-tm{font-size:11.5px;font-weight:600;color:#5B6B76;padding:3px 9px;border-radius:999px;background:#F2F6F7}
+.gr-more{border:0;background:none;font:inherit;font-size:12.5px;font-weight:700;color:#079E98;cursor:pointer;padding:4px 0}
+.grow .more{margin-top:8px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3940,13 +3960,13 @@ function chipInner(g){ const n = g.age - S.about.age, nm = g.name;
 function whenTxt(g, edit){ const n = g.age - S.about.age; if (g.kind === 'legacy') return 'At the end of your plan' + (asmMine('planEnd') ? ' (' + AS.end + ')' : ''); if (passedG(g)) return edit ? 'Age ' + g.age + ' · ' + (YEAR0 + n) + ' · ' + PASSED.toLowerCase() : PASSED; return (g.kind === 'retire' ? (S.retireSet ? 'Age ' + g.age : 'Age not chosen yet') : 'in ' + n + ' yr' + (n === 1 ? '' : 's') + ' · age ' + g.age) + ' · ' + (YEAR0 + n); }
 function gRows(only){
   return (only || S.goals).slice().sort((a, b) => a.age - b.age).map(g => { const ret = g.kind === 'retire', open = S.tlOpen[g.id];
-    return '<div class="grow' + (S.tlHl === g.id ? ' hl' : '') + '" id="row-' + g.id + '"><div class="hd"><span class="e" aria-hidden="true">' + g.e + '</span><input value="' + esc(g.name) + '" data-gname="' + g.id + '" aria-label="Goal name"' + (ret ? ' readonly' : '') + '>' + (ret ? '' : '<button class="link" style="font-size:12.5px" data-a="gdel" data-p="' + g.id + '" aria-label="Remove ' + esc(g.name) + '">Remove</button>') + '</div>' +
+    return '<div class="grow' + (S.tlHl === g.id ? ' hl' : '') + '" id="row-' + g.id + '"><div class="hd"><span class="e" aria-hidden="true">' + g.e + '</span><input value="' + esc(g.name) + '" data-gname="' + g.id + '" aria-label="Goal name"' + (ret ? ' readonly' : '') + '>' + (ret ? '' : '<button class="gdel2" data-a="gdel" data-p="' + g.id + '" aria-label="Remove ' + esc(g.name) + '" title="Remove"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>') + '</div>' +
       '<div class="flds"><div class="full"><span class="fl">' + (ret ? 'Retire at' : 'When') + '</span>' + stepper('gyr', g.id, '<span id="when-' + g.id + '">' + whenTxt(g, true) + '</span>', 'When') + '</div>' +
       '<label><span class="fl">' + (ret ? 'Income a year €' : g.kind === 'mfree' ? 'Mortgage left €' : 'Amount €') + '</span><input class="in" inputmode="numeric" value="' + Math.round(g.amount) + '" data-gamt="' + g.id + '"></label>' +
       (ret ? '<div><span class="fl">Pension</span><span class="small">From Your finances</span></div>' : '<label><span class="fl">Saved so far €</span><input class="in" inputmode="numeric" value="' + Math.round(g.saved || 0) + '" data-gsaved="' + g.id + '"></label>') +
-      (g.k === 'safety' ? '<label class="full"><span class="fl">Months of essential spending to keep</span><input class="in" inputmode="numeric" value="' + (asmMine('safetyMonths') ? asmGet('safetyMonths') : '') + '" data-gmonths="' + g.id + '" placeholder="e.g. ' + ASM.safetyMonths.sug() + '"><span class="small" style="display:block">Your amount follows this once we know your spending. Your assumptions and the Emergency fund calculator use the same number.</span>' + safeNote(g) + '</label>' : '') + '</div>' +
-      '<div class="small" style="margin-top:4px">Today\'s money' + (g.kind === 'mfree' && S.fin.mortBal ? ' · from your Liabilities' : '') + '</div>' +
-      (ret ? '' : '<button class="link" data-a="gmore" data-p="' + g.id + '" aria-expanded="' + !!open + '">' + (open ? '▲ Fewer details' : '▼ More details (optional)') + '</button>' + (open ? '<div class="more">' + [['who','For whom',['Me','Partner','Child','Family']],['flex','Flexible on timing?',['Can move','Fixed date']]].map(([k, l, os]) => '<div class="fl" style="margin-top:6px">' + l + '</div><div class="chips">' + os.map(o => '<button class="chip sm' + (g[k] === o ? ' sel' : '') + '" aria-pressed="' + (g[k] === o) + '" data-a="gset" data-p="' + g.id + '|' + k + '|' + o + '">' + o + '</button>').join('') + '</div>').join('') + '</div>' : '')) + '</div>'; }).join('');
+      (g.k === 'safety' ? '<label class="full"><span class="fl">Months of essential spending to keep</span><input class="in" inputmode="numeric" value="' + (asmMine('safetyMonths') ? asmGet('safetyMonths') : '') + '" data-gmonths="' + g.id + '" placeholder="e.g. ' + ASM.safetyMonths.sug() + '">' + safeNote(g) + '</label>' : '') + '</div>' +
+      '<div class="gr-foot"><span class="gr-tm">Today\'s money' + (g.kind === 'mfree' && S.fin.mortBal ? ' · from your Liabilities' : '') + '</span>' +
+      (ret ? '</div>' : '<button class="gr-more" data-a="gmore" data-p="' + g.id + '" aria-expanded="' + !!open + '">' + (open ? 'Fewer details ↑' : 'More details ↓') + '</button></div>' + (open ? '<div class="more">' + [['who','For whom',['Me','Partner','Child','Family']],['flex','Flexible on timing?',['Can move','Fixed date']]].map(([k, l, os]) => '<div class="fl" style="margin-top:6px">' + l + '</div><div class="chips">' + os.map(o => '<button class="chip sm' + (g[k] === o ? ' sel' : '') + '" aria-pressed="' + (g[k] === o) + '" data-a="gset" data-p="' + g.id + '|' + k + '|' + o + '">' + o + '</button>').join('') + '</div>').join('') + '</div>' : '')) + '</div>'; }).join('');
 }
 V.F2 = () => ({id:'F2', note:'Timeline: drag chips (touch, mouse, keyboard), snap to years, lanes never overlap. Retirement flag = retirement age everywhere. Rows below are optional edits.', head:flowHead(2, 'Step 2 · Define', 'Your timeline', "Drag each goal to when you'd like it. Rough is fine. You can change anything later.", 'go|F1'),
   html:saveBanner() + tlBoard() + '<div class="sec"><h3>Your goals</h3><button class="link" data-a="go" data-p="F1">＋ Add a goal</button></div>' + gRows(),
