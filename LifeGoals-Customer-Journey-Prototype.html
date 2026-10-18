@@ -2835,6 +2835,36 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
 .bk-n{position:relative;z-index:1;width:40px;height:40px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fff;border:1.5px solid rgba(8,106,116,.12)}
 .bk-steps b{display:block;font-size:14px;color:#182A54;padding-top:9px}
 .bk-steps small{display:block;font-size:12.5px;color:#5B6B76;margin-top:2px}
+/* v143: shortcuts like tool tiles; goals coverage; findings; foundations */
+.sc3 .sv2:first-child{grid-column:auto!important;flex-direction:column!important;align-items:flex-start!important;min-height:132px!important}
+.sc3 .sv2:first-child .sv2-i{background:linear-gradient(145deg,#E3F6F3,#D4EEF0)!important}
+.sc3 .sv2:first-child .sv2-go{position:absolute!important;width:26px!important;height:26px!important;background:#EAF7F6!important;color:#086A74!important}
+#r-goals .gs{display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:12px;align-items:center;padding:12px 0!important;border:0!important}
+#r-goals .gs + .gs{border-top:1px solid rgba(8,106,116,.08)!important}
+#r-goals .gs .e{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;background:#F4F9F9;align-self:start}
+#r-goals .gs .nm{font-size:14.5px;font-weight:700;color:#182A54}
+#r-goals .gs .nm span{display:block;font-size:12px;font-weight:500;color:#5B6B76}
+#r-goals .gs .bar{height:6px!important;border-radius:3px!important;margin:6px 0 4px!important;background:rgba(8,106,116,.1)!important;background-image:none!important}
+#r-goals .gs .bar i{border-radius:3px!important}
+#r-goals .gs .gl{font-size:12px;line-height:1.35;color:#5B6B76;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#r-goals .gs .p{text-align:right;font-size:18px;font-weight:800;align-self:start;line-height:1.1}
+#r-goals .gs .p small{display:block;margin-top:4px;font-size:11px;font-weight:700;white-space:nowrap}
+.found{display:flex!important;flex-direction:column;gap:8px}
+.fcard.f2c{display:flex!important;align-items:center;gap:12px;width:100%;padding:12px!important;border-radius:16px!important;border:1px solid rgba(8,106,116,.08)!important;background:#fff!important;box-shadow:none!important;font:inherit;text-align:left;cursor:pointer}
+.fcard.f2c:hover{background:#F7FAFA!important}
+.f2c-i{width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.f2c.str .f2c-i{background:#E6F6EF}.f2c.gap .f2c-i{background:#FDECE8}.f2c.dec .f2c-i{background:#FFF4DE}
+.f2c-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.f2c-m small{font-size:11.5px;font-weight:700}
+.f2c.str small{color:#15875C}.f2c.gap small{color:#C9472B}.f2c.dec small{color:#9A6B00}
+.f2c-m b{font-size:14px;line-height:1.35;color:#182A54}
+.f2c-go{color:#9DB3B8;font-size:20px}
+.fsum .fbar i.fb-mid{background:#F2B134}.fsum .fbar i.fb-bad{background:#E0533A}
+.fnd2 .f2m b{font-size:13.5px!important}
+.fnd2 .f2s{display:-webkit-box!important;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.fnd2 .f2s::before{display:none}
+.fnd2 .f2{min-height:46px!important}
+#r-goals .gs .bar{height:8px!important;border-radius:4px!important}#r-goals .gs .bar i{border-radius:4px!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5566,7 +5596,7 @@ function resultsHTML(){ if (!planReady()) return gateHTML('res');
     roughNote() + planProfileBanner() +
     '<div class="card"><h3 class="h">Your goals</h3><p class="small" style="margin:0 0 6px">How much of each goal your future income and savings can cover.</p><div id="r-goals">' + goalsBox(P) + '</div></div>' +
     '<div class="card" id="r-found"><h3 class="h">What we found</h3><div class="found" style="margin-top:8px">' +
-      [['💪','Your main strength',F.sT,'var(--good-t)','str'],['🔎','Your main gap',F.gT,'var(--alert-t)','gap'],['🎯','Your biggest decision',F.dT,'var(--acc-d)','dec']].map(c => '<div class="fcard"><div class="k" style="color:' + c[3] + '">' + c[0] + ' ' + c[1] + '</div><b>' + esc(c[2]) + '</b><button class="link" style="font-size:12.5px;padding:2px 0" data-a="sheet" data-p="explain|' + c[4] + '">Explain this</button></div>').join('') + '</div>' +
+      [['💪','Your main strength',F.sT,'var(--good-t)','str'],['🔎','Your main gap',F.gT,'var(--alert-t)','gap'],['🎯','Your biggest decision',F.dT,'var(--acc-d)','dec']].map(c => '<button class="fcard f2c ' + c[4] + '" data-a="sheet" data-p="explain|' + c[4] + '"><span class="f2c-i" aria-hidden="true">' + c[0] + '</span><span class="f2c-m"><small>' + c[1] + '</small><b>' + esc(c[2]) + '</b></span><span class="f2c-go" aria-hidden="true">›</span></button>').join('') + '</div>' +
       (S.understood ? '<p class="pill ok" style="margin:12px 0 8px">✓ Thanks, noted</p><div class="small" style="font-weight:800;margin-bottom:6px">What would you like to ask an adviser? (optional)</div><div class="chips">' + ADV_QS.map(q => '<button class="chip sm' + (S.advQs.includes(q) ? ' sel' : '') + '" aria-pressed="' + S.advQs.includes(q) + '" data-a="advq" data-p="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div><p class="small" style="margin:6px 0 0">Sustainable / ethical options: your adviser will ask about this before recommending anything.</p>' : '<button class="btn" style="margin-top:12px" data-a="understood">That makes sense</button>') + '</div>' +
     fndCard() + wiCard() +
     '<div class="card" id="r-glancec"><h3 class="h">Your future, at a glance</h3><div id="r-glance">' + glanceHTML(P) + '</div></div>' +
@@ -6521,7 +6551,7 @@ V.HOME = () => { if (!planReady()) return {id:'HOME', note:'Home while a require
       '<div class="card gcard"><div class="eyebrow">Overall readiness' + (skippedSecs().length || qualityCount() > 2 ? ' · rough' : '') + '</div>' + gauge(avg) + '<b class="gk">' + ok + ' of ' + gs.length + ' goals on track</b><div class="small">How much of your goals your money can cover, on average.</div></div>' +
       '<div class="card" id="h-fnd"><div class="row" style="justify-content:space-between"><b style="font-size:15px">Your financial foundations</b><button class="link" data-a="seg" data-p="fnd">See all</button></div>' + fndHTML(true) + '</div>' + roughNote() +
       '<div class="sec"><h3>Your goals</h3><button class="link" data-a="seg" data-p="results">See results</button></div><div class="hstrip gcards">' + gs.map(g => { const p = P.pct[g.id], b = band(p); return '<div class="hcard"><div class="hc-img" style="background-image:' + gImg(g) + '"><span class="hc-tag" style="color:var(--' + b + '-t)">' + (p >= 95 ? 'On track' : p >= 60 ? 'Nearly there' : 'Needs attention') + '</span><span class="hc-name"><span aria-hidden="true">' + g.e + '</span> ' + esc(g.name) + '</span><span class="hc-stats"><span><small>Target</small>' + (g.amount ? eurK(g.amount) + (g.kind === 'retire' ? '/yr' : '') : '–') + '</span><span><small>When</small>' + (g.kind === 'retire' ? 'Age ' + g.age : passedG(g) ? 'Passed' : (YEAR0 + g.age - S.about.age)) + '</span><span><small>Covered</small>' + p + '%</span></span></div>' + (passedG(g) ? '<div class="hc-body">' + dateBtn(g) + '</div>' : '') + '</div>'; }).join('') + '</div>' +
-      '<div class="sec"><h3>Shortcuts</h3></div><div class="shortcuts">' + [['seg','timeline','🗓️','My timeline'],['gowi','','🔮','Try a what-if'],['upl','smart','📥','Add a document'],['report','','⬇️','Download my plan']].map(([a, p, e, t]) => '<button class="tile" data-a="' + a + '"' + (p ? ' data-p="' + p + '"' : '') + '><span class="e" aria-hidden="true">' + e + '</span>' + t + '</button>').join('') + '</div>' +
+      '<div class="sec"><h3>Shortcuts</h3></div><div class="svc2 sc3">' + [['seg','timeline','🗓️','My timeline','See your goals by age'],['gowi','','🔮','Try a what-if','Test a change to your plan'],['upl','smart','📥','Add a document','Fill figures from a statement'],['report','','⬇️','Download my plan','Your plan as a report']].map(([a, p, e, t, d]) => '<button class="sv2" data-a="' + a + '"' + (p ? ' data-p="' + p + '"' : '') + '><span class="sv2-i" aria-hidden="true">' + e + '</span><span class="sv2-t"><b>' + t + '</b><small>' + d + '</small></span><span class="sv2-go" aria-hidden="true">→</span></button>').join('') + '</div>' +
       '<p class="disc">Guidance, not advice. Figures are illustrative and based on your details and our assumptions.</p>'}; };
 function gauge(p){ const L = Math.PI * 80, v = Math.max(0, Math.min(100, p));   // half circle, radius 80
   return '<div class="gauge" aria-hidden="true"><svg viewBox="0 0 200 112" width="220" height="123"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#2563EB"/></linearGradient></defs><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="rgba(15,47,74,.08)" stroke-width="18" stroke-linecap="round"/><path d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke="url(#gg)" stroke-width="18" stroke-linecap="round" stroke-dasharray="' + (L * v / 100).toFixed(1) + ' ' + L.toFixed(1) + '"/></svg><b>' + p + '<small>%</small></b></div>'; }
