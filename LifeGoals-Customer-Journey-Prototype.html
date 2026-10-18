@@ -2126,13 +2126,13 @@ body.desk .hstrip > .vcard{width:auto!important;min-width:0!important;flex:none!
 @media (min-width:561px){.xhero .xh-card{aspect-ratio:16 / 8!important;max-height:380px}.xhero .xh-back{max-height:400px}}
 body.desk .xhero .xh-card{aspect-ratio:16 / 7!important;max-height:360px}
 /* v94: desktop / tablet - Ask chat docks as a full-height side panel; other sheets centre as dialogs */
-@media (min-width:561px){
-  .sheet-bg:has(.chatsheet){align-items:stretch;justify-content:flex-end}
-  .sheet.chatsheet{width:440px!important;max-width:calc(100% - 32px)!important;height:auto!important;max-height:none!important;margin:16px!important;border-radius:26px!important;box-shadow:0 30px 60px -20px rgba(24,42,84,.45)!important;animation:chatin .35s var(--ease)}
-  .sheet.chatsheet .grab{display:none}
-  .chatsheet .chat-h{padding-top:18px}
-  .sheet-bg:not(:has(.chatsheet)){align-items:center;justify-content:center}
-  .sheet-bg:not(:has(.chatsheet)) .sheet{max-width:560px;border-radius:26px!important;max-height:86%}
+@media all{
+  body.desk .sheet-bg:has(.chatsheet){align-items:stretch;justify-content:flex-end}
+  body.desk .sheet.chatsheet{width:440px!important;max-width:calc(100% - 32px)!important;height:auto!important;max-height:none!important;margin:16px!important;border-radius:26px!important;box-shadow:0 30px 60px -20px rgba(24,42,84,.45)!important;animation:chatin .35s var(--ease)}
+  body.desk .sheet.chatsheet .grab{display:none}
+  body.desk .chatsheet .chat-h{padding-top:18px}
+  body.desk .sheet-bg:not(:has(.chatsheet)){align-items:center;justify-content:center}
+  body.desk .sheet-bg:not(:has(.chatsheet)) .sheet{max-width:560px;border-radius:26px!important;max-height:86%}
 }
 @keyframes chatin{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.sheet.chatsheet{animation:none}}
@@ -2784,6 +2784,57 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 #p4-3 .asmf .nbox input{font-size:16px!important}
 #p4-3 .infl button,#p4-3 .infl .chip{min-height:38px!important;padding:6px 14px!important;border-radius:12px!important;background:#F4F9F9!important;border:1px solid rgba(8,106,116,.12)!important;color:#182A54!important;font-size:13px!important;font-weight:600!important;box-shadow:none!important;text-align:left}
 #p4-3 .infl button[aria-pressed="true"],#p4-3 .infl .chip.sel,#p4-3 .infl button.on{background:#EAF7F6!important;border-color:#079E98!important;color:#086A74!important;box-shadow:0 0 0 1px #079E98!important}
+/* v140: Ask chat inside the phone - clear of the status bar, suggestions in one scrolling row */
+body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:calc(100% - 52px)!important}
+.chat-sug{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;margin:0 -16px 0 0;padding:4px 16px 6px 34px!important}
+.chat-sug::-webkit-scrollbar{display:none}
+.chat-sug small{position:absolute;opacity:0;pointer-events:none}
+.chat-sug .cs{flex:0 0 auto;white-space:nowrap}
+.chat-log{padding-bottom:4px!important}
+.sheet.chatsheet{background:#F7FBFB!important}
+/* v141: Your profile result page */
+.card.rp-hero{padding:18px!important;background:linear-gradient(140deg,#0B5880,#079E98)!important;color:#fff!important;border:0!important;box-shadow:0 20px 40px -22px rgba(7,158,152,.7)!important}
+.rp-top{display:flex;align-items:center;gap:14px}
+.rp-e{width:56px;height:56px;flex-shrink:0;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;background:rgba(255,255,255,.92)}
+.rp-top small{display:block;font-size:12px;font-weight:600;opacity:.85}
+.rp-top b{display:block;font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.rp-strap{margin:12px 0 12px;font-size:14.5px;line-height:1.45;opacity:.95}
+.rp-str{display:flex;flex-wrap:wrap;gap:6px}
+.rp-str span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.18);font-size:13px;font-weight:600}
+.rp-str i{font-style:normal;width:16px;height:16px;border-radius:50%;background:#fff;color:#079E98;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.rp-watch{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.14);font-size:13px;line-height:1.4}
+.rp-watch small{display:block;font-size:11.5px;font-weight:700;opacity:.85}
+.card.rp-terms .h{margin:0 0 6px;font-size:17px}
+.rp-terms .term{border:0!important}
+.rp-terms [class*="tag"],.rp-terms .tn{color:#086A74!important}
+.card.rp-risk .rp-lbl{display:block;font-size:12px;font-weight:700;color:#086A74}
+.card.rp-risk .rp-rl{font-size:24px;font-weight:800;color:#182A54;margin:2px 0 4px}
+.card.rp-risk .pbar{height:8px!important;border-radius:4px!important;background:rgba(8,106,116,.12)!important}
+.card.rp-risk .pbar i{background:linear-gradient(90deg,#08D9B8,#0A7A85)!important;border-radius:4px!important}
+/* v142: money terms tiles; booked page */
+.rp-terms .tsec{margin-top:12px}
+.rp-terms .tsec > .small{font-size:13px!important;margin-bottom:6px}
+.rp-terms .term{display:flex!important;flex-direction:column;gap:2px;margin:0 0 6px!important;padding:9px 12px!important;border-radius:14px;background:#F4F9F9;border:0!important}
+.rp-terms .tg{color:#086A74!important;font-size:12.5px!important;font-weight:700}
+.rp-terms .tm{font-size:13.5px;color:#182A54}
+.card.bk-hero{padding:16px!important;background:linear-gradient(140deg,#0B5880,#079E98)!important;color:#fff!important;border:0!important;box-shadow:0 20px 40px -22px rgba(7,158,152,.7)!important}
+.bk-top{display:flex;gap:14px;align-items:center}
+.bk-d{width:64px;height:72px;flex-shrink:0;border-radius:18px;background:#fff;color:#182A54;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;box-shadow:0 10px 20px -10px rgba(0,0,0,.35)}
+.bk-d small{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#086A74}
+.bk-d b{font-size:24px;font-weight:800}
+.bk-ok{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.2);font-size:12px;font-weight:700}
+.bk-ok i{font-style:normal;width:16px;height:16px;border-radius:50%;background:#fff;color:#079E98;font-size:10px;display:flex;align-items:center;justify-content:center}
+.bk-when{display:block;font-size:18px;font-weight:800;margin-top:6px}
+.bk-who{display:block;font-size:13px;opacity:.9}
+.bk-note{margin:12px 0 10px;font-size:12.5px;opacity:.85}
+.bk-cal{min-height:42px;padding:0 18px;border-radius:999px;border:0;background:#fff;color:#182A54;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px -10px rgba(0,0,0,.4)}
+.card.bk-next .h{margin:0 0 10px;font-size:17px}
+.bk-steps{list-style:none;margin:0;padding:0;position:relative}
+.bk-steps::before{content:'';position:absolute;left:19px;top:20px;bottom:20px;width:2px;background:linear-gradient(180deg,#08D9B8,#0B5880);opacity:.3}
+.bk-steps li{position:relative;display:flex;gap:12px;align-items:flex-start;padding:7px 0}
+.bk-n{position:relative;z-index:1;width:40px;height:40px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fff;border:1.5px solid rgba(8,106,116,.12)}
+.bk-steps b{display:block;font-size:14px;color:#182A54;padding-top:9px}
+.bk-steps small{display:block;font-size:12.5px;color:#5B6B76;margin-top:2px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5660,9 +5711,9 @@ V.ME = () => { const m = S.me;
       html:umSummary(s.qs) + s.qs.map((q, qi) => q.d && typeof S.ans[q.d] === 'number' ? '' : umQCard(q, (off + qi + 1) + ' of 13')).join(''), foot:'<button class="btn" data-a="umsave">Save this section</button>'}; }
   if (m === 'umr') { const P = personality(), r = riskRead(true), bar = (l, v) => '<div style="margin-top:10px;font-size:13px"><div>' + l + '</div><span class="pbar" style="display:block;margin-top:4px"><i style="width:' + Math.round(v / 5 * 100) + '%"></i></span></div>';
     return {id:'ME-R', note:'Understand Me result: money personality + indicative risk profile (5 labels, lowest of want, can afford, time and experience; FP review R2–R6). Feeds My Plan. Adviser confirms.', head:appHead('Your profile', '', 'me|um'),
-      html:'<div class="card" style="background:linear-gradient(150deg,var(--sun-l),#fff)"><div class="eyebrow" style="color:var(--acc-d)">Your money personality</div><div style="font-family:var(--fh);font-size:30px;font-weight:800;margin:4px 0">' + P.e + ' ' + P.name + '</div><p style="margin:0 0 8px">' + P.strap + '</p><b>Strengths</b><div class="chips" style="margin:6px 0 10px">' + P.str.map(x => '<span class="pill ok">' + x + '</span>').join('') + '</div><b>One thing to watch</b><p style="margin:4px 0 0" class="small">' + P.watch + '</p></div>' +
-        '<div class="card"><div class="eyebrow">Your money terms</div>' + termsHTML() + '</div>' +
-        '<div class="card"><div class="eyebrow">Your indicative risk profile</div><div style="font-family:var(--fh);font-size:26px;font-weight:800;margin:4px 0">' + riskLabelText(r) + '</div>' + (r.label ? bar(sectLbl('appetite'), r.want) + bar(sectLbl('capacity'), r.can) + bar(sectLbl('horizon'), r.time) + (r.limit === 'experience' ? bar(sectLbl('experience'), r.level) : '') + '<p class="small" style="margin:8px 0 0">Set by: <b>' + RISK_SETBY[r.limit] + '</b></p>' + (r.keNote ? '<p class="small" style="margin:6px 0 0;color:var(--ink)">' + KE_NOTE + '</p>' : '') : '') + (r.mis ? '<p class="note" style="margin-top:12px">' + esc(r.mis) + '</p>' : '') + '<p class="small" style="margin:10px 0 0">This now shows on <b>My Plan</b> and in your plan report.</p></div>' +
+      html:'<div class="card rp-hero"><div class="rp-top"><span class="rp-e" aria-hidden="true">' + P.e + '</span><div><small>Your money personality</small><b>' + P.name + '</b></div></div><p class="rp-strap">' + P.strap + '</p><div class="rp-str">' + P.str.map(x => '<span><i aria-hidden="true">✓</i>' + x + '</span>').join('') + '</div><div class="rp-watch"><span aria-hidden="true">👀</span><div><small>One thing to watch</small>' + P.watch + '</div></div></div>' +
+        '<div class="card rp-terms"><h3 class="h">Your money terms</h3>' + termsHTML() + '</div>' +
+        '<div class="card rp-risk"><small class="rp-lbl">Your indicative risk profile</small><div class="rp-rl">' + riskLabelText(r) + '</div>' + (r.label ? bar(sectLbl('appetite'), r.want) + bar(sectLbl('capacity'), r.can) + bar(sectLbl('horizon'), r.time) + (r.limit === 'experience' ? bar(sectLbl('experience'), r.level) : '') + '<p class="small" style="margin:8px 0 0">Set by: <b>' + RISK_SETBY[r.limit] + '</b></p>' + (r.keNote ? '<p class="small" style="margin:6px 0 0;color:var(--ink)">' + KE_NOTE + '</p>' : '') : '') + (r.mis ? '<p class="note" style="margin-top:12px">' + esc(r.mis) + '</p>' : '') + '<p class="small" style="margin:10px 0 0">This now shows on <b>My Plan</b> and in your plan report.</p></div>' +
         retBtn() + '<p class="disc">This is an indicative profile to guide your conversation. It is not advice. Your adviser confirms your risk profile with you. ' + DISC_FORMAL + '</p>'}; }
   if (m === 'details'){ const nm = S.acct.name || S.fin.name || '', dob = S.about.dob && dobValid(S.about.dob) ? dateLong(new Date(+S.about.dob.y, +S.about.dob.m - 1, +S.about.dob.d)) : '', age = S.about.ageToday || S.about.age || '';
     const row = (ic, l, v) => '<button class="pd-r" data-a="fsec" data-p="0"><span class="pd-i" aria-hidden="true">' + ic + '</span><span class="pd-l">' + l + '</span>' + (v !== '' && v != null ? '<b>' + esc(String(v)) + '</b>' : '<em>Add</em>') + '<span class="pd-c" aria-hidden="true">›</span></button>';
@@ -6510,8 +6561,10 @@ V.EXP = () => { const b = S.book, st = S.exp, A = ADVISERS[b.adv], sp = speciali
   if (b.done) return {id:'EXP-01', note:'Experts tab after booking: meeting details and secure document requests.', head:appHead('Experts', 'Your adviser and meeting.'), html:(needsProfile() ? nudge('🧭', 'Check your profile before your adviser meeting', 'Check now', 'toprofile') : '') + bookedCard() + '<div class="card"><b>Documents your adviser asked for</b>' + ['Latest pension statement','Mortgage statement (last 12 months)'].map(d => '<div class="mini"><span>📄 ' + d + '</span><button class="link" data-a="toast" data-p="Sent securely to ' + A.n.split(' ')[0] + '">Upload</button></div>').join('') + '</div>' + nextSteps()};
   return {id:'EXP-00', note:'Experts tab (layout from the LifeGoal mobile prototype): suggested match, specialist types (pre-selected from an Explore topic), what\'s on (live sessions), booking. Works before a plan; consent-before-sharing kept.', head:appHead('Experts', 'Real advisers, when you want them. Free first call, no obligation.'), html:planNudge + (needsProfile() ? nudge('🧭', 'Check your profile before your adviser meeting', 'Check now', 'toprofile') : '') + advCard + specRow + liveRow, foot:'<button class="btn sun" data-a="book">📅 Book my adviser meeting</button>'};
 };
-function bookedCard(){ const b = S.book, A = ADVISERS[b.adv]; return '<div class="card" style="background:var(--ok-l)"><div style="font-size:36px" aria-hidden="true">✅</div><b style="font-size:17px">' + esc(b.slot) + '</b><div class="small" style="color:var(--ink)">' + b.mode + ' with ' + A.n + '</div><p class="small" style="color:var(--ink)">Confirmation sent by email and SMS.</p><button class="btn sm ghost" data-a="ics">' + (dlPossible() ? '📄 Save meeting details (.txt)' : '📆 Add to my calendar') + '</button></div>'; }
-function nextSteps(){ return '<div class="card"><b>What happens next</b><ol class="small" style="padding-left:18px;margin:8px 0 0;color:var(--ink)"><li>Your adviser reviews your plan.</li><li>A verification call: you confirm details and add any missing documents through the secure portal.</li><li>Your adviser prepares your personal plan and you agree it together.</li><li>You take action.</li><li>LifeMap keeps tracking and reminds you about reviews.</li></ol></div>'; }
+function bookedCard(){ const b = S.book, A = ADVISERS[b.adv], m = String(b.slot || '').match(/^(\w+)\s+(\d+)\s+(\w+)\s*·?\s*(.*)$/);
+  return '<div class="card bk-hero"><div class="bk-top"><span class="bk-d" aria-hidden="true">' + (m ? '<small>' + esc(m[1]) + '</small><b>' + esc(m[2]) + '</b><small>' + esc(m[3]) + '</small>' : '📅') + '</span><div><span class="bk-ok"><i aria-hidden="true">✓</i> Confirmed</span><b class="bk-when">' + esc(b.slot) + '</b><span class="bk-who">' + b.mode + ' with ' + A.n + '</span></div></div><p class="bk-note">Confirmation sent by email and SMS.</p><button class="bk-cal" data-a="ics">' + (dlPossible() ? '📄 Save meeting details' : '📆 Add to my calendar') + '</button></div>'; }
+function nextSteps(){ const st = [['🔎', 'Your adviser reviews your plan'], ['📞', 'A short verification call', 'Confirm details and add any missing documents securely'], ['🤝', 'You agree your personal plan together'], ['🚀', 'You take action'], ['🔔', 'LifeMap keeps tracking and reminds you about reviews']];
+  return '<div class="card bk-next"><h3 class="h">What happens next</h3><ol class="bk-steps">' + st.map((x, i) => '<li><span class="bk-n" aria-hidden="true">' + x[0] + '</span><div><b>' + (i + 1) + '. ' + x[1] + '</b>' + (x[2] ? '<small>' + x[2] + '</small>' : '') + '</div></li>').join('') + '</ol></div>'; }
 
 /* ================= ASK (help only: plain-English explanations, never advice) ================= */
 const ASK_GEN = [
