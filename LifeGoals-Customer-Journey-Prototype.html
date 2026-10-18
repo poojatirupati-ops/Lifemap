@@ -2768,6 +2768,22 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 #p4-3 .tag.doc,#p4-3 .tag{font:600 10.5px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;padding:2px 8px!important;border-radius:999px!important;background:#EAF7F6!important;color:#086A74!important;border:0!important;text-transform:none!important}
 #p4-3 .infl > b{font-size:14.5px!important;color:#182A54}
 #p4-3 hr,#p4-3 .asmf .nbline{display:none}
+/* v139: lighter Check your details */
+#p4-3{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;backdrop-filter:none!important}
+#p4-3 > h3,#p4-3 > p.small,#p4-3 > .p4-prog{padding:0 4px}
+#p4-3 .tag{display:none!important}
+#p4-3 > .field{background:rgba(255,255,255,.92)!important;box-shadow:0 10px 24px -18px rgba(24,42,84,.45);padding:12px 14px 12px 60px!important;position:relative;min-height:64px}
+#p4-3 > .field::before{position:absolute;left:12px;top:12px;width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:#EAF7F6}
+#p4-3 > .field:has(#asm-retireAge)::before{content:'🌅'}
+#p4-3 > .field:has(#asm-planEnd)::before{content:'⏳'}
+#p4-3 > .field:has(.infl)::before{content:'📈'}
+#p4-3 > .field:has(#asm-pRetireAge)::before{content:'💞'}
+#p4-3 .asmf .flabel{font-size:14px!important}
+#p4-3 .asmf .small,#p4-3 .asmf > p,#p4-3 .infl > p.small{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px!important}
+#p4-3 .asmf .nbox{padding:4px 10px!important;border-radius:11px}
+#p4-3 .asmf .nbox input{font-size:16px!important}
+#p4-3 .infl button,#p4-3 .infl .chip{min-height:38px!important;padding:6px 14px!important;border-radius:12px!important;background:#F4F9F9!important;border:1px solid rgba(8,106,116,.12)!important;color:#182A54!important;font-size:13px!important;font-weight:600!important;box-shadow:none!important;text-align:left}
+#p4-3 .infl button[aria-pressed="true"],#p4-3 .infl .chip.sel,#p4-3 .infl button.on{background:#EAF7F6!important;border-color:#079E98!important;color:#086A74!important;box-shadow:0 0 0 1px #079E98!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
