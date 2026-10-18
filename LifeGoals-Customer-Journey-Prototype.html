@@ -2561,6 +2561,32 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 @media (prefers-reduced-motion:reduce){.lv3-dot{animation:none}}
 .mp-av span.ill{background:none!important;overflow:hidden;padding:0}
 .mp-av span.ill svg{display:block;border-radius:50%}
+/* v122: Me - money personality card and calmer rows */
+.card.mepr{padding:16px!important}
+.mepr-top{display:flex;gap:14px;align-items:center}
+.mepr-e{width:54px;height:54px;flex-shrink:0;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:27px;background:linear-gradient(145deg,#E3F6F3,#D4EEF0);box-shadow:0 8px 18px -10px rgba(7,158,152,.55)}
+.mepr-top small{display:block;font-size:11.5px;font-weight:600;color:#086A74}
+.mepr-top b{display:block;font-size:20px;color:#182A54;line-height:1.2}
+.mepr-top span{display:block;font-size:13px;color:#5B6B76;line-height:1.35}
+.mepr-risk{margin:14px 0 0;padding:12px;border-radius:16px;background:#F4F9F9;display:flex;flex-direction:column;gap:10px}
+.mepr-rl{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mepr-rl small{font-size:12.5px;color:#5B6B76;font-weight:600}.mepr-rl b{font-size:15px;color:#182A54}
+.mepr-meter span{display:block;height:6px;border-radius:3px;background:rgba(8,106,116,.12);overflow:hidden}
+.mepr-meter i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#08D9B8,#0A7A85)}
+.mepr-meter small{display:block;margin-top:6px;font-size:11.5px;color:#5B6B76}
+.mepr-cta{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:12px;min-height:44px;border-radius:999px;border:0;background:linear-gradient(90deg,#079E98,#0A7A85);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 20px -12px rgba(7,158,152,.8)}
+.mepr-cta i{font-style:normal}
+/* v122b: Me rows grouped in one card */
+.melist{margin:12px 0 0;border-radius:22px;background:rgba(255,255,255,.88);border:1px solid rgba(8,106,116,.08);box-shadow:0 12px 28px -22px rgba(24,42,84,.45);overflow:hidden}
+.melist .goal{margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;padding:12px 14px!important;gap:12px!important}
+.melist .goal + .goal{border-top:1px solid rgba(8,106,116,.08)!important}
+.melist .goal:hover{background:#F4F9F9!important;transform:none!important}
+.melist .goal .ic{width:40px!important;height:40px!important;border-radius:12px!important;font-size:19px!important;background:#EAF7F6!important;box-shadow:none!important}
+.melist .goal b{font-size:14.5px}
+.melist .goal .small{font-size:12.5px}
+.me-pct{padding:4px 10px;border-radius:999px;background:#EAF7F6;color:#086A74;font-size:12.5px;font-weight:700}
+.mepr-e > *{position:static!important;display:flex!important;align-items:center;justify-content:center;width:100%;height:100%;font-size:27px!important;margin:0!important;transform:none!important}
+.mepr-top .mepr-e{display:flex!important;align-items:center!important;justify-content:center!important;font-size:27px!important;line-height:1!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5442,11 +5468,11 @@ V.ME = () => { const m = S.me;
       '<div class="card mehh"><h3 class="h">Your household</h3><div class="field" style="margin:10px 0 0"><span class="flabel">Planning with a partner?</span>' + seg('partner', [['Yes','Yes'],['No','No']], v => (v === 'Yes' && b.partner === true) || (v === 'No' && b.partner === false)) + (b.partner ? marriedField() + partnerBlock() : '') + '</div>' +
         '<div class="field" style="margin:16px 0 0"><span class="flabel">Children or others who rely on you</span>' + seg('deps', [[0,'0'],[1,'1'],[2,'2'],[3,'3+']], v => b.deps === v) + '</div></div>' +
       (!discEnough() ? '<div class="card"><div class="eyebrow">Your profile</div><p class="small" style="color:var(--ink);margin:6px 0 0">Answer a few more of your first questions to see your money personality and indicative risk profile.</p><button class="link" data-a="me" data-p="recheck">Answer a few more</button></div>' :
-      '<div class="card"><div class="eyebrow">Your profile</div><div class="row" style="margin-top:6px"><span style="font-size:34px" aria-hidden="true">' + P.e + '</span><div style="flex:1"><b style="font-family:var(--fh);font-size:20px">' + P.name + '</b><div class="small">' + P.strap + '</div></div></div>' +
-        '<div class="mini" style="margin-top:8px"><span>Indicative risk profile</span><b>' + riskLabelText(r) + '</b></div><span class="pill ' + (full ? 'ok' : 'sunny') + '">' + (full ? '✓ From all 13 answers' : 'First read · ' + umCount() + ' of 13 answers') + '</span>' +
-        '<div><button class="link" data-a="me" data-p="' + (full ? 'umr' : 'um') + '">' + (full ? 'See my full profile' : 'Answer ' + (13 - umCount()) + ' more to confirm it') + '</button></div></div>') +
-      '<div style="margin-top:12px">' + rowBtn('me', 'recheck', '✅', 'Your first answers', S.um.rechecked ? 'Checked ✓ · ' + discCount() + ' answers from when you started' : discCount() + ' answers, pre-filled · check they still fit') + rowBtn('me', 'terms', '◆', 'Your money terms', 'What your answers say, in adviser words and plain English') +
-        rowBtn('me', 'um', '🧭', 'Your full money profile', 'Risk appetite · Capacity for loss · Investor behaviour · ' + umNewCount() + ' of 7 answered', ring(Math.round(umCount() / 13 * 100), 46, 'var(--sea-d)')) +
+      '<div class="card mepr"><div class="mepr-top"><span class="mepr-e" aria-hidden="true">' + P.e + '</span><div><small>Your money personality</small><b>' + P.name + '</b><span>' + P.strap + '</span></div></div>' +
+        '<div class="mepr-risk"><div class="mepr-rl"><small>Indicative risk profile</small><b>' + riskLabelText(r).replace(/\s*\(first read\)/i, '') + '</b></div><div class="mepr-meter" aria-label="' + umCount() + ' of 13 answers"><span><i style="width:' + Math.round(umCount() / 13 * 100) + '%"></i></span><small>' + (full ? 'Confirmed · all 13 answers' : umCount() + ' of 13 answers · first read') + '</small></div></div>' +
+        '<button class="mepr-cta" data-a="me" data-p="' + (full ? 'umr' : 'um') + '">' + (full ? 'See my full profile' : 'Answer ' + (13 - umCount()) + ' more to confirm') + ' <i aria-hidden="true">→</i></button></div>') +
+      '<div class="melist">' + rowBtn('me', 'recheck', '✅', 'Your first answers', S.um.rechecked ? 'Checked ✓ · ' + discCount() + ' answers from when you started' : discCount() + ' answers, pre-filled · check they still fit') + rowBtn('me', 'terms', '📖', 'Your money terms', 'Adviser words, in plain English') +
+        rowBtn('me', 'um', '🧭', 'Your full money profile', umNewCount() + ' of 7 deeper questions answered', '<span class="me-pct">' + Math.round(umCount() / 13 * 100) + '%</span>') +
         (S.app ? rowBtn('me', 'money', '💶', 'My money', 'Your 6 finance sections and documents') : rowBtn('makeplan', '', '💶', 'My money', 'Added when you make your plan, after a quick account check')) + rowBtn('me', 'asm', '🧮', 'Your assumptions', 'Prices, growth, retirement and emergency fund settings') + rowBtn('me', 'privacy', '🔐', 'Privacy & preferences', 'Consents, what advisers see, delete my data') + '</div>' +
       '<p class="disc">None of this is required. It sharpens your plan and means your adviser won\'t ask you again.</p>'};
 };
