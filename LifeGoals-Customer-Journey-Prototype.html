@@ -2611,6 +2611,19 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .fa-edit{flex-shrink:0;min-height:32px;padding:0 14px;border-radius:999px;border:1.5px solid #CFE7E6;background:#fff;color:#086A74;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .fa-edit:hover{background:#EAF7F6}
 .fa-ed .opts{margin-top:4px}
+/* v127: My details as a profile page */
+.pdpro{margin-top:4px}
+.pdpro .mp-name{margin:0!important}
+.pd-list{border-radius:22px;background:rgba(255,255,255,.88);border:1px solid rgba(8,106,116,.08);box-shadow:0 12px 28px -22px rgba(24,42,84,.45);overflow:hidden}
+.pd-r{display:flex;align-items:center;gap:12px;width:100%;min-height:54px;padding:8px 14px;border:0;background:transparent;font:inherit;text-align:left;cursor:pointer;color:#182A54}
+.pd-r + .pd-r{border-top:1px solid rgba(8,106,116,.08)}
+.pd-r:hover{background:#F4F9F9}
+.pd-i{width:34px;height:34px;flex-shrink:0;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;background:#EAF7F6}
+.pd-l{flex:1;min-width:0;font-size:14px;color:#5B6B76}
+.pd-r b{font-size:14px;font-weight:700;text-align:right;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pd-r em{font-style:normal;font-size:13px;font-weight:700;color:#079E98}
+.pd-c{color:#9DB3B8;font-size:18px;margin-left:2px}
+.pdpro h2.mp-name{font-size:22px!important;line-height:1.2!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5471,7 +5484,12 @@ V.ME = () => { const m = S.me;
         '<div class="card"><div class="eyebrow">Your money terms</div>' + termsHTML() + '</div>' +
         '<div class="card"><div class="eyebrow">Your indicative risk profile</div><div style="font-family:var(--fh);font-size:26px;font-weight:800;margin:4px 0">' + riskLabelText(r) + '</div>' + (r.label ? bar(sectLbl('appetite'), r.want) + bar(sectLbl('capacity'), r.can) + bar(sectLbl('horizon'), r.time) + (r.limit === 'experience' ? bar(sectLbl('experience'), r.level) : '') + '<p class="small" style="margin:8px 0 0">Set by: <b>' + RISK_SETBY[r.limit] + '</b></p>' + (r.keNote ? '<p class="small" style="margin:6px 0 0;color:var(--ink)">' + KE_NOTE + '</p>' : '') : '') + (r.mis ? '<p class="note" style="margin-top:12px">' + esc(r.mis) + '</p>' : '') + '<p class="small" style="margin:10px 0 0">This now shows on <b>My Plan</b> and in your plan report.</p></div>' +
         retBtn() + '<p class="disc">This is an indicative profile to guide your conversation. It is not advice. Your adviser confirms your risk profile with you. ' + DISC_FORMAL + '</p>'}; }
-  if (m === 'details') return {id:'ME-DET', note:'My details (name, contact, household).', head:appHead('My details', '', 'meback'), html:'<div class="card">' + [['Name', S.acct.name || S.fin.name],['Email', S.acct.email],['Mobile', S.acct.mobile],['Date of birth', S.about.dob && dobValid(S.about.dob) ? dateLong(new Date(+S.about.dob.y, +S.about.dob.m - 1, +S.about.dob.d)) : 'Not given yet'],['Age', S.about.ageToday ? S.about.ageToday + ' today' : S.about.age || 'Not given yet'],['Partner', partnerLine()],['People who rely on you', ['0','1','2','3+'][S.about.deps || 0]],['Retirement age', S.retireSet ? S.retireAge : 'Not chosen yet']].map(x => '<div class="mini"><span>' + x[0] + '</span><b>' + esc(x[1]) + '</b></div>').join('') + '</div><button class="btn ghost" style="margin-top:12px" data-a="fsec" data-p="0">Edit About you</button>'};
+  if (m === 'details'){ const nm = S.acct.name || S.fin.name || '', dob = S.about.dob && dobValid(S.about.dob) ? dateLong(new Date(+S.about.dob.y, +S.about.dob.m - 1, +S.about.dob.d)) : '', age = S.about.ageToday || S.about.age || '';
+    const row = (ic, l, v) => '<button class="pd-r" data-a="fsec" data-p="0"><span class="pd-i" aria-hidden="true">' + ic + '</span><span class="pd-l">' + l + '</span>' + (v !== '' && v != null ? '<b>' + esc(String(v)) + '</b>' : '<em>Add</em>') + '<span class="pd-c" aria-hidden="true">›</span></button>';
+    return {id:'ME-DET', note:'My details as a profile page: photo header, personal and household groups; empty fields show Add.', head:appHead('', '', 'meback'),
+      html:'<div class="card mepro pdpro"><div class="mp-cover" aria-hidden="true"></div><div class="mp-av"><span class="ph" style="background-image:url(' + (S.acct.photo || 'media/profile-photo.jpg') + ')"></span><label class="mp-cam" title="Change photo"><input type="file" id="avup" accept="image/*" aria-label="Change your photo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></label></div><h2 class="mp-name t" tabindex="-1">' + esc(nm || 'Your profile') + '</h2><p class="mp-sub">' + (S.acct.email ? esc(S.acct.email) : 'Add your details so your plan fits you') + '</p><button class="mp-edit" data-a="fsec" data-p="0">Edit profile</button></div>' +
+        '<h3 class="me-gh">Personal</h3><div class="pd-list">' + row('👤', 'Name', nm) + row('✉️', 'Email', S.acct.email || '') + row('📱', 'Mobile', S.acct.mobile || '') + row('🎂', 'Date of birth', dob) + row('⏳', 'Age', age ? age + (S.about.ageToday ? ' today' : '') : '') + '</div>' +
+        '<h3 class="me-gh">Household & plan</h3><div class="pd-list">' + row('💞', 'Partner', partnerLine()) + row('👨‍👩‍👧', 'People who rely on you', ['0','1','2','3+'][S.about.deps || 0]) + row('🌅', 'Retirement age', S.retireSet ? S.retireAge : '') + '</div>'}; }
   if (m === 'privacy') return {id:'ME-PRIV', note:'Privacy & preferences: consents, sustainability preference (§13, optional, goes to the adviser), what each adviser can see, delete my data.', head:appHead('Privacy & preferences', '', 'meback'),
     html:'<div class="card"><label class="check"><input type="checkbox" checked disabled><span>Use my details to build my plan (needed for the service)</span></label><label class="check"><input type="checkbox" data-acct="c2"' + (S.acct.c2 ? ' checked' : '') + '><span>Send me reminders and updates</span></label></div>' +
       '<div class="card"><b>Your preferences</b><p class="small" style="margin:4px 0 8px">Optional. Your adviser will ask about this before recommending anything.</p><div class="chips"><button class="chip sm' + (S.advQs.includes(ESG_Q) ? ' sel' : '') + '" aria-pressed="' + S.advQs.includes(ESG_Q) + '" data-a="advq" data-p="' + esc(ESG_Q) + '">🌿 ' + esc(ESG_Q) + '</button></div></div>' +
