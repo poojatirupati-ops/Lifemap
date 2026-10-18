@@ -2375,6 +2375,28 @@ body.desk .xhero .xh-card{min-height:340px}
 @keyframes abtw{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.12) rotate(12deg)}}
 .askbar .ab-tx{color:#5B6B76}.askbar .ab-tx b{background:linear-gradient(90deg,#079E98,#0B5880);-webkit-background-clip:text;background-clip:text;color:transparent}
 @media (prefers-reduced-motion:reduce){.askbar,.askbar .ab-spark,.askbar .ab-spark svg{animation:none}}
+/* v108: Mortgages calculators - calm list, only the open one is a photo card */
+#mp-calc > span{display:none}
+.mp-cal{flex-direction:column!important;height:auto!important;gap:8px!important}
+.mp-c{flex:none!important;filter:none!important;min-height:0!important;border-radius:18px!important;transition:background .3s ease,box-shadow .3s ease}
+.mp-c:not(.on){background:rgba(255,255,255,.82)!important;color:#182A54!important;border:1px solid rgba(8,106,116,.1);box-shadow:0 6px 16px -14px rgba(24,42,84,.45)}
+.mp-c:not(.on):hover{background:#fff!important}
+.mp-c:not(.on) .ph,.mp-c:not(.on) .sh{display:none}
+.mp-ch{flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;height:auto!important;min-height:56px!important;padding:8px 14px 8px 8px!important;gap:12px!important;font-size:14.5px!important;font-weight:700!important}
+.mp-c:not(.on) .mp-ch{color:#182A54!important}
+.mp-ch .t{writing-mode:horizontal-tb!important;transform:none!important;margin:0!important;align-self:center!important;font-size:14.5px!important}
+.mp-ch .e{width:38px;height:38px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px!important;background:#EAF7F6}
+.mp-c.on .mp-ch .e{background:rgba(255,255,255,.2)}
+.mp-ch .n{display:none!important}
+.mp-c:not(.on) .mp-ch::after{content:'›';margin-left:auto;font-size:22px;line-height:1;color:#086A74;opacity:.7}
+.mp-c.on{background:linear-gradient(135deg,#0B5880,#079E98)!important;box-shadow:0 18px 36px -20px rgba(7,158,152,.7)}
+.mp-c.on .ph{opacity:.32!important;mix-blend-mode:luminosity}
+.mp-c.on .sh{background:linear-gradient(180deg,rgba(11,88,128,.1),rgba(11,40,70,.7))!important}
+.mp-cb{position:relative!important;display:none;padding:2px 16px 16px!important;min-height:0!important}
+.mp-c.on .mp-cb{display:flex!important}
+.mp-cb p{display:none}
+.mp-cb strong{font-size:21px!important;margin:4px 0 12px!important}
+.mp-cb .btn{background:#fff!important;color:#182A54!important;box-shadow:0 8px 18px -10px rgba(0,0,0,.4)!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
