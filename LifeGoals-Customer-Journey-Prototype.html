@@ -2598,6 +2598,19 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .pghead{padding:8px 0 4px}
 .pghead h2.t{margin:0 0 4px}
 .pghead .sub{margin:0 0 6px}
+/* v125: Your first answers - numbered answer cards */
+.fa-note{display:flex;align-items:center;gap:8px;margin:2px 0 12px;padding:9px 12px;border-radius:14px;background:#EAF7F6;color:#086A74;font-size:13px;font-weight:600}
+.fa-note span{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#079E98;color:#fff;font-size:11px}
+.fa-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.pq.fa-c{padding:12px 12px 12px 14px!important;margin:0!important;border:1px solid rgba(8,106,116,.08)!important;border-radius:18px!important;background:rgba(255,255,255,.9)!important;box-shadow:0 8px 20px -16px rgba(24,42,84,.45)}
+.fa-q{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.4;color:#5B6B76;margin-bottom:8px}
+.fa-n{width:20px;height:20px;flex-shrink:0;border-radius:7px;display:flex;align-items:center;justify-content:center;background:#F2F8F8;color:#086A74;font-size:11px;font-weight:800}
+.fa-a{display:flex;align-items:center;gap:10px}
+.fa-e{width:38px;height:38px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;background:#F4F9F9}
+.fa-a b{flex:1;min-width:0;font-size:14.5px;color:#182A54;line-height:1.3}
+.fa-edit{flex-shrink:0;min-height:32px;padding:0 14px;border-radius:999px;border:1.5px solid #CFE7E6;background:#fff;color:#086A74;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.fa-edit:hover{background:#EAF7F6}
+.fa-ed .opts{margin-top:4px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5355,9 +5368,9 @@ function umQCard(q, label){ const d = q.d ? DQ_BY(q.d) : q, key = q.d ? 'd' + q.
     (q.chips ? '<div class="small" style="font-weight:800;margin:12px 0 6px">Which have you had? (optional)</div><div class="chips">' + q.chips.map(c => '<button class="chip sm' + (S.um.chips.includes(c) ? ' sel' : '') + '" aria-pressed="' + S.um.chips.includes(c) + '" data-a="umchip" data-p="' + c + '">' + c + '</button>').join('') + '</div>' : '') + '</div>'; }
 function umSummary(qs){ const pre = qs.filter(q => q.d && typeof S.ans[q.d] === 'number');
   if (!pre.length) return '';
-  return '<div class="card"><div class="row" style="justify-content:space-between;flex-wrap:wrap"><b>Your first answers</b><span class="pill mint">✓ Pre-filled — change if you like</span></div>' + pre.map(q => { const d = DQ_BY(q.d), key = 'd' + q.d, sel = S.ans[q.d];
-    if (S.meEdit[key]) return '<div class="pq"><div class="small" style="font-weight:800;margin-bottom:6px">' + esc(d.q) + '</div><div class="opts" role="group" aria-label="' + esc(d.q) + '">' + d.o.map((o, k) => '<button class="opt row1' + (sel === k ? ' sel' : '') + '" aria-pressed="' + (sel === k) + '" data-a="umpick" data-p="' + key + '|' + k + '"><span class="em" style="background:var(--sand)" aria-hidden="true">' + o.e + '</span><span class="tx">' + esc(o.t) + '</span></button>').join('') + '</div></div>';
-    return '<div class="pq"><div class="small">' + esc(d.q) + '</div><div class="row" style="margin-top:2px"><span aria-hidden="true" style="font-size:20px">' + d.o[sel].e + '</span><b style="flex:1;font-size:14.5px">' + esc(d.o[sel].t) + '</b><button class="link" data-a="umedit" data-p="' + key + '" aria-label="Change your answer to: ' + esc(d.q) + '">Change</button></div></div>'; }).join('') + '</div>'; }
+  return '<p class="fa-note"><span aria-hidden="true">✓</span> Pre-filled from your first answers · tap Edit to change one</p><div class="fa-list">' + pre.map((q, qi) => { const d = DQ_BY(q.d), key = 'd' + q.d, sel = S.ans[q.d];
+    if (S.meEdit[key]) return '<div class="pq fa-c fa-ed"><div class="fa-q"><span class="fa-n">' + (qi + 1) + '</span>' + esc(d.q) + '</div><div class="opts" role="group" aria-label="' + esc(d.q) + '">' + d.o.map((o, k) => '<button class="opt row1' + (sel === k ? ' sel' : '') + '" aria-pressed="' + (sel === k) + '" data-a="umpick" data-p="' + key + '|' + k + '"><span class="em" style="background:var(--sand)" aria-hidden="true">' + o.e + '</span><span class="tx">' + esc(o.t) + '</span></button>').join('') + '</div></div>';
+    return '<div class="pq fa-c"><div class="fa-q"><span class="fa-n">' + (qi + 1) + '</span>' + esc(d.q) + '</div><div class="fa-a"><span class="fa-e" aria-hidden="true">' + d.o[sel].e + '</span><b>' + esc(d.o[sel].t) + '</b><button class="fa-edit" data-a="umedit" data-p="' + key + '" aria-label="Change your answer to: ' + esc(d.q) + '">Edit</button></div></div>'; }).join('') + '</div>'; }
 function rowBtn(a, p, e, t, d, right){ return '<button class="goal" data-a="' + a + '" data-p="' + p + '"><span class="ic" aria-hidden="true">' + e + '</span><span style="flex:1;min-width:0"><b>' + t + '</b><br><span class="small">' + d + '</span></span>' + (right || '<span class="chev" aria-hidden="true">›</span>') + '</button>'; }
 // FP round 8 (§14): the three types as the customer sees them
 const T_GOV = 'Set by Government · 2026', T_MINE = 'Your choice', T_HOW = 'How the plan works', T_SET = 'Set by LifeMap', T_ASSUMED = 'Assumed: add yours';
