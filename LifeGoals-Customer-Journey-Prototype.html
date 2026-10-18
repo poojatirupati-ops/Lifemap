@@ -2458,6 +2458,13 @@ body.desk .mp-grid{grid-template-columns:repeat(3,1fr)}
 .mp-gc:not(.big) .gc-tx b{font-size:14px;font-weight:700}
 .mp-gc:not(.big) .gc-tx small,.mp-gc:not(.big) .gc-go{display:none}
 .mp-grid{gap:10px 10px}
+/* v113: Borrow card uses the same style as the rest of the grid (still full width) */
+.mp-gc.big{min-height:0!important;padding:0!important;background:rgba(255,255,255,.88)!important;color:#182A54!important;justify-content:flex-start!important;border:1px solid rgba(8,106,116,.08);box-shadow:0 8px 20px -16px rgba(24,42,84,.45)!important}
+.mp-gc.big::before{display:none!important}
+.mp-gc.big .gc-ph{position:relative;inset:auto;z-index:0;display:block;height:110px;width:100%}
+.mp-gc.big .gc-tx{padding:10px 12px 12px;gap:0}
+.mp-gc.big .gc-tx b{font-size:14px!important;font-weight:700}
+.mp-gc.big .gc-tx small,.mp-gc.big .gc-go{display:none!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
