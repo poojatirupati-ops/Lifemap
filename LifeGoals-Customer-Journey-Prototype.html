@@ -2465,6 +2465,30 @@ body.desk .mp-grid{grid-template-columns:repeat(3,1fr)}
 .mp-gc.big .gc-tx{padding:10px 12px 12px;gap:0}
 .mp-gc.big .gc-tx b{font-size:14px!important;font-weight:700}
 .mp-gc.big .gc-tx small,.mp-gc.big .gc-go{display:none!important}
+/* v114: Read and ask - cards like the Tools for you tiles */
+.mp-rd.rd2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rd-c{display:block;padding:10px 10px 12px;border-radius:20px;background:#fff;border:1px solid #E7ECEF;box-shadow:0 6px 16px -10px rgba(24,42,84,.25);overflow:hidden}
+.rd-c[open]{grid-column:1 / -1}
+.rd-c summary{list-style:none;display:flex;flex-direction:column;gap:4px;cursor:pointer;min-height:0!important;padding:0!important}
+.rd-c summary::-webkit-details-marker{display:none}
+.rd-c summary::after{display:none!important;content:none!important}
+.rd-ic{display:flex;align-items:center;justify-content:center;height:84px;border-radius:14px;background:var(--t);font-size:32px;margin-bottom:6px}
+.rd-c[open] .rd-ic{height:64px}
+.rd-c summary small{font-size:12px;color:#086A74;font-weight:600;padding:0 4px}
+.rd-c summary b{font-size:14px;line-height:1.25;color:#182A54;padding:0 4px;min-height:36px}
+.rd-go{display:flex;align-items:center;justify-content:center;gap:6px;min-height:38px;margin-top:8px;border-radius:999px;background:#E6F4F4;color:#086A74;font-size:13.5px;font-weight:600}
+.rd-go i{font-style:normal;transition:transform .2s}
+.rd-c[open] .rd-go i{transform:rotate(45deg)}
+.rd-go .c{display:none}.rd-c[open] .rd-go .o{display:none}.rd-c[open] .rd-go .c{display:inline}
+.rd-c .bd{padding:12px 6px 2px;font-size:13.5px;line-height:1.5;color:#5B6B76}
+body.desk .mp-rd.rd2{grid-template-columns:repeat(3,1fr)}
+.mp-rd.rd2 .rd-c:last-child:nth-child(odd){grid-column:1 / -1}
+body.desk .mp-rd.rd2 .rd-c:last-child:nth-child(odd){grid-column:auto}
+body.desk .mp-rd.rd2 .rd-c[open]{grid-column:1 / -1}
+.rd-c summary{align-items:stretch!important;text-align:left!important;justify-content:flex-start!important;gap:4px!important;font-weight:400}
+.rd-c summary > *{width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
+.rd-c summary .rd-go{margin-top:auto!important}
+.rd-c{display:flex;flex-direction:column}.rd-c summary{flex:1}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5983,7 +6007,7 @@ V.MORT = () => { const d = MPQ(), t = TOPICS.find(x => x[1] === 'Mortgages'), pd
       return '<button class="mp-gc' + (i === 0 ? ' big' : '') + '" data-a="calc" data-p="' + m[2] + '" aria-label="' + esc(m[0]) + ': ' + esc(nm) + '"><span class="gc-ph" style="background-image:url(\'' + mpPhoto(m[1]) + '\')" aria-hidden="true"></span><span class="gc-e" aria-hidden="true">' + m[3] + '</span><span class="gc-tx"><b>' + esc(m[0]) + '</b><small>' + esc(nm) + '</small></span><span class="gc-go" aria-hidden="true">→</span></button>'; }).join('') + '</div>' +
    '<div class="mp-sec" id="mp-watch"><h3>Watch</h3><span id="mp-wc">' + doneN + ' of ' + d.v.length + ' watched</span></div><div class="mp-bub mp-vrow" role="group" aria-label="Videos">' + d.v.map((v, i) => { const rv = v.vid && VID(v.vid), pst = (rv && rv.poster) || mpPhoto(['home-keys', 'house-for-sale', 'money-plant', 'invest-charts', 'couple-planning'][i % 5]), done = S.mpd[S.mps + '-' + i];
       return '<button class="mp-bu mp-vc' + (i === S.mpv ? ' cur' : '') + (done ? ' done' : '') + '" data-a="mpvid" data-p="' + i + '" aria-label="' + esc(v.t) + (done ? ', watched' : '') + '"' + (i === S.mpv ? ' aria-current="true"' : '') + '><span class="vc-art" style="--c:' + v.bg + (pst ? ';background-image:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45)),url(' + pst + ')' : '') + '">' + (rv && rv.poster ? '' : '<i class="vc-badge" aria-hidden="true">' + v.ic + '</i>') + '<span class="vc-play" aria-hidden="true">' + (i === S.mpv ? '●' : '▶') + '</span>' + (v.d ? '<span class="vc-d">' + esc(v.d) + '</span>' : '') + '<b class="vc-ok" aria-hidden="true">✓</b></span><span class="vc-t">' + esc(v.s) + '</span>' + (i === S.mpv ? '<span class="vc-now">Now playing</span>' : '') + '</button>'; }).join('') + '</div><div id="mp-player">' + mpVideoBlock() + '</div>' +
-   '<div class="mp-sec" id="mp-read"><h3>Read and ask</h3></div><div class="mp-rd">' + d.r.map(x => '<details><summary style="min-height:48px"><span aria-hidden="true">' + x[2] + '</span>' + x[0] + '</summary><div class="bd"><b style="color:var(--ink)">' + esc(x[1]) + '</b><br>TODO: content to come from docs/content/mortgage/ (not added yet).</div></details>').join('') + '</div>' +
+   '<div class="mp-sec" id="mp-read"><h3>Read and ask</h3></div><div class="mp-rd rd2">' + d.r.map((x, i) => '<details class="rd-c"><summary><span class="rd-ic" style="--t:' + ['#EEF6F4', '#F1F0FA', '#EAF2FA'][i % 3] + '" aria-hidden="true">' + x[2] + '</span><small>' + esc(x[0]) + '</small><b>' + esc(x[1]) + '</b><span class="rd-go"><span class="o">Open</span><span class="c">Close</span> <i aria-hidden="true">+</i></span></summary><div class="bd"><b style="color:var(--ink)">' + esc(x[1]) + '</b><br>TODO: content to come from docs/content/mortgage/ (not added yet).</div></details>').join('') + '</div>' +
    '<div class="mp-sec" id="mp-live"><h3>Live sessions</h3><span>Free · ask experts live</span></div>' + d.l.map((x, i) => { const k = S.mps + '-' + i, on = !!S.mpseat[k], [dd, ...tt] = x[0].split(' ');
       return '<div class="card lv2" style="margin-bottom:8px"><span class="lv2-d" aria-hidden="true"><small>' + esc(dd) + '</small><b>' + esc(tt.join(' ')) + '</b></span><span class="lv2-m"><span class="lv2-tags"><span class="lv2-live">Live</span><span class="lv2-free">Free</span></span><b>' + esc(x[1]) + '</b><small>With a mortgage broker · ' + esc(x[0]) + '</small></span><button class="mp-seat" data-a="mpseat" data-p="' + k + '" aria-pressed="' + on + '">' + (on ? '✓ Seat saved' : 'Save seat') + '</button></div>'; }).join('') +
    '<p class="disc">Topics explain general ideas. They are not advice.</p></div>' + expertFab('mortgage')}; };
