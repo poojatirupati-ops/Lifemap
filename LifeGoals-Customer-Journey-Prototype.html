@@ -2448,6 +2448,16 @@ body.desk .xhero .xh-card{min-height:340px}
 .gc-go{position:absolute;right:10px;bottom:12px;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;color:#182A54;font-size:13px;font-weight:800}
 body.desk .mp-grid{grid-template-columns:repeat(3,1fr)}
 .vc-badge{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:16px!important;background:rgba(255,255,255,.88);filter:none!important}
+/* v112: calmer calculator grid */
+.mp-gc .gc-e{display:none}
+.mp-gc.big{min-height:150px!important}
+.mp-gc:not(.big){min-height:0!important;padding:0!important;background:rgba(255,255,255,.88);color:#182A54;justify-content:flex-start;border:1px solid rgba(8,106,116,.08);box-shadow:0 8px 20px -16px rgba(24,42,84,.45)}
+.mp-gc:not(.big)::before{display:none}
+.mp-gc:not(.big) .gc-ph{position:relative;inset:auto;z-index:0;display:block;height:78px;width:100%}
+.mp-gc:not(.big) .gc-tx{padding:10px 12px 12px;gap:0}
+.mp-gc:not(.big) .gc-tx b{font-size:14px;font-weight:700}
+.mp-gc:not(.big) .gc-tx small,.mp-gc:not(.big) .gc-go{display:none}
+.mp-grid{gap:10px 10px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
