@@ -2489,6 +2489,27 @@ body.desk .mp-rd.rd2 .rd-c[open]{grid-column:1 / -1}
 .rd-c summary > *{width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important}
 .rd-c summary .rd-go{margin-top:auto!important}
 .rd-c{display:flex;flex-direction:column}.rd-c summary{flex:1}
+/* v115: Read and ask - fixed row of cards, content panel below */
+.mp-rd.rd3{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory;scroll-padding-left:16px}
+.mp-rd.rd3::-webkit-scrollbar{display:none}
+.rd3 .rd-c{flex:0 0 156px;scroll-snap-align:start;display:flex;flex-direction:column;gap:4px;padding:10px 10px 12px;border-radius:20px;background:#fff;border:1px solid #E7ECEF;box-shadow:0 6px 16px -10px rgba(24,42,84,.25);text-align:left;font:inherit;cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s}
+.rd3 .rd-c:hover{transform:translateY(-2px)}
+.rd3 .rd-c.on{border-color:#079E98;box-shadow:0 0 0 1px #079E98,0 10px 22px -14px rgba(7,158,152,.55)}
+.rd3 .rd-ic{height:76px;margin-bottom:6px}
+.rd3 .rd-c small{font-size:12px;color:#086A74;font-weight:600;padding:0 4px}
+.rd3 .rd-c b{font-size:14px;line-height:1.25;color:#182A54;padding:0 4px;min-height:54px}
+.rd3 .rd-go{margin-top:auto}
+.rd3 .rd-c.on .rd-go{background:linear-gradient(90deg,#079E98,#0A7A85);color:#fff}
+.rd-panel{margin:4px 0 6px;padding:14px 16px;border-radius:18px;background:#fff;border:1px solid rgba(8,106,116,.12);box-shadow:0 10px 24px -18px rgba(24,42,84,.45);animation:rise .3s var(--ease) both}
+.rd-panel b{display:block;font-size:14.5px;color:#182A54;margin-bottom:4px}
+.rd-panel p{margin:0;font-size:13.5px;line-height:1.5;color:#5B6B76}
+body.desk .mp-rd.rd3{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible;margin:0;padding:0}
+body.desk .rd3 .rd-c{flex:none}
+.mp-rd.rd3{display:flex!important;flex-direction:row!important;align-items:stretch}
+.rd3 .rd-c{overflow:visible!important;height:auto!important}
+body.desk .mp-rd.rd3{display:grid!important}
+#screen .scroll,#screen .qbody{overflow-anchor:none}
+#mp-player video{aspect-ratio:16/9;width:100%;height:auto}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -6007,7 +6028,8 @@ V.MORT = () => { const d = MPQ(), t = TOPICS.find(x => x[1] === 'Mortgages'), pd
       return '<button class="mp-gc' + (i === 0 ? ' big' : '') + '" data-a="calc" data-p="' + m[2] + '" aria-label="' + esc(m[0]) + ': ' + esc(nm) + '"><span class="gc-ph" style="background-image:url(\'' + mpPhoto(m[1]) + '\')" aria-hidden="true"></span><span class="gc-e" aria-hidden="true">' + m[3] + '</span><span class="gc-tx"><b>' + esc(m[0]) + '</b><small>' + esc(nm) + '</small></span><span class="gc-go" aria-hidden="true">→</span></button>'; }).join('') + '</div>' +
    '<div class="mp-sec" id="mp-watch"><h3>Watch</h3><span id="mp-wc">' + doneN + ' of ' + d.v.length + ' watched</span></div><div class="mp-bub mp-vrow" role="group" aria-label="Videos">' + d.v.map((v, i) => { const rv = v.vid && VID(v.vid), pst = (rv && rv.poster) || mpPhoto(['home-keys', 'house-for-sale', 'money-plant', 'invest-charts', 'couple-planning'][i % 5]), done = S.mpd[S.mps + '-' + i];
       return '<button class="mp-bu mp-vc' + (i === S.mpv ? ' cur' : '') + (done ? ' done' : '') + '" data-a="mpvid" data-p="' + i + '" aria-label="' + esc(v.t) + (done ? ', watched' : '') + '"' + (i === S.mpv ? ' aria-current="true"' : '') + '><span class="vc-art" style="--c:' + v.bg + (pst ? ';background-image:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45)),url(' + pst + ')' : '') + '">' + (rv && rv.poster ? '' : '<i class="vc-badge" aria-hidden="true">' + v.ic + '</i>') + '<span class="vc-play" aria-hidden="true">' + (i === S.mpv ? '●' : '▶') + '</span>' + (v.d ? '<span class="vc-d">' + esc(v.d) + '</span>' : '') + '<b class="vc-ok" aria-hidden="true">✓</b></span><span class="vc-t">' + esc(v.s) + '</span>' + (i === S.mpv ? '<span class="vc-now">Now playing</span>' : '') + '</button>'; }).join('') + '</div><div id="mp-player">' + mpVideoBlock() + '</div>' +
-   '<div class="mp-sec" id="mp-read"><h3>Read and ask</h3></div><div class="mp-rd rd2">' + d.r.map((x, i) => '<details class="rd-c"><summary><span class="rd-ic" style="--t:' + ['#EEF6F4', '#F1F0FA', '#EAF2FA'][i % 3] + '" aria-hidden="true">' + x[2] + '</span><small>' + esc(x[0]) + '</small><b>' + esc(x[1]) + '</b><span class="rd-go"><span class="o">Open</span><span class="c">Close</span> <i aria-hidden="true">+</i></span></summary><div class="bd"><b style="color:var(--ink)">' + esc(x[1]) + '</b><br>TODO: content to come from docs/content/mortgage/ (not added yet).</div></details>').join('') + '</div>' +
+   '<div class="mp-sec" id="mp-read"><h3>Read and ask</h3></div><div class="mp-rd rd3" role="group" aria-label="Read and ask">' + d.r.map((x, i) => '<button class="rd-c' + (S.mprd === i ? ' on' : '') + '" data-a="mprd" data-p="' + i + '" aria-expanded="' + (S.mprd === i) + '"><span class="rd-ic" style="--t:' + ['#EEF6F4', '#F1F0FA', '#EAF2FA'][i % 3] + '" aria-hidden="true">' + x[2] + '</span><small>' + esc(x[0]) + '</small><b>' + esc(x[1]) + '</b><span class="rd-go">' + (S.mprd === i ? 'Close <i aria-hidden="true">×</i>' : 'Open <i aria-hidden="true">+</i>') + '</span></button>').join('') + '</div>' +
+   (S.mprd != null && d.r[S.mprd] ? '<div class="rd-panel" role="region" aria-label="' + esc(d.r[S.mprd][0]) + '"><b>' + esc(d.r[S.mprd][1]) + '</b><p>TODO: content to come from docs/content/mortgage/ (not added yet).</p></div>' : '') +
    '<div class="mp-sec" id="mp-live"><h3>Live sessions</h3><span>Free · ask experts live</span></div>' + d.l.map((x, i) => { const k = S.mps + '-' + i, on = !!S.mpseat[k], [dd, ...tt] = x[0].split(' ');
       return '<div class="card lv2" style="margin-bottom:8px"><span class="lv2-d" aria-hidden="true"><small>' + esc(dd) + '</small><b>' + esc(tt.join(' ')) + '</b></span><span class="lv2-m"><span class="lv2-tags"><span class="lv2-live">Live</span><span class="lv2-free">Free</span></span><b>' + esc(x[1]) + '</b><small>With a mortgage broker · ' + esc(x[0]) + '</small></span><button class="mp-seat" data-a="mpseat" data-p="' + k + '" aria-pressed="' + on + '">' + (on ? '✓ Seat saved' : 'Save seat') + '</button></div>'; }).join('') +
    '<p class="disc">Topics explain general ideas. They are not advice.</p></div>' + expertFab('mortgage')}; };
@@ -6508,7 +6530,7 @@ const ACT = {
   vplay:() => { S.play = !S.play; focusKey = '[data-a="vplay"]'; render(); }, vfilter:p => { S.vf = p; focusKey = '[data-a="vfilter"][data-p="' + p + '"]'; render(); },
   remind:() => toast('We\'ll remind you before it starts'), xfeat:p => { S.xf = +p; focusKey = '[data-a="xfeat"][data-p="' + p + '"]'; render(); }, xswipe:p => xSwipe(+p), topic:p => { S.xs.push({v:'XTOPIC', p}); lastId = null; render(); },
   mpsit:p => { S.mps = +p; S.mpv = 0; S.mpc = null; focusKey = '[data-a="mpsit"][data-p="' + p + '"]'; render(); },
-  mpcal:p => { S.mpc = p; focusKey = '[data-a="mpcal"][data-p="' + p + '"]'; render(); },
+  mprd:p => { S.mprd = S.mprd === +p ? null : +p; focusKey = '[data-a="mprd"][data-p="' + p + '"]'; render(); }, mpcal:p => { S.mpc = p; focusKey = '[data-a="mpcal"][data-p="' + p + '"]'; render(); },
   mpvid:p => { S.mpv = +p; focusKey = '[data-a="mpvid"][data-p="' + p + '"]'; render(); },
   mpjump:p => { const e = document.getElementById(p); if (e) e.scrollIntoView({behavior:RM() ? 'auto' : 'smooth', block:'start'}); },
   mpseat:k => { S.mpseat[k] = !S.mpseat[k]; focusKey = '[data-a="mpseat"][data-p="' + k + '"]'; render(); toast(S.mpseat[k] ? 'Seat saved. We\'ll remind you before it starts' : 'Seat released'); },
