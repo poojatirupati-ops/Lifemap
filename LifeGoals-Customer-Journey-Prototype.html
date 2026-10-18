@@ -2364,6 +2364,17 @@ body.desk .quiz .qbody.dpage > :first-child,body.desk .quiz .qbody.dpage > :last
 /* v106: featured card always tall enough for its text */
 @media (min-width:561px){.xhero .xh-card{min-height:360px;max-height:none!important}.xhero .xh-back{max-height:none}}
 body.desk .xhero .xh-card{min-height:340px}
+/* v107: Ask bar stands out - animated gradient border, glow, shimmering sparkle */
+@property --abA{syntax:'<angle>';initial-value:0deg;inherits:false}
+.askbar{position:relative;border:2px solid transparent!important;background:linear-gradient(#fff,#fff) padding-box,conic-gradient(from var(--abA),#08D9B8,#0B5880,#7CF3DC,#079E98,#08D9B8) border-box!important;box-shadow:0 0 0 4px rgba(8,217,184,.1),0 14px 30px -14px rgba(7,158,152,.55)!important;animation:abspin 6s linear infinite;transition:transform .2s var(--ease),box-shadow .2s}
+.askbar:hover{transform:translateY(-2px);box-shadow:0 0 0 6px rgba(8,217,184,.14),0 18px 34px -14px rgba(7,158,152,.6)!important}
+@keyframes abspin{to{--abA:360deg}}
+.askbar .ab-spark{box-shadow:0 0 0 4px rgba(8,217,184,.18),0 6px 16px -4px rgba(7,158,152,.7);animation:abglow 2.6s ease-in-out infinite}
+.askbar .ab-spark svg{animation:abtw 2.6s ease-in-out infinite}
+@keyframes abglow{0%,100%{box-shadow:0 0 0 4px rgba(8,217,184,.18),0 6px 16px -4px rgba(7,158,152,.7)}50%{box-shadow:0 0 0 8px rgba(8,217,184,.08),0 6px 20px -4px rgba(7,158,152,.9)}}
+@keyframes abtw{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.12) rotate(12deg)}}
+.askbar .ab-tx{color:#5B6B76}.askbar .ab-tx b{background:linear-gradient(90deg,#079E98,#0B5880);-webkit-background-clip:text;background-clip:text;color:transparent}
+@media (prefers-reduced-motion:reduce){.askbar,.askbar .ab-spark,.askbar .ab-spark svg{animation:none}}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3624,7 +3635,7 @@ V.DR = () => { if (!discEnough()){ const first = DISC6.findIndex(q => typeof S.a
   '<div class="panel" style="margin-top:12px"><div class="qeye">Your money terms</div><p class="small" style="margin:4px 0 0">The words an adviser would use, and what they mean for you.</p>' + termsHTML(true) + '</div>' +
   (r.mis ? '<div class="panel"><div class="qeye" style="color:var(--sea-d)">You might notice…</div><p style="margin:6px 0 0;font-size:15px;line-height:1.5">' + esc(r.mis) + '</p></div>' : '') +
   '<p class="disc">A first read from 6 answers, not advice. ' + DISC_FORMAL + '</p></div>' +
-  '<div class="qfoot" style="flex-direction:column;align-items:stretch;gap:6px"><p class="fnote">Get a more accurate picture</p><button class="wbtn" data-a="drplan">Make my plan</button></div>'};
+  '<div class="qfoot" style="flex-direction:column;align-items:stretch;gap:6px"><p class="fnote">Get a more accurate picture</p><button class="wbtn" data-a="drplan">Continue</button></div>'};
 };
 V.DS = () => ({id:'DS', note:'Save your results (§12, MASTER C8): email only, or Skip for now. No password, no money yet. Then straight into the main app.', kind:'quiz', html:
   '<div class="qtop"><button class="qx" data-a="go" data-p="DR" aria-label="Back">‹</button><span style="flex:1"></span></div><div class="qbody"><div class="medal msave" aria-hidden="true"><svg class="msvg" width="46" height="46" viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 36h20.5a8.5 8.5 0 0 0 1.4-16.9A12 12 0 0 0 13 21.5 7.3 7.3 0 0 0 14 36z" fill="rgba(255,255,255,.18)"/><path d="m18.5 27.5 4 4 8-8.5"/></svg></div><h2 tabindex="-1">Save your results</h2><p class="qsub">We\'ll email you a secure link so you can pick up where you left off.</p>' +
@@ -6351,7 +6362,7 @@ const ACT = {
   dssave:() => { const e = (document.getElementById('ds-email').value || '').trim(); if (!/.+@.+\..+/.test(e)){ document.getElementById('dserr').textContent = 'Please enter a valid email, or tap Skip for now.'; return; }
     S.save = {email:e, comms:document.getElementById('ds-comms').checked, done:true, asked:true}; S.acct.email = e; const wp = S.wantPlan; S.wantPlan = false; enterApp('Saved ✓ Check your inbox for your link'); if (wp) ACT.makeplan(); },
   dsskip:() => { S.save.asked = true; const wp = S.wantPlan; S.wantPlan = false; enterApp(wp ? '' : 'Welcome! Make your plan whenever you\'re ready'); if (wp) ACT.makeplan(); },
-  drplan:() => { S.wantPlan = true; go('DS'); },
+  drplan:() => { S.wantPlan = false; go('DS'); },   // after the quiz people land on Home (Make my plan lives there)
   gpick:p => { if (p === 'mfree' && noMort() && !S.goals.some(g => g.k === 'mfree')){ toast('Be mortgage-free is for homeowners with a mortgage. Your finances say: ' + S.fin.home); return; } if (p === 'other'){ S.sheet = 'other'; render(); return; }
     const i = S.goals.findIndex(g => g.k === p); if (i >= 0) S.goals.splice(i, 1); else S.goals.push(mkGoal(p)); if (S.wi.g != null && !gById(S.wi.g)) S.wi = {g:null, m:0, l:0}; focusKey = '[data-a="gpick"][data-p="' + p + '"]'; if (S.app) afterPlanEdit(); render(); },
   addother:p => { let c; if (p === 'own'){ const v = ((document.getElementById('oth') || {}).value || '').trim(); if (!v) { toast('Type a name for your goal'); return; } c = ['⭐', v.slice(0, 30), 10000, 4]; } else c = OTHER_LIST[+p];
