@@ -2587,6 +2587,17 @@ body.desk .rd3 .rd-c{flex-basis:auto!important}
 .me-pct{padding:4px 10px;border-radius:999px;background:#EAF7F6;color:#086A74;font-size:12.5px;font-weight:700}
 .mepr-e > *{position:static!important;display:flex!important;align-items:center;justify-content:center;width:100%;height:100%;font-size:27px!important;margin:0!important;transform:none!important}
 .mepr-top .mepr-e{display:flex!important;align-items:center!important;justify-content:center!important;font-size:27px!important;line-height:1!important}
+/* v123: Me rows in two groups, one-line descriptions */
+.me-gh{margin:20px 4px 8px!important;font-size:13px!important;font-weight:700;letter-spacing:.02em;color:#5B6B76}
+.melist{margin-top:0!important}
+.melist .goal .small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.melist .goal br{display:none}
+.melist .goal b{display:block}
+.melist .goal{padding:11px 14px!important}
+/* v124: scrolling page title */
+.pghead{padding:8px 0 4px}
+.pghead h2.t{margin:0 0 4px}
+.pghead .sub{margin:0 0 6px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5471,9 +5482,9 @@ V.ME = () => { const m = S.me;
       '<div class="card mepr"><div class="mepr-top"><span class="mepr-e" aria-hidden="true">' + P.e + '</span><div><small>Your money personality</small><b>' + P.name + '</b><span>' + P.strap + '</span></div></div>' +
         '<div class="mepr-risk"><div class="mepr-rl"><small>Indicative risk profile</small><b>' + riskLabelText(r).replace(/\s*\(first read\)/i, '') + '</b></div><div class="mepr-meter" aria-label="' + umCount() + ' of 13 answers"><span><i style="width:' + Math.round(umCount() / 13 * 100) + '%"></i></span><small>' + (full ? 'Confirmed · all 13 answers' : umCount() + ' of 13 answers · first read') + '</small></div></div>' +
         '<button class="mepr-cta" data-a="me" data-p="' + (full ? 'umr' : 'um') + '">' + (full ? 'See my full profile' : 'Answer ' + (13 - umCount()) + ' more to confirm') + ' <i aria-hidden="true">→</i></button></div>') +
-      '<div class="melist">' + rowBtn('me', 'recheck', '✅', 'Your first answers', S.um.rechecked ? 'Checked ✓ · ' + discCount() + ' answers from when you started' : discCount() + ' answers, pre-filled · check they still fit') + rowBtn('me', 'terms', '📖', 'Your money terms', 'Adviser words, in plain English') +
-        rowBtn('me', 'um', '🧭', 'Your full money profile', umNewCount() + ' of 7 deeper questions answered', '<span class="me-pct">' + Math.round(umCount() / 13 * 100) + '%</span>') +
-        (S.app ? rowBtn('me', 'money', '💶', 'My money', 'Your 6 finance sections and documents') : rowBtn('makeplan', '', '💶', 'My money', 'Added when you make your plan, after a quick account check')) + rowBtn('me', 'asm', '🧮', 'Your assumptions', 'Prices, growth, retirement and emergency fund settings') + rowBtn('me', 'privacy', '🔐', 'Privacy & preferences', 'Consents, what advisers see, delete my data') + '</div>' +
+      '<h3 class="me-gh">Your profile</h3><div class="melist">' + rowBtn('me', 'recheck', '✅', 'Your first answers', S.um.rechecked ? 'Checked ✓' : discCount() + ' answers · check they still fit') + rowBtn('me', 'terms', '📖', 'Your money terms', 'Adviser words, in plain English') +
+        rowBtn('me', 'um', '🧭', 'Your full money profile', umNewCount() + ' of 7 deeper questions', '<span class="me-pct">' + Math.round(umCount() / 13 * 100) + '%</span>') +
+        '</div><h3 class="me-gh">Settings</h3><div class="melist">' + (S.app ? rowBtn('me', 'money', '💶', 'My money', 'Finances and documents') : rowBtn('makeplan', '', '💶', 'My money', 'Added when you make your plan')) + rowBtn('me', 'asm', '🧮', 'Your assumptions', 'Prices, growth and retirement') + rowBtn('me', 'privacy', '🔐', 'Privacy & preferences', 'Consents and your data') + '</div>' +
       '<p class="disc">None of this is required. It sharpens your plan and means your adviser won\'t ask you again.</p>'};
 };
 function partnerLine(){ if (!S.about.partner) return 'No'; const pt = S.partner; return pt.mode === 'invite' ? (pt.sent ? 'Invited · ' + pt.email : 'Invite not sent yet') : pt.mode === 'manual' ? [pt.name || 'Added by you', S.fin.pAge ? 'age ' + S.fin.pAge : ''].filter(Boolean).join(', ') : 'Yes'; }
@@ -6514,6 +6525,7 @@ function render(){ syncAges(); syncLists(); syncSafety();
   if (!onboarding) html += '<button class="askfab" data-a="ask" aria-label="Ask: help and plain-English explanations"><span aria-hidden="true">💬</span>Ask</button>';
   html += sheetHTML(s.id);
   scr.innerHTML = html; hideEmoji(scr);
+  { const hd = scr.querySelector('.app > header.sky'), mn = scr.querySelector('.app > .scroll'); if (hd && mn && hd.querySelector(':scope > .topbar.hdr') && hd.parentElement === mn.parentElement){ const rest = [...hd.children].filter(c => !c.classList.contains('topbar')); if (rest.length){ const w = document.createElement('div'); w.className = 'pghead'; rest.forEach(c => w.appendChild(c)); mn.prepend(w); } } }   // v124: page titles scroll with the page; only the logo bar stays pinned
   if (!same){ scr.classList.remove('enter'); void scr.offsetWidth; scr.classList.add('enter'); }   // layout v7: content rises in on a new screen
   if (!same && !RM()) countUp(scr);
   fndWatch(scr);   // v13: big figures count up when a screen opens
