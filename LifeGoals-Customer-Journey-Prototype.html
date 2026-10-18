@@ -2397,6 +2397,23 @@ body.desk .xhero .xh-card{min-height:340px}
 .mp-cb p{display:none}
 .mp-cb strong{font-size:21px!important;margin:4px 0 12px!important}
 .mp-cb .btn{background:#fff!important;color:#182A54!important;box-shadow:0 8px 18px -10px rgba(0,0,0,.4)!important}
+/* v109: Mortgages top - situation switch, jump tabs and upload card */
+.mp-sit{background:rgba(255,255,255,.8)!important;border:1px solid rgba(8,106,116,.1)!important;padding:4px!important;margin:4px 0 12px!important;box-shadow:0 8px 20px -16px rgba(24,42,84,.4)}
+.mp-sit button{min-height:42px!important;font-size:13.5px!important;font-weight:600!important;color:#5B6B76!important;line-height:1.15;transition:background .2s,color .2s}
+.mp-sit button[aria-pressed="true"],.mp-sit button.on,.mp-sit button.sel{background:linear-gradient(135deg,#079E98,#0A7A85)!important;color:#fff!important;box-shadow:0 6px 14px -8px rgba(7,158,152,.8)!important}
+.mp-jump{gap:4px!important;margin:0 -16px 14px!important;padding:2px 16px 4px!important;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 28px),transparent)}
+.mp-jump::-webkit-scrollbar{display:none}
+.mp-jump button{flex:0 0 auto!important;min-height:34px!important;padding:0 14px!important;border:0!important;background:transparent!important;color:#5B6B76!important;font-size:13px!important;font-weight:600!important;border-radius:999px!important}
+.mp-jump button:hover{background:rgba(8,106,116,.06)!important;color:#086A74!important}
+.mp-jump button[aria-current="true"],.mp-jump button.on{background:#EAF7F6!important;color:#086A74!important}
+.mp-up{background:rgba(255,255,255,.85)!important;border:1px solid rgba(8,106,116,.1)!important;box-shadow:0 12px 28px -20px rgba(24,42,84,.45);align-items:flex-start!important;padding:14px!important}
+.mp-up .ic{flex:0 0 42px!important;height:42px!important;background:linear-gradient(145deg,#08D9B8,#0B5880)!important;font-size:20px!important}
+.mp-up b{font-size:14.5px!important}
+.mp-up .row2{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mp-up .btn{min-height:38px!important;font-size:13.5px!important;padding:0 16px!important}
+.mp-up .btn:not(.ghost){background:linear-gradient(90deg,#079E98,#0A7A85)!important;color:#fff!important;box-shadow:0 8px 16px -10px rgba(7,158,152,.8)!important}
+.mp-up .btn.ghost{background:#fff!important;border:1.5px solid #CFE7E6!important;color:#086A74!important}
+.mp-sit button{white-space:nowrap;font-size:13px!important;padding:0 6px!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
