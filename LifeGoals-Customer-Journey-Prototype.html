@@ -2865,6 +2865,28 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
 .fnd2 .f2s::before{display:none}
 .fnd2 .f2{min-height:46px!important}
 #r-goals .gs .bar{height:8px!important;border-radius:4px!important}#r-goals .gs .bar i{border-radius:4px!important}
+/* v144: what-if footer and "Your future, at a glance" */
+.wigrow{border:1px solid rgba(8,106,116,.12)!important;border-radius:16px!important;padding:0 14px!important;background:#fff!important}
+.wigrow > summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:50px!important;font-size:14px!important;font-weight:700!important;color:#182A54}
+.wigrow > summary::-webkit-details-marker{display:none}
+.wigrow > summary::after{content:'';width:8px;height:8px;border-right:2px solid #086A74;border-bottom:2px solid #086A74;transform:rotate(45deg);margin-right:4px;transition:transform .2s}
+.wigrow[open] > summary::after{transform:rotate(-135deg)}
+.wigrow[open]{padding-bottom:12px!important}
+[data-a="wisave"],[data-a="wireset"]{min-height:46px!important;border-radius:999px!important;font-size:14px!important;white-space:nowrap}
+[data-a="wisave"]{background:linear-gradient(90deg,#079E98,#0A7A85)!important;color:#fff!important;border:0!important;box-shadow:0 10px 20px -12px rgba(7,158,152,.8)!important}
+[data-a="wireset"]{background:#fff!important;color:#086A74!important;border:1.5px solid #CFE7E6!important;box-shadow:none!important}
+#r-glancec .vt{display:grid!important;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:4px 0 12px;border-radius:14px;background:#EEF4F5}
+#r-glancec .vt button{min-height:38px!important;padding:0 6px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#5B6B76!important;font-size:13px!important;font-weight:700!important;box-shadow:none!important;white-space:nowrap}
+#r-glancec .vt button.on{background:#fff!important;color:#086A74!important;box-shadow:0 2px 8px -3px rgba(24,42,84,.3)!important}
+#r-glance [role=tabpanel] > p.small:first-child{font-size:12.5px;color:#5B6B76;margin:0 0 4px}
+#r-glance .mlist{display:flex;flex-direction:column;gap:0;margin-top:8px;border-radius:16px;background:#F7FAFA;padding:4px 12px}
+#r-glance .mlist > div{display:flex;align-items:center;gap:8px;padding:9px 0;font-size:14px;font-weight:600;color:#182A54}
+#r-glance .mlist > div + div{border-top:1px solid rgba(8,106,116,.08)}
+#r-glance .mlist .sw{width:8px!important;height:8px!important;border-radius:50%!important;flex-shrink:0}
+#r-glance .mlist .small{margin-left:auto;font-size:12px;color:#5B6B76;white-space:nowrap}
+#r-glance .mlist .small b{font-size:13px}
+#r-glance .pnote{margin:10px 0 0;padding:10px 12px;border-radius:14px;background:#EAF7F6;font-size:12.5px;line-height:1.5;color:#182A54;border:0}
+#main > .btn[data-a="report"],#main .btn[data-a="report"]:not(.sm){background:#fff!important;color:#086A74!important;border:1.5px solid #CFE7E6!important;box-shadow:0 8px 18px -14px rgba(24,42,84,.4)!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -5589,7 +5611,7 @@ function wiCard(){ const w = S.wi, gs = S.goals.slice().sort((a, b) => a.age - b
     '<div class="wi-out" id="wi-out" aria-live="polite"></div>' +
     /* §26: the saving controls come first; growth and inflation sit below, one tap away */
     '<details class="card asmg wigrow" data-g="wi-grow"' + (S.asmOpen === 'wi-grow' ? ' open' : '') + ' style="margin:12px 0 0;box-shadow:none;border:1.5px solid #D5E0EA"><summary style="cursor:pointer;font-weight:800;min-height:44px">Growth and inflation settings</summary><div style="margin-top:8px"><div class="fl" style="font-size:12px;font-weight:800;margin-bottom:6px">Growth assumptions</div>' + assumeToggle() + '<div style="height:10px"></div>' + inflChoice('wi') + '<p class="small" style="margin:8px 0 0"><button class="link" style="padding:0;font-size:13px" data-a="asmopen">Your assumptions</button> · prices, growth, retirement and emergency fund settings</p></div></details>' +
-    '<div class="grid2" style="margin-top:12px"><button class="btn sm" style="width:100%" data-a="wisave">Save as my preferred plan</button><button class="btn sm ghost" style="width:100%" data-a="wireset">Back to my plan</button></div></div>'; }
+    '<div class="grid2" style="margin-top:12px"><button class="btn sm" style="width:100%" data-a="wisave">Save this plan</button><button class="btn sm ghost" style="width:100%" data-a="wireset">Back to my plan</button></div></div>'; }
 function resultsHTML(){ if (!planReady()) return gateHTML('res');
   const P0 = project(), P = project(S.wi), F = findings(P0), rough = qualityCount() > 2;
   return '<div class="prelim"><span aria-hidden="true">ℹ️</span><span>Preliminary guidance · based on your figures and the assumptions you chose · not financial advice. <button class="link" style="padding:0;font-size:12.5px" data-a="sheet" data-p="assume">What your plan assumes</button></span></div>' +
