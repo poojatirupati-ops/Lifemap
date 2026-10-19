@@ -2898,6 +2898,37 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
 .jkey{display:flex;flex-wrap:wrap;gap:6px 12px;margin:8px 0 0;font-size:12px;color:#5B6B76;font-weight:600}
 .jkey span{display:inline-flex;align-items:center;gap:6px}
 .jkey i{width:14px;height:6px;border-radius:3px}
+/* v146: eligibility card and quiz */
+.elg{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;margin:0 0 14px;padding:16px;border-radius:24px;background:linear-gradient(140deg,#EAF7F6,#E3EEF8);border:1px solid rgba(8,106,116,.1);overflow:hidden}
+.elg-eye{display:inline-block;font-size:11.5px;font-weight:700;color:#086A74;margin-bottom:4px}
+.elg-tx b{display:block;font-size:20px;line-height:1.15;letter-spacing:-.02em;color:#182A54}
+.elg-tx p{margin:6px 0 12px;font-size:13px;line-height:1.4;color:#5B6B76}
+.elg-go{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:0;background:linear-gradient(90deg,#079E98,#0B5880);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -12px rgba(7,158,152,.8)}
+.elg-go i{font-style:normal}
+.elg-t{display:block;margin-top:8px;font-size:12px;color:#5B6B76}
+.elg-ph{position:relative}
+.elg-ph > span{position:absolute;border-radius:16px;background:center/cover no-repeat;border:4px solid #182A54;box-shadow:0 12px 24px -12px rgba(24,42,84,.6)}
+.elg-a{left:0;right:6px;top:0;height:150px;transform:rotate(-3deg)}
+.elg-b{left:22px;right:-14px;bottom:-8px;height:84px;transform:rotate(4deg)}
+.elg-ph em{position:absolute;left:6px;right:6px;bottom:6px;padding:4px 6px;border-radius:8px;background:rgba(255,255,255,.92);font-style:normal;font-size:12px;font-weight:800;color:#182A54;line-height:1.1}
+.elg-ph em small{display:block;font-size:8.5px;font-weight:600;color:#5B6B76;text-transform:uppercase;letter-spacing:.04em}
+.elg-ph em.ok{left:auto;right:6px;background:#16B47E;color:#fff;font-size:11px;padding:4px 8px;border-radius:999px}
+.elq-top{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:700;color:#086A74;margin:4px 0 12px}
+.elq-bar{flex:1;height:6px;border-radius:3px;background:rgba(8,106,116,.12);overflow:hidden}.elq-bar i{display:block;height:100%;background:linear-gradient(90deg,#08D9B8,#0A7A85)}
+.elq h2{font-size:20px!important;margin:0 0 14px!important}
+.elq-o{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.elq-b{display:flex;align-items:center;gap:12px;min-height:54px;padding:0 14px;border-radius:16px;border:1px solid rgba(8,106,116,.12);background:#fff;font:inherit;font-size:14.5px;font-weight:700;color:#182A54;text-align:left;cursor:pointer}
+.elq-b span{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:#F4F9F9;font-size:17px}
+.elq-b:hover,.elq-b.sel{border-color:#079E98;background:#EAF7F6}
+.elr{text-align:center}
+.elr-ok{display:inline-block;padding:4px 12px;border-radius:999px;background:#E6F6EF;color:#15875C;font-size:12px;font-weight:700;margin:4px 0 8px}
+.elr h2{font-size:17px!important;margin:0!important;color:#5B6B76!important;font-weight:600!important}
+.elr-big{display:block;font-size:40px;font-weight:800;letter-spacing:-.03em;color:#086A74;margin:2px 0 12px}
+.elr-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.elr-g div{padding:10px;border-radius:14px;background:#F4F9F9}.elr-g small{display:block;font-size:11.5px;color:#5B6B76}.elr-g b{font-size:16px;color:#182A54}
+.elr-n{margin:0 0 14px;font-size:12.5px;line-height:1.45;color:#5B6B76}
+.elg-go{white-space:nowrap}
+.elg-t{white-space:nowrap}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4073,6 +4104,21 @@ const AV_ILL = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidde
       requestAnimationFrame(() => x.items.forEach(it => { it.style.transition = ''; })); }, RM() ? 0 : 220); };
   document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end);
 })();
+// v146: mortgage eligibility - card on Mortgages (Buying) and a 4-question quiz in a sheet
+const ELIG_Q = [{q:'Are you buying on your own?', o:[['🙋', 'Just me'], ['👫', 'With a partner']]}, {q:'Is this your first home?', o:[['🔑', 'Yes, my first home'], ['🏠', "No, I've owned before"]]},
+  {q:'Yearly income before tax (both of you, if joint)', o:[['💶', 'Under €50,000', 40000], ['💶', '€50,000 to €80,000', 65000], ['💶', '€80,000 to €120,000', 100000], ['💶', 'Over €120,000', 140000]]},
+  {q:'How much have you saved for a deposit?', o:[['🐷', 'Under €20,000', 15000], ['🐷', '€20,000 to €40,000', 30000], ['🐷', '€40,000 to €70,000', 55000], ['🐷', 'Over €70,000', 85000]]}];
+function eligCard(){ return '<div class="elg"><div class="elg-tx"><span class="elg-eye">Mortgage eligibility</span><b>Take our 5 minute eligibility quiz</b><p>Find out roughly how much you could borrow, and what home price that means.</p><button class="elg-go" data-a="elig">Start quiz <i aria-hidden="true">→</i></button><span class="elg-t"><span aria-hidden="true">⏱</span> Fast & simple · about 5 minutes</span></div>' +
+  '<div class="elg-ph" aria-hidden="true"><span class="elg-a" style="background-image:url(media/house-for-sale.jpg)"><em><small>Property value</small>€350,000</em></span><span class="elg-b" style="background-image:url(media/home-keys.jpg)"><em class="ok">✓ Approved</em></span></div></div>'; }
+function eligHTML(){ const e = S.elig || {i:0, a:[]}, n = ELIG_Q.length;
+  if (e.i < n){ const q = ELIG_Q[e.i];
+    return '<div class="elq"><div class="elq-top"><span>Question ' + (e.i + 1) + ' of ' + n + '</span><span class="elq-bar"><i style="width:' + Math.round(e.i / n * 100) + '%"></i></span></div><h2 class="t" tabindex="-1">' + q.q + '</h2><div class="elq-o">' + q.o.map((o, k) => '<button class="elq-b' + (e.a[e.i] === k ? ' sel' : '') + '" data-a="eligpick" data-p="' + k + '"><span aria-hidden="true">' + o[0] + '</span>' + esc(o[1]) + '</button>').join('') + '</div>' + (e.i ? '<button class="link" data-a="eligback">← Back</button>' : '') + '</div>'; }
+  const H = RI.home, ftb = e.a[1] === 0, inc = ELIG_Q[2].o[e.a[2]][2], dep = ELIG_Q[3].o[e.a[3]][2], lti = ftb ? H.ltiFTB : H.ltiSSB, ltv = ftb ? H.ltv : Math.min(H.ltv, .8);
+  const loan = inc * lti, byDep = dep / (1 - ltv), price = Math.min(loan + dep, byDep), borrow = Math.max(0, price - dep), lim = loan + dep <= byDep ? 'income' : 'deposit';
+  return '<div class="elr"><span class="elr-ok">✓ Your estimate</span><h2 class="t" tabindex="-1">You could borrow about</h2><b class="elr-big">' + eur(Math.round(borrow / 1000) * 1000) + '</b>' +
+    '<div class="elr-g"><div><small>Home price up to</small><b>' + eur(Math.round(price / 1000) * 1000) + '</b></div><div><small>Your deposit</small><b>' + eur(dep) + '</b></div></div>' +
+    '<p class="elr-n">' + (lim === 'income' ? 'Your income sets the limit: lenders usually lend up to ' + lti + '× income' + (ftb ? ' for first-time buyers' : '') + '.' : 'Your deposit sets the limit: you need at least ' + Math.round((1 - ltv) * 100) + '% of the price saved.') + ' A rough guide only, not a mortgage offer.</p>' +
+    '<button class="btn" data-a="calc" data-p="borrow">Open the Borrow calculator</button><button class="btn ghost" data-a="xfab" data-p="mortgage" style="margin-top:8px">Talk to a mortgage expert</button><button class="link" data-a="elig" style="margin-top:6px">Start again</button></div>'; }
 const brand2 = () => '<div class="brand brand2"><span class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M2.5 7l5.5-2.2 8 2.6 5.5-2.2v13.6L16 21l-8-2.6-5.5 2.2z" fill="#fff" fill-opacity=".22" stroke="#fff" stroke-opacity=".75" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 4.8v13.6M16 7.4V21" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/><path d="M5 16.5c2.2-.2 2.6-3 5.6-3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2"/><path d="M14.5 1.8a4.7 4.7 0 0 1 4.7 4.7c0 3.4-4.7 7.6-4.7 7.6S9.8 9.9 9.8 6.5a4.7 4.7 0 0 1 4.7-4.7z" fill="#fff"/><circle cx="14.5" cy="6.5" r="1.8" fill="#079E98"/></svg></span><span class="bt"><b>Life<em>Map</em></b><small>by DigiPro.AI</small></span></div>';
 const SVG_CHAT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2-5.3A8.4 8.4 0 1 1 21 11.5z"/></svg>';
 const SVG_BELL = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
@@ -6438,6 +6484,7 @@ V.MORT = () => { const d = MPQ(), t = TOPICS.find(x => x[1] === 'Mortgages'), pd
    '<div class="dsheet2"><span class="dgrab" aria-hidden="true"></span><h2 class="t" tabindex="-1" style="margin:0">Mortgages</h2><div class="small" style="margin-top:4px">' + esc(t[2]) + '</div></div>' +
    '<div class="mp-sit" role="group" aria-label="Your situation">' + MP_SIT.map((x, i) => '<button data-a="mpsit" data-p="' + i + '" aria-pressed="' + (i === S.mps) + '">' + x[0] + '</button>').join('') + '</div>' +
    '<nav class="mp-jump" aria-label="On this page">' + [['mp-up','Upload'], ['mp-calc','Calculators'], ['mp-watch','Watch'], ['mp-read','Read'], ['mp-live','Live']].map(j => '<button data-a="mpjump" data-p="' + j[0] + '">' + j[1] + '</button>').join('') + '</nav>' +
+   (S.mps === 0 ? eligCard() : '') +
    '<div class="mp-up" id="mp-up"><span class="ic" aria-hidden="true">📄</span><div style="flex:1;min-width:0"><b>Upload your mortgage statement or payslip</b><small>Every calculator below fills in for you</small>' +
     (pd ? '<div class="row2"><span class="small">✅ Uploaded: <b>' + esc(pd.name) + '</b></span><button class="link" data-a="pstup" data-p="home">Replace</button></div>' : '<div class="row2"><label class="btn sm" style="cursor:pointer">Upload<input type="file" class="sr" data-pfile="home" accept=".pdf,.jpg,.jpeg,.png,.heic"></label><button class="btn sm ghost" data-a="pstup" data-p="home">Use a sample</button></div>') + '</div></div>' +
    '<div class="mp-sec" id="mp-calc"><h3>Calculators for you</h3><span>' + ncal + ' of ' + ncal + '</span></div><div class="mp-grid">' + d.c.map((id, i) => { const m = MP_CAL[id], nm = id === 'topup' ? MP_TOPUPNAME : C(m[2]).name;
@@ -6693,6 +6740,7 @@ function chatEnd(){ const l = document.getElementById('chat-log'); if (l) l.scro
 /* ================= SHEETS ================= */
 function sheetHTML(sid){ const s = S.sheet; if (!s) return ''; let h = '';
   if (s === 'ask') h = askHTML(sid);
+  if (s === 'elig') h = eligHTML();
   const [t, p] = s.split('|');
   if (t === 'fnd') h = fndSheet(p);
   if (t === 'xpert') h = expertSheet(p);
@@ -6953,7 +7001,7 @@ const ACT = {
   mpvid:p => { S.mpv = +p; focusKey = '[data-a="mpvid"][data-p="' + p + '"]'; render(); },
   mpjump:p => { const e = document.getElementById(p); if (e) e.scrollIntoView({behavior:RM() ? 'auto' : 'smooth', block:'start'}); },
   mpseat:k => { S.mpseat[k] = !S.mpseat[k]; focusKey = '[data-a="mpseat"][data-p="' + k + '"]'; render(); toast(S.mpseat[k] ? 'Seat saved. We\'ll remind you before it starts' : 'Seat released'); },
-  xfab:p => { S.sheet = 'xpert|' + p; render(); },
+  xfab:p => { S.sheet = 'xpert|' + p; render(); }, elig:() => { S.elig = {i:0, a:[]}; S.sheet = 'elig'; render(); }, eligpick:p => { const e = S.elig; e.a[e.i] = +p; e.i++; render(); }, eligback:() => { if (S.elig.i > 0) S.elig.i--; render(); },
   xcontact:p => { const [t, m] = p.split('|'); S.sheet = null; if (m === 'video') S.book.mode = 'Video'; ACT.expertfor(t); toast(m === 'call' ? 'Pick an expert and a time and we\'ll call you back' : m === 'msg' ? 'Pick an expert to send your message to' : 'Pick a time for your video call'); },
   expertfor:p => { S.tab = 'exp'; S.exp = 'home'; S.xs = []; S.play = false; if (EXPERT_FOR[p]) S.book.spec = p; S.sheet = null; lastId = null; render(); },
   spec:p => { S.book.spec = S.book.spec === p ? null : p; focusKey = '[data-a="spec"][data-p="' + p + '"]'; render(); },
