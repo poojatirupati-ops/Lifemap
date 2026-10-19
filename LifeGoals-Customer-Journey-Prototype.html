@@ -2929,6 +2929,21 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
 .elr-n{margin:0 0 14px;font-size:12.5px;line-height:1.45;color:#5B6B76}
 .elg-go{white-space:nowrap}
 .elg-t{white-space:nowrap}
+/* v147: eligibility card - photo top, text below */
+.elg2{margin:0 0 14px;border-radius:24px;overflow:hidden;background:#fff;border:1px solid rgba(8,106,116,.1);box-shadow:0 16px 34px -22px rgba(24,42,84,.5)}
+.elg2-ph{position:relative;height:170px;background:center 40%/cover no-repeat}
+.elg2-ph::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,40,70,0) 50%,rgba(11,40,70,.35))}
+.elg2-val{position:absolute;left:12px;bottom:12px;z-index:1;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.94);font-size:15px;font-weight:800;color:#182A54;line-height:1.1;box-shadow:0 8px 18px -10px rgba(0,0,0,.45)}
+.elg2-val small{display:block;font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#5B6B76}
+.elg2-in{position:absolute;right:12px;top:12px;z-index:1;width:84px;height:64px;border-radius:14px;background:center/cover no-repeat;border:3px solid #fff;box-shadow:0 10px 20px -10px rgba(0,0,0,.5);transform:rotate(3deg)}
+.elg2-ok{position:absolute;right:12px;bottom:12px;z-index:1;padding:5px 10px;border-radius:999px;background:#16B47E;color:#fff;font-size:12px;font-weight:700;box-shadow:0 8px 16px -8px rgba(22,180,126,.8)}
+.elg2-tx{padding:14px 16px 16px}
+.elg2-eye{display:block;font-size:11.5px;font-weight:700;color:#086A74}
+.elg2-tx b{display:block;font-size:20px;letter-spacing:-.02em;color:#182A54;margin-top:2px}
+.elg2-tx p{margin:4px 0 12px;font-size:13px;line-height:1.45;color:#5B6B76}
+.elg2-go{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:999px;border:0;background:linear-gradient(90deg,#079E98,#0B5880);color:#fff;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -12px rgba(7,158,152,.8);white-space:nowrap}
+.elg2-go i{font-style:normal}
+.elg2-t{display:block;text-align:center;margin-top:8px;font-size:12px;color:#5B6B76}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4108,8 +4123,8 @@ const AV_ILL = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidde
 const ELIG_Q = [{q:'Are you buying on your own?', o:[['🙋', 'Just me'], ['👫', 'With a partner']]}, {q:'Is this your first home?', o:[['🔑', 'Yes, my first home'], ['🏠', "No, I've owned before"]]},
   {q:'Yearly income before tax (both of you, if joint)', o:[['💶', 'Under €50,000', 40000], ['💶', '€50,000 to €80,000', 65000], ['💶', '€80,000 to €120,000', 100000], ['💶', 'Over €120,000', 140000]]},
   {q:'How much have you saved for a deposit?', o:[['🐷', 'Under €20,000', 15000], ['🐷', '€20,000 to €40,000', 30000], ['🐷', '€40,000 to €70,000', 55000], ['🐷', 'Over €70,000', 85000]]}];
-function eligCard(){ return '<div class="elg"><div class="elg-tx"><span class="elg-eye">Mortgage eligibility</span><b>Take our 5 minute eligibility quiz</b><p>Find out roughly how much you could borrow, and what home price that means.</p><button class="elg-go" data-a="elig">Start quiz <i aria-hidden="true">→</i></button><span class="elg-t"><span aria-hidden="true">⏱</span> Fast & simple · about 5 minutes</span></div>' +
-  '<div class="elg-ph" aria-hidden="true"><span class="elg-a" style="background-image:url(media/house-for-sale.jpg)"><em><small>Property value</small>€350,000</em></span><span class="elg-b" style="background-image:url(media/home-keys.jpg)"><em class="ok">✓ Approved</em></span></div></div>'; }
+function eligCard(){ return '<div class="elg2"><div class="elg2-ph" style="background-image:url(media/family-couch.jpg)" aria-hidden="true"><span class="elg2-val"><small>Property value</small>€350,000</span><span class="elg2-in" style="background-image:url(media/couple-planning.jpg)"></span><span class="elg2-ok">✓ Approved</span></div>' +
+  '<div class="elg2-tx"><span class="elg2-eye">Mortgage eligibility</span><b>How much could you borrow?</b><p>Take our 5 minute quiz and see a rough borrowing amount and home price.</p><button class="elg2-go" data-a="elig">Start eligibility quiz <i aria-hidden="true">→</i></button><span class="elg2-t"><span aria-hidden="true">⏱</span> About 5 minutes · no credit check</span></div></div>'; }
 function eligHTML(){ const e = S.elig || {i:0, a:[]}, n = ELIG_Q.length;
   if (e.i < n){ const q = ELIG_Q[e.i];
     return '<div class="elq"><div class="elq-top"><span>Question ' + (e.i + 1) + ' of ' + n + '</span><span class="elq-bar"><i style="width:' + Math.round(e.i / n * 100) + '%"></i></span></div><h2 class="t" tabindex="-1">' + q.q + '</h2><div class="elq-o">' + q.o.map((o, k) => '<button class="elq-b' + (e.a[e.i] === k ? ' sel' : '') + '" data-a="eligpick" data-p="' + k + '"><span aria-hidden="true">' + o[0] + '</span>' + esc(o[1]) + '</button>').join('') + '</div>' + (e.i ? '<button class="link" data-a="eligback">← Back</button>' : '') + '</div>'; }
