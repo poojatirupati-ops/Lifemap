@@ -3055,7 +3055,7 @@ const RULES_IE_2026 = {
     exit:RV_(0.38, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-0162026.aspx', '1 Jan 2026'),
     deemed:RV_(8, 'https://etf.ie/blog/budget-2026-etf/', '2026'),
     cgt:RV_(0.31, 'https://www.davy.ie/market-and-insights/insights/budget-2027.html', 'disposals from 7 Oct 2026 (Budget 2027)'),
-    cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/transfering-an-asset/index.aspx', 'Law (annual exemption per person)'),
+    cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/', 'Law (annual exemption per person)'),
     cat:RV_(420000, 'https://en.wikipedia.org/wiki/2027_Irish_budget', 'gifts and inheritances from 7 Oct 2026 (Group A, child from parent)')
   },
   home:{
@@ -3081,13 +3081,13 @@ const RI = (function unwrap(o){ const r = {}; Object.keys(o).forEach(k => { cons
    Each entry replaces one RI value from 1 Jan 2027. Where a figure was not in the announced Budget (age credit, DIRT, Qualified Adult and other DSP rates, SFT, stamp duty)
    the 2026 value stays and the page says so. verify:true on every figure: open the Department of Finance "Budget 2027 Tax Policy Changes" and Revenue before release;
    the Finance (No. 2) Bill 2026 may still change details. */
-const B27_SRC = 'https://assets.gov.ie/static/documents/c6792805/Budget_2027_Tax_Policy_Changes_v2.pdf';
+const B27_SRC = 'https://www.gov.ie/en/department-of-finance/';   // the Department of Finance Budget 2027 tax document: add its exact link here once opened and checked
 const RULES_2027 = {
   'it.band':RV_(46500, B27_SRC, '1 Jan 2027'), 'it.bandSPCCC':RV_(50500, B27_SRC, '1 Jan 2027'), 'it.bandMarried':RV_(55500, B27_SRC, '1 Jan 2027'), 'it.bandUplift':RV_(37500, B27_SRC, '1 Jan 2027 (two incomes up to 93,000)'),
   'it.personal':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.personalMarried':RV_(4250, B27_SRC, '1 Jan 2027'), 'it.paye':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.eic':RV_(2125, B27_SRC, '1 Jan 2027'),
   'it.homeCarer':RV_(2050, B27_SRC, '1 Jan 2027'), 'it.rent':RV_(1150, B27_SRC, '2027 and 2028'), 'it.rentJoint':RV_(2300, B27_SRC, '2027 and 2028'),
   'usc.bands':RV_([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], B27_SRC, '1 Jan 2027 (2% band now to 30,300)'),
-  'sp.week':RV_(309.30, 'https://www.gov.ie/en/department-of-finance/publications/budget-2027/', 'Jan 2027 (+10)'),
+  'sp.week':RV_(309.30, 'https://www.gov.ie/en/department-of-social-protection/', 'Jan 2027 (+10)'),
   'sav.exit':RV_(0.35, 'https://www.zurich.ie/blog/a-guide-to-budget-2027/', '1 Jan 2027 (funds, ETFs and life policies; 8-year deemed disposal stays)')
 };
 const RULES_2027_NOT_CHANGED = 'Not changed in the announced Budget, so 2026 figures stay: DIRT, USC rates, PRSI (rate path already legislated), pension relief and lump-sum limits, Standard Fund Threshold, stamp duty, age credit, single-parent credit. Qualified Adult and other Social Welfare rates will be updated once published.';

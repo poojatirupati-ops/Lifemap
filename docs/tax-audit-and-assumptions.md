@@ -87,7 +87,7 @@ Sources used: engine rules register in `LifeGoals-Customer-Journey-Prototype.htm
 
 ## 6. Budget 2027 (announced 6 Oct 2026): plan start year 2027
 
-The plan start year (Your assumptions, "Start the plan in") is 2026 or 2027. LifeMap suggests 2027 from October 2026. A 2027 plan uses these figures from 1 January 2027. Each is flagged verify: open the Department of Finance "Budget 2027 Tax Policy Changes" and Revenue before release, because the Finance (No. 2) Bill 2026 may change details. I could only read press and adviser summaries of the Budget, not the primary pages.
+The plan start year (Your assumptions, "Start the plan in") is 2026 or 2027. LifeMap suggests 2027 from October 2026. A 2027 plan uses these figures from 1 January 2027. Each is flagged verify: open the Department of Finance Budget 2027 tax document and Revenue before release (exact links not yet confirmed), because the Finance (No. 2) Bill 2026 may change details. I could only read press and adviser summaries of the Budget, not the primary pages.
 
 | Item | 2026 | 2027 |
 |---|---|---|
