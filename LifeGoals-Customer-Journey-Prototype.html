@@ -3054,16 +3054,16 @@ const RULES_IE_2026 = {
     dirt:RV_(0.33, 'https://cantorfitzgerald.ie/budget-2026-key-updates-for-investors-and-savers', '2026'),
     exit:RV_(0.38, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-0162026.aspx', '1 Jan 2026'),
     deemed:RV_(8, 'https://etf.ie/blog/budget-2026-etf/', '2026'),
-    cgt:RV_(0.31, 'https://www.davy.ie/market-and-insights/insights/budget-2027.html', 'disposals from 7 Oct 2026 (Budget 2027)'),
+    cgt:RV_(0.31, 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/', 'disposals from 7 Oct 2026 (Budget 2027)', false),
     cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/', 'Law (annual exemption per person)'),
-    cat:RV_(420000, 'https://en.wikipedia.org/wiki/2027_Irish_budget', 'gifts and inheritances from 7 Oct 2026 (Group A, child from parent)')
+    cat:RV_(420000, 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/', 'gifts and inheritances from 7 Oct 2026 (Group A up 5%, from €400,000)')
   },
   home:{
     ltiFTB:RV_(4, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     ltiSSB:RV_(3.5, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     ltv:RV_(0.90, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     stamp:RV_([[1e6, 0.01], [1.5e6, 0.02], [Infinity, 0.06]], 'https://www.raisin.com/en-ie/taxes/stamp-duty-ireland/', 'Budget 2025'),
-    htbMax:RV_(35000, 'https://en.wikipedia.org/wiki/2027_Irish_budget', 'from 7 Oct 2026 (Budget 2027), scheme to 31 Dec 2029')
+    htbMax:RV_(35000, 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/', 'immediate effect, Budget 2027 (scheme to 31 Dec 2029)', false)
   },
   infl:{
     ie:RV_(0.039, 'https://www.cso.ie/en/csolatestnews/pressreleases/2026pressreleases/pressstatementflashestimatefortheharmonisedindexofconsumerpricesseptember2026/', 'CSO HICP flash, Sep 2026 (published 1 Oct 2026)'),
@@ -3079,18 +3079,18 @@ const RULES_IE_2026 = {
 const RI = (function unwrap(o){ const r = {}; Object.keys(o).forEach(k => { const x = o[k]; r[k] = x && typeof x === 'object' && 'v' in x && 'src' in x ? x.v : unwrap(x); }); return r; })(RULES_IE_2026);
 /* ---------- Budget 2027 (announced 6 Oct 2026): a plan that starts in 2027 uses these rules ----------
    Each entry replaces one RI value from 1 Jan 2027. Where a figure was not in the announced Budget (age credit, DIRT, Qualified Adult and other DSP rates, SFT, stamp duty)
-   the 2026 value stays and the page says so. verify:true on every figure: open the Department of Finance "Budget 2027 Tax Policy Changes" and Revenue before release;
-   the Finance (No. 2) Bill 2026 may still change details. */
-const B27_SRC = 'https://www.gov.ie/en/department-of-finance/';   // the Department of Finance Budget 2027 tax document: add its exact link here once opened and checked
+   the 2026 value stays and the page says so. Checked 21 Oct 2026 against the Department of Finance Tax Policy Changes Summary and the Budget in Brief (both read in full): the changes below are stated there as increases (+€2,500 band, +€125 credits, +€100 Home Carer, USC 2% ceiling €28,700 to €30,300, +€150 / +€300 Rent Tax Credit, +€10 weekly social welfare, 38% to 35%).
+   The totals are the 2026 figure plus the stated increase. The Finance Bill may still change details. */
+const B27_SRC = 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/';   // Your guide to Budget 2027 (gov.ie, published 6 Oct 2026); with the Department of Finance 'Tax Policy Changes Summary' and the Budget in Brief PDF (read in full 21 Oct 2026)
 const RULES_2027 = {
-  'it.band':RV_(46500, B27_SRC, '1 Jan 2027'), 'it.bandSPCCC':RV_(50500, B27_SRC, '1 Jan 2027'), 'it.bandMarried':RV_(55500, B27_SRC, '1 Jan 2027'), 'it.bandUplift':RV_(37500, B27_SRC, '1 Jan 2027 (two incomes up to 93,000)'),
-  'it.personal':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.personalMarried':RV_(4250, B27_SRC, '1 Jan 2027'), 'it.paye':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.eic':RV_(2125, B27_SRC, '1 Jan 2027'),
-  'it.homeCarer':RV_(2050, B27_SRC, '1 Jan 2027'), 'it.rent':RV_(1150, B27_SRC, '2027 and 2028'), 'it.rentJoint':RV_(2300, B27_SRC, '2027 and 2028'),
-  'usc.bands':RV_([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], B27_SRC, '1 Jan 2027 (2% band now to 30,300)'),
-  'sp.week':RV_(309.30, 'https://www.gov.ie/en/department-of-social-protection/', 'Jan 2027 (+10)'),
-  'sav.exit':RV_(0.35, 'https://www.zurich.ie/blog/a-guide-to-budget-2027/', '1 Jan 2027 (funds, ETFs and life policies; 8-year deemed disposal stays)')
+  'it.band':RV_(46500, B27_SRC, '1 Jan 2027', false), 'it.bandSPCCC':RV_(50500, B27_SRC, '1 Jan 2027', false), 'it.bandMarried':RV_(55500, B27_SRC, '1 Jan 2027', false), 'it.bandUplift':RV_(37500, B27_SRC, '1 Jan 2027 (two incomes up to 93,000)', false),
+  'it.personal':RV_(2125, B27_SRC, '1 Jan 2027', false), 'it.personalMarried':RV_(4250, B27_SRC, '1 Jan 2027', false), 'it.paye':RV_(2125, B27_SRC, '1 Jan 2027', false), 'it.eic':RV_(2125, B27_SRC, '1 Jan 2027', false),
+  'it.homeCarer':RV_(2050, B27_SRC, '1 Jan 2027', false), 'it.rent':RV_(1150, B27_SRC, '2027 and 2028', false), 'it.rentJoint':RV_(2300, B27_SRC, '2027 and 2028', false),
+  'usc.bands':RV_([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], B27_SRC, '1 Jan 2027 (2% band now to 30,300)', false),
+  'sp.week':RV_(309.30, B27_SRC, 'Jan 2027 (+€10 on weekly social welfare payments)', false), 'sp.illness':RV_(264, B27_SRC, 'Jan 2027 (+€10)', false), 'sp.survivor':RV_(269.50, B27_SRC, 'Jan 2027 (+€10)', false), 'sp.survivor66':RV_(309.30, B27_SRC, 'Jan 2027 (+€10)', false),
+  'sav.exit':RV_(0.35, B27_SRC, '1 Jan 2027 (Investment Undertaking Tax, life assurance exit tax, equivalent offshore funds and certain foreign policies; 8-year deemed disposal stays)', false)
 };
-const RULES_2027_NOT_CHANGED = 'Not changed in the announced Budget, so 2026 figures stay: DIRT, USC rates, PRSI (rate path already legislated), pension relief and lump-sum limits, Standard Fund Threshold, stamp duty, age credit, single-parent credit. Qualified Adult and other Social Welfare rates will be updated once published.';
+const RULES_2027_NOT_CHANGED = 'Not in the Budget 2027 tax measures, so 2026 figures stay: DIRT, USC rates and the 3% band, PRSI (rate path already legislated), pension relief and lump-sum limits, stamp duty, age credit, single-parent credit. The Standard Fund Threshold valuation factors are being revised (not modelled). The exact Qualified Adult rate is not in the published guide and stays at 2026.';
 const RI_BASE = {};   // 2026 values of everything the overlay can replace
 const riGet = (p) => p.split('.').reduce((o, k) => o[k], RI), riSet = (p, v) => { const ks = p.split('.'), l = ks.pop(); ks.reduce((o, k) => o[k], RI)[l] = v; };
 Object.keys(RULES_2027).forEach(p => { const v = riGet(p); RI_BASE[p] = Array.isArray(v) ? v.map(x => Array.isArray(x) ? x.slice() : x) : v; });
@@ -5869,7 +5869,7 @@ function govRows(){ const I = RI.it, U = RI.usc, PN = RI.pen, SP = RI.sp, H = RI
     ['Auto-enrolment (My Future Fund)', pcs(A.ee) + ' you + ' + pcs(A.er) + ' employer + ' + pcs(A.state) + ' State, on pay up to ' + eur(A.earnCap)],
     ['Savings tax', 'DIRT ' + pcs(RI.sav.dirt) + ' on deposit interest; exit tax ' + pcs(RI.sav.exit) + ' on funds and life policies, with a ' + RI.sav.deemed + '-year deemed disposal'],
     ['Capital gains tax', pcs(RI.sav.cgt) + ' on gains above ' + eur(RI.sav.cgtExempt) + ' a year (disposals from 7 October 2026). In your plan it is taken off sales of other assets, crypto, gold and art, on the share of their value you treat as a gain. The yearly exemption is not counted.'],
-    ['Gift and inheritance tax (CAT)', 'Group A threshold ' + eur(RI.sav.cat) + ' (a child from a parent), from 7 October 2026. Not in your plan yet.']].concat(RULES_YEAR === 2027 ? [['New Investment Account (announced)', 'From July 2027: up to €12,000 a year, no tax on the first €50,000, 1% levy above that. Not in your plan yet; details come with the Finance Bill.']] : []).concat([
+    ['Gift and inheritance tax (CAT)', 'Group A threshold ' + eur(RI.sav.cat) + ' (a child from a parent), from 7 October 2026. Not in your plan yet.']].concat(RULES_YEAR === 2027 ? [['New Investment Account (announced)', 'Budget 2027 sets up the legal framework for a new Investment Account. The limits and tax details are not published yet, so it is not in your plan.']] : []).concat([
     ['Mortgage limits (Central Bank)', H.ltiFTB + '× income for first-time buyers, ' + H.ltiSSB + '× for others; at least a ' + pcs(1 - H.ltv) + ' deposit'],
     ['Stamp duty', pcs(H.stamp[0][1]) + ' up to ' + eur(H.stamp[0][0]) + ', ' + pcs(H.stamp[1][1]) + ' to ' + eur(H.stamp[1][0]) + ', ' + pcs(H.stamp[2][1]) + ' above']]); }
 const govHTML = () => govRows().map(x => '<div class="mini"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>').join('');

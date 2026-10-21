@@ -87,7 +87,7 @@ Sources used: engine rules register in `LifeGoals-Customer-Journey-Prototype.htm
 
 ## 6. Budget 2027 (announced 6 Oct 2026): plan start year 2027
 
-The plan start year (Your assumptions, "Start the plan in") is 2026 or 2027. LifeMap suggests 2027 from October 2026. A 2027 plan uses these figures from 1 January 2027. Each is flagged verify: open the Department of Finance Budget 2027 tax document and Revenue before release (exact links not yet confirmed), because the Finance (No. 2) Bill 2026 may change details. I could only read press and adviser summaries of the Budget, not the primary pages.
+The plan start year (Your assumptions, "Start the plan in") is 2026 or 2027. LifeMap suggests 2027 from October 2026. A 2027 plan uses these figures from 1 January 2027. Checked on 21 Oct 2026 against the official Department of Finance "Budget 2027 Tax Policy Changes Summary" and the "Budget in Brief" (both read in full). They state the increases (+€2,500 band, +€125 credits, +€100 Home Carer, USC 2% ceiling to €30,300, Rent Tax Credit €1,150 / €2,300, +€10 weekly social welfare, exit tax 35%, CGT 31%, Help to Buy €35,000, CAT Group A +5%). The band and credit totals are the 2026 figure plus the stated increase. The Finance Bill may still change details.
 
 | Item | 2026 | 2027 |
 |---|---|---|
@@ -100,7 +100,7 @@ The plan start year (Your assumptions, "Start the plan in") is 2026 or 2027. Lif
 | Home Carer credit | €1,950 | €2,050 |
 | Rent Tax Credit | €1,000 (€2,000 joint) | €1,150 (€2,300 joint), 2027 and 2028 |
 | USC 2% band ends at | €28,700 | €30,300 (rates unchanged) |
-| State Pension (full rate, a week) | €299.30 | €309.30 (€319.30 at 80+) |
+| State Pension (full rate, a week) | €299.30 | €309.30 (€319.30 at 80+); Illness Benefit €264, survivor's pension €269.50 / €309.30 |
 | Exit tax (funds, ETFs, life policies) | 38% | 35%, 8-year deemed disposal stays |
 
 Already in force from 7 Oct 2026 (used in both 2026 and 2027 plans): CGT 31% (was 33%); Help to Buy up to €35,000 (was €30,000); CAT Group A threshold €420,000.
@@ -109,4 +109,6 @@ Not changed in the announced Budget, so 2026 figures stay: DIRT 33%, USC rates a
 
 Announced, not modelled yet: the New Investment Account from July 2027 (up to €12,000 a year, no tax on the first €50,000, 1% levy above; no CGT, exit tax or deemed disposal inside it). Details to be confirmed in the Finance Bill.
 
-Open conflicts in the press coverage to settle against the official document: the top of the 3% USC band (€70,044 vs €70,444; the engine keeps €70,044) and the self-employed USC surcharge threshold (€100,000, unchanged).
+Settled by the official documents: only the 2% USC band ceiling changes, so the top of the 3% band stays at €70,044 and the self-employed USC surcharge is unchanged. The exact Qualified Adult rate and the Investment Account details (limit, tax-free amount, levy) are not in the published guides: the Budget says only "legislative framework for the new Investment Account", so the figures I quoted for it from press coverage stay unmodelled until the Finance Bill.
+
+Also in the Budget, not modelled: Standard Fund Threshold age-related valuation factors revised (mainly defined-benefit pensions); Rent-a-Room relief limit €16,000; childcare services relief ceiling €20,000; CAT Group B and C thresholds +10%. Official forecast inflation (Budget in Brief chart, read off the graph): about 3.3% in 2026, 3.0% in 2027, 2.1% in 2028, 2.0% in 2029.
