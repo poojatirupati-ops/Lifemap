@@ -2963,8 +2963,8 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
    Every statutory value the engine, the calculators and the copy use. Each leaf: v (value), src (source URL), eff (effective date),
    verify (true = open the primary page and record the date before release; audit "Src" P or S). Budget 2027 (6 Oct 2026) is a one-place update here.
    Judgement values are NOT here: they are the customer's own choices ("Your assumptions", ASM below). */
-let RULES_VERSION = 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes already in force (CGT, Help to Buy)';
-let BUDGET27 = 'This plan uses 2026 rules. Budget 2027 changes (from 1 January 2027) are available: choose 2027 as the plan start year in Your assumptions.';   // set by setRulesYear(); every 2027 figure is flagged verify until the Finance Bill is final
+let RULES_VERSION = 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates';
+let BUDGET27 = 'Tax assumptions: 2026. Includes announced 2027 changes from 1 January 2027. Some figures are based on 2026 rates pending publication of updated rules.';   // set by setRulesYear(); every 2027 figure is announced or provisional until the Finance Bill is enacted
 const RV_ = (v, src, eff, verify, by) => ({v, src, eff, verify:verify !== false, by});   // by = the source as the customer sees it
 const RULES_IE_2026 = {
   it:{   // income tax
@@ -3010,6 +3010,7 @@ const RULES_IE_2026 = {
     endAge:RV_(66, 'https://www.oireachtas.ie/en/debates/question/2018-11-21/241/', 'Law'),
     sMinIncome:RV_(5000, 'https://www.gov.ie/en/department-of-social-protection/publications/prsi-class-s-rates/', '2026'),
     sMin:RV_(650, 'https://www.gov.ie/en/department-of-social-protection/publications/prsi-class-s-rates/', '2026'),
+    arfApplies:RV_(true, 'https://www.gov.ie/en/department-of-social-protection/', 'PRSI on ARF / PRSA withdrawals before 66: sources conflict (provider guidance says Class S is deducted; no Revenue or DSP page confirmed). Kept as before, provisional'),
     unearnedMin:RV_(5000, 'https://www.gov.ie/en/department-of-social-protection/publications/prsi-class-s-rates/', '2026')
   },
   pen:{
@@ -3048,14 +3049,25 @@ const RULES_IE_2026 = {
     illness:RV_(254, 'https://www.inou.ie/assets/files/pdf/2026_-_inou_budget_factsheet.pdf', '1 Jan 2026'),
     survivor:RV_(259.50, 'https://www.raisin.com/en-ie/pensions/widow-pensions', '1 Jan 2026'),
     survivor66:RV_(299.30, 'https://www.raisin.com/en-ie/pensions/widow-pensions', '1 Jan 2026'),
-    weeks:RV_(52, 'Convention', '—', false)
+    weeks:RV_(52, 'Convention', '—', false),
+    nonContrib:RV_(288, 'https://www.gov.ie/en/department-of-social-protection/', '1 Jan 2026 (reference only: not used by the plan)'),
+    qaIllness:RV_(168.60, 'https://www.gov.ie/en/department-of-social-protection/', '1 Jan 2026 (reference only: not used by the plan)')
+  },
+  ia:{   // the proposed Investment Account (Budget 2027). Nothing here is used by the plan yet
+    start:RV_(null, 'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html', 'not in 2026'),
+    limit:RV_(null, 'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html', 'not in 2026'),
+    taxFreeValue:RV_(null, 'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html', 'not in 2026'),
+    levy:RV_(null, 'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html', 'not in 2026')
   },
   sav:{   // savings and investment tax (shown as notes)
     dirt:RV_(0.33, 'https://cantorfitzgerald.ie/budget-2026-key-updates-for-investors-and-savers', '2026'),
     exit:RV_(0.38, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-0162026.aspx', '1 Jan 2026'),
     deemed:RV_(8, 'https://etf.ie/blog/budget-2026-etf/', '2026'),
-    cgt:RV_(0.31, 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/', 'disposals from 7 Oct 2026 (Budget 2027)', false),
-    cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/', 'Law (annual exemption per person)'),
+    cgt:RV_(0.31, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx', 'standard rate on disposals from 7 Oct 2026 (Revenue eBrief 142/26, seen in search results; page not opened)'),
+    cgtBefore:RV_(0.33, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx', 'standard rate on disposals before 7 Oct 2026'),
+    cgtFrom:RV_('2026-10-07', 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx', 'date the 31% rate starts'),
+    cgtDev:RV_(0.33, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx', 'development land stays at 33% (not modelled)'),
+    cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/', 'annual exemption per person (not confirmed in the sources I could read)'),
     cat:RV_(420000, 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/', 'gifts and inheritances from 7 Oct 2026 (Group A up 5%, from €400,000)')
   },
   home:{
@@ -3077,28 +3089,64 @@ const RULES_IE_2026 = {
 };
 // RI: plain values read by every function (RI.it.band = 44000 …)
 const RI = (function unwrap(o){ const r = {}; Object.keys(o).forEach(k => { const x = o[k]; r[k] = x && typeof x === 'object' && 'v' in x && 'src' in x ? x.v : unwrap(x); }); return r; })(RULES_IE_2026);
-/* ---------- Budget 2027 (announced 6 Oct 2026): a plan that starts in 2027 uses these rules ----------
-   Each entry replaces one RI value from 1 Jan 2027. Where a figure was not in the announced Budget (age credit, DIRT, Qualified Adult and other DSP rates, SFT, stamp duty)
-   the 2026 value stays and the page says so. Checked 21 Oct 2026 against the Department of Finance Tax Policy Changes Summary and the Budget in Brief (both read in full): the changes below are stated there as increases (+€2,500 band, +€125 credits, +€100 Home Carer, USC 2% ceiling €28,700 to €30,300, +€150 / +€300 Rent Tax Credit, +€10 weekly social welfare, 38% to 35%).
-   The totals are the 2026 figure plus the stated increase. The Finance Bill may still change details. */
-const B27_SRC = 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/';   // Your guide to Budget 2027 (gov.ie, published 6 Oct 2026); with the Department of Finance 'Tax Policy Changes Summary' and the Budget in Brief PDF (read in full 21 Oct 2026)
+/* ---------- Tax-year configurations: 2026 (the register above) and 2027 (this overlay) ----------
+   ONE engine. RULES_IE_2026 holds the 2026 value of every parameter; RULES_2027 holds only the 2027 values that were announced. Every other parameter carries its 2026 value into 2027
+   and is shown as "2026 Fallback" (never as an official 2027 figure). Every parameter has a status: Verified / Announced / Provisional / 2026 Fallback / Requires Verification.
+   The engine loads the configuration for EACH projected year (setRulesYear(year)), so a plan that starts in 2026 switches to the 2027 rules from 2027, not for every year.
+   Evidence read in full on 21 Oct 2026: the Department of Finance "Budget 2027 Tax Policy Changes Summary" and the "Budget in Brief" (they state the increases, not the new totals). Not opened: Revenue, DSP, Oireachtas
+   (this environment cannot reach them), so nothing here is marked "Verified" for 2027. The Finance (No. 2) Bill 2026 may change details. */
+const ST_V = 'Verified', ST_A = 'Announced / Provisional', ST_F = '2026 Fallback', ST_R = 'Requires Verification';
+const SRC_GUIDE = 'https://www.gov.ie/en/department-of-public-expenditure-infrastructure-public-service-reform-and-digitalisation/publications/your-guide-to-budget-2027/';
+const SRC_ZURICH_SP = 'https://www.zurich.ie/blog/pension-changes-2027/', SRC_CITINFO = 'https://www.citizensinformation.ie/en/money-and-tax/budgets/budget-2027/', SRC_REV_CGT = 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx', SRC_KPMG_IA = 'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html';
+const R27 = (v, eff, note, src, status) => ({v, eff, note, src:src || SRC_GUIDE, status:status || ST_A});
+const INC27 = 'Dept of Finance summary: the increase is stated; the total is the 2026 figure plus the increase.';
 const RULES_2027 = {
-  'it.band':RV_(46500, B27_SRC, '1 Jan 2027', false), 'it.bandSPCCC':RV_(50500, B27_SRC, '1 Jan 2027', false), 'it.bandMarried':RV_(55500, B27_SRC, '1 Jan 2027', false), 'it.bandUplift':RV_(37500, B27_SRC, '1 Jan 2027 (two incomes up to 93,000)', false),
-  'it.personal':RV_(2125, B27_SRC, '1 Jan 2027', false), 'it.personalMarried':RV_(4250, B27_SRC, '1 Jan 2027', false), 'it.paye':RV_(2125, B27_SRC, '1 Jan 2027', false), 'it.eic':RV_(2125, B27_SRC, '1 Jan 2027', false),
-  'it.homeCarer':RV_(2050, B27_SRC, '1 Jan 2027', false), 'it.rent':RV_(1150, B27_SRC, '2027 and 2028', false), 'it.rentJoint':RV_(2300, B27_SRC, '2027 and 2028', false),
-  'usc.bands':RV_([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], B27_SRC, '1 Jan 2027 (2% band now to 30,300)', false),
-  'sp.week':RV_(309.30, B27_SRC, 'Jan 2027 (+€10 on weekly social welfare payments)', false), 'sp.illness':RV_(264, B27_SRC, 'Jan 2027 (+€10 assumed from the general €10 rise; the exact rate is not in the guide)', true), 'sp.survivor':RV_(269.50, B27_SRC, 'Jan 2027 (+€10 assumed from the general €10 rise; the exact rate is not in the guide)', true), 'sp.survivor66':RV_(309.30, B27_SRC, 'Jan 2027 (+€10 assumed from the general €10 rise; the exact rate is not in the guide)', true),
-  'sav.exit':RV_(0.35, B27_SRC, '1 Jan 2027 (Investment Undertaking Tax, life assurance exit tax, equivalent offshore funds and certain foreign policies; 8-year deemed disposal stays)', false)
+  'it.band':R27(46500, '1 Jan 2027', 'Entry point for the 40% rate +€2,500. ' + INC27), 'it.bandSPCCC':R27(50500, '1 Jan 2027', 'One-parent band +€2,500. ' + INC27),
+  'it.bandMarried':R27(55500, '1 Jan 2027', 'Married, one income, +€2,500. ' + INC27), 'it.bandUplift':R27(37500, '1 Jan 2027', 'Second-income increase: two incomes reach €93,000 (2 x €46,500). ' + INC27),
+  'it.personal':R27(2125, '1 Jan 2027', 'Personal credit +€125. ' + INC27), 'it.personalMarried':R27(4250, '1 Jan 2027', 'Married personal credit (twice the single credit). ' + INC27),
+  'it.paye':R27(2125, '1 Jan 2027', 'Employee credit +€125. ' + INC27), 'it.eic':R27(2125, '1 Jan 2027', 'Earned Income credit +€125. ' + INC27),
+  'it.homeCarer':R27(2050, '1 Jan 2027', 'Home Carer credit +€100. ' + INC27),
+  'it.rent':R27(1150, '2027 and 2028', 'Rent Tax Credit +€150 (stated with the totals in the Budget in Brief).'), 'it.rentJoint':R27(2300, '2027 and 2028', 'Rent Tax Credit +€300 for a couple (totals stated in the Budget in Brief).'),
+  'usc.bands':R27([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], '1 Jan 2027', 'The 2% band ceiling rises from €28,700 to €30,300 (stated in the Budget in Brief). Nothing else in USC changes.'),
+  'sp.week':R27(309.30, 'Jan 2027', 'Weekly social welfare payments +€10 (official). €309.30 is also in adviser tables (Zurich).', SRC_ZURICH_SP),
+  'sp.qa66':R27(277.40, 'Jan 2027', 'Qualified Adult 66+, from an adviser table (Zurich). The official rates table was not opened.', SRC_ZURICH_SP),
+  'sp.qaUnder66':R27(206.10, 'Jan 2027', 'Qualified Adult under 66, from an adviser table (Zurich). The official rates table was not opened.', SRC_ZURICH_SP),
+  'sav.exit':R27(0.35, '1 Jan 2027', 'Investment Undertaking Tax, life assurance exit tax, equivalent offshore funds and certain foreign policies 38% to 35% (official). 1 Jan 2027 is from press coverage. The 8-year deemed disposal stays.'),
+  'ia.start':R27('2027-07-01', 'proposed', 'Accounts due to open 1 July 2027, subject to the Finance Bill (adviser and press coverage; the Budget says only "legislative framework").', SRC_KPMG_IA),
+  'ia.limit':R27(12000, 'proposed', 'Annual contribution cap per person (press coverage; Finance Bill pending).', SRC_KPMG_IA),
+  'ia.taxFreeValue':R27(50000, 'proposed', 'First €50,000 of ACCOUNT VALUE is not levied, a 1% levy applies to the value above it. It is not a tax-free amount of gains (press coverage; Finance Bill pending).', SRC_KPMG_IA),
+  'ia.levy':R27(0.01, 'proposed', 'Annual levy on account value above the threshold (press coverage; Finance Bill pending).', SRC_KPMG_IA)
 };
-const RULES_2027_NOT_CHANGED = 'Not in the Budget 2027 tax measures, so 2026 figures stay: DIRT, USC rates and the 3% band, PRSI (rate path already legislated), pension relief and lump-sum limits, stamp duty, age credit, single-parent credit. The Standard Fund Threshold valuation factors are being revised (not modelled). The exact Qualified Adult rate is not in the published guide and stays at 2026.';
-const RI_BASE = {};   // 2026 values of everything the overlay can replace
+const RULES_2027_NOT_CHANGED = 'Not in the Budget 2027 tax measures, so the 2026 figure is carried forward: DIRT, USC rates and the 3% band, PRSI (rate path already legislated), pension relief and lump-sum limits, stamp duty, age credit, single-parent credit, Illness Benefit, survivor\'s and non-contributory pensions. The Standard Fund Threshold valuation factors are being revised (not modelled).';
+const RI_BASE = {};   // the 2026 value of every parameter the 2027 overlay can replace
 const riGet = (p) => p.split('.').reduce((o, k) => o[k], RI), riSet = (p, v) => { const ks = p.split('.'), l = ks.pop(); ks.reduce((o, k) => o[k], RI)[l] = v; };
 Object.keys(RULES_2027).forEach(p => { const v = riGet(p); RI_BASE[p] = Array.isArray(v) ? v.map(x => Array.isArray(x) ? x.slice() : x) : v; });
-let RULES_YEAR = 2026;
-function setRulesYear(y){ y = y >= 2027 ? 2027 : 2026; if (y === RULES_YEAR) return; RULES_YEAR = y;
-  Object.keys(RULES_2027).forEach(p => riSet(p, y === 2027 ? RULES_2027[p].v : RI_BASE[p]));
-  RULES_VERSION = y === 2027 ? 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending' : 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes already in force (CGT, Help to Buy)';
-  BUDGET27 = y === 2027 ? 'This plan uses Budget 2027 rules from 1 January 2027 (announced 6 October 2026). The Finance Bill may still change some details. ' + RULES_2027_NOT_CHANGED : 'This plan uses 2026 rules. Budget 2027 changes (from 1 January 2027) are available: choose 2027 as the plan start year in Your assumptions.'; }
+let RULES_YEAR = 2026, RULES_DIRTY = false;
+const taxYearFor = y => (typeof S !== 'undefined' && S && S.taxYearOverride) || (y >= 2027 ? 2027 : 2026);   // an adviser or administrator can force one year for a comparison
+function taxTexts(startY){
+  const e = taxYearFor(startY);
+  RULES_VERSION = e === 2027 ? 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending' : 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates';
+  BUDGET27 = 'Tax assumptions: ' + startY + '. Includes announced 2027 changes' + (startY < 2027 && e !== 2027 ? ' from 1 January 2027' : '') + '. Some figures are based on 2026 rates pending publication of updated rules.'; }
+function setRulesYear(y, quiet){ const e = taxYearFor(y);
+  if (e !== RULES_YEAR || RULES_DIRTY){ RULES_YEAR = e; RULES_DIRTY = false;
+    Object.keys(RULES_2027).forEach(p => { const o = typeof S !== 'undefined' && S && S.taxOv && S.taxOv[p]; riSet(p, e === 2027 ? (o && o.v != null && o.v !== '' ? o.v : RULES_2027[p].v) : RI_BASE[p]); }); }
+  if (!quiet) taxTexts(y); }
+const cgtRateOn = d => d >= RI.sav.cgtFrom ? RI.sav.cgt : RI.sav.cgtBefore;   // by disposal date (ISO text): 33% before 7 Oct 2026, 31% from then
+const TAX_CAT = {it:'Income tax', usc:'USC', prsi:'PRSI', pen:'Pensions', ae:'Auto-enrolment', sp:'Social welfare and State Pension', sav:'Savings, investments and CGT', home:'Home', infl:'Inflation', guide:'Guidance', ia:'Investment Account (proposed)'};
+const TAX_NAMES = {"it.band": "Standard-rate band, single (40% starts above)", "it.bandSPCCC": "Standard-rate band, one-parent family", "it.bandMarried": "Standard-rate band, married one income", "it.bandUplift": "Second-income increase to the band (married two incomes)", "it.r1": "Standard income tax rate", "it.r2": "Higher income tax rate", "it.personal": "Personal tax credit, single", "it.personalMarried": "Personal tax credit, married / civil partners", "it.paye": "Employee (PAYE) tax credit", "it.eic": "Earned Income tax credit", "it.homeCarer": "Home Carer tax credit", "it.rent": "Rent Tax Credit, single", "it.rentJoint": "Rent Tax Credit, couple", "it.rentLastYear": "Last year of the Rent Tax Credit", "it.spccc": "Single Person Child Carer credit", "usc.bands": "USC bands and rates", "usc.exempt": "USC exemption (income up to)", "prsi.path": "PRSI rate path (Class A / S)", "prsi.arfApplies": "PRSI applies to ARF / PRSA withdrawals before 66", "pen.relief": "Pension tax relief limits by age", "pen.earnCap": "Pension relief earnings cap", "pen.lsMaxPct": "Retirement lump sum: share of the fund", "pen.lsTaxFree": "Retirement lump sum: tax-free amount", "pen.lsCap": "Retirement lump sum: 20% band ends", "pen.lsBandRate": "Retirement lump sum: rate in the middle band", "pen.sft": "Standard Fund Threshold by year", "pen.sftRate": "Tax above the Standard Fund Threshold", "pen.arfMin61": "ARF minimum withdrawal from 61", "pen.arfMin71": "ARF minimum withdrawal from 71", "pen.arfMinBig": "ARF minimum withdrawal over the large-fund limit", "pen.arfBig": "ARF large-fund limit", "sp.week": "State Pension (Contributory), a week", "sp.over80": "State Pension: extra from 80, a week", "sp.qa66": "Qualified Adult increase, 66 or over, a week", "sp.qaUnder66": "Qualified Adult increase, under 66, a week", "sp.illness": "Illness Benefit, a week", "sp.survivor": "Survivor's pension, under 66, a week", "sp.survivor66": "Survivor's pension, 66 or over, a week", "sp.nonContrib": "State Pension (Non-Contributory), a week", "sp.qaIllness": "Qualified Adult increase, Illness Benefit, a week", "sav.dirt": "DIRT on deposit interest", "sav.exit": "Exit tax: funds and life policies", "sav.deemed": "Deemed disposal period (years)", "sav.cgt": "Capital gains tax: standard rate from 7 Oct 2026", "sav.cgtBefore": "Capital gains tax: standard rate before 7 Oct 2026", "sav.cgtFrom": "Capital gains tax: new rate starts", "sav.cgtDev": "Capital gains tax: development land", "sav.cgtExempt": "Capital gains tax: yearly exemption per person", "sav.cat": "Gift and inheritance tax: Group A threshold (not in the plan)", "home.htbMax": "Help to Buy: maximum relief", "home.stamp": "Stamp duty rates", "ia.start": "Investment Account: start date", "ia.limit": "Investment Account: yearly contribution limit", "ia.taxFreeValue": "Investment Account: value before the levy", "ia.levy": "Investment Account: yearly levy above that value"};
+const taxName = p => TAX_NAMES[p] || p.split('.').slice(1).join(' ').replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase());
+const TAX_FLAGS = {'prsi.arfApplies':ST_R, 'sav.cgtExempt':ST_R, 'sav.cgt':ST_A, 'sav.cgtBefore':ST_A, 'sav.cgtFrom':ST_A};   // set by the evidence: the ARF PRSI rule and the exemption are unconfirmed; the CGT rate and date come from Revenue eBrief 142/26 (seen in search results only)
+const TAX_CHECKED_26 = '2 Oct 2026 (secondary sources; not yet reconciled with Revenue / DSP)', TAX_CHECKED_27 = '21 Oct 2026 (Dept of Finance summary and Budget in Brief)';
+// The auditable register: one row per parameter with the 2026 value, the 2027 value or fallback, the status, source, effective date and last check.
+function taxRegister(){ const rows = []; const walk = (o, path) => Object.keys(o).forEach(k => { const x = o[k], p = path ? path + '.' + k : k;
+    if (x && typeof x === 'object' && 'v' in x && 'src' in x){ const ov = RULES_2027[p], adm = S && S.taxOv && S.taxOv[p], fb = !ov;
+      rows.push({path:p, cat:TAX_CAT[p.split('.')[0]] || p.split('.')[0], name:taxName(p), v26:x.v, v27:adm && adm.v != null && adm.v !== '' ? adm.v : ov ? ov.v : x.v, fallback:fb && !adm,
+        status26:TAX_FLAGS[p] || (x.verify ? ST_R : ST_V), status27:adm && adm.status ? adm.status : ov ? ov.status : TAX_FLAGS[p] || (p.startsWith('ia.') ? ST_R : ST_F), eff:ov ? ov.eff : x.eff, src:ov ? ov.src : x.src, checked:ov ? TAX_CHECKED_27 : TAX_CHECKED_26, note:ov ? ov.note : (x.eff && /not (confirmed|used)|reference only|sources conflict/.test(x.eff) ? x.eff : ''), admin:!!adm}); }
+    else if (x && typeof x === 'object' && !Array.isArray(x)) walk(x, p); });
+  walk(RULES_IE_2026, ''); return rows; }
+const taxDisclosure = () => '<b>' + esc(BUDGET27.split('. ')[0]) + '.</b> ' + esc(BUDGET27.split('. ').slice(1).join('. ')) + ' <details style="margin-top:4px"><summary style="min-height:44px;display:inline-flex;align-items:center;cursor:pointer;font-weight:700">Which figures are provisional?</summary><span class="small" style="display:block">Announced 2027 changes are used from their start dates: income tax bands and credits, the USC 2% band, the State Pension, exit tax at 35% and capital gains tax at 31%. They may change when the Finance Bill is enacted. ' + esc(RULES_2027_NOT_CHANGED) + ' Projections are illustrative, not guaranteed.</span></details>';
+const isoD0 = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const taxSnapshot = () => { const r = taxRegister(); return {startYear:YEAR0, override:(S && S.taxYearOverride) || null, rules:RULES_VERSION, announced:r.filter(x => x.status27 === ST_A).length, fallback:r.filter(x => x.status27 === ST_F).length, needsCheck:r.filter(x => x.status27 === ST_R || x.status26 === ST_R).length}; };
 // Law figures quoted in copy, built once from the register (§14: every figure quoted once, from the single rules register)
 const LAW = {ls:'up to ' + '€' + RI.pen.lsTaxFree.toLocaleString('en-IE') + ' tax-free, the next €' + (RI.pen.lsCap - RI.pen.lsTaxFree).toLocaleString('en-IE') + ' taxed at ' + Math.round(RI.pen.lsBandRate * 100) + '%, and anything above €' + RI.pen.lsCap.toLocaleString('en-IE') + ' taxed at your marginal rate (' + Math.round(RI.it.r2 * 100) + '% here)',
   arf:'from 61 you must take at least ' + Math.round(RI.pen.arfMin61 * 100) + '% a year (' + Math.round(RI.pen.arfMin71 * 100) + '% from 71)',
@@ -3117,9 +3165,12 @@ const CBI_RATES = 'https://www.centralbank.ie/statistics/data-and-analysis/credi
 /* H3: the investment standard is DERIVED, never typed, so it cannot drift from its own explanation:
    growth before fees and tax, less charges, less exit tax paid every 8 years (deemed disposal), per year, to 0.1%. */
 const INV_CHG_STD = 0.01;   // the fund charges used if no charges figure is set (the Pensions Authority assumption, Market rates)
-const invNet = (extraCut) => { const g = (() => { const x = SETTINGS.s.invGross; return x.pv != null ? x.pv : x.v; })() - (extraCut || 0), cs = SETTINGS.s.fundChg, c = cs && (cs.pv != null ? cs.pv : cs.v) != null ? (cs.pv != null ? cs.pv : cs.v) : INV_CHG_STD, y = RI.sav.deemed, t = RI.sav.exit, f = Math.pow(1 + g - c, y);
+const invDirect = () => typeof S !== 'undefined' && S && S.asm && S.asm.invWrapper === 'shares';   // shares held directly: capital gains tax when sold, no exit tax, no 8-year rule
+const invNet = (extraCut) => { if (invDirect()){ const x = SETTINGS.s.invGross, cs = SETTINGS.s.fundChg, g0 = (x.pv != null ? x.pv : x.v) - (extraCut || 0), c0 = cs && (cs.pv != null ? cs.pv : cs.v) != null ? (cs.pv != null ? cs.pv : cs.v) : INV_CHG_STD; return Math.round((g0 - c0) * 1000) / 1000; }
+   const g = (() => { const x = SETTINGS.s.invGross; return x.pv != null ? x.pv : x.v; })() - (extraCut || 0), cs = SETTINGS.s.fundChg, c = cs && (cs.pv != null ? cs.pv : cs.v) != null ? (cs.pv != null ? cs.pv : cs.v) : INV_CHG_STD, y = RI.sav.deemed, t = RI.sav.exit, f = Math.pow(1 + g - c, y);
   return Math.round((Math.pow(f - t * (f - 1), 1 / y) - 1) * 1000) / 1000; };
-const invBy = () => { const x = SETTINGS.s.invGross, cs = SETTINGS.s.fundChg, pc = v => (Math.round(v * 1000) / 10) + '%', g = x.pv != null ? x.pv : x.v, c = cs && (cs.pv != null ? cs.pv : cs.v) != null ? (cs.pv != null ? cs.pv : cs.v) : INV_CHG_STD;
+const invBy = () => { if (invDirect()) return 'a planning assumption, not a prediction: growth before fees less about 1% charges; capital gains tax is taken off when the shares are sold, not each year';
+   const x = SETTINGS.s.invGross, cs = SETTINGS.s.fundChg, pc = v => (Math.round(v * 1000) / 10) + '%', g = x.pv != null ? x.pv : x.v, c = cs && (cs.pv != null ? cs.pv : cs.v) != null ? (cs.pv != null ? cs.pv : cs.v) : INV_CHG_STD;
   return 'a planning assumption, not a prediction: ' + pc(g) + ' before fees and tax, less about ' + pc(c) + ' charges, less ' + Math.round(RI.sav.exit * 100) + '% exit tax taken every ' + RI.sav.deemed + ' years'; };
 const SETTINGS = {partner:'', s:{
   infl:{n:'Inflation: prices rise (a year)', u:'pct', grp:'Prices & growth', v:0.02, by:'the ECB target for the long term', src:'https://www.bundesbank.de/en/tasks/topics/european-central-bank-updates-monetary-policy-strategy-970824', asat:'2025 strategy', verify:true},
@@ -3141,6 +3192,7 @@ const SETTINGS = {partner:'', s:{
   safetyMonthsTwo:{n:'Emergency fund: months with two secure incomes', u:'num', grp:'Emergency fund & saving', v:3, by:'two secure incomes', src:'LifeMap planning standard. Reference points: MABS and CCPC guidance', asat:'2026', verify:false},
   cashYears:{n:'Money for goals sooner than this is kept as cash (years)', u:'yrs', grp:'Emergency fund & saving', v:5, by:'money needed within 5 years is usually kept as cash', src:'LifeMap planning standard (common planning practice: money needed within about 5 years is not invested)', asat:'2026', verify:false, guide:'Longer-term money has more time to ride out ups and downs.'},
   investShare:{n:'Spare savings: share invested', u:'pct', grp:'Emergency fund & saving', v:0.4, by:'a balanced cash and invested mix', src:'LifeMap planning standard (a balanced cash and invested mix)', asat:'2026', verify:false},
+  invWrapper:{n:'How your investments are held', u:'choice', grp:'Choices', v:'fund', by:'most people hold funds or ETFs', src:'LifeMap planning standard. Funds and ETFs pay exit tax (with the 8-year rule); shares held directly pay capital gains tax when sold.', asat:'2026', verify:false},
   cgtGain:{n:'Other assets and alternative investments: share of the value that is a gain', u:'pct', grp:'Emergency fund & saving', v:0.4, by:'a planning figure, because we do not know what you paid', src:'LifeMap planning standard. Capital gains tax applies to the gain only, not the whole value.', asat:'2026', verify:false, guide:'When other assets, crypto, gold or art are sold for a goal, capital gains tax is taken off this share of their value.'},
   saveShare:{n:'Share of spare money saved, at most', u:'pct', grp:'Emergency fund & saving', v:0.5, by:'half of your spare money', src:'LifeMap planning standard', asat:'2026', verify:false, guide:'We never count more than this share of your spare money as saved, unless you set your own monthly saving.'},
   noAnswer:{n:'Monthly saving if not answered', u:'eur', grp:'Emergency fund & saving', v:300, by:'a modest regular amount', src:'LifeMap planning standard', asat:'2026', verify:false, guide:'Used until you answer "How much could you comfortably invest each month?".'},
@@ -3777,6 +3829,7 @@ const ASM = {
     need:() => finN('loanBal') + finN('debt') > 0 && !(finN('loanRate') > 0), get help(){ return SG('loanRate'); }},
   cashYears:{g:'safety', b:'B21', ty:3, n:'years kept as cash', l:'Money for goals sooner than this is kept as cash (years)', t:'yrs', min:1, max:10, step:1, sug:() => ST.cashYears, get by(){ return STB.cashYears.by; }, need:() => true, get help(){ return SG('cashYears'); }},
   investShare:{g:'safety', b:'B21', ty:3, n:'share of spare savings invested', l:'Spare savings: share invested (the rest stays in cash)', t:'pct', min:0, max:100, step:5, sug:() => ST.investShare, get by(){ return STB.investShare.by; }, need:() => true, get help(){ return SG('investShare'); }},
+  invWrapper:{g:'safety', b:'B29', ty:3, n:'how your investments are held', l:'Your investments are', t:'choice', o:[['fund', 'Funds or ETFs (exit tax, 8-year rule)'], ['shares', 'Shares held directly (capital gains tax when sold)']], sug:() => SV('invWrapper'), get by(){ return SB('invWrapper'); }, need:() => false, help:'Funds and ETFs pay exit tax, and the 8-year rule treats them as sold every 8 years. Shares you hold directly pay capital gains tax only when you sell, but dividends are taxed as income each year.'},
   cgtGain:{g:'safety', b:'B28', ty:3, n:'gain share when assets are sold', l:'Other assets, crypto, gold or art: share of their value that is a gain (for capital gains tax when sold)', t:'pct', min:0, max:100, step:5, sug:() => ST.cgtGain, get by(){ return STB.cgtGain.by; }, need:() => false, get help(){ return SG('cgtGain'); }},
   saveShare:{g:'safety', b:'B22', ty:3, n:'share of spare money saved', l:'Share of your spare money you save, at most', t:'pct', min:0, max:100, step:5, sug:() => ST.saveShare, get by(){ return STB.saveShare.by; }, need:() => S.saveM == null, get help(){ return SG('saveShare'); }},
   noAnswer:{g:'safety', b:'B22', ty:3, n:'monthly saving', l:'Monthly saving if you haven\'t told us how much you could invest', t:'eur', min:0, max:5000, step:25, sug:() => ST.noAnswer, get by(){ return STB.noAnswer.by; }, need:() => S.saveM == null && typeof S.ans['6'] !== 'number', get help(){ return SG('noAnswer'); }},
@@ -3884,7 +3937,7 @@ function hhTax(p1, p2, o){ const I = RI.it, ps = p2 ? [p1, p2] : [p1], rate = o.
   let us = 0, pr = 0;
   ps.forEach(p => { const base = p.emp + p.draw + p.other;   // DSP payments (State Pension) are USC-exempt
     us += usc(base, p.age >= RI.usc.reducedAge && base <= RI.usc.reducedMax) + (p.se ? RI.usc.seSurcharge * Math.max(0, p.emp - RI.usc.seSurchargeOver) : 0);
-    if (p.age < RI.prsi.endAge){ pr += (p.se ? prsiS(p.emp, rate) : prsiA(p.emp, rate)) + rate * p.draw + (p.other > RI.prsi.unearnedMin ? rate * p.other : 0); } });   // no PRSI from 66; ARF/PRSA draws and unearned income pay PRSI before 66
+    if (p.age < RI.prsi.endAge){ pr += (p.se ? prsiS(p.emp, rate) : prsiA(p.emp, rate)) + (RI.prsi.arfApplies ? rate * p.draw : 0) + (p.other > RI.prsi.unearnedMin ? rate * p.other : 0); } });   // no PRSI from 66; ARF/PRSA draws and unearned income pay PRSI before 66
   return {it, usc:us, prsi:pr, total:it + us + pr}; }
 const P0_ = (o) => Object.assign({emp:0, se:false, sp:0, draw:0, other:0, relief:0, age:40}, o);
 // Single-person helpers (also used by tests): take-home pay, and income in retirement
@@ -3926,7 +3979,9 @@ function assumeRows(){ applyAssume(); const F = finNums(), mine = k => asmMine(k
   R.push(['Tax for couples', S.about.partner && S.about.married === true ? 'Joint assessment (married / civil partners), also once retired' : 'Taxed as individuals', T_GOV]);
   if (S.needs && (S.needs.life || S.needs.ip)) R.push(['Protection needs noted for your adviser', [S.needs.life ? 'life cover ' + eur(S.needs.life) : '', S.needs.ip ? 'income protection ' + eur(S.needs.ip) + ' a month' : ''].filter(Boolean).join(', '), T_MINE]);
   R.push(['How timing is counted', 'Calculators: monthly, end of the month. Pension contributions in your plan and in the Retirement tool: paid at the end of each year (a little lower than monthly). Money you save towards goals: at the start of each year. Mortgage rates are a yearly rate ÷ 12; card, loan and APR figures are effective yearly rates.', T_HOW]);
-  R.push(['Capital gains tax on sold assets', pcs(RI.sav.cgt) + ' on ' + pcs(+asmV('cgtGain')) + ' of the value of other assets, crypto, gold or art when they are sold for a goal (assumed gain)', asmSrcLbl('cgtGain')]);
+  R.push(['Tax year rules', 'Each year of your plan uses its own rules: 2026 rules to the end of 2026, announced 2027 rules from 1 January 2027 (figures not announced keep their 2026 value)', T_GOV]);
+  R.push(['Investments held as', asmV('invWrapper') === 'shares' ? 'Shares held directly: capital gains tax when sold, no exit tax and no 8-year rule' : 'Funds or ETFs: exit tax, with the 8-year rule', asmSrcLbl('invWrapper')]);
+  R.push(['Capital gains tax on sold assets', pcs(RI.sav.cgt) + ' (33% before 7 Oct 2026) on ' + pcs(+asmV('cgtGain')) + ' of the value of other assets, crypto, gold or art (and shares held directly) when they are sold, after the ' + eur(RI.sav.cgtExempt) + ' a year exemption for each of you. Nothing is taxed while you hold them.', asmSrcLbl('cgtGain')]);
   R.push(['Known limits', 'Living costs stay the same through the plan. Your partner\'s pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn\'t modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn\'t applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Capital gains tax uses a share-of-value assumption and ignores the yearly exemption; tax on a life-policy lump sum, rental costs, the tax-free part of a bought annuity and gift or inheritance tax are not modelled yet.', T_HOW]);
   return R; }
 const rowHTML = x => '<div class="mini"><span>' + esc(x[0]) + '<br><span class="tag ' + TAG_CLS(x[2]) + '">' + esc(x[2]) + '</span>' + (x[3] ? '<br><span class="small">' + esc(x[3]) + '</span>' : '') + '</span><b>' + esc(x[1]) + '</b></div>';
@@ -4026,19 +4081,32 @@ function project(wi){
   const W = {cash, sav:f.savings, inv, oth:f.otherAssets, alt:f.altInv}, WK = ['cash', 'sav', 'inv', 'oth', 'alt'];
   const wTot = () => W.cash + W.sav + W.inv + W.oth + W.alt;
   const WK_EASY = ['cash', 'sav'];   // the emergency fund is built from cash and savings accounts only
-  const cgtEff = RI.sav.cgt * +asmV('cgtGain');   // Capital gains tax when other assets or alternative investments are sold: the tax rate on the share of the value that is a gain (annual exemption not counted: prudent)
-  const WCG = {oth:cgtEff, alt:cgtEff};
-  const wTake = (amt, src, keys) => { let need = Math.max(0, amt), got = 0; (keys || WK).forEach(k => { const e = WCG[k] || 0, d = Math.min(need, Math.max(0, W[k]) * (1 - e)); if (d > 0){ W[k] -= d / (1 - e); need -= d; got += d; if (src) src[k] = (src[k] || 0) + d; } }); return got; };   // d = money received after tax; W[k] falls by the sale value
+  // Capital gains tax applies when something is SOLD, not while it is held: other assets, alternative investments (and shares held directly) pay it on the gain share of what is sold,
+  // at the rate in force on the sale date (33% before 7 Oct 2026, 31% from then), after the yearly exemption (each person). Funds and ETFs pay exit tax inside their growth rate instead.
+  const gainSh = +asmV('cgtGain'), WG = {oth:gainSh, alt:gainSh, inv:invDirect() ? gainSh : 0}, CG = {rate:RI.sav.cgt, left:0};
+  const isoD = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const cgtYear = y => { const t0 = isoD(dobToday()), j1 = y + '-01-01'; CG.rate = cgtRateOn(t0 > j1 ? t0 : j1); CG.left = RI.sav.cgtExempt * (f.partner ? 2 : 1); };   // a sale happens after today, so a plan year already under way uses today's date
+  cgtYear(YEAR0);
+  const wTake = (amt, src, keys) => { let need = Math.max(0, amt), got = 0;
+    (keys || WK).forEach(k => { const g = WG[k] || 0, have = Math.max(0, W[k]); if (need <= 0 || have <= 0) return;
+      if (!g){ const d = Math.min(need, have); W[k] -= d; need -= d; got += d; if (src) src[k] = (src[k] || 0) + d; return; }
+      const r = CG.rate, ex = CG.left, net = x => x - r * Math.max(0, g * x - ex), d = Math.min(need, net(have));   // d = money received after tax
+      const x = d <= ex / g ? d : (d - r * ex) / (1 - r * g);   // the sale value that gives d after tax
+      CG.left = Math.max(0, ex - g * x); W[k] -= x; need -= d; got += d; if (src) src[k] = (src[k] || 0) + d; });
+    return got; };
   fg.forEach(g => { const x = G[g.id], want = Math.max(0, x.cost / Math.pow(1 + x.r, x.n) - x.pot), take = wTake(want, x.src0, g.k === 'safety' ? WK_EASY : WK); x.pot += take; });
   const sh = +asmV('investShare');   // B21: new unallocated money, cash / invested mix
   const wAdd = v => { W.cash += v * (1 - sh); W.inv += v * sh; };
   const gf = {}; S.goals.forEach(g => gf[g.id] = {cost:0, cov:0});
-  const rows = []; let auto0 = 0;
+  const rows = [], taxUsed = []; let auto0 = 0;   // taxUsed: the tax figures each projected year used (kept with the plan)
   const V = Math.max(R, +asmV('accessAge')), lsPct = +asmV('lumpSum'), rule = asmV('drawRule'), fixedReal = +asmV('drawFixed'), spG = asmV('spGrow'), flatBands = asmV('bands') === 'flat';
   const penExtraM = +(S.penExtra || 0), ownBase = f.pensionM > 0 ? f.pensionOwnM / f.pensionM : 0;
   for (let t = 0; t <= N; t++){
-    const a = a0 + t, yr = YEAR0 + t, infl = Math.pow(1 + AS.infl, t), wgw = Math.pow(1 + AS.wage, t), working = a < R, tI = flatBands ? 1 : infl, rate = prsiRate(yr);
-    const spI = spG === 'pay' ? wgw : spG === 'flat' ? 1 : infl;   // B11
+    const yr = YEAR0 + t; setRulesYear(yr, true); cgtYear(yr);   // each projected year uses its own tax configuration (effective dates, fallbacks)
+    const rb = RULES_YEAR, yb = Math.max(0, yr - rb), invY = asmMine('inv') ? AS.inv : invNet(0);
+    taxUsed.push({yr, taxYear:RULES_YEAR, band:RI.it.band, credit:RI.it.personal, usc2:RI.usc.bands[1][0], sp:RI.sp.week, exit:RI.sav.exit, cgt:CG.rate, cgtExempt:CG.left, index:flatBands ? 1 : Math.pow(1 + AS.infl, yb)});
+    const a = a0 + t, infl = Math.pow(1 + AS.infl, t), wgw = Math.pow(1 + AS.wage, t), working = a < R, tI = flatBands ? 1 : Math.pow(1 + AS.infl, yb), rate = prsiRate(yr);
+    const spI = spG === 'pay' ? Math.pow(1 + AS.wage, yb) : spG === 'flat' ? 1 : Math.pow(1 + AS.infl, yb);   // B11: grows from the year the rates were set
     // --- person 1
     const p1 = {emp:0, se:f.work === 'Self-employed', sp:0, draw:0, other:(f.otherM + f.rentM) * 12 * infl + (f.polInc > 0 && f.polIncAge > 0 && a >= f.polIncAge ? f.polInc : 0), relief:0, age:a};
     let cashOut = 0;   // own pension and auto-enrolment contributions (come out of take-home pay)
@@ -4055,11 +4123,11 @@ function project(wi){
       const mn = arfMin(a, pen), want = rule === 'min' ? pen * mn : rule === 'fixed' ? Math.max(fixedReal * infl, pen * mn) : pen * Math.max(1 / Math.max(1, AS.end - a + 1), mn);
       const draw = Math.min(pen, want); pen = (pen - draw) * (1 + AS.penRet); p1.draw = draw;
     }
-    if (a >= AS.spAge) p1.sp = AS.sp * f.sp * spI + (a >= 80 && f.sp > 0 ? RI.sp.over80 * RI.sp.weeks * spI : 0);   // the over-80 increase belongs to a State Pension in payment: none counted, none added
+    if (a >= AS.spAge) p1.sp = RI.sp.week * RI.sp.weeks * f.sp * spI + (a >= 80 && f.sp > 0 ? RI.sp.over80 * RI.sp.weeks * spI : 0);   // the over-80 increase belongs to a State Pension in payment: none counted, none added
     // --- partner (employment to 66, then their State Pension or a Qualified Adult increase paid to you)
     let p2 = null;
     if (f.partner){ const pa = f.pAge + t; p2 = {emp:f.pAge > 0 && pa < (f.pRet || 66) ? f.pIncome * wgw : 0, se:false, sp:0, draw:0, other:0, relief:0, age:pa};
-      if (pa >= 66 && f.pSp !== 'qa') p2.sp = AS.sp * (+f.pSp || 0) * spI;
+      if (pa >= 66 && f.pSp !== 'qa') p2.sp = RI.sp.week * RI.sp.weeks * (+f.pSp || 0) * spI;
       if (f.pSp === 'qa' && a >= AS.spAge && p2.emp === 0) p1.sp += (pa >= 66 ? RI.sp.qa66 : RI.sp.qaUnder66) * RI.sp.weeks * spI; }
     const scale = p => p && Object.assign({}, p, {emp:p.emp / tI, sp:p.sp / tI, draw:p.draw / tI, other:p.other / tI, relief:p.relief / tI});
     const T = hhTax(scale(p1), scale(p2), {married:f.married, spccc:f.spccc, rent:f.rentCred && yr <= RI.it.rentLastYear, carer:f.carer, rate});
@@ -4100,17 +4168,19 @@ function project(wi){
     } else {
       fg.forEach(g => { const x = G[g.id]; if (!x.done){ x.cYrs++; if (t === 0) x.need0 = Math.max(0, (x.cost - x.pot * Math.pow(1 + x.r, g.age - a)) / annF(g.age - a, x.r, AS.wage)); } });
       let gap = -net; const take = v => { const d = Math.min(gap, v); gap -= d; used += d; return d; };
-      WK.forEach(k => { W[k] -= take(Math.max(0, W[k])); }); buffer -= take(buffer);
+      { const got = wTake(gap, null, WK); gap -= got; used += got; }   // a shortfall in living costs sells assets too, after any capital gains tax
+      buffer -= take(buffer);
       fg.slice().reverse().forEach(g => { const x = G[g.id]; if (!x.done && gap > 0) x.pot -= take(x.pot); });   // Nice-to-have and latest goals give way first
       short = gap;
     }
     // 4. Growth
-    W.cash *= 1 + AS.cash; W.sav *= 1 + AS.cash; W.inv *= 1 + AS.inv; W.oth *= 1 + AS.infl; W.alt *= 1 + AS.inv; buffer *= 1 + AS.cash; fg.forEach(g => { const x = G[g.id]; if (!x.done) x.pot *= 1 + x.r; });
+    W.cash *= 1 + AS.cash; W.sav *= 1 + AS.cash; W.inv *= 1 + invY; W.oth *= 1 + AS.infl; W.alt *= 1 + invY; buffer *= 1 + AS.cash; fg.forEach(g => { const x = G[g.id]; if (!x.done) x.pot *= 1 + x.r; });
     if (rg && !working){ gf[rg.id].cost += living; gf[rg.id].cov += living - Math.min(short, living); }
     const pots = fg.reduce((s, g) => s + G[g.id].pot, 0), liquid = wTot() + buffer + pots;
     S.goals.forEach(g => { if (g.kind === 'legacy' && t === N){ const tgt = g.amount * infl; gf[g.id].cost = tgt; gf[g.id].cov = Math.min(tgt, wTot() + buffer); } });
     rows.push({polIn, downIn, t, a, yr, inflow, needs:living + fixed, goalPaid, living, fixed, goalCost, dueG, short:short + goalGap, shortLiving:short, goalGap, due, used, saved, spent, liquid, pen, retired:!working, rmark:a === R, tax:T.total * tI, gross});
   }
+  setRulesYear(YEAR0, true);   // back to the plan's first-year configuration for everything outside the projection
   // 5. Results. Floor, so 99.6% never reads as 100%.
   const pct = {}, goal = {};
   S.goals.forEach(g => { const x = gf[g.id]; pct[g.id] = x.cost > 0 ? (x.cov >= x.cost - 1 ? 100 : clamp(Math.floor(x.cov / x.cost * 100), 0, 99)) : 100; });
@@ -4120,7 +4190,7 @@ function project(wi){
   fg.forEach(g => { if (pct[g.id] < 95){ const r = rows[g.age - a0]; if (r) r.goalShort = true; } });   // FP round 4 F1: colours follow the %
   if (rg && rows.some(r => r.retired && r.shortLiving > Math.max(500, r.needs * 0.02))) pct[rg.id] = Math.min(pct[rg.id], 94);
   const s0 = rows[0], sur0 = f.age < R ? (s0.saved + s0.spent) / 12 : 0;
-  return {rows, pct, goal, save:{surplusM:Math.round(sur0), saveM:Math.round(s0.saved / 12), autoM:auto0}};
+  return {rows, pct, goal, taxUsed, save:{surplusM:Math.round(sur0), saveM:Math.round(s0.saved / 12), autoM:auto0}};
 }
 const band = p => p >= 95 ? 'good' : p >= 70 ? 'nudge' : 'alert';   // teal / gold / coral (Pooja, 1 Oct); weather emojis stay as icons
 const BANDW = {good:'On track', nudge:'Needs a nudge', alert:'Needs attention'}, BANDE = {good:'☀️', nudge:'🌦️', alert:'⛈️'};
@@ -4846,7 +4916,7 @@ function reportData(){
   if (f.partner){ left.push(['Partner', f.pAge ? 'Age ' + f.pAge + (S.pRetSet ? ', stops work at ' + S.pRet : '') : 'Counted as your age']); }
   const glossary = [['Today’s money · future euros', 'Today’s prices, and amounts after prices rise.'], ['Inflation', 'How fast prices rise. This plan uses ' + pcs(AS.infl) + ' a year.'], ['Shortfall', 'The part of a year’s costs your plan cannot pay.'], ['Covered %', 'How much of a goal’s cost your income and savings meet.'], ['PRSA · ARF', 'A personal pension account · a fund you draw income from.'], ['State Pension', 'Government pension from ' + RI.sp.age + '. Full rate ' + eurW(RI.sp.week) + ' a week.'], ['USC · PRSI', 'Irish charges on pay. PRSI builds your State Pension record.'], ['Capacity for loss', 'How much you could afford to lose.'], ['My Future Fund', 'Ireland’s automatic workplace pension.']];
   const assumptions = {big:String(left.length + right.length), bigLabel:'things we assumed', eyebrow:'ASSUMPTIONS AND SMALL PRINT', title:'What your plan assumes', left, right,
-    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', (RULES_YEAR === 2027 ? 'Budget 2027 rules (announced 6 Oct 2026) are used from 1 January 2027. The Finance Bill may still change some details.' : 'Irish rules checked 2 Oct 2026. Your plan starts in 2026, so Budget 2027 changes (from 1 January 2027) are not used.'), 'Capital gains tax is estimated on a share of the value of other assets, crypto, gold and art. Tax on life-policy lump sums, rental costs and gift or inheritance tax are not included yet.']},
+    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', BUDGET27 + ' The Finance Bill may still change some details.', 'Capital gains tax is estimated on a share of the value of other assets, crypto, gold and art. Tax on life-policy lump sums, rental costs and gift or inheritance tax are not included yet.']},
     pleaseNote:{title:'Please note', text:'This is preliminary guidance, not financial advice. Only an authorised adviser can give advice. Investments can fall as well as rise. All projections are illustrative, not guaranteed. This tool is designed to help you explore your preferences. It does not replace a formal suitability or risk assessment where financial advice is provided.'},
     sources:'Sources: Revenue; Department of Social Protection; CSO flash inflation September 2026; ECB target; LifeMap plan engine.', glossary:{title:'Words used in this report', items:glossary}};
   // ---- page 11 ----
@@ -5772,7 +5842,7 @@ function resultsHTML(){ if (!planReady()) return gateHTML('res');
     fndCard() + wiCard() +
     '<div class="card" id="r-glancec"><h3 class="h">Your future, at a glance</h3><div id="r-glance">' + glanceHTML(P) + '</div></div>' +
     '<div class="ends"><button class="btn navy" data-a="report">⬇ Download my plan</button><button class="btn sun" data-a="book">📅 Book my adviser meeting</button><button class="btn ghost" data-a="adjust">✏️ Adjust my goals</button></div>' +
-    '<p class="disc" id="b27-res">' + esc(BUDGET27) + '</p><p class="disc">Guidance, not advice. Projections are illustrative, use standard assumptions and are not guaranteed. Only an authorised adviser who knows your full situation can give advice. ' + (S.versions.length ? '<button class="link" style="font-size:12px;padding:0" data-a="sheet" data-p="history">Plan history (' + S.versions.length + ')</button>' : '') + '</p>';
+    '<div class="disc" id="b27-res">' + taxDisclosure() + '</div><p class="disc">Guidance, not advice. Projections are illustrative, use standard assumptions and are not guaranteed. Only an authorised adviser who knows your full situation can give advice. ' + (S.versions.length ? '<button class="link" style="font-size:12px;padding:0" data-a="sheet" data-p="history">Plan history (' + S.versions.length + ')</button>' : '') + '</p>';
 }
 function liveUpdate(fromBox){ const P0 = project(), P = project(S.wi);
   const set = (id, h) => { const e = document.getElementById(id); if (e) e.innerHTML = h; };
@@ -6886,7 +6956,7 @@ function openReport(){ if (!planReady()){ S.sheet = 'gate|report'; render(); ret
   const h = '<div class="rep-bar"><b>Your plan</b><button data-r="print" style="background:var(--sun);color:var(--ink)">⬇ Download my plan</button><span id="rep-msg" role="status" aria-live="polite" style="font-size:13px;font-weight:700;flex:1 1 220px"></span><button data-r="close" style="background:#fff;color:var(--ink)">Close</button></div>' +
     '<div class="lmr-wrap" tabindex="0" role="region" aria-label="Your plan report, ' + rep.pages.length + ' pages. Scroll to read.">' + rep.pages.map(x => '<div class="lmr-slot">' + x + '</div>').join('') + '</div>';
   const R = document.getElementById('report'); R.innerHTML = h; reportFrom = selFor(document.activeElement); R.classList.add('on'); R.scrollTop = 0; repFit(); R.querySelector('[data-r="print"]').focus();
-  if (!S.versions.some(v => /report/.test(v.note))) S.versions.push({note:'Report downloaded', date:'29 Sep 2026'});
+  if (!S.versions.some(v => /report/.test(v.note))) S.versions.push({note:'Report downloaded', date:'29 Sep 2026', tax:taxSnapshot()});
 }
 
 /* ================= SAVING FILES (journey-spec §24.3) =================
@@ -6961,6 +7031,20 @@ function setInput(k, s){ const pv = s.pv, id = 'set-' + k;
 const SETBOUNDS = {infl:[0, 0.06], wage:[0, 0.06], cash:[0, 0.04], inv:[0, 0.06], invGross:[0, 0.08], pen:[0, 0.07], penRet:[0, 0.06], rentRise:[0, 0.08], houseGrow:[0, 0.06], upkeep:[0, 0.03], ownShare:[0, 1], retireMult:[15, 40], retireSpend:[0.4, 1], lumpSum:[0, 0.25],
   safetyMonths:[1, 12], safetyMonthsTwo:[1, 12], cashYears:[1, 10], investShare:[0, 1], cgtGain:[0, 1], saveShare:[0, 1], noAnswer:[0, 5000], lifeShare:[0.3, 1], lifeYears:[1, 30], mortRate:[0.005, 0.1], loanRate:[0, 0.3], cardRate:[0, 0.35], depRate:[0, 0.06], buyFees:[0, 50000], fundChg:[0, 0.05], waitYears:[0, 20], style:[1, 3]};
 const setBoundMsg = k => { const b = SETBOUNDS[k], s = SET[k]; if (!b) return ''; const f = x => s.u === 'pct' ? (+(x * 100).toFixed(2)) + '%' : s.u === 'eur' ? eur(x) : String(x); return 'Allowed: ' + f(b[0]) + ' to ' + f(b[1]) + (k === 'lumpSum' ? ' (25% is the legal limit)' : ''); };
+const taxFmt = v => v == null ? '—' : v && typeof v === 'object' && !(Array.isArray(v) && v.every(Array.isArray)) ? JSON.stringify(v, (k, x) => x === Infinity ? 'no limit' : x).replace(/"/g, '').slice(0, 160) : Array.isArray(v) ? v.map(b => (b[1] * 100).toFixed(2).replace(/\.?0+$/, '') + '% to ' + (b[0] === Infinity ? 'no limit' : b[0].toLocaleString('en-IE'))).join(' · ') : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : typeof v === 'number' ? (v > 0 && v < 1 ? (v * 100).toFixed(2).replace(/\.?0+$/, '') + '%' : v.toLocaleString('en-IE')) : String(v);
+function taxRegisterHTML(){ const rows = taxRegister(), cats = []; rows.forEach(r => { let c = cats.find(x => x[0] === r.cat); if (!c) cats.push(c = [r.cat, []]); c[1].push(r); });
+  const n = st => rows.filter(r => r.status27 === st).length, ov = S.taxYearOverride || 'auto', editable = r => RULES_2027[r.path] && !Array.isArray(RULES_2027[r.path].v) && typeof RULES_2027[r.path].v !== 'boolean';
+  return '<details class="card asmg" data-g="set-tax"' + (S.asmOpen === 'set-tax' ? ' open' : '') + '><summary style="cursor:pointer;font-weight:800;min-height:44px">Tax rules register: 2026 and 2027 (' + rows.length + ' figures)</summary><div style="margin-top:10px">' +
+   '<p class="small" style="margin:0 0 8px">Every plan year loads its own tax year (effective dates, then the 2026 figure carried forward where 2027 is not announced). 2027: <b>' + n(ST_A) + '</b> announced or provisional, <b>' + n(ST_F) + '</b> carried forward from 2026, <b>' + n(ST_R) + '</b> need verification. Nothing is marked Verified for 2027: the official Revenue, Social Protection and Oireachtas pages could not be opened. Last checks are shown on each row.</p>' +
+   '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 10px" role="group" aria-label="Compare one tax year for the whole plan">' + [['auto', 'Automatic (by plan year)'], ['2026', 'Force 2026'], ['2027', 'Force 2027']].map(x => '<button class="chip sm' + (String(ov) === x[0] ? ' sel' : '') + '" aria-pressed="' + (String(ov) === x[0]) + '" data-a="taxyear" data-p="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+   '<p class="small" style="margin:0 0 8px">Forcing a year is for comparing scenarios; it changes this plan only, not the register. Changes made below apply to this session (the prototype has no shared database yet).</p>' +
+   cats.map(([c, rs]) => '<details class="card" style="margin:0 0 8px;box-shadow:none;border:1px solid var(--line)"><summary style="cursor:pointer;font-weight:800;min-height:44px">' + esc(c) + ' (' + rs.length + ')</summary>' + rs.map(r =>
+     '<div class="field" style="margin:0 0 14px"><span class="flabel">' + esc(r.name) + ' <span class="tag ' + (r.status27 === ST_A ? 'look' : r.status27 === ST_F ? 'none' : r.status27 === ST_V ? 'doc' : 'typed') + '">' + esc(r.status27) + (r.admin ? ' · admin change' : '') + '</span></span>' +
+     '<span class="small" style="display:block">2026: <b>' + esc(taxFmt(r.v26)) + '</b> (' + esc(r.status26) + ') · 2027: <b>' + esc(taxFmt(r.v27)) + '</b>' + (r.fallback ? ' <i>2026 rate carried forward: 2027 rate not confirmed</i>' : '') + '</span>' +
+     '<span class="small" style="display:block">Effective: ' + esc(r.eff || '—') + ' · Last checked: ' + esc(r.checked) + '</span>' + (r.note ? '<span class="small" style="display:block">' + esc(r.note) + '</span>' : '') +
+     '<span class="small" style="display:block;word-break:break-all">Source: ' + (/^https?:/.test(r.src) ? '<a href="' + esc(r.src) + '" target="_blank" rel="noopener">' + esc(r.src) + '</a>' : esc(r.src)) + '</span>' +
+     (editable(r) ? '<span class="row" style="gap:6px;margin-top:4px"><input class="in" style="max-width:120px" aria-label="2027 value for ' + esc(r.name) + '" data-taxov="' + esc(r.path) + '" data-k="v" value="' + esc(S.taxOv && S.taxOv[r.path] && S.taxOv[r.path].v != null ? S.taxOv[r.path].v : RULES_2027[r.path].v) + '" inputmode="decimal"><select class="in" style="max-width:190px" aria-label="Status for ' + esc(r.name) + '" data-taxov="' + esc(r.path) + '" data-k="status">' + [ST_V, ST_A, ST_F, ST_R].map(st => '<option' + (st === r.status27 ? ' selected' : '') + '>' + st + '</option>').join('') + '</select></span>' : '') + '</div>').join('') + '</details>').join('') +
+   (S.taxOv && Object.keys(S.taxOv).length ? '<button class="link" data-a="taxovclear">Remove all my changes</button>' : '') + '</div></details>'; }
 function settingsHTML(){ const grps = []; Object.entries(SET).forEach(([k, s]) => { let g = grps.find(x => x[0] === s.grp); if (!g) grps.push(g = [s.grp, []]); g[1].push(k); });
   return '<div class="note" role="note" style="background:#FFF3CD;border:1.5px solid #E0B84A"><b>🔒 Admin view · not for customers.</b> LifeMap or a partner (credit union, adviser firm, company, agent) controls these standards. A figure changed here changes the suggestion everywhere, in the app and in the workbook\'s Settings sheet. Customers can still change any of them for their own plan. Law values (tax, USC, PRSI, pension relief, State Pension, Central Bank limits) are not here and can\'t be changed. Retirement age and life expectancy have no standard.</div>' +
     '<div class="card"><div class="field" style="margin:0"><label for="set-partner">Partner name (customers then read "Suggested by …" beside any figure you change)</label><input class="in" id="set-partner" data-setname="1" value="' + esc(SETTINGS.partner) + '" autocomplete="off" placeholder="e.g. a credit union"></div>' + (Object.values(SET).some(s => s.pv != null) || SETTINGS.partner ? '<button class="link" data-a="setreset" data-p="all" style="margin-top:8px">Back to the LifeMap standards</button>' : '') + '</div>' +
@@ -6968,6 +7052,7 @@ function settingsHTML(){ const grps = []; Object.entries(SET).forEach(([k, s]) =
       ks.map(k => { const s = SET[k]; return '<div class="field" style="margin:0 0 16px"><span class="flabel" id="setl-' + k + '">' + esc(s.n) + (s.pv != null ? ' <span class="tag doc">Changed by ' + esc(SPN()) + '</span>' : '') + '</span>' +
         '<span class="small" style="display:block">LifeMap standard: <b>' + esc(setFmt(s, s.v)) + '</b> · ' + esc(s.label || s.by) + ' · as at ' + esc(s.asat) + (s.verify ? ' · <b>verify before release</b>' : '') + '</span>' + (s.guide ? '<span class="small" style="display:block">Guidance: ' + esc(s.guide) + '</span>' : '') + (s.note ? '<span class="small" style="display:block">Note: ' + esc(s.note) + '</span>' : '') +
         (s.src ? '<span class="small" style="display:block;word-break:break-all">Source: ' + esc(s.src) + '</span>' : '') + '<span class="small" style="display:block;margin:4px 0">Partner figure (leave blank for the LifeMap standard):</span>' + setInput(k, s) + (SETBOUNDS[k] ? '<span class="small" style="display:block" id="setb-' + k + '">' + esc(setBoundMsg(k)) + '</span>' : '') + (S.setMsg && S.setMsg.k === k ? '<span class="small" role="alert" style="display:block;color:var(--alert-t)" id="setm-' + k + '">' + esc(S.setMsg.msg) + '</span>' : '') + (s.pv != null ? '<button class="link" data-a="setreset" data-p="' + k + '">Reset</button>' : '') + '</div>'; }).join('') + '</div></details>').join('') +
+    taxRegisterHTML() +
     '<details class="card asmg" data-g="set-guide"><summary style="cursor:pointer;font-weight:800;min-height:44px">Guidance figures (no standard)</summary><div style="margin-top:10px">' + Object.entries(SETTINGS.g).map(([k, s]) => '<div class="field" style="margin:0 0 12px"><span class="flabel">' + esc(s.n) + '</span><span class="small" style="display:block">' + s.v + ' · ' + esc(s.by) + ' · as at ' + esc(s.asat) + ' · <b>verify before release</b></span></div>').join('') + '<p class="small">Life expectancy is only ever shown as guidance. It is never a default: each customer picks their own plan-until age.</p></div></details>'; }
 V.SET = () => ({id:'ADMIN-SET', note:'ADMIN VIEW (journey-spec §19.6, option C): the Settings block, controlled by LifeMap or a partner. Not shown to customers.', head:appHead('Settings', '🔒 Admin view · not for customers', 'adminclose'), html:settingsHTML()});
 function finScreen(){ return S.upl ? V.PU() : S.fsec != null ? V.P3() : V.P2(); }
@@ -7030,7 +7115,7 @@ function rankHTML(ctx){ const gs = rankList(); if (gs.length < 2) return '';
     '<ol class="rank" aria-labelledby="rank-h-' + ctx + '" style="list-style:none;margin:0;padding:0">' + gs.map((g, i) => '<li class="mini rk-r" data-gid="' + g.id + '" style="align-items:center"><span class="rk-grip" aria-hidden="true" title="Drag to reorder"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="rk-n">' + (i + 1) + '</span><span class="rk-e" aria-hidden="true">' + g.e + '</span><span style="flex:1;min-width:0"><b class="rk-t">' + esc(g.name) + '</b><span class="small">' + (g.kind === 'retire' ? 'Paid from your pension' : g.kind === 'legacy' ? 'What is left at the end' : (YEAR0 + g.age - S.about.age) + ' · age ' + g.age) + '</span></span>' +
       '<span class="rk-arr"><button class="chip sm" data-a="grank" data-p="' + g.id + '|up" aria-label="Move ' + esc(g.name) + ' up, now ' + (i + 1) + ' of ' + gs.length + '"' + (i === 0 ? ' aria-disabled="true"' : '') + '>▲</button><button class="chip sm" data-a="grank" data-p="' + g.id + '|down" aria-label="Move ' + esc(g.name) + ' down, now ' + (i + 1) + ' of ' + gs.length + '"' + (i === gs.length - 1 ? ' aria-disabled="true"' : '') + '>▼</button></span></li>').join('') + '</ol>' +
     '<p class="small" role="status" id="rank-msg-' + ctx + '" style="margin:6px 0 0">' + esc(S.rankMsg || '') + '</p>' + (S.rank ? '<button class="link" data-a="grankreset">Back to our suggested order</button>' : '') + '</div>'; }
-function version(note){ S.versions.push({note, date:'29 Sep 2026'}); }
+function version(note){ S.versions.push({note, date:'29 Sep 2026', tax:taxSnapshot()}); }
 function toResults(){ S.scr = 'U1'; render(); setTimeout(() => { S.app = true; S.pb = false; S.shell = true; S.tab = 'plan'; S.planSeg = 'main'; S.planGo = 'results'; if (!S.versions.some(v => /results/.test(v.note))) version('First results'); render(); }, RM() ? 300 : 1400); }
 function finBack(){ if (S.from === 'check'){ S.from = null; S.fsec = null; if (S.app) { render(); } else go('P4'); return; } S.fsec = null; if (S.app){ if (S.tab === 'me'){ S.me = 'money'; } } else S.scr = 'P2'; render(); }
 function openSec(i){ S.fsec = +i; S.upl = null; if (S.app){ if (S.tab !== 'exp'){ S.tab = 'me'; S.me = 'fin'; } } else S.scr = 'P3'; S.sheet = null; render(); }
@@ -7077,6 +7162,8 @@ const ACT = {
   gyr:p => { const [id, d] = p.split('|'), g = gById(id); moveGoal(g, g.age + +d); focusKey = '[data-a="gyr"][data-p="' + p + '"]'; render(); },
   gmore:p => { S.tlOpen[p] = !S.tlOpen[p]; focusKey = '[data-a="gmore"][data-p="' + p + '"]'; render(); },
   gset:p => { const [id, k, v] = p.split('|'); gById(id)[k] = v; focusKey = '[data-a="gset"][data-p="' + p + '"]'; render(); },
+  taxyear:p => { S.taxYearOverride = p === 'auto' ? null : +p; RULES_DIRTY = true; S.asmOpen = 'set-tax'; render(); },
+  taxovclear:() => { S.taxOv = {}; RULES_DIRTY = true; S.asmOpen = 'set-tax'; render(); },
   adminclose:() => { S.admin = false; render(); },
   setreset:p => { if (p === 'all'){ SETTINGS.partner = ''; Object.values(SET).forEach(s => { delete s.pv; }); } else delete SET[p].pv; applyAssume(); render(); },
   grank:p => { const [id, dir] = p.split('|'), list = rankList().map(g => g.id), i = list.indexOf(+id), j = dir === 'up' ? i - 1 : i + 1; if (i < 0 || j < 0 || j >= list.length) return;
@@ -7209,6 +7296,7 @@ function bindLite(){ const w = document.querySelector('.cwrap'); if (w && !w._k)
 function refreshGlance(fsel){ const e = document.getElementById('r-glance'); if (!e) { render(); return; } e.innerHTML = glanceHTML(project(S.wi)); bindLite(); const b = fsel && e.querySelector(fsel); if (b) b.focus({preventScroll:true}); }
 function bind(){
   const ph = document.getElementById('screen'); bindLite();
+  ph.querySelectorAll('[data-taxov]').forEach(i => i.addEventListener('change', () => { const p = i.dataset.taxov, k = i.dataset.k; S.taxOv = S.taxOv || {}; const o = S.taxOv[p] = Object.assign({}, S.taxOv[p]); if (k === 'v'){ const t = String(i.value).trim().replace(/,/g, ''); o.v = t === '' ? null : isNaN(+t) ? t : +t; if (o.v != null && !o.status) o.status = ST_A; } else o.status = i.value; o.by = 'Administrator (this session)'; o.at = isoD0(dobToday()); RULES_DIRTY = true; S.asmOpen = 'set-tax'; render(); }));
   ph.querySelectorAll('details.asmg').forEach(d => d.addEventListener('toggle', () => { if (d.open) S.asmOpen = d.dataset.g; else if (S.asmOpen === d.dataset.g) S.asmOpen = null; })); bindNB(ph);   // keep the open group across re-renders
   ph.querySelectorAll('input[data-in="age"]').forEach(r => r.addEventListener('input', () => { S.about.age = +r.value; ageNext(); r.setAttribute('aria-valuetext', 'Age ' + S.about.age); const o = document.getElementById('age-v') || ph.querySelector('.stepper output'); if (o) { if ('value' in o && o.tagName === 'INPUT') o.value = S.about.age; else o.textContent = S.about.age; } }));
   ph.querySelectorAll('[data-gname]').forEach(i => i.addEventListener('input', () => { gById(i.dataset.gname).name = i.value.slice(0, 30) || 'My goal'; }));

@@ -1,5 +1,16 @@
 # Changelog
 
+## Branch `tax-2027-config` (not deployed, awaiting review) · Tax-year configurations, effective dates, fallbacks, register
+- **One engine, year-specific rules.** Every projected year loads its own tax year: 2026 rules to the end of 2026, announced 2027 rules from 2027; figures not announced keep their 2026 value (shown as "2026 Fallback", never as an official 2027 figure). Tax bands, credits and the State Pension are indexed only from the year their rules were set, and only by the plan's own inflation choice. The tax figures used each year are returned with the plan (`taxUsed`) and a snapshot is kept with each plan version.
+- **Register** (`taxRegister()`, `docs/tax-verification-register.md`): 95 parameters with the 2026 value, the 2027 value or fallback, status (Verified / Announced / Provisional / 2026 Fallback / Requires Verification), effective date, last check and source. Nothing is "Verified" for 2027: the official Revenue, Social Protection and Oireachtas pages could not be opened.
+- **Capital gains tax** is taken only when something is sold: rate by sale date (33% before 7 Oct 2026, 31% from then), the yearly exemption per person, a gain-share assumption. Shortfalls that sell assets are taxed too.
+- **Investments held as** funds / ETFs (exit tax and the 8-year rule in the growth rate) or shares held directly (no exit tax or 8-year rule; capital gains tax when sold).
+- **PRSI on ARF withdrawals before 66** is a switch kept as before and flagged "Requires Verification" (sources conflict).
+- Qualified Adult 2027 rates added (adviser table, announced); Illness Benefit and survivor's pension go back to the 2026 amount (not confirmed).
+- **Customer line** "Tax assumptions: 2027 ... pending publication of updated rules" with a short "Which figures are provisional?". **Admin Settings** shows the register side by side, can force one tax year for a comparison, and can change a 2027 value or status for the session.
+- Not built: Investment Account in the engine (figures held as provisional, not used), asset-level CGT inputs (cost, costs, losses), employer PRSI, shared admin storage and roles.
+- Tests: `tests/tax2027.js` (20 checks, all pass), `tests/asm.js` (35, pass). A plan starting in 2027 gives the same results as `main`; a plan starting in 2026 gives the same first year and differs from 2027 onwards by design.
+
 ## 21 Oct 2026 · Budget 2027 rules as a plan start-year option, capital gains tax on sold assets
 - **Start the plan in 2027** now uses the Budget 2027 rules (announced 6 Oct 2026) from 1 January 2027: 40% band €46,500 (one-parent €50,500, married €55,500 + up to €37,500), personal / employee / earned income credits €2,125, Home Carer €2,050, Rent Tax Credit €1,150 (€2,300 joint), USC 2% band to €30,300, State Pension €309.30 a week, exit tax 35%. A plan that starts in 2026 keeps the 2026 rules. Everything is in one place (`RULES_2027`), checked on 21 Oct 2026 against the Department of Finance Tax Policy Changes Summary and the Budget in Brief, and shown in "What your plan assumes" and the report.
 - From 7 Oct 2026, in both years: CGT 31%, Help to Buy up to €35,000, CAT Group A threshold €420,000 (info).
