@@ -4140,7 +4140,7 @@ function project(wi){
   const V = Math.max(R, +asmV('accessAge')), lsPct = +asmV('lumpSum'), rule = asmV('drawRule'), fixedReal = +asmV('drawFixed'), spG = asmV('spGrow'), flatBands = asmV('bands') === 'flat';
   const penExtraM = +(S.penExtra || 0), ownBase = f.pensionM > 0 ? f.pensionOwnM / f.pensionM : 0;
   for (let t = 0; t <= N; t++){
-    const yr = YEAR0 + t; setRulesYear(yr, true); cgtYear(yr); Object.keys(YS).forEach(k => YS[k] = 0);   // each projected year uses its own tax configuration (effective dates, fallbacks)
+    const yr = YEAR0 + t; setRulesYear(yr, true); cgtYear(yr); Object.keys(YS).forEach(k => YS[k] = 0); let lumpTaxY = 0, sftY = 0;   // each projected year uses its own tax configuration (effective dates, fallbacks)
     const rb = RULES_YEAR, yb = Math.max(0, yr - rb);
     taxUsed.push({yr, taxYear:RULES_YEAR, band:RI.it.band, credit:RI.it.personal, usc2:RI.usc.bands[1][0], sp:RI.sp.week, exit:RI.sav.exit, cgt:CG.rate, cgtExempt:CG.left, index:flatBands ? 1 : Math.pow(1 + AS.infl, yb)});
     const a = a0 + t, infl = Math.pow(1 + AS.infl, t), wgw = Math.pow(1 + AS.wage, t), working = a < R, tI = flatBands ? 1 : Math.pow(1 + AS.infl, yb), rate = prsiRate(yr);
@@ -4156,8 +4156,8 @@ function project(wi){
       pen = pen * (1 + f.penG) + contrib;   // same rule as pensionAt() (Retirement tool)
     } else if (a < V){ pen = pen * (1 + f.penG); }   // retired before 60: most pensions can't be drawn yet; the fund stays invested
     else {
-      if (a === V){ const cet = RI.pen.sftRate * Math.max(0, pen - sftFor(yr)); pen -= cet;   // Standard Fund Threshold (chargeable excess tax)
-        if (lsPct > 0){ const L = lumpSum(pen, lsPct); pen -= L.gross; wAdd(L.net); } }
+      if (a === V){ const cet = RI.pen.sftRate * Math.max(0, pen - sftFor(yr)); pen -= cet; sftY = cet;   // Standard Fund Threshold (chargeable excess tax)
+        if (lsPct > 0){ const L = lumpSum(pen, lsPct); pen -= L.gross; wAdd(L.net); lumpTaxY = L.tax; } }
       const mn = arfMin(a, pen), want = rule === 'min' ? pen * mn : rule === 'fixed' ? Math.max(fixedReal * infl, pen * mn) : pen * Math.max(1 / Math.max(1, AS.end - a + 1), mn);
       const draw = Math.min(pen, want); pen = (pen - draw) * (1 + AS.penRet); p1.draw = draw;
     }
@@ -4212,12 +4212,13 @@ function project(wi){
       short = gap;
     }
     // 4. Growth
+    const cashBase = W.cash + W.sav + Math.max(0, buffer) + fg.reduce((z, g) => { const x = G[g.id]; return z + (!x.done && x.r === AS.cash ? Math.max(0, x.pot) : 0); }, 0), dirtY = cashBase * AS.cash * RI.sav.dirt / (1 - RI.sav.dirt);   // the cash rate is after DIRT: this is the DIRT that came off the interest
     W.cash *= 1 + AS.cash; W.sav *= 1 + AS.cash; H.grow(taxEvt ? invG : AS.inv); buffer *= 1 + AS.cash; fg.forEach(g => { const x = G[g.id]; if (!x.done) x.pot *= 1 + x.r; });
     if (rg && !working){ gf[rg.id].cost += living; gf[rg.id].cov += living - Math.min(short, living); }
     const pots = fg.reduce((s, g) => s + G[g.id].pot, 0), liquid = wTot() + buffer + pots;
     S.goals.forEach(g => { if (g.kind === 'legacy' && t === N){ const tgt = g.amount * infl; gf[g.id].cost = tgt; gf[g.id].cov = Math.min(tgt, wTot() + buffer); } });
     rows.push({polIn, downIn, t, a, yr, inflow, needs:living + fixed, goalPaid, living, fixed, goalCost, dueG, short:short + goalGap, shortLiving:short, goalGap, due, used, saved, spent, liquid, pen, retired:!working, rmark:a === R, tax:T.total * tI, gross, exitDeemed:TX.deemed, taxOnSales:TX.sale,
-      cf:{emp:p1.emp, pemp:p2 ? p2.emp : 0, sp:p1.sp + (p2 ? p2.sp : 0), draw:p1.draw, other:p1.other, it:T.it * tI, usc:T.usc * tI, prsi:T.prsi * tI, cashOut, sold:Object.assign({}, YS), bal:{cash:W.cash, sav:W.sav, inv:W.inv, oth:W.oth, alt:W.alt, buffer, pots}}});
+      cf:{dirt:dirtY, lumpTax:lumpTaxY, sft:sftY, emp:p1.emp, pemp:p2 ? p2.emp : 0, sp:p1.sp + (p2 ? p2.sp : 0), draw:p1.draw, other:p1.other, it:T.it * tI, usc:T.usc * tI, prsi:T.prsi * tI, cashOut, sold:Object.assign({}, YS), bal:{cash:W.cash, sav:W.sav, inv:W.inv, oth:W.oth, alt:W.alt, buffer, pots}}});
   }
   setRulesYear(YEAR0, true);   // back to the plan's first-year configuration for everything outside the projection
   // 5. Results. Floor, so 99.6% never reads as 100%.
