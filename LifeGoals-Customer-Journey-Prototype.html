@@ -4186,7 +4186,7 @@ const AV_ILL = '<svg viewBox="0 0 100 100" width="100%" height="100%" aria-hidde
 const ELIG_Q = [{q:'Are you buying on your own?', o:[['🙋', 'Just me'], ['👫', 'With a partner']]}, {q:'Is this your first home?', o:[['🔑', 'Yes, my first home'], ['🏠', "No, I've owned before"]]},
   {q:'Yearly income before tax (both of you, if joint)', o:[['💶', 'Under €50,000', 40000], ['💶', '€50,000 to €80,000', 65000], ['💶', '€80,000 to €120,000', 100000], ['💶', 'Over €120,000', 140000]]},
   {q:'How much have you saved for a deposit?', o:[['🐷', 'Under €20,000', 15000], ['🐷', '€20,000 to €40,000', 30000], ['🐷', '€40,000 to €70,000', 55000], ['🐷', 'Over €70,000', 85000]]}];
-function eligCard(){ return '<div class="elg2"><div class="elg2-ph" style="background-image:url(media/family-couch.jpg)" aria-hidden="true"><span class="elg2-val"><small>Property value</small>€350,000</span><span class="elg2-in" style="background-image:url(media/couple-planning.jpg)"></span><span class="elg2-ok">✓ Approved</span></div>' +
+function eligCard(){ return '<div class="elg2"><div class="elg2-ph" style="background-image:url(media/family-couch.jpg)" aria-hidden="true"><span class="elg2-in" style="background-image:url(media/couple-planning.jpg)"></span></div>' +
   '<div class="elg2-tx"><span class="elg2-eye">Mortgage eligibility</span><b>How much could you borrow?</b><p>Take our 5 minute quiz and see a rough borrowing amount and home price.</p><button class="elg2-go" data-a="elig">Start eligibility quiz <i aria-hidden="true">→</i></button><span class="elg2-t"><span aria-hidden="true">⏱</span> About 5 minutes · no credit check</span></div></div>'; }
 function eligHTML(){ const e = S.elig || {i:0, a:[]}, n = ELIG_Q.length;
   if (e.i < n){ const q = ELIG_Q[e.i];
