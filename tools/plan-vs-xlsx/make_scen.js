@@ -27,6 +27,19 @@ function mk(i) {
   if (rnd() < .35) { fin.loanBal = pick([3500, 12000, 40000]); fin.loanPayM = pick([0, 100, 350, 900]); if (rnd() < .5) fin.loanRate = pick([6.5, 9]); }
   if (rnd() < .1) { fin.debt = pick([5000, 80000]); fin.debtPayM = pick([0, 200]); }
   if (partner) { fin.pAge = Math.max(19, age + ri(-6, 6)); fin.pIncome = pick([0, 0, 25000, 50000, 90000]); if (fin.pIncome > 0) sc.pRet = pick([40, 50, 55, 60, 62, 65, 66, 68]); fin.pSp = pick([undefined, 'Own full', 'Own partial', 'Qualified adult increase', 'None', 'Not sure']); }
+  // engine v3.0: the assets, home and policy figures
+  if (rnd() < .35) fin.savings = pick([2000, 8000, 30000, 90000]);
+  if (rnd() < .2) fin.otherAssets = pick([20000, 80000]);
+  if (rnd() < .15) fin.altInv = pick([3000, 15000]);
+  if (fin.invest > 0 && rnd() < .5) { fin.invCost = Math.round(fin.invest * pick([.5, .8, 1, 1.2])); if (rnd() < .5) fin.invYears = pick([0, 3, 5, 7, 9, 15]); }
+  if (fin.otherAssets && rnd() < .5) fin.othCost = Math.round(fin.otherAssets * pick([.3, .7, 1.1]));
+  if (fin.altInv && rnd() < .5) fin.altCost = Math.round(fin.altInv * pick([.4, 1.3]));
+  if (rnd() < .15) fin.capLoss = pick([2000, 15000]);
+  if (partner && rnd() < .5) fin.assetsJoint = pick(['Yes', 'No', 'Not sure']);
+  if (home.startsWith('Own') && rnd() < .6) { fin.homeValue = pick([250000, 500000, 900000]); if (rnd() < .4) { fin.homeUse = pick(["Yes, I'd downsize", "Yes, I'd downsize", 'Only as a last resort']); fin.downAge = ri(Math.max(50, age + 1), 90); fin.downValue = pick([120000, 300000]); } }
+  if (rnd() < .12) { fin.polLump = pick([8000, 30000]); fin.polLumpAge = Math.min(100, age + ri(0, 25)); }
+  if (rnd() < .12) { fin.polInc = pick([3000, 9000]); fin.polIncAge = Math.min(100, age + ri(0, 30)); }
+  if (rnd() < .1) sc.safetyWanted = true; else if (rnd() < .1) sc.safetyOff = true;
   Object.keys(fin).forEach(k => fin[k] === undefined && delete fin[k]);
   // lists: sometimes use lists for cards, loans, pensions and other-property mortgages
   const L = {}; 
@@ -38,9 +51,10 @@ function mk(i) {
   // assumptions: most are chosen; some are left to the standard
   const A = {}; const ch = (k, v) => { if (rnd() < .6) A[k] = v; };
   ch('inv', pick([0.02, 0.026, 0.035])); ch('cash', pick([0.005, 0.01])); ch('pen', pick([0.04, 0.045])); ch('penRet', pick([0.028, 0.0315])); ch('wage', pick([0.02, 0.03, 0.035])); ch('bands', pick(['prices', 'flat'])); ch('spGrow', pick(['prices', 'pay', 'flat']));
+  if (rnd() < .25) A.invWrapper = 'shares'; if (rnd() < .3) A.cgtGain = pick([.2, .4, .6]);
   ch('retireSpend', pick([0.7, 0.8, 1])); ch('lumpSum', pick([0, 0.15, 0.25])); ch('drawRule', pick(['spread', 'min', 'fixed'])); if (A.drawRule === 'fixed') A.drawFixed = pick([15000, 30000]);
   ch('safetyMonths', pick([3, 4, 6, 9])); ch('cashYears', pick([3, 5, 7])); ch('investShare', pick([0, .4, .8])); ch('saveShare', pick([.3, .5, .8])); ch('noAnswer', pick([100, 300, 600]));
-  A.planEnd = pick([85, 90, 95, 100]); if (rnd() < .5) A.startYear = pick([2026, 2027]);
+  A.planEnd = pick([85, 90, 95, 100]); if (rnd() < .5) A.startYear = pick([2026]);
   ch('mortRate', pick([0.03, 0.04])); ch('cardRate', pick([0.18, 0.23])); ch('loanRate', pick([0.06, 0.1])); ch('spWeek', pick([150, 230, 299])); ch('pSpWeek', pick([100, 239.44])); ch('penChg', pick([0.005, 0.01, 0.015]));
   if (L.pens && L.pens.some(p => p.own != null) && L.pens.some(p => p.own == null)) A.ownShare = pick([.4, .5, 1]); else ch('ownShare', pick([.4, .5, 1]));
   sc.asm = A;
@@ -79,7 +93,7 @@ function mk(i) {
 }
 const EDGE = [
   {name:'dob-start2026', about:{age:30, partner:false, deps:0, dob:{d:29, m:2, y:1996}}, retireAge:65, infl:0.02, assume:'standard', fin:{work:'Employed', income:52000, costsM:2000, cash:8000, home:'Rent'}, asm:{planEnd:90, startYear:2026}, goals:[{k:'family', age:35, amount:15000}]},
-  {name:'dob-start2027', about:{age:31, partner:false, deps:0, dob:{d:29, m:2, y:1996}}, retireAge:65, infl:0.02, assume:'standard', fin:{work:'Employed', income:52000, costsM:2000, cash:8000, home:'Rent'}, asm:{planEnd:90, startYear:2027}, goals:[{k:'family', age:35, amount:15000}]},
+  {name:'dob-start2027', about:{age:31, partner:false, deps:0, dob:{d:29, m:2, y:1996}}, retireAge:65, infl:0.02, assume:'standard', fin:{work:'Employed', income:52000, costsM:2000, cash:8000, home:'Rent'}, asm:{planEnd:90, startYear:2026}, goals:[{k:'family', age:35, amount:15000}]},
   {name:'dob-partner-31dec', about:{age:41, partner:true, deps:1, married:true, dobDay:31, dobMonth:12}, retireAge:63, pRet:62, infl:0.025, assume:'standard', fin:{work:'Employed', income:61000, pIncome:30000, pAge:39, costsM:2600, cash:12000, home:'Rent'}, asm:{planEnd:92}, goals:[{k:'edu', age:50, amount:30000}]},
   {name:'edge-planend-55', about:{age:30, partner:false, deps:0}, retireAge:50, infl:0.02, assume:'standard', fin:{work:'Employed', income:60000, costsM:2000, cash:20000, home:'Rent'}, asm:{planEnd:55}, goals:[{k:'safety', age:32, amount:9000, auto:true}], lists:{}},
   {name:'edge-planend-50', about:{age:30, partner:false, deps:0}, retireAge:45, infl:0.02, assume:'standard', fin:{work:'Employed', income:60000, costsM:2000, cash:20000, home:'Rent'}, asm:{planEnd:50}, goals:[], lists:{}},

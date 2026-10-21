@@ -30,6 +30,8 @@ window.applyScenario = function(sc){
   const w = sc.wi || {}; S.wi = {g:w.g != null ? S.goals[w.g].id : null, m:w.m || 0, l:w.l || 0};
   const se = sc.sess || {}; S.book = S.book || {}; S.book.done = !!se.booked; S.book.slot = se.slot || ''; S.um.rechecked = !!se.rechecked; S.pref = se.pref ? {g:null, m:100, l:0} : null;
   S.saved = {}; (sc.saved || []).forEach(k => S.saved[k] = true); S.look = {}; (sc.look || []).forEach(k => S.look[k] = 'flagged'); S.ack = {}; (sc.ack || []).forEach(k => S.ack[k] = true);
+  S.safetyWanted = !!sc.safetyWanted; S.safetyOff = !!sc.safetyOff;
+  if (window.FORCE_TAX_YEAR) S.taxYearOverride = window.FORCE_TAX_YEAR;   // the 2026-only workbook: the app is held to the 2026 rules in every year
   syncLists(); applyAssume(); syncSafety(); return true;
 };
 window.readOutputs = function(){

@@ -1,11 +1,12 @@
 #!/bin/bash
 # plan-vs-xlsx: feeds the same inputs to the prototype (Playwright) and to the Plan sheets of LifeGoals-Calculators.xlsx (LibreOffice),
 # then compares goal %, goal lines, yearly rows, findings, foundations, gate, my-money sections, next best step, what-if text, chart numbers and the profile.
-# usage: tools/plan-vs-xlsx/plan-vs-xlsx.sh [number of random scenarios (default 120)] [seed (default 23)]
+# usage: [WB=workbook.xlsx] [PLAN_META=plan-meta-v29.json] [TAX2026=1] tools/plan-vs-xlsx/plan-vs-xlsx.sh [number of random scenarios (default 120)] [seed (default 23)]
 set -e
+export PLAN_META TAX2026
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$HERE/../.."; export NODE_PATH=${NODE_PATH:-/opt/node22/lib/node_modules}
 N=${1:-120}; SEED=${2:-23}; W=${TMPDIR:-/tmp}/plan-vs-xlsx; mkdir -p "$W"
-cp "$ROOT/deliverables/LifeGoals-Calculators.xlsx" "$W/copy.xlsx"      # a COPY: the deliverable is never touched
+cp "${WB:-$ROOT/deliverables/LifeGoals-Calculators.xlsx}" "$W/copy.xlsx"      # a COPY: the deliverable is never touched. WB=... another workbook; PLAN_META=plan-meta-v29.json for the v2.9 workbook; TAX2026=1 holds the app to the 2026 rules
 cd "$HERE"
 node make_scen.js "$N" "$SEED" "$W/in.json"                              # random customers + 7 edge cases
 for n in 9 12 15 20; do NFUND=$n node make_scen.js 2 $((SEED + n)) "$W/many$n.json" >/dev/null; done   # plans with 9, 12, 15 and 20 saved-for goals

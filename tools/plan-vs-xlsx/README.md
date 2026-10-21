@@ -7,7 +7,9 @@ export NODE_PATH=/opt/node22/lib/node_modules
 tools/plan-vs-xlsx/plan-vs-xlsx.sh 120 23        # 120 random customers, seed 23; about 20 minutes
 ```
 
-The deliverable is never touched (it works on a copy). The last line is `SCENARIOS n FAIL m`; every FAIL line above it lists the first differences. Read them all.
+The deliverable is never touched (it works on a copy).
+
+For the 2026-only workbook (v2.9): `WB=deliverables/LifeGoals-Calculators-v2.9-2026-tax.xlsx PLAN_META=tools/plan-vs-xlsx/plan-meta-v29.json TAX2026=1 tools/plan-vs-xlsx/plan-vs-xlsx.sh 200 77`. `TAX2026=1` holds the prototype to the 2026 rules in every year and starts plans in 2026 (that workbook has no 2027 rules); `plan-meta-v29.json` has the Plan cashflow columns moved one to the right for the added "taxes applied" column. The random customers now include the assets, shares or funds, capital losses, joint ownership, downsizing, policies and the automatic Emergency fund goal. The last line is `SCENARIOS n FAIL m`; every FAIL line above it lists the first differences. Read them all.
 
 ## The customers
 

@@ -18,6 +18,8 @@ def apply_sc(x, sc, out=None):
     x.setname('In_partner', 'Yes' if ab.get('partner') else 'No', col='C')
     if ab.get('married') is not None: x.setname('In_married', 'Yes' if ab['married'] else 'No', col='C')
     S('In_deps', ab.get('deps'))
+    if sc.get('safetyWanted'): x.setname('In_safetyWanted', 'Yes', col='C')
+    if sc.get('safetyOff'): x.setname('In_safetyOff', 'Yes', col='C')
     S('In_retireAge', sc.get('retireAge')); S('In_pRet', sc.get('pRet')); S('In_infl', sc.get('infl'))
     x.setname('In_assumeSet', 'Cautious' if sc.get('assume') == 'cautious' else 'Standard', col='C')
     S('In_q6', sc.get('q6')); S('In_saveM', sc.get('saveM'))
@@ -33,6 +35,7 @@ def apply_sc(x, sc, out=None):
     if dob.get('you'): x.setname('In_age', ser(dob['you']), col='C')
     if dob.get('partner') and ab.get('partner'): x.setname('In_pAge', ser(dob['partner']), col='C')
     for k, v in sc.get('asm', {}).items(): S('In_a_' + k, v)
+    if 'startYear' not in sc.get('asm', {}): S('In_a_startYear', 2026)   # the 2026 branch copy of the app starts plans in 2026
     pr = sc.get('prof', {})
     for k, v in pr.get('ans', {}).items(): x.setname('PA_' + k + '_Typed', v + 1)
     for k, v in pr.get('um', {}).items(): x.setname('PA_' + k + '_Typed', v + 1)
