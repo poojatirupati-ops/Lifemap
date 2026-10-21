@@ -3335,7 +3335,7 @@ const qSec = q => q.sec || SECQ[q.d] || null;
 const FSEC = [
   {id:'about', t:'About you', e:'🙋', docs:[], f:['name','age','retireAge','pAge']},
   {id:'income', t:'Income and expenses', e:'💶', docs:[['🧾','Payslips (last 3)'],['🏛️','Employment Detail Summary'],['🏦','Current-account statements'],['📑','Form 11 / Notice of Assessment']], f:['work','income','pIncome','otherM','costsM','oneOffY']},
-  {id:'assets', t:'Assets', e:'🏠', docs:[['🐷','Savings or credit-union statement'],['📈','Investment statement'],['🪙','Share scheme or crypto statement'],['🏡','Property valuation or LPT record']], f:['home','homeValue','homeUse','downAge','downValue','cash','savings','invest','invCost','invYears','otherAssets','othCost','altInv','altCost','capLoss','assetsJoint','propValue','rentM']},
+  {id:'assets', t:'Assets', e:'🏠', docs:[['🐷','Savings or credit-union statement'],['📈','Investment statement'],['🪙','Share scheme or crypto statement'],['🏡','Property valuation or LPT record']], f:['home','homeValue','homeUse','downAge','downValue','cash','savings','invest','invCost','invYears','divY','otherAssets','othCost','altInv','altCost','capLoss','assetsJoint','propValue','rentM','rentCostM']},
   {id:'liab', t:'Liabilities', e:'💳', docs:[['🏠','Mortgage statement'],['📄','Loan statement'],['💳','Credit-card statement'],['🗂️','Central Credit Register report']], f:['mortYN','mortBal','mortPayM','mortYears','mortRate','cardBal','cardPayM','cardRate','loanBal','loanPayM','loanRate','mort2']},
   {id:'prot', t:'Protection', e:'🛡️', docs:[], f:['life','ip','ci','workCover','health']},
   {id:'pension', t:'Pension', e:'🌅', docs:[['📊','Pension statement'],['🏢','Employer scheme details'],['🏛️','State Pension record (MyWelfare)']], f:['pension','pensionM','pensionOwnM','ae','sp','pSp','polLump','polLumpAge','polInc','polIncAge']}
@@ -3382,6 +3382,8 @@ const FF = {
   polIncAge:{l:'Your age when it starts', type:'num', min:18, max:100, opt:1, show:() => finN('polInc') > 0},
   propValue:{l:'Other property: value', type:'eur', opt:1, hint:'Optional'},
   rentM:{l:'Other property: rent received a month (before tax)', type:'eur', opt:1, hint:'Optional. Rental profit is taxed at your marginal rate, with USC and PRSI'},
+  rentCostM:{l:'Other property: costs a month', type:'eur', opt:1, show:() => +S.fin.rentM > 0, hint:'Optional. Agent fees, repairs, insurance and mortgage interest on the rented property. Tax is charged on rent less these costs. Costs above the rent are not counted.'},
+  divY:{l:'Dividends you receive a year (shares held directly)', type:'eur', opt:1, show:() => +S.fin.invest > 0, hint:'Optional. Before tax, in today\'s money. Taxed as income each year. Leave blank for funds and ETFs, where exit tax covers it. If you enter dividends, your investment growth assumption should be price growth only.'},
   mortYN:{l:'Do you have a mortgage?', type:'choice', o:['Yes','No'], opt:1, virtual:1},
   mortBal:{l:'Mortgage left', type:'eur', show:mort},
   mortPayM:{l:'Monthly repayment', type:'eur', show:mort},
@@ -3431,6 +3433,8 @@ const EXAMPLES = {
   invest:{t:() => 'Aoife\'s investment statement shows ' + se('invest') + '. She enters ' + se('invest') + '.', w:'your investment, share-scheme or broker statement or app.'},
   propValue:{t:() => 'Aoife and Cian don\'t own another property. They enter €0.', w:'for a property you own, the Property Price Register or your LPT return.'},
   rentM:{t:() => 'Aoife and Cian don\'t rent out a property, so no rent comes in. They enter €0.', w:'your tenancy agreement or RTB registration.'},
+  rentCostM:{t:() => 'Aoife and Cian don\'t rent out a property, so there are no rental costs.', w:'your agent\'s statements, insurance and repair bills, and the mortgage statement for the rented property.'},
+  divY:{t:() => 'Aoife holds funds, so there are no dividends to enter.', w:'your broker or share-scheme statement, or the dividend vouchers.'},
   mortBal:{t:() => 'Aoife and Cian owe ' + se('mortBal') + ' on their mortgage. They enter ' + se('mortBal') + '.', w:'your annual mortgage statement or your lender\'s app.'},
   mortPayM:{t:() => 'Aoife and Cian repay ' + se('mortPayM') + ' a month. They enter ' + se('mortPayM') + '.', w:'your mortgage statement, or the direct debit on your bank statement.'},
   mortYears:{t:() => 'Aoife and Cian\'s mortgage has ' + sf('mortYears') + ' years left. They enter ' + sf('mortYears') + '.', w:'the remaining term on your annual mortgage statement.'},
@@ -3996,7 +4000,7 @@ function assumeRows(){ applyAssume(); const F = finNums(), mine = k => asmMine(k
   R.push(['What you paid for assets', (finNums().invCost != null || finNums().othCost != null || finNums().altCost != null ? 'Your figures where you entered them. ' : '') + 'Where you did not: funds and shares you hold directly are assumed bought at today\'s value (no gain yet); other assets and alternative investments assume ' + pcs(+asmV('cgtGain')) + ' of their value is gain', asmSrcLbl('cgtGain')]);
   R.push(['PRSI on pension (ARF) withdrawals', 'UNRESOLVED. The plan charges ' + pcs(prsiRate(YEAR0)) + ' PRSI on ARF / PRSA withdrawals before 66, and from 66 to 70 if you do not get the contributory State Pension, because provider guidance says so. Revenue and Social Protection have not been checked, so this may change', T_ASSUMED]);
   R.push(['State Pension entitlement', 'Total Contributions Approach: your years of PRSI divided by 40 (nothing under 10 years). The 2025 to 2033 transition (the higher of the Yearly Average blend and the Total Contributions Approach) is not modelled: enter the weekly amount from your MyWelfare statement to use your own figure', T_HOW]);
-  R.push(['Known limits', 'Living costs stay the same through the plan. Your partner\'s pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn\'t modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn\'t applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Where you have not entered what you paid, capital gains tax uses a share-of-value assumption and funds are assumed bought at today\'s value. Dividends and fund distributions, tax on a life-policy lump sum, rental costs, the tax-free part of a bought annuity and gift or inheritance tax are not modelled yet.', T_HOW]);
+  R.push(['Known limits', 'Living costs stay the same through the plan. Your partner\'s pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn\'t modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn\'t applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Where you have not entered what you paid, capital gains tax uses a share-of-value assumption and funds are assumed bought at today\'s value. Not included: tax on a life-policy lump sum (enter it after tax), the tax-free part of a bought annuity, gift or inheritance tax, mortgage interest relief on rented property, Local Property Tax, stamp duty and business or farm reliefs. Fund distributions are covered by exit tax. Capital gains tax and exit tax are taken in the year of the sale or the 8-year anniversary, not on the Revenue payment date (about 10 months later).', T_HOW]);
   return R; }
 const rowHTML = x => '<div class="mini"><span>' + esc(x[0]) + '<br><span class="tag ' + TAG_CLS(x[2]) + '">' + esc(x[2]) + '</span>' + (x[3] ? '<br><span class="small">' + esc(x[3]) + '</span>' : '') + '</span><b>' + esc(x[1]) + '</b></div>';
 function assumeSheet(){ const R = assumeRows(), gov = R.filter(x => x[2] === T_GOV), rest = R.filter(x => x[2] !== T_GOV);
@@ -4020,7 +4024,7 @@ function finNums(){ syncLists();
   const aeElig = wk === 'Employed' && S.about.age >= RI.ae.ageMin && S.about.age <= RI.ae.ageMax && inc > RI.ae.earnMin && penM === 0;
   const C = S.about.cred || {};
   return {age:S.about.age, R:S.retireAge, work:wk, married:!!S.about.partner && S.about.married === true, partner:!!S.about.partner, pAge:S.about.partner ? (n('pAge') || S.about.age) : 0, pRet:S.pRetSet ? S.pRet : 0, income:inc, pIncome:S.about.partner ? n('pIncome') : 0,
-    otherM:n('otherM'), costsM:n('costsM'), oneOffY:n('oneOffY'), cash:n('cash'), invest:n('invest'), rentM:n('rentM'),
+    otherM:n('otherM'), costsM:n('costsM'), oneOffY:n('oneOffY'), cash:n('cash'), invest:n('invest'), rentM:n('rentM'), rentCostM:n('rentCostM'), divY:n('divY'),
     savings:n('savings'), otherAssets:n('otherAssets'), altInv:n('altInv'), invCost:nb('invCost'), invYears:nb('invYears'), othCost:nb('othCost'), altCost:nb('altCost'), capLoss:n('capLoss'), assetsJoint:f.assetsJoint === 'Yes', homeVal:/^Own/.test(f.home || '') ? n('homeValue') : 0, homeUse:/^Own/.test(f.home || '') ? (f.homeUse || 'No, never') : 'No, never', downAge:n('downAge'), downValue:n('downValue'),
     polLump:n('polLump'), polLumpAge:n('polLumpAge'), polInc:n('polInc'), polIncAge:n('polIncAge'),
     mortBal:mortOn ? n('mortBal') : 0, mortRate:mR, mortPayM:mortOn ? (mStated || mPmt(n('mortBal'), mR, n('mortYears') || 25)) : 0, mortPayEst:mortOn && !mStated, mortYearsKnown:n('mortYears') > 0, mortPayLow:mortOn && mStated > 0 && n('mortBal') > 0 && n('mortYears') > 0 && mStated < mPmt(n('mortBal'), mR, n('mortYears')) - 1, mortYears:mortOn ? n('mortYears') : 0,
@@ -4146,7 +4150,7 @@ function project(wi){
     const a = a0 + t, infl = Math.pow(1 + AS.infl, t), wgw = Math.pow(1 + AS.wage, t), working = a < R, tI = flatBands ? 1 : Math.pow(1 + AS.infl, yb), rate = prsiRate(yr);
     const spI = spG === 'pay' ? Math.pow(1 + AS.wage, yb) : spG === 'flat' ? 1 : Math.pow(1 + AS.infl, yb);   // B11: grows from the year the rates were set
     // --- person 1
-    const p1 = {emp:0, se:f.work === 'Self-employed', sp:0, draw:0, other:(f.otherM + f.rentM) * 12 * infl + (f.polInc > 0 && f.polIncAge > 0 && a >= f.polIncAge ? f.polInc : 0), relief:0, age:a};
+    const p1 = {emp:0, se:f.work === 'Self-employed', sp:0, draw:0, other:(f.otherM + f.rentM - Math.min(f.rentCostM, f.rentM)) * 12 * infl + f.divY * infl + (f.polInc > 0 && f.polIncAge > 0 && a >= f.polIncAge ? f.polInc : 0), relief:0, age:a};
     let cashOut = 0;   // own pension and auto-enrolment contributions (come out of take-home pay)
     if (working){
       const gR = f.income * wgw, E = (f.pensionOwnM + penExtraM) * 12 * wgw, Etot = (f.pensionM + penExtraM) * 12 * wgw;

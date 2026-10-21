@@ -130,7 +130,7 @@ for k in ('free0','freeP','freeE'): ws[f"{cf[k]}6"]={'free0':'Savings available 
 pp=wb['Plan pay & tax']
 for r in range(234,324):
     v=pp[f'AF{r}'].value
-    if isinstance(v,str) and v.startswith('=(F_OtherM+F_RentM)*12*'): pp[f'AF{r}']=v+f'+IF(AND(In_polInc>0,In_polIncAge>0,C{r}>=In_polIncAge),In_polInc,0)'
+    if isinstance(v,str) and v.startswith('=(F_OtherM+F_RentM)*12*'): pp[f'AF{r}']=f'=(F_OtherM+F_RentM-MIN(In_rentCostM,F_RentM))*12*E{r}+In_divY*E{r}+IF(AND(In_polInc>0,In_polIncAge>0,C{r}>=In_polIncAge),In_polInc,0)'
 # ---- this workbook holds the 2026 rules only: the plan always starts in 2026
 pi['F101']='=Rules_Year'
 v=pi['G101'].value; assert 'OR(C101=Rules_Year,C101=Rules_Year_Next)' in v; pi['G101']=v.replace('OR(C101=Rules_Year,C101=Rules_Year_Next)','C101=Rules_Year')
@@ -174,7 +174,7 @@ pr_=wb['Plan results']
 NEW=[('homeUse','Would you use your home to fund your plan?','OR(In_home="Own outright",In_home="Own with mortgage")',3),('downAge','Age you would downsize','AND(OR(In_home="Own outright",In_home="Own with mortgage"),In_homeUse="Yes, I\'d downsize")',3),
  ('downValue','Value of the smaller home','AND(OR(In_home="Own outright",In_home="Own with mortgage"),In_homeUse="Yes, I\'d downsize")',3),('savings','Savings accounts','1',3),('invCost','What you paid for your investments','In_invest>0',3),('invYears','Years you have held your investments','In_invest>0',3),
  ('otherAssets','Other assets you would sell if needed','1',3),('othCost','What you paid for your other assets','In_otherAssets>0',3),('altInv','Alternative investments','1',3),('altCost','What you paid for your alternative investments','In_altInv>0',3),
- ('capLoss','Capital losses you can use','OR(In_otherAssets>0,In_altInv>0,In_invest>0)',3),('assetsJoint','Assets owned together with your partner','AND(F_Partner=1,OR(In_otherAssets>0,In_altInv>0,In_invest>0))',3),
+ ('capLoss','Capital losses you can use','OR(In_otherAssets>0,In_altInv>0,In_invest>0)',3), ('divY','Dividends from shares held directly','In_invest>0',3),('rentCostM','Other property: costs a month','In_rentM>0',3),('assetsJoint','Assets owned together with your partner','AND(F_Partner=1,OR(In_otherAssets>0,In_altInv>0,In_invest>0))',3),
  ('polLump','Policy lump sum','1',6),('polLumpAge','Age the policy pays out','In_polLump>0',6),('polInc','Policy or annuity income','1',6),('polIncAge','Age the policy income starts','In_polInc>0',6)]
 R0n=250; pr_.cell(R0n-2,2,'MY MONEY: the optional figures added in engine v3.0 (same columns as the table above, rows 101 to 139)').font=BOLD
 for i,(k,lab,show,sec_) in enumerate(NEW):
@@ -184,6 +184,10 @@ for i,(k,lab,show,sec_) in enumerate(NEW):
     for c,v in row_.items():
         pr_.cell(r,c, int(v) if c in (4,6,14) else v)
 RN1=R0n+len(NEW)-1
+pr_.cell(R0n+len(NEW)+1,2,'NOT INCLUDED IN THE PLAN (shown to the customer with "What your plan assumes")').font=BOLD
+nt_=pr_.cell(R0n+len(NEW)+2,2,'Tax on a life-policy lump sum (enter it after tax), the tax-free part of a bought annuity, gift or inheritance tax, mortgage interest relief on rented property, Local Property Tax, stamp duty and business or farm reliefs. Fund distributions are covered by exit tax. Capital gains tax and exit tax are taken in the year of the sale or the 8-year anniversary, not on the Revenue payment date (about 10 months later).')
+cellname(wb,'Not_Included',pr_,f'B{R0n+len(NEW)+2}')
+
 import re as _re
 def union(f):
     f=_re.sub(r'SUMIFS\((\$[A-Z]\$)101:(\$[A-Z]\$)139,(\$[A-Z]\$)101:(\$[A-Z]\$)139,(\d)\)',lambda m:f'(SUMIFS({m.group(1)}101:{m.group(2)}139,{m.group(3)}101:{m.group(4)}139,{m.group(5)})+SUMIFS({m.group(1)}{R0n}:{m.group(2)}{RN1},{m.group(3)}{R0n}:{m.group(4)}{RN1},{m.group(5)}))',f)

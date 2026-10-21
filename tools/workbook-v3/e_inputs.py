@@ -34,6 +34,8 @@ def build_inputs(wb):
     row('othCost','What you paid for your other assets (blank = a share of the value is assumed to be gain)','€','n',0,100000000,'S.fin.othCost')
     row('altCost','What you paid for your alternative investments (blank = a share of the value is assumed to be gain)','€','n',0,100000000,'S.fin.altCost')
     row('capLoss','Capital losses you can use against gains (reported to Revenue, not yet used)','€','n',0,100000000,'S.fin.capLoss')
+    row('divY','Dividends you receive a year from shares held directly (before tax, today\'s money; blank for funds and ETFs)','€ a year','n',0,100000000,'S.fin.divY')
+    row('rentCostM','Other property: costs a month (agent, repairs, insurance, mortgage interest); tax is on rent less costs','€ a month','n',0,1000000,'S.fin.rentCostM')
     row('assetsJoint','Do you own these assets together with your partner? (Yes/No/Not sure; Yes = two yearly CGT exemptions)','','t',note='S.fin.assetsJoint',opts=['Yes','No','Not sure'])
     r+=1; head('YOUR HOME AND POLICIES')
     row('homeUse','Would you ever use your home to fund your plan? (No, never / Yes, I\'d downsize / Only as a last resort)','','t',note='S.fin.homeUse (only counted if you own your home)',opts=["No, never","Yes, I'd downsize","Only as a last resort"])

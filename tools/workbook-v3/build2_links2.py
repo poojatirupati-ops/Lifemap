@@ -38,3 +38,17 @@ c13['B39']='• Extra a month = salary × increase ÷ 12 in the first year. The 
 c13['B58']='Note: the extra contribution rises with pay each year, as in the app and your plan. Tax relief shown is for the first year.'
 c13['C32'].value=c13['C32'].value
 json.dump(linked,open(SC+'linked.json','w'))
+
+# ---- C29: dividends on shares held directly (taxed as income each year)
+c29_=wb['C29 Investment tax']
+from copy import copy as _c
+for col in range(2,6):
+    for r_ in (14,34):
+        src=c29_.cell(13,col); d=c29_.cell(r_,col); d.font=_c(src.font); d.fill=_c(src.fill); d.border=_c(src.border); d.alignment=_c(src.alignment); d.number_format=src.number_format
+c29_['B14']='=IF($E$2="Sample example",D14,E14)'; c29_['C14']='Dividends from shares held directly, a year before tax (shares only; funds and ETFs pay exit tax instead). Taxed as income each year at your top rates, with USC, and PRSI above 5,000 of unearned income. Your growth figure above should then be price growth only. Comes from Plan inputs when given.'
+c29_['D14']=3000; c29_['E14']='=IF(Has_divY=1,In_divY,0)'
+GR='IF(Has_income=1,In_income,60000)'
+ITx='(0.2*MAX(0,MIN(Band_Single,{g}+B14)-MIN(Band_Single,{g}))+0.4*(B14-MAX(0,MIN(Band_Single,{g}+B14)-MIN(Band_Single,{g}))))'.format(g=GR)
+def USC(x): return f'(USC_Rate_1*MIN({x},USC_Band_1)+USC_Rate_2*MAX(0,MIN({x},USC_Band_2)-USC_Band_1)+USC_Rate_3*MAX(0,MIN({x},USC_Band_3)-USC_Band_2)+USC_Rate_4*MAX(0,{x}-USC_Band_3))'
+c29_['B34']=f'=IF(B9="Fund or ETF",0,{ITx}+{USC(GR+"+B14")}-{USC(GR)}+IF(B14>5000,\'Plan pay & tax\'!$J$234*B14,0))'
+c29_['C34']='Tax on the dividends each year (shares only): income tax at your top rate, extra USC, and PRSI if over 5,000. Uses your income from Plan inputs, or 60,000 if not given.'

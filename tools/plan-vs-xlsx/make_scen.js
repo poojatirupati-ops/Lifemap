@@ -37,6 +37,8 @@ function mk(i) {
   if (rnd() < .15) fin.capLoss = pick([2000, 15000]);
   if (partner && rnd() < .5) fin.assetsJoint = pick(['Yes', 'No', 'Not sure']);
   if (home.startsWith('Own') && rnd() < .6) { fin.homeValue = pick([250000, 500000, 900000]); if (rnd() < .4) { fin.homeUse = pick(["Yes, I'd downsize", "Yes, I'd downsize", 'Only as a last resort']); fin.downAge = ri(Math.max(50, age + 1), 90); fin.downValue = pick([120000, 300000]); } }
+  if (fin.rentM > 0 && rnd() < .7) fin.rentCostM = pick([100, 300, 800]);
+  if (fin.invest > 0 && rnd() < .4) fin.divY = pick([500, 2000, 6000]);
   if (rnd() < .12) { fin.polLump = pick([8000, 30000]); fin.polLumpAge = Math.min(100, age + ri(0, 25)); }
   if (rnd() < .12) { fin.polInc = pick([3000, 9000]); fin.polIncAge = Math.min(100, age + ri(0, 30)); }
   if (rnd() < .1) sc.safetyWanted = true; else if (rnd() < .1) sc.safetyOff = true;
