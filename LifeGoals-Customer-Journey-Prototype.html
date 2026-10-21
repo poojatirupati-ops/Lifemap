@@ -2963,8 +2963,8 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
    Every statutory value the engine, the calculators and the copy use. Each leaf: v (value), src (source URL), eff (effective date),
    verify (true = open the primary page and record the date before release; audit "Src" P or S). Budget 2027 (6 Oct 2026) is a one-place update here.
    Judgement values are NOT here: they are the customer's own choices ("Your assumptions", ASM below). */
-const RULES_VERSION = 'Irish rules 2026 · checked 2 Oct 2026';
-const BUDGET27 = "Budget 2027 changes (announced 6 Oct 2026) aren't included yet. We'll update LifeMap once they're final.";   // §23: no unconfirmed figure is used or named
+let RULES_VERSION = 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes already in force (CGT, Help to Buy)';
+let BUDGET27 = 'This plan uses 2026 rules. Budget 2027 changes (from 1 January 2027) are available: choose 2027 as the plan start year in Your assumptions.';   // set by setRulesYear(); every 2027 figure is flagged verify until the Finance Bill is final
 const RV_ = (v, src, eff, verify, by) => ({v, src, eff, verify:verify !== false, by});   // by = the source as the customer sees it
 const RULES_IE_2026 = {
   it:{   // income tax
@@ -3053,14 +3053,17 @@ const RULES_IE_2026 = {
   sav:{   // savings and investment tax (shown as notes)
     dirt:RV_(0.33, 'https://cantorfitzgerald.ie/budget-2026-key-updates-for-investors-and-savers', '2026'),
     exit:RV_(0.38, 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-0162026.aspx', '1 Jan 2026'),
-    deemed:RV_(8, 'https://etf.ie/blog/budget-2026-etf/', '2026')
+    deemed:RV_(8, 'https://etf.ie/blog/budget-2026-etf/', '2026'),
+    cgt:RV_(0.31, 'https://www.davy.ie/market-and-insights/insights/budget-2027.html', 'disposals from 7 Oct 2026 (Budget 2027)'),
+    cgtExempt:RV_(1270, 'https://www.revenue.ie/en/gains-gifts-and-inheritance/transfering-an-asset/index.aspx', 'Law (annual exemption per person)'),
+    cat:RV_(420000, 'https://en.wikipedia.org/wiki/2027_Irish_budget', 'gifts and inheritances from 7 Oct 2026 (Group A, child from parent)')
   },
   home:{
     ltiFTB:RV_(4, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     ltiSSB:RV_(3.5, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     ltv:RV_(0.90, 'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework', '1 Jan 2023'),
     stamp:RV_([[1e6, 0.01], [1.5e6, 0.02], [Infinity, 0.06]], 'https://www.raisin.com/en-ie/taxes/stamp-duty-ireland/', 'Budget 2025'),
-    htbMax:RV_(30000, 'https://charteredaccountants.ie/News/help-to-buy-guidance-updated-for-scheme-extension', 'to 31 Dec 2029')
+    htbMax:RV_(35000, 'https://en.wikipedia.org/wiki/2027_Irish_budget', 'from 7 Oct 2026 (Budget 2027), scheme to 31 Dec 2029')
   },
   infl:{
     ie:RV_(0.039, 'https://www.cso.ie/en/csolatestnews/pressreleases/2026pressreleases/pressstatementflashestimatefortheharmonisedindexofconsumerpricesseptember2026/', 'CSO HICP flash, Sep 2026 (published 1 Oct 2026)'),
@@ -3074,6 +3077,28 @@ const RULES_IE_2026 = {
 };
 // RI: plain values read by every function (RI.it.band = 44000 …)
 const RI = (function unwrap(o){ const r = {}; Object.keys(o).forEach(k => { const x = o[k]; r[k] = x && typeof x === 'object' && 'v' in x && 'src' in x ? x.v : unwrap(x); }); return r; })(RULES_IE_2026);
+/* ---------- Budget 2027 (announced 6 Oct 2026): a plan that starts in 2027 uses these rules ----------
+   Each entry replaces one RI value from 1 Jan 2027. Where a figure was not in the announced Budget (age credit, DIRT, Qualified Adult and other DSP rates, SFT, stamp duty)
+   the 2026 value stays and the page says so. verify:true on every figure: open the Department of Finance "Budget 2027 Tax Policy Changes" and Revenue before release;
+   the Finance (No. 2) Bill 2026 may still change details. */
+const B27_SRC = 'https://assets.gov.ie/static/documents/c6792805/Budget_2027_Tax_Policy_Changes_v2.pdf';
+const RULES_2027 = {
+  'it.band':RV_(46500, B27_SRC, '1 Jan 2027'), 'it.bandSPCCC':RV_(50500, B27_SRC, '1 Jan 2027'), 'it.bandMarried':RV_(55500, B27_SRC, '1 Jan 2027'), 'it.bandUplift':RV_(37500, B27_SRC, '1 Jan 2027 (two incomes up to 93,000)'),
+  'it.personal':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.personalMarried':RV_(4250, B27_SRC, '1 Jan 2027'), 'it.paye':RV_(2125, B27_SRC, '1 Jan 2027'), 'it.eic':RV_(2125, B27_SRC, '1 Jan 2027'),
+  'it.homeCarer':RV_(2050, B27_SRC, '1 Jan 2027'), 'it.rent':RV_(1150, B27_SRC, '2027 and 2028'), 'it.rentJoint':RV_(2300, B27_SRC, '2027 and 2028'),
+  'usc.bands':RV_([[12012, 0.005], [30300, 0.02], [70044, 0.03], [Infinity, 0.08]], B27_SRC, '1 Jan 2027 (2% band now to 30,300)'),
+  'sp.week':RV_(309.30, 'https://www.gov.ie/en/department-of-finance/publications/budget-2027/', 'Jan 2027 (+10)'),
+  'sav.exit':RV_(0.35, 'https://www.zurich.ie/blog/a-guide-to-budget-2027/', '1 Jan 2027 (funds, ETFs and life policies; 8-year deemed disposal stays)')
+};
+const RULES_2027_NOT_CHANGED = 'Not changed in the announced Budget, so 2026 figures stay: DIRT, USC rates, PRSI (rate path already legislated), pension relief and lump-sum limits, Standard Fund Threshold, stamp duty, age credit, single-parent credit. Qualified Adult and other Social Welfare rates will be updated once published.';
+const RI_BASE = {};   // 2026 values of everything the overlay can replace
+const riGet = (p) => p.split('.').reduce((o, k) => o[k], RI), riSet = (p, v) => { const ks = p.split('.'), l = ks.pop(); ks.reduce((o, k) => o[k], RI)[l] = v; };
+Object.keys(RULES_2027).forEach(p => { const v = riGet(p); RI_BASE[p] = Array.isArray(v) ? v.map(x => Array.isArray(x) ? x.slice() : x) : v; });
+let RULES_YEAR = 2026;
+function setRulesYear(y){ y = y >= 2027 ? 2027 : 2026; if (y === RULES_YEAR) return; RULES_YEAR = y;
+  Object.keys(RULES_2027).forEach(p => riSet(p, y === 2027 ? RULES_2027[p].v : RI_BASE[p]));
+  RULES_VERSION = y === 2027 ? 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending' : 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes already in force (CGT, Help to Buy)';
+  BUDGET27 = y === 2027 ? 'This plan uses Budget 2027 rules from 1 January 2027 (announced 6 October 2026). The Finance Bill may still change some details. ' + RULES_2027_NOT_CHANGED : 'This plan uses 2026 rules. Budget 2027 changes (from 1 January 2027) are available: choose 2027 as the plan start year in Your assumptions.'; }
 // Law figures quoted in copy, built once from the register (§14: every figure quoted once, from the single rules register)
 const LAW = {ls:'up to ' + '€' + RI.pen.lsTaxFree.toLocaleString('en-IE') + ' tax-free, the next €' + (RI.pen.lsCap - RI.pen.lsTaxFree).toLocaleString('en-IE') + ' taxed at ' + Math.round(RI.pen.lsBandRate * 100) + '%, and anything above €' + RI.pen.lsCap.toLocaleString('en-IE') + ' taxed at your marginal rate (' + Math.round(RI.it.r2 * 100) + '% here)',
   arf:'from 61 you must take at least ' + Math.round(RI.pen.arfMin61 * 100) + '% a year (' + Math.round(RI.pen.arfMin71 * 100) + '% from 71)',
@@ -3116,6 +3141,7 @@ const SETTINGS = {partner:'', s:{
   safetyMonthsTwo:{n:'Emergency fund: months with two secure incomes', u:'num', grp:'Emergency fund & saving', v:3, by:'two secure incomes', src:'LifeMap planning standard. Reference points: MABS and CCPC guidance', asat:'2026', verify:false},
   cashYears:{n:'Money for goals sooner than this is kept as cash (years)', u:'yrs', grp:'Emergency fund & saving', v:5, by:'money needed within 5 years is usually kept as cash', src:'LifeMap planning standard (common planning practice: money needed within about 5 years is not invested)', asat:'2026', verify:false, guide:'Longer-term money has more time to ride out ups and downs.'},
   investShare:{n:'Spare savings: share invested', u:'pct', grp:'Emergency fund & saving', v:0.4, by:'a balanced cash and invested mix', src:'LifeMap planning standard (a balanced cash and invested mix)', asat:'2026', verify:false},
+  cgtGain:{n:'Other assets and alternative investments: share of the value that is a gain', u:'pct', grp:'Emergency fund & saving', v:0.4, by:'a planning figure, because we do not know what you paid', src:'LifeMap planning standard. Capital gains tax applies to the gain only, not the whole value.', asat:'2026', verify:false, guide:'When other assets, crypto, gold or art are sold for a goal, capital gains tax is taken off this share of their value.'},
   saveShare:{n:'Share of spare money saved, at most', u:'pct', grp:'Emergency fund & saving', v:0.5, by:'half of your spare money', src:'LifeMap planning standard', asat:'2026', verify:false, guide:'We never count more than this share of your spare money as saved, unless you set your own monthly saving.'},
   noAnswer:{n:'Monthly saving if not answered', u:'eur', grp:'Emergency fund & saving', v:300, by:'a modest regular amount', src:'LifeMap planning standard', asat:'2026', verify:false, guide:'Used until you answer "How much could you comfortably invest each month?".'},
   lifeShare:{n:'Life cover: share of income the family needs', u:'pct', grp:'Protection', v:0.6, by:'families usually need less than full pay', src:'LifeMap planning standard. Reference point: Irish life-insurer needs calculators', asat:'2026', verify:false},
@@ -3751,6 +3777,7 @@ const ASM = {
     need:() => finN('loanBal') + finN('debt') > 0 && !(finN('loanRate') > 0), get help(){ return SG('loanRate'); }},
   cashYears:{g:'safety', b:'B21', ty:3, n:'years kept as cash', l:'Money for goals sooner than this is kept as cash (years)', t:'yrs', min:1, max:10, step:1, sug:() => ST.cashYears, get by(){ return STB.cashYears.by; }, need:() => true, get help(){ return SG('cashYears'); }},
   investShare:{g:'safety', b:'B21', ty:3, n:'share of spare savings invested', l:'Spare savings: share invested (the rest stays in cash)', t:'pct', min:0, max:100, step:5, sug:() => ST.investShare, get by(){ return STB.investShare.by; }, need:() => true, get help(){ return SG('investShare'); }},
+  cgtGain:{g:'safety', b:'B28', ty:3, n:'gain share when assets are sold', l:'Other assets, crypto, gold or art: share of their value that is a gain (for capital gains tax when sold)', t:'pct', min:0, max:100, step:5, sug:() => ST.cgtGain, get by(){ return STB.cgtGain.by; }, need:() => false, get help(){ return SG('cgtGain'); }},
   saveShare:{g:'safety', b:'B22', ty:3, n:'share of spare money saved', l:'Share of your spare money you save, at most', t:'pct', min:0, max:100, step:5, sug:() => ST.saveShare, get by(){ return STB.saveShare.by; }, need:() => S.saveM == null, get help(){ return SG('saveShare'); }},
   noAnswer:{g:'safety', b:'B22', ty:3, n:'monthly saving', l:'Monthly saving if you haven\'t told us how much you could invest', t:'eur', min:0, max:5000, step:25, sug:() => ST.noAnswer, get by(){ return STB.noAnswer.by; }, need:() => S.saveM == null && typeof S.ans['6'] !== 'number', get help(){ return SG('noAnswer'); }},
   lifeShare:{g:'safety', b:'B24', ty:3, n:'share of income your family would need', l:'Life cover: share of your income your family would need', t:'pct', min:30, max:100, step:5, sug:() => ST.lifeShare, get by(){ return STB.lifeShare.by; }, need:() => false, get help(){ return SG('lifeShare'); }},
@@ -3761,7 +3788,7 @@ const ASM = {
   budgetSave:{g:'safety', b:'B27', ty:3, n:'budget split', l:'Budget split: savings and debt', t:'pct', min:0, max:100, step:5, sug:() => ST.budget[2], get by(){ return STB.budget.by; }, need:() => false, get help(){ return SG('budgetSave'); }},
   planEnd:{g:'length', b:'B12', ty:3, own:true, n:'plan-until age', l:'Plan until age (life expectancy)', t:'age', min:50, max:100, step:1, fb:() => S && S.about.partner ? 95 : 90, need:() => true,   // internal fallback only, never shown (planMissing gates results)
     help:'At 65, average life expectancy in Ireland is about ' + GD.lifeMen65 + ' for men and ' + GD.lifeWomen65 + ' for women (' + GDB.lifeMen65.by + '). Choose the age you want to plan to.'},
-  startYear:{g:'length', b:'B23', ty:3, n:'plan start year', l:'Start the plan in', t:'choice', o:[[2026, '2026'], [2027, '2027']], sug:() => (new Date() > new Date('2026-09-30T23:59:59') ? 2027 : 2026), by:'from October most of this year has passed', need:() => true, help:''}
+  startYear:{g:'length', b:'B23', ty:3, n:'plan start year', l:'Start the plan in', t:'choice', o:[[2026, '2026'], [2027, '2027']], sug:() => (new Date() > new Date('2026-09-30T23:59:59') ? 2027 : 2026), by:'from October most of this year has passed', need:() => true, help:'Choose 2027 to use the Budget 2027 tax rules (announced 6 October 2026) from 1 January 2027: higher tax bands and credits, a wider 2% USC band, a €10 higher State Pension and exit tax at 35%. The Finance Bill may still change some details.'}
 };
 // §27.3: no hard limit; a calm one-line note, never a block
 const retNote = a => a < 50 ? 'Retiring before 50 is possible. Pensions can usually be drawn from 60 (some schemes from 50) and the State Pension from ' + RI.sp.age + ', so until then your plan uses savings and other income. Your results will show any gap honestly.'
@@ -3814,7 +3841,7 @@ function syncAges(){ if (!S || !S.about) return; const b = S.about, y0 = +asmV('
     else { const c = dobCheck(b.dob, 'you'); b.age = c.ok ? y0 - +b.dob.y : null; b._dobAge = b.age; b.ageToday = c.ok ? c.ageToday : null; S.fin.age = b.age == null ? undefined : b.age; if (b.age != null) S.src.age = S.src.age || 'pre'; } }
   if (!b.dob) b.ageToday = b.age;
   if (b.pdob){ const c = dobCheck(b.pdob, 'partner'); if (c.ok){ S.fin.pAge = y0 - +b.pdob.y; S.src.pAge = 'typed'; } else { delete S.fin.pAge; delete S.src.pAge; } } }
-function applyAssume(){ syncAges(); Object.assign(AS, curSet()); AS.infl = S && S.infl != null ? S.infl : SV('infl');   // inflation is the client's own choice (S.infl); SV('infl') is only an internal fallback before they choose
+function applyAssume(){ syncAges(); setRulesYear(+asmV('startYear')); Object.assign(AS, curSet()); AS.infl = S && S.infl != null ? S.infl : SV('infl');   // inflation is the client's own choice (S.infl); SV('infl') is only an internal fallback before they choose
   ['wage', 'cash', 'inv', 'pen', 'penRet', 'mortRate', 'cardRate', 'loanRate'].forEach(k => { AS[k] = +asmV(k); });
   AS.end = +asmV('planEnd'); AS.sp = RI.sp.week * RI.sp.weeks; AS.spAge = RI.sp.age; YEAR0 = +asmV('startYear');
   SAVE.buffer = +asmV('safetyMonths'); SAVE.longYrs = +asmV('cashYears'); SAVE.share = +asmV('saveShare'); SAVE.noAnswer = +asmV('noAnswer'); }
@@ -3899,7 +3926,8 @@ function assumeRows(){ applyAssume(); const F = finNums(), mine = k => asmMine(k
   R.push(['Tax for couples', S.about.partner && S.about.married === true ? 'Joint assessment (married / civil partners), also once retired' : 'Taxed as individuals', T_GOV]);
   if (S.needs && (S.needs.life || S.needs.ip)) R.push(['Protection needs noted for your adviser', [S.needs.life ? 'life cover ' + eur(S.needs.life) : '', S.needs.ip ? 'income protection ' + eur(S.needs.ip) + ' a month' : ''].filter(Boolean).join(', '), T_MINE]);
   R.push(['How timing is counted', 'Calculators: monthly, end of the month. Pension contributions in your plan and in the Retirement tool: paid at the end of each year (a little lower than monthly). Money you save towards goals: at the start of each year. Mortgage rates are a yearly rate ÷ 12; card, loan and APR figures are effective yearly rates.', T_HOW]);
-  R.push(['Known limits', 'Living costs stay the same through the plan. Your partner\'s pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn\'t modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn\'t applied. Auto-enrolment rates after 2028 stay at the 2026 rates.', T_HOW]);
+  R.push(['Capital gains tax on sold assets', pcs(RI.sav.cgt) + ' on ' + pcs(+asmV('cgtGain')) + ' of the value of other assets, crypto, gold or art when they are sold for a goal (assumed gain)', asmSrcLbl('cgtGain')]);
+  R.push(['Known limits', 'Living costs stay the same through the plan. Your partner\'s pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn\'t modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn\'t applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Capital gains tax uses a share-of-value assumption and ignores the yearly exemption; tax on a life-policy lump sum, rental costs, the tax-free part of a bought annuity and gift or inheritance tax are not modelled yet.', T_HOW]);
   return R; }
 const rowHTML = x => '<div class="mini"><span>' + esc(x[0]) + '<br><span class="tag ' + TAG_CLS(x[2]) + '">' + esc(x[2]) + '</span>' + (x[3] ? '<br><span class="small">' + esc(x[3]) + '</span>' : '') + '</span><b>' + esc(x[1]) + '</b></div>';
 function assumeSheet(){ const R = assumeRows(), gov = R.filter(x => x[2] === T_GOV), rest = R.filter(x => x[2] !== T_GOV);
@@ -3998,7 +4026,9 @@ function project(wi){
   const W = {cash, sav:f.savings, inv, oth:f.otherAssets, alt:f.altInv}, WK = ['cash', 'sav', 'inv', 'oth', 'alt'];
   const wTot = () => W.cash + W.sav + W.inv + W.oth + W.alt;
   const WK_EASY = ['cash', 'sav'];   // the emergency fund is built from cash and savings accounts only
-  const wTake = (amt, src, keys) => { let need = Math.max(0, amt), got = 0; (keys || WK).forEach(k => { const d = Math.min(need, Math.max(0, W[k])); if (d > 0){ W[k] -= d; need -= d; got += d; if (src) src[k] = (src[k] || 0) + d; } }); return got; };
+  const cgtEff = RI.sav.cgt * +asmV('cgtGain');   // Capital gains tax when other assets or alternative investments are sold: the tax rate on the share of the value that is a gain (annual exemption not counted: prudent)
+  const WCG = {oth:cgtEff, alt:cgtEff};
+  const wTake = (amt, src, keys) => { let need = Math.max(0, amt), got = 0; (keys || WK).forEach(k => { const e = WCG[k] || 0, d = Math.min(need, Math.max(0, W[k]) * (1 - e)); if (d > 0){ W[k] -= d / (1 - e); need -= d; got += d; if (src) src[k] = (src[k] || 0) + d; } }); return got; };   // d = money received after tax; W[k] falls by the sale value
   fg.forEach(g => { const x = G[g.id], want = Math.max(0, x.cost / Math.pow(1 + x.r, x.n) - x.pot), take = wTake(want, x.src0, g.k === 'safety' ? WK_EASY : WK); x.pot += take; });
   const sh = +asmV('investShare');   // B21: new unallocated money, cash / invested mix
   const wAdd = v => { W.cash += v * (1 - sh); W.inv += v * sh; };
@@ -4816,7 +4846,7 @@ function reportData(){
   if (f.partner){ left.push(['Partner', f.pAge ? 'Age ' + f.pAge + (S.pRetSet ? ', stops work at ' + S.pRet : '') : 'Counted as your age']); }
   const glossary = [['Today’s money · future euros', 'Today’s prices, and amounts after prices rise.'], ['Inflation', 'How fast prices rise. This plan uses ' + pcs(AS.infl) + ' a year.'], ['Shortfall', 'The part of a year’s costs your plan cannot pay.'], ['Covered %', 'How much of a goal’s cost your income and savings meet.'], ['PRSA · ARF', 'A personal pension account · a fund you draw income from.'], ['State Pension', 'Government pension from ' + RI.sp.age + '. Full rate ' + eurW(RI.sp.week) + ' a week.'], ['USC · PRSI', 'Irish charges on pay. PRSI builds your State Pension record.'], ['Capacity for loss', 'How much you could afford to lose.'], ['My Future Fund', 'Ireland’s automatic workplace pension.']];
   const assumptions = {big:String(left.length + right.length), bigLabel:'things we assumed', eyebrow:'ASSUMPTIONS AND SMALL PRINT', title:'What your plan assumes', left, right,
-    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', 'Irish rules checked 2 Oct 2026. Budget 2027 changes (announced 6 Oct 2026) aren’t included yet. We’ll update your plan once they’re final.']},
+    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', (RULES_YEAR === 2027 ? 'Budget 2027 rules (announced 6 Oct 2026) are used from 1 January 2027. The Finance Bill may still change some details.' : 'Irish rules checked 2 Oct 2026. Your plan starts in 2026, so Budget 2027 changes (from 1 January 2027) are not used.'), 'Capital gains tax is estimated on a share of the value of other assets, crypto, gold and art. Tax on life-policy lump sums, rental costs and gift or inheritance tax are not included yet.']},
     pleaseNote:{title:'Please note', text:'This is preliminary guidance, not financial advice. Only an authorised adviser can give advice. Investments can fall as well as rise. All projections are illustrative, not guaranteed. This tool is designed to help you explore your preferences. It does not replace a formal suitability or risk assessment where financial advice is provided.'},
     sources:'Sources: Revenue; Department of Social Protection; CSO flash inflation September 2026; ECB target; LifeMap plan engine.', glossary:{title:'Words used in this report', items:glossary}};
   // ---- page 11 ----
@@ -5837,9 +5867,11 @@ function govRows(){ const I = RI.it, U = RI.usc, PN = RI.pen, SP = RI.sp, H = RI
     ['State Pension (full rate)', eurW(SP.week) + ' a week from ' + SP.age + ' (' + eur(SP.over80) + ' more from 80); Qualified Adult ' + eurW(SP.qa66)],
     ['Illness Benefit and survivor\'s pension', eurW(SP.illness) + ' a week; survivor\'s pension ' + eurW(SP.survivor) + ' under 66, ' + eurW(SP.survivor66) + ' at 66+'],
     ['Auto-enrolment (My Future Fund)', pcs(A.ee) + ' you + ' + pcs(A.er) + ' employer + ' + pcs(A.state) + ' State, on pay up to ' + eur(A.earnCap)],
-    ['Savings tax', 'DIRT ' + pcs(RI.sav.dirt) + ' on deposit interest; exit tax ' + pcs(RI.sav.exit) + ' on funds'],
+    ['Savings tax', 'DIRT ' + pcs(RI.sav.dirt) + ' on deposit interest; exit tax ' + pcs(RI.sav.exit) + ' on funds and life policies, with a ' + RI.sav.deemed + '-year deemed disposal'],
+    ['Capital gains tax', pcs(RI.sav.cgt) + ' on gains above ' + eur(RI.sav.cgtExempt) + ' a year (disposals from 7 October 2026). In your plan it is taken off sales of other assets, crypto, gold and art, on the share of their value you treat as a gain. The yearly exemption is not counted.'],
+    ['Gift and inheritance tax (CAT)', 'Group A threshold ' + eur(RI.sav.cat) + ' (a child from a parent), from 7 October 2026. Not in your plan yet.']].concat(RULES_YEAR === 2027 ? [['New Investment Account (announced)', 'From July 2027: up to €12,000 a year, no tax on the first €50,000, 1% levy above that. Not in your plan yet; details come with the Finance Bill.']] : []).concat([
     ['Mortgage limits (Central Bank)', H.ltiFTB + '× income for first-time buyers, ' + H.ltiSSB + '× for others; at least a ' + pcs(1 - H.ltv) + ' deposit'],
-    ['Stamp duty', pcs(H.stamp[0][1]) + ' up to ' + eur(H.stamp[0][0]) + ', ' + pcs(H.stamp[1][1]) + ' to ' + eur(H.stamp[1][0]) + ', ' + pcs(H.stamp[2][1]) + ' above']]; }
+    ['Stamp duty', pcs(H.stamp[0][1]) + ' up to ' + eur(H.stamp[0][0]) + ', ' + pcs(H.stamp[1][1]) + ' to ' + eur(H.stamp[1][0]) + ', ' + pcs(H.stamp[2][1]) + ' above']]); }
 const govHTML = () => govRows().map(x => '<div class="mini"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>').join('');
 function stdLeft(){ return planMissing().length; }
 function asmScreen(){ applyAssume(); const open = S.asmOpen === undefined ? 'prices' : S.asmOpen, left = planMissing().length;
@@ -6927,7 +6959,7 @@ function setInput(k, s){ const pv = s.pv, id = 'set-' + k;
 /* M6: sane limits for a partner's own figure (same units as the value: 0.03 = 3%). Outside them the figure is refused with a clear message.
    The tax-free lump sum can never be more than the 25% legal limit; growth standards have a ceiling so a provider cannot make a plan look better than it is. */
 const SETBOUNDS = {infl:[0, 0.06], wage:[0, 0.06], cash:[0, 0.04], inv:[0, 0.06], invGross:[0, 0.08], pen:[0, 0.07], penRet:[0, 0.06], rentRise:[0, 0.08], houseGrow:[0, 0.06], upkeep:[0, 0.03], ownShare:[0, 1], retireMult:[15, 40], retireSpend:[0.4, 1], lumpSum:[0, 0.25],
-  safetyMonths:[1, 12], safetyMonthsTwo:[1, 12], cashYears:[1, 10], investShare:[0, 1], saveShare:[0, 1], noAnswer:[0, 5000], lifeShare:[0.3, 1], lifeYears:[1, 30], mortRate:[0.005, 0.1], loanRate:[0, 0.3], cardRate:[0, 0.35], depRate:[0, 0.06], buyFees:[0, 50000], fundChg:[0, 0.05], waitYears:[0, 20], style:[1, 3]};
+  safetyMonths:[1, 12], safetyMonthsTwo:[1, 12], cashYears:[1, 10], investShare:[0, 1], cgtGain:[0, 1], saveShare:[0, 1], noAnswer:[0, 5000], lifeShare:[0.3, 1], lifeYears:[1, 30], mortRate:[0.005, 0.1], loanRate:[0, 0.3], cardRate:[0, 0.35], depRate:[0, 0.06], buyFees:[0, 50000], fundChg:[0, 0.05], waitYears:[0, 20], style:[1, 3]};
 const setBoundMsg = k => { const b = SETBOUNDS[k], s = SET[k]; if (!b) return ''; const f = x => s.u === 'pct' ? (+(x * 100).toFixed(2)) + '%' : s.u === 'eur' ? eur(x) : String(x); return 'Allowed: ' + f(b[0]) + ' to ' + f(b[1]) + (k === 'lumpSum' ? ' (25% is the legal limit)' : ''); };
 function settingsHTML(){ const grps = []; Object.entries(SET).forEach(([k, s]) => { let g = grps.find(x => x[0] === s.grp); if (!g) grps.push(g = [s.grp, []]); g[1].push(k); });
   return '<div class="note" role="note" style="background:#FFF3CD;border:1.5px solid #E0B84A"><b>🔒 Admin view · not for customers.</b> LifeMap or a partner (credit union, adviser firm, company, agent) controls these standards. A figure changed here changes the suggestion everywhere, in the app and in the workbook\'s Settings sheet. Customers can still change any of them for their own plan. Law values (tax, USC, PRSI, pension relief, State Pension, Central Bank limits) are not here and can\'t be changed. Retirement age and life expectancy have no standard.</div>' +
@@ -7343,7 +7375,7 @@ function showRoad(){ const sv = document.querySelector('#r-glance svg[role=img]'
 function tlOnScreen(){ const t = document.querySelector('.tl-board'), m = document.getElementById('main'); if (!t || !m) return false; const a = t.getBoundingClientRect(), b = m.getBoundingClientRect(); return a.bottom > b.top && a.top < b.bottom; }
 function showTL(){ const t = document.querySelector('.tl-board'); if (t) t.scrollIntoView({block:'start', behavior:'instant'}); }
 addEventListener('resize', () => { fit(); const l = phoneLandscape(); if (wasLand !== null && l !== wasLand && S && (S.app || S.shell)){ const vis = S.app && roadOnScreen(), tlv = tlOnScreen(); render(); if (document.getElementById('tl')) layoutTL(); if (vis && l) showRoad(); else if (tlv) showTL(); } else if (document.getElementById('tl')) layoutTL(); wasLand = l; });
-S = fresh(); side(); document.body.classList.toggle('desk', isDesk()); if (deskPref){ document.getElementById('vphone').setAttribute('aria-pressed','false'); document.getElementById('vdesk').setAttribute('aria-pressed','true'); } fit(); render();
+S = fresh(); try { applyAssume(); } catch (e) {} side(); document.body.classList.toggle('desk', isDesk()); if (deskPref){ document.getElementById('vphone').setAttribute('aria-pressed','false'); document.getElementById('vdesk').setAttribute('aria-pressed','true'); } fit(); render();
 new MutationObserver(() => setBg(document.getElementById('report').classList.contains('on'))).observe(document.getElementById('report'), {attributes:true, attributeFilter:['class']});   // the page behind the report is inert while it is open, however it was opened or closed
 ['screen', 'report'].forEach(id => emoObs.observe(document.getElementById(id), {childList:true, subtree:true, characterData:false}));
 

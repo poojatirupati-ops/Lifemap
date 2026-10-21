@@ -1,5 +1,14 @@
 # Changelog
 
+## 21 Oct 2026 · Budget 2027 rules as a plan start-year option, capital gains tax on sold assets
+- **Start the plan in 2027** now uses the Budget 2027 rules (announced 6 Oct 2026) from 1 January 2027: 40% band €46,500 (one-parent €50,500, married €55,500 + up to €37,500), personal / employee / earned income credits €2,125, Home Carer €2,050, Rent Tax Credit €1,150 (€2,300 joint), USC 2% band to €30,300, State Pension €309.30 a week, exit tax 35%. A plan that starts in 2026 keeps the 2026 rules. Everything is in one place (`RULES_2027`), flagged verify, and shown in "What your plan assumes" and the report.
+- From 7 Oct 2026, in both years: CGT 31%, Help to Buy up to €35,000, CAT Group A threshold €420,000 (info).
+- Not changed in the Budget so left as 2026: DIRT, USC rates, PRSI path, pension limits, SFT, stamp duty, age credit. Qualified Adult and other Social Welfare rates still to update. New Investment Account (July 2027) noted, not modelled.
+- Capital gains tax is now taken off sales of other assets, crypto, gold and art in the funding order, on a share of their value treated as a gain (new assumption, standard 40%; yearly exemption not counted).
+- Rules are set from the start year on load, so the calculators and the plan use the same year.
+- Tests: `tests/asm.js` updated for the 2027 values. The calculator-vs-workbook test (`tools/calc-vs-xlsx`) now fails 14 of 161 and shows 16 constant differences, all because the workbook still holds 2026 rules; the workbook is updated next.
+- Added `docs/tax-audit-and-assumptions.md`: tax coverage audit, Voyant comparison and the full assumptions list.
+
 ## 20 Oct 2026 · Engine v3.0: emergency fund first, funding order, home option, policies, money explanation
 - Emergency fund first: target = 3 months of essential spending with two secure incomes, otherwise 6 (the
   customer's setting). If cash is below the target, an Emergency fund goal is added, ranked first. It is optional:
