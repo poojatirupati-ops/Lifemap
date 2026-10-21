@@ -6376,7 +6376,7 @@ const FEE = {ty:2, n:'yearly fees', mk:'fundChg', t:'pct'}, RET = {ret:true, n:'
 const CALC_A = {borrow:{rate:'mortRate'}, repayment:{rate:'mortRate'}, overpay:{rate:'mortRate'}, ratechange:{rate:'mortRate'}, term:{rate:'mortRate'}, mortgageprotect:{rate:'mortRate'}, rentbuy:{rate:'mortRate', g:'houseGrow'},
   goalplanner:{r:'cash'}, compound:{r:'invGross'}, lumpsum:{r:'invGross', f:FEE, wait:WAIT}, regularinvest:{g:'invGross', f:FEE}, fees:{g:'invGross', a:FEE, b:FEE}, realreturn:{r:'invGross'},
   emergency:{mt:'safetyMonths'}, retirement:{g:'pen', ra:RET, o:SPY}, contrib:{g:'pen'}, avc:{g:'pen'}, lastmoney:{g:'penRet', age:RET_W}, lifecover:{y:'lifeYears', surv:'survivor'}, incomegap:{ib:IBW}, riskreturn:{s:STYLE}, debtpay:{apr:'cardRate'}, loan:{apr:'loanRate'}};
-const CALC_X = {borrow:['buyFees'], deposit:['buyFees'], rentbuy:['rentRise', 'upkeep', 'buyFees', 'depEarn'], retirement:['wage', 'retireMult', 'lumpSum', 'accessAge'], lastmoney:['ddTiming', 'planEnd'], drawdown:['ddTiming', 'riskMu1', 'riskMu2', 'riskMu3'],
+const CALC_X = {borrow:['buyFees'], deposit:['buyFees'], rentbuy:['rentRise', 'upkeep', 'buyFees', 'depEarn'], retirement:['wage', 'retireMult', 'lumpSum', 'accessAge'], contrib:['wage'], lastmoney:['ddTiming', 'planEnd'], drawdown:['ddTiming', 'riskMu1', 'riskMu2', 'riskMu3'],
   riskreturn:['riskMu1', 'riskMu2', 'riskMu3', 'riskVol1', 'riskVol2', 'riskVol3'], lifecover:['lifeShare'], budget:['budgetNeeds', 'budgetWants', 'budgetSave']};
 // §27.5: a calculator input that is a LifeMap standard (not the customer's own figure, not a required choice)
 const calcStdItem = s => !!s && !s.ret && ((s.a && asmKind(s.a) === 'std') || (!s.a && s.ty === 3 && !!s.sug));

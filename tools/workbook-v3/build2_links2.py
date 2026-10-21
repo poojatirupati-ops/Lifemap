@@ -1,3 +1,4 @@
+from openpyxl.workbook.defined_name import DefinedName
 # ---- round 2: goal-linked inputs, debt that takes longest, C10 / C13 app method ----
 PIN="'Plan inputs'!$N$111:$N$132"
 def goalcol(col,key): return f"IFERROR(INDEX('Plan inputs'!${col}$111:${col}$132,MATCH(\"{key}\",{PIN},0)),0)"
@@ -26,8 +27,14 @@ c10['B45']='• With the wait as long as or longer than the years, the money onl
 c10['B63']='Note: while it waits, the money earns the cash savings rate (your Plan assumption "Cash savings earn"), as in the app. If growth after fees is no more than the cash rate, waiting costs nothing or less.'
 # C13: contributions rise with pay (the app's method)
 c13=wb['C13 Contribution impact']
-c13['C29']='=IF(Need_1<>"",Need_1,IF(ABS(Used_Growth_Rate-AS_Wage)<1E-12,12*Extra_Per_Month*Years*(1+Used_Growth_Rate)^(Years-1),12*Extra_Per_Month*((1+Used_Growth_Rate)^Years-(1+AS_Wage)^Years)/(Used_Growth_Rate-AS_Wage)))'
-c13['B39']='• Extra a month = salary × increase ÷ 12 in the first year. The extra rises with pay each year (Plan assumption "Pay rises"), so Value = 12 × extra × ((1+growth)^years − (1+pay rise)^years) ÷ (growth − pay rise).'
+from copy import copy as _cp
+for col in range(2,8):
+    src=c13.cell(22,col); dst=c13.cell(23,col); dst.font=_cp(src.font); dst.fill=_cp(src.fill); dst.border=_cp(src.border); dst.alignment=_cp(src.alignment); dst.number_format=src.number_format
+c13['B23']='Pay rises a year (contributions rise with pay)'; c13['D23']='%'; c13['E23']='Type 3 · LifeMap standard · LifeMap uses 3% a year (Irish pay has grown about 3%-4% a year recently; LifeMap Standard set). Change it if you want to use your own. Allowed: 0% to 6% · steps of 0.25%'
+c13['F23']='=AS_Wage'; c13['G23']='=IF(ISBLANK(C23),F23,C23)'; c13['C23'].fill=_cp(c13['C22'].fill); c13['C23'].number_format='0.00%'; c13['F23'].number_format='0.00%'; c13['G23'].number_format='0.00%'
+c13.defined_names['Wage']=DefinedName('Wage',attr_text="'C13 Contribution impact'!$G$23")
+c13['C29']='=IF(Need_1<>"",Need_1,IF(ABS(Used_Growth_Rate-Wage)<1E-12,12*Extra_Per_Month*Years*(1+Used_Growth_Rate)^(Years-1),12*Extra_Per_Month*((1+Used_Growth_Rate)^Years-(1+Wage)^Years)/(Used_Growth_Rate-Wage)))'
+c13['B39']='• Extra a month = salary × increase ÷ 12 in the first year. The extra rises with pay each year (the pay rise on this sheet, from your Plan assumption "Pay rises"), so Value = 12 × extra × ((1+growth)^years − (1+pay rise)^years) ÷ (growth − pay rise).'
 c13['B58']='Note: the extra contribution rises with pay each year, as in the app and your plan. Tax relief shown is for the first year.'
 c13['C32'].value=c13['C32'].value
 json.dump(linked,open(SC+'linked.json','w'))

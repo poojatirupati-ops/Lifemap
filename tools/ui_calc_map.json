@@ -641,6 +641,10 @@
     [
      "penChg",
      "Typical_Pension_Charges"
+    ],
+    [
+     "wage",
+     "Wage"
     ]
    ]
   ]

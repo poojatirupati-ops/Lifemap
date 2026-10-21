@@ -127,6 +127,9 @@ def compare(x, sc, out, tol=1.0, verbose=True):
     for i, ln in enumerate(out['lines']):
         v = x.val(f'GR{i + 1}_Line')
         if (v or '') != (ln or ''): bad.append(('line', i, ln, v))
+    for i, w in enumerate(out.get('why', [])):   # where each goal's money comes from (the app's goalWhy)
+        v = x.getcell('Plan goals', f'AC{110 + i}'); v = '' if v is None else v
+        if v != (w or ''): bad.append(('why', i, w, v))
     if out['fnd'] and not out.get('wiOn'):
         held = False
         for i, L in enumerate(out['fnd']):

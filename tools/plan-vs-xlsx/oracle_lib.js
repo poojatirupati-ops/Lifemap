@@ -38,7 +38,7 @@ window.readOutputs = function(){
   applyAssume(); const out = {}; out.dob = {you:S.about.dob, partner:S.about.pdob || null}; const P0 = project(), P = project(S.wi);
   const rows = P.rows.map(r => ({t:r.t, a:r.a, inflow:r.inflow, needs:r.needs, goalPaid:r.goalPaid, living:r.living, fixed:r.fixed, goalCost:r.goalCost, short:r.short, shortLiving:r.shortLiving, goalGap:r.goalGap, used:r.used, saved:r.saved, spent:r.spent, liquid:r.liquid, pen:r.pen, tax:r.tax, gross:r.gross, isShort:isShort(r) ? 1 : 0}));
   out.rows = rows; out.N = AS.end - S.about.age;
-  out.pct = S.goals.map(g => P.pct[g.id]); out.bands = S.goals.map(g => band(P.pct[g.id]));
+  out.pct = S.goals.map(g => P.pct[g.id]); out.why = S.goals.map(g => goalWhy(P, g)); out.bands = S.goals.map(g => band(P.pct[g.id]));
   out.goalNums = S.goals.map(g => P.goal[g.id] ? {needM:P.goal[g.id].needM, nowM:P.goal[g.id].nowM, avgM:P.goal[g.id].avgM} : null);
   out.save = P0.save; out.wiOn = !!(S.wi && (S.wi.m || S.wi.l));
   out.amounts = S.goals.map(g => g.amount);

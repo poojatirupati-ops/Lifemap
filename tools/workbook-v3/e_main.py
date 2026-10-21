@@ -71,6 +71,54 @@ pgd={'cashAfterBuf':'J75','preTakeE':'J78','preTakeR':'J79'}
 hws,hc=e_holdings.build_holdings(wb,cf,pgd)
 pg['J77']=f"='Plan holdings'!{hc['capInv']}7+'Plan holdings'!{hc['capOth']}7+'Plan holdings'!{hc['capAlt']}7"
 pg['D77']='=PG_Easy0+PG_Rest0'; pg['D78']=f"='Plan holdings'!{hc['wTot']}7"
+# ---- where each goal's money comes from (the app's goalWhy): per goal, today's draw and the draw when it is due, by pot
+HP="'Plan holdings'!"
+for k_,cl_ in (('J80','capInv'),('J81','capOth'),('J82','capAlt')): pg[k_]=f"={HP}{hc[cl_]}7"
+for rr_,lab_,nm_ in ((80,'Investments if all sold today, after tax','PG_CapInv'),(81,'Other assets if sold today, after tax','PG_CapOth'),(82,'Alternative investments if sold today, after tax','PG_CapAlt')):
+    pg.cell(rr_,7,lab_); pg.cell(rr_,10).fill=PLN; cellname(wb,nm_,pg,f'J{rr_}')
+for c,h in zip(range(29,40),['Today: from cash','Today: from savings accounts','Today: from investments','Today: from other assets','Today: from alternative investments','When due: from cash','When due: from savings accounts','When due: from investments','When due: from other assets','When due: from alternative investments','Where the money comes from (before the % line)']):
+    x=pg.cell(53,c,h); x.fill=HEAD; x.font=WH; x.alignment=Alignment(wrap_text=True,vertical='top')
+newcol_start=NC
+dcols={}
+for K_ in range(1,21):
+    for key,h in (('cT','cumulative paid from savings, goal'),('cF','cumulative freed, goal'),('dc','from cash'),('ds','from savings accounts'),('di','from investments'),('do','from other assets'),('da','from alternative investments')):
+        newcol(f'{key}{K_}',f'Goal {K_} when due: {h}' if key[0]=='d' else f'Goal {K_}: {h}')
+for r in range(8,98):
+    for K_ in range(1,21):
+        top=f"{cf[f's{K_}_top']}{r}"
+        fr=f"{cf[f's{K_}_due']}{r}*IF(Slot{K_}_SpendLike=1,{cf[f's{K_}_potS']}{r}-{cf[f's{K_}_pay0']}{r},IF(Slot{K_}_PotFree=1,{cf[f's{K_}_potS']}{r},0))"
+        pv_c=f"{cf[f'cT{K_-1}']}{r}" if K_>1 else '0'; pv_f=f"{cf[f'cF{K_-1}']}{r}" if K_>1 else '0'
+        ws[f"{cf[f'cT{K_}']}{r}"]=f"={pv_c}+{top}"; ws[f"{cf[f'cF{K_}']}{r}"]=f"={pv_f}+{fr}"
+        D0=pv_c; D1=f"{cf[f'cT{K_}']}{r}"
+        Pc=f"({HP}{hc['cashS']}{r}+{HP}{hc['aCash']}{r}+(1-H_Sh)*{pv_f})"; Ps=f"{HP}{hc['savS']}{r}"
+        Pi=f"({HP}{hc['capInv']}{r}-{HP}{hc['fInv']}{r}+H_Sh*{pv_f})"; Po=f"{HP}{hc['capOth']}{r}"; Pa=f"{HP}{hc['capAlt']}{r}"
+        b1=Pc; b2=f"({Pc}+{Ps})"; b3=f"({Pc}+{Ps}+{Pi})"; b4=f"({Pc}+{Ps}+{Pi}+{Po})"; b5=f"({Pc}+{Ps}+{Pi}+{Po}+{Pa})"
+        seg=lambda lo,hi: f"=MAX(0,MIN({D1},{hi})-MAX({D0},{lo}))"
+        ws[f"{cf[f'dc{K_}']}{r}"]=seg('0',b1); ws[f"{cf[f'ds{K_}']}{r}"]=seg(b1,b2); ws[f"{cf[f'di{K_}']}{r}"]=seg(b2,b3); ws[f"{cf[f'do{K_}']}{r}"]=seg(b3,b4); ws[f"{cf[f'da{K_}']}{r}"]=seg(b4,b5)
+for K_ in range(1,21):
+    rr=53+K_
+    cumE=f"SUM($Y$54:Y{rr})"; cumEp=f"({cumE}-Y{rr})"; cumR=f"SUM($Z$54:Z{rr})"; cumRp=f"({cumR}-Z{rr})"
+    pg[f'AC{rr}']=f"=MIN({cumE},PG_CashAfterBuf)-MIN({cumEp},PG_CashAfterBuf)"
+    pg[f'AD{rr}']=f"=MIN(MAX(0,{cumE}-PG_CashAfterBuf),H_Sav0)-MIN(MAX(0,{cumEp}-PG_CashAfterBuf),H_Sav0)"
+    pg[f'AE{rr}']=f"=MIN({cumR},PG_CapInv)-MIN({cumRp},PG_CapInv)"
+    pg[f'AF{rr}']=f"=MIN(MAX(0,{cumR}-PG_CapInv),PG_CapOth)-MIN(MAX(0,{cumRp}-PG_CapInv),PG_CapOth)"
+    pg[f'AG{rr}']=f"=MIN(MAX(0,{cumR}-PG_CapInv-PG_CapOth),PG_CapAlt)-MIN(MAX(0,{cumRp}-PG_CapInv-PG_CapOth),PG_CapAlt)"
+    for col,key in zip(('AH','AI','AJ','AK','AL'),('dc','ds','di','do','da')):
+        pg[f'{col}{rr}']=f"=SUM('Plan cashflow'!{cf[f'{key}{K_}']}$8:{cf[f'{key}{K_}']}$97)"
+    names=['cash','savings accounts','investments','other assets','alternative investments']
+    pc=lambda col,txt: f'IF({col}{rr}>0.5," + €"&TEXT({col}{rr},"#,##0")&" from your {txt} today","")'
+    pd=lambda col,txt: f'IF({col}{rr}>0.5," + €"&TEXT({col}{rr},"#,##0")&" from your {txt} when it is due","")'
+    parts=(f'IF(R{rr}>0," + €"&TEXT(R{rr},"#,##0")&" already saved","")&'+'&'.join(pc(c,t) for c,t in zip(('AC','AD','AE','AF','AG'),names))+
+           f'&IF(Slot{K_}_AvgM>0," + about €"&TEXT(Slot{K_}_AvgM,"#,##0")&" a month from your pay"&IF(J{rr}>0," for "&J{rr}&IF(J{rr}=1," year"," years"),""),"")&'+'&'.join(pd(c,t) for c,t in zip(('AH','AI','AJ','AK','AL'),names)))
+    pg[f'AM{rr}']=f'=IF(D{rr}=1,MID({parts},4,2000),"")'
+for i in range(1,23):
+    r4=109+i
+    A=f"CHOOSE($I{r4},"+','.join(f"AM{53+k}" for k in range(1,21))+")"
+    own='OR(In_home="Own outright",In_home="Own with mortgage")'
+    down=f'IF(AND(In_homeUse="Only as a last resort",{own},In_homeValue>0)," If you downsized at 70 to a home worth half as much, you\'d free about €"&TEXT(ROUND(In_homeValue*0.5*0.9,0),"#,##0")&" in today\'s money"&IF(ROUND(In_homeValue*0.5*0.9,0)>=E{r4}-F{r4},", which would close this gap.","."),"")'
+    pg[f'AC{r4}']=(f'=IF(OR($Q{r4}="",NOT(OR($D{r4}="spend",$D{r4}="mfree",$D{r4}="pot"))),"",IF({A}<>"",{A}&", plus growth: "&G{r4}&"% covered.","")&IF(AND(E{r4}-F{r4}>1,G{r4}<100)," Still to find: €"&TEXT(E{r4}-F{r4},"#,##0")&IF($D{r4}<>"pot"," (in future euros)","")&"."&{down},""))')
+pg['AC109']='Where each goal\'s money comes from (the app\'s line)'
+pg['AC109'].fill=HEAD; pg['AC109'].font=WH
 # ---- Plan cashflow: the savings pots now come from Plan holdings
 for r in range(8,98):
     ws[f"{cf['free0']}{r}"]=f"='Plan holdings'!{hc['avail']}{r}"
@@ -145,6 +193,11 @@ def union(f):
 for r in (140,141,142,143,144,145,146,147,148,151,152):
     v=pr_.cell(r,3).value; nv=union(v); assert nv!=v,(r,v)
     pr_.cell(r,3).value=nv
+# ---- the sample customer's "typed" search figures follow the app (2026 rules): goal 1 needs 255 more a month, three goals cannot reach 100%, the main gap closes with 250 a month
+pg_=wb['Plan goals']
+pg_['AB113']='=IF(ISBLANK(L113),IF(Fill_Example="Yes","none",""),L113)'; pg_['AB114']='=IF(ISBLANK(L114),IF(Fill_Example="Yes","none",""),L114)'
+c_=cell_of('Find_ExtraFor')
+rc=wb['Plan results']['C38']; assert '"none"' in rc.value; rc.value=rc.value.replace('IF(Fill_Example="Yes","none","")','IF(Fill_Example="Yes",250,"")')
 pp_=wb['Plan pay & tax']
 # ---- ARF / PRSA withdrawals: PRSI (UNRESOLVED in the register; the prototype applies it) and shares held directly grow without the exit-tax smoothing
 asm=wb['Assumptions']; rr=135
