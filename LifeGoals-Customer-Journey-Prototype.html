@@ -2944,6 +2944,61 @@ body:not(.desk) .sheet.chatsheet{height:calc(100% - 52px)!important;max-height:c
 .elg2-go{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;border-radius:999px;border:0;background:linear-gradient(90deg,#079E98,#0B5880);color:#fff;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px -12px rgba(7,158,152,.8);white-space:nowrap}
 .elg2-go i{font-style:normal}
 .elg2-t{display:block;text-align:center;margin-top:8px;font-size:12px;color:#5B6B76}
+/* v149 batch 1: plan timeline actions, results strip, tap targets, desktop buttons, timeline chips */
+.tl-acts{display:flex;gap:8px;margin:4px 0 0}
+.tl-act{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border-radius:999px;border:1.5px solid #CFE7E6;background:#fff;color:#086A74;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.tl-act:hover{background:#EAF7F6}
+.card.tls{display:flex!important;align-items:center;gap:12px;padding:14px!important;background:linear-gradient(135deg,#0B5880,#079E98)!important;color:#fff!important;border:0!important;box-shadow:0 14px 30px -18px rgba(7,158,152,.7)!important}
+.tls-m{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.tls-m b{font-size:16px}.tls-m small{font-size:12px;opacity:.85}
+.tls-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}.tls-bar i{display:block;height:100%;background:#fff;border-radius:3px}
+.tls-go{flex-shrink:0;min-height:40px;padding:0 16px;border-radius:999px;border:0;background:#fff;color:#182A54;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+details.wigrow > summary{cursor:pointer}
+#miss-banner{font-size:13px!important}
+.prelim{font-size:12.5px!important;padding:10px 12px!important;border-radius:14px!important}
+.banner.sbn .link{min-height:36px!important;display:inline-flex!important;align-items:center}
+.gr-more{min-height:36px;padding:0 6px!important}
+.rank .rk-arr .chip.sm{height:30px!important;width:30px!important}
+.nudge .link{min-height:36px!important;display:inline-flex!important;align-items:center}
+body.desk #main .btn:not(.sm):not(.tls-go){width:auto!important;max-width:100%;min-width:240px;padding-left:32px!important;padding-right:32px!important}
+body.desk #main .grid2 .btn{width:100%!important;min-width:0}
+.tl-chip .nm{white-space:nowrap!important;max-width:none!important}
+.prelim{display:flex!important;align-items:center;gap:8px;background:#F2F6F7!important;color:#5B6B76!important;font-weight:600}
+.prelim > span:last-child{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.prelim .link{color:#086A74!important;white-space:nowrap}
+#r-prof.banner{display:flex!important;align-items:center;gap:10px;width:100%;padding:10px 10px 10px 12px!important;border-radius:16px!important;background:#fff!important;border:1px solid rgba(8,106,116,.1)!important;font-size:13px}
+#r-prof.banner > span:nth-child(2){flex:1;min-width:0}
+#r-prof.banner .link{margin-left:auto!important;flex-shrink:0;padding:7px 12px!important;border-radius:999px;background:#EAF7F6;color:#086A74!important;text-decoration:none!important;font-size:12.5px!important;font-weight:700;white-space:nowrap;min-height:0!important}
+/* v150 batch 2: one shared look for older pages - teal selections, soft tags, sans eyebrows, tidy rows */
+html body #screen .chip.sel,html body #screen .chip[aria-pressed="true"]{background:#EAF7F6!important;border-color:#079E98!important;color:#086A74!important;box-shadow:0 0 0 1px #079E98!important}
+html body #screen .chip{border-radius:999px}
+html body #screen .seg button.on,html body #screen .seg button[aria-pressed="true"]{background:#EAF7F6!important;color:#086A74!important;box-shadow:inset 0 0 0 1.5px #079E98!important}
+html body #screen .tag{font:600 11px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;padding:2px 8px!important;border-radius:999px!important;border:0!important}
+html body #screen .eyebrow{font-family:Inter,system-ui,sans-serif!important;letter-spacing:.06em!important;font-size:11px!important;font-weight:700!important;color:#086A74!important;animation:none!important}
+html body #screen .stat.done{background:linear-gradient(145deg,#08D9B8,#0A7A85)!important;color:#fff!important;border:0!important}
+html body #screen .stat.look{background:#FFF4DE!important;color:#9A6B00!important;border:0!important}
+html body #screen .stat{border-radius:50%}
+html body #screen .goal .small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body #screen .goal{border:1px solid rgba(8,106,116,.08)!important;box-shadow:0 8px 20px -18px rgba(24,42,84,.45)!important}
+html body #screen .goal .ic{background:#EAF7F6!important;border-radius:12px!important;box-shadow:none!important}
+html body #screen .btn.sm:not(.ghost){background:linear-gradient(90deg,#079E98,#0A7A85)!important;color:#fff!important;border:0!important}
+html body #screen .check input[type=checkbox]{accent-color:#079E98;width:20px;height:20px}
+html body #screen .card[style*="var(--ok-l)"],html body #screen .card[style*="var(--sea-l)"]{background:#F2FAF9!important;border:1px solid rgba(8,106,116,.1)!important}
+html body #screen .note{border-radius:14px!important}
+html body #screen .disc{font-size:11.5px;color:#7A8A92}
+/* v151 declutter: long helper text trimmed to two lines in choice blocks */
+html body #screen .infl > p.small{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body #screen .infl button,html body #screen .infl .chip{border-radius:12px!important;text-align:left}
+/* v152: one font family everywhere (no typewriter labels); adviser match note */
+:root{--fm:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
+html body #screen .vc-kind,html body #screen .av2-tag,html body #screen .lv2-d small,html body #screen .elg2-val small{letter-spacing:.04em!important}
+.av2-why{display:block!important;line-height:1.45}
+.av2-why > span{margin-right:6px}
+html body #screen .brand2 .bt small{letter-spacing:.02em}
+html body #screen .dday.on{background:linear-gradient(160deg,#08D9B8,#0B5880)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 20px -10px rgba(7,158,152,.7)!important}
+html body #screen .dday.on *{color:#fff!important}
+html body #screen .slots button.on,html body #screen .slot.on,html body #screen [data-a="bslot"][aria-pressed="true"]{background:#EAF7F6!important;color:#086A74!important;border-color:#079E98!important;box-shadow:0 0 0 1px #079E98!important}
+html body #screen .sheet:not(.chatsheet) h2.t{font-size:23px!important;line-height:1.2!important;padding-right:48px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4421,7 +4476,7 @@ V.P3 = () => { const sec = FSEC[S.fsec], mode = sec.docs.length ? (S.fmode[sec.i
     (sec.id === 'about' ? '<div class="card"><div class="field"><span class="flabel">Planning with a partner? <span class="tag pre">From your answers</span></span><div class="seg" role="group" style="margin:0" aria-label="Planning with a partner">' + ['Yes','No'].map(x => { const on = (x === 'Yes') === !!S.about.partner; return '<button class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-a="partner" data-p="' + x + '">' + x + '</button>'; }).join('') + '</div></div>' +
       '<div class="field" style="margin:0"><span class="flabel">Children or others who rely on you <span class="tag pre">From your answers</span></span><div class="seg" role="group" style="margin:0" aria-label="Dependants">' + ['0','1','2','3+'].map((x, k) => '<button class="' + (S.about.deps === k ? 'on' : '') + '" aria-pressed="' + (S.about.deps === k) + '" data-a="deps" data-p="' + k + '">' + x + '</button>').join('') + '</div></div>' +
       (S.about.partner ? '<div style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px"><b>Your partner</b>' + partnerBlock() + '</div>' : '') + credChips() + '</div>' : '');
-  const blankNote = sec.id === 'about' ? '' : '<p class="small" style="margin:0 2px 10px">Leave blank anything you don\'t have. It counts as €0 and stays on your list as optional. You never need to type 0.</p>';
+  const blankNote = sec.id === 'about' ? '' : '<p class="small" style="margin:0 2px 10px">Skip anything you don\'t have. It counts as €0.</p>';
   return {id:'P3-' + (S.fsec + 1), note:'Section ' + (S.fsec + 1) + ' of 6 · ' + sec.t + '. Upload vs Type it; every field has "Not sure? See an example" (§15), which never fills the field.', head:flowHead(3, 'Your finances · ' + (S.fsec + 1) + ' of 6', sec.e + ' ' + sec.t, sec.id === 'about' ? 'Mostly filled in from your answers. Just check it.' : sec.id === 'prot' ? 'Say Yes or No for each type. Add the details if you like.' : 'Upload a document or type it in. Round figures are fine.', 'fback'),
   html:(sec.docs.length ? '<div class="seg" role="group" aria-label="How to add">' + [['upload','📄 Upload'],['type','⌨️ Type it']].map(([m, l]) => '<button class="' + (mode === m ? 'on' : '') + '" aria-pressed="' + (mode === m) + '" data-a="fmode" data-p="' + m + '">' + l + '</button>').join('') + '</div>' : '<p class="small">' + (sec.id === 'prot' ? 'Add a policy under each type if you like. No other documents needed.' : 'No documents needed here. ID and proof of address are handled by your adviser later.') + '</p>') + blankNote + body,
   foot:'<button class="btn" data-a="fsave">Save this section</button>'};
@@ -4474,7 +4529,7 @@ function extraTo100(g){ const w = S.wi && S.wi.g === g.id ? S.wi : {m:0, l:0}, o
   if (!ok(5000)) return null; let lo = 0, hi = 5000; for (let i = 0; i < 13; i++){ const mid = (lo + hi) / 2; if (ok(mid)) hi = mid; else lo = mid; } return Math.ceil(hi / 5) * 5; }
 /* v3.0: the saving line and where each goal's money comes from */
 function saveLine(P){ P = P || project(); const sv = P.save; if (!sv || !(sv.surplusM > 0)) return ''; const spent = Math.max(0, sv.surplusM - sv.saveM);
-  return 'After tax, living costs and debt repayments you have ' + eur(sv.surplusM) + ' a month left. Your plan saves ' + eur(sv.saveM) + ' of it towards your goals; ' + eur(spent) + ' is for everyday spending. Change this in My monthly saving.'; }
+  return eur(sv.surplusM) + ' a month left after costs · ' + eur(sv.saveM) + ' goes to your goals, ' + eur(spent) + ' to everyday spending.'; }
 const SRC_W = {cash:'cash', sav:'savings accounts', inv:'investments', oth:'other assets', alt:'alternative investments'};
 function goalWhy(P, g){ const x = P.goal && P.goal[g.id]; if (!x || g.kind === 'retire' || g.kind === 'legacy') return '';
   const parts = []; if (x.saved0 > 0) parts.push(eur(x.saved0) + ' already saved');
@@ -5763,7 +5818,7 @@ function wiCard(){ const w = S.wi, gs = S.goals.slice().sort((a, b) => a.age - b
     '<div class="grid2" style="margin-top:12px"><button class="btn sm" style="width:100%" data-a="wisave">Save this plan</button><button class="btn sm ghost" style="width:100%" data-a="wireset">Back to my plan</button></div></div>'; }
 function resultsHTML(){ if (!planReady()) return gateHTML('res');
   const P0 = project(), P = project(S.wi), F = findings(P0), rough = qualityCount() > 2;
-  return '<div class="prelim"><span aria-hidden="true">ℹ️</span><span>Preliminary guidance · based on your figures and the assumptions you chose · not financial advice. <button class="link" style="padding:0;font-size:12.5px" data-a="sheet" data-p="assume">What your plan assumes</button></span></div>' +
+  return '<div class="prelim"><span aria-hidden="true">ℹ️</span><span>Guidance from your figures, not financial advice. <button class="link" style="padding:0;font-size:12.5px" data-a="sheet" data-p="assume">What we assume</button></span></div>' +
     roughNote() + planProfileBanner() +
     '<div class="card"><h3 class="h">Your goals</h3><p class="small" style="margin:0 0 6px">How much of each goal your future income and savings can cover.</p><div id="r-goals">' + goalsBox(P) + '</div></div>' +
     '<div class="card" id="r-found"><h3 class="h">What we found</h3><div class="found" style="margin-top:8px">' +
@@ -5782,7 +5837,7 @@ function liveUpdate(fromBox){ const P0 = project(), P = project(S.wi);
   if (fromBox) { const sv = document.querySelector('#r-save .nb'); if (sv && document.activeElement !== sv) sv.value = nbFmt(project().save.saveM); }
   const g = gById(S.wi.g); set('wim-h', S.wi.m < 0 ? 'Saving less each month (affects your whole plan)' : S.wi.m > 0 ? 'Extra each month towards ' + esc(g ? g.name.toLowerCase() : 'your goal') + (g && g.kind === 'retire' ? ' (counted as retirement saving)' : ' until it happens') : '−€500 to +€1,000 a month');
 }
-function tlStrip(){ if (!planReady()){ const m = planMissing(); return '<div class="card row" id="tl-strip" style="background:var(--sea-l)"><div style="flex:1"><b>To see your results we need ' + m.length + (m.length === 1 ? ' thing' : ' things') + '</b><div class="small" style="color:var(--ink)">Your goals\' progress shows once ' + (m.length === 1 ? 'it is' : 'they are') + ' chosen.</div></div><button class="btn sm" data-a="gofix" data-p="' + m[0].k + '">Choose</button></div>'; } const P = project(), n = S.goals.filter(g => P.pct[g.id] >= 95).length; return '<div class="card row" id="tl-strip" style="background:var(--sea-l)"><div style="flex:1"><b>' + n + ' of ' + S.goals.length + ' goals on track</b><div class="small" style="color:var(--ink)">Updates as you move things.</div></div><button class="btn sm" data-a="seg" data-p="results">See results ↓</button></div>'; }
+function tlStrip(){ if (!planReady()){ const m = planMissing(); return '<div class="card row" id="tl-strip" style="background:var(--sea-l)"><div style="flex:1"><b>To see your results we need ' + m.length + (m.length === 1 ? ' thing' : ' things') + '</b><div class="small" style="color:var(--ink)">Your goals\' progress shows once ' + (m.length === 1 ? 'it is' : 'they are') + ' chosen.</div></div><button class="btn sm" data-a="gofix" data-p="' + m[0].k + '">Choose</button></div>'; } const P = project(), n = S.goals.filter(g => P.pct[g.id] >= 95).length; return '<div class="card tls" id="tl-strip"><div class="tls-m"><b>' + n + ' of ' + S.goals.length + ' goals on track</b><span class="tls-bar"><i style="width:' + Math.round(n / Math.max(1, S.goals.length) * 100) + '%"></i></span><small>Updates as you move your goals</small></div><button class="tls-go" data-a="seg" data-p="results">Results ↓</button></div>'; }
 
 /* ================= APP SHELL ================= */
 const ICON = {explore:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>', home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>', plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18c3-6 6 2 9-4s4-6 7-6"/><circle cx="20" cy="8" r="1.6" fill="currentColor"/></svg>',
@@ -5793,7 +5848,7 @@ V.PLAN = () => { const hl = S.tlHl != null && gById(S.tlHl), all = S.planEdit;
   const edit = all ? '<div class="sec"><h3>Your goals</h3><button class="link" data-a="planedit">Done</button></div>' + gRows()
     : hl ? '<div id="tl-edit">' + gRows([hl]) + '<button class="link" data-a="tlclose">Done</button></div>' : '';
   return {id:'PLAN', note:'My Plan: timeline at the top (the centre), then goals-on-track strip, then results in spec order: goals % → what we found → what if → at a glance → 3 end actions. Tap a goal to edit it.', head:appHead('My Plan', 'Drag your goals. Your results update below.'),
-    html:tlBoard() + edit + '<div class="row" style="justify-content:space-between;margin:2px 2px 0"><button class="link" data-a="addgoal">＋ Add a goal</button>' + (all ? '' : '<button class="link" data-a="planedit">✏️ Edit goal details</button>') + '</div>' + tlStrip() + (S.goals.length > 1 ? '<details class="card asmg" data-g="rank"' + (S.asmOpen === 'rank' ? ' open' : '') + ' style="margin-top:12px"><summary style="cursor:pointer;font-weight:800;min-height:44px">Which goal first?' + (S.rank ? ' · your order' : '') + '</summary><div style="margin-top:8px">' + rankHTML('plan') + '</div></details>' : '') +
+    html:tlBoard() + edit + '<div class="tl-acts"><button class="tl-act" data-a="addgoal"><span aria-hidden="true">＋</span> Add a goal</button>' + (all ? '' : '<button class="tl-act" data-a="planedit"><span aria-hidden="true">✎</span> Edit goals</button>') + '</div>' + tlStrip() + (S.goals.length > 1 ? '<details class="card asmg wigrow" data-g="rank"' + (S.asmOpen === 'rank' ? ' open' : '') + ' style="margin-top:12px"><summary>Which goal first?' + (S.rank ? ' · your order' : '') + '</summary><div style="margin-top:8px">' + rankHTML('plan') + '</div></details>' : '') +
       '<div id="r-res" style="scroll-margin-top:8px"><div class="sec" style="margin-top:18px"><h3 style="font-size:21px">Your results</h3></div>' + detailsBanner() + resultsHTML() + '</div>'};
 };
 V.GOALS = () => ({id:'PLAN-ADD', note:'Add a goal from My Plan (same goal tiles).', head:appHead('Add a goal', 'Tap to add or remove.', 'seg|timeline'), html:'<div class="gtiles" role="group" aria-label="Goals">' + GOALCAT.map(c => goalTile(c.k)).join('') + '</div>' + S.goals.filter(g => g.k === 'other').map(g => '<div class="pill mint" style="margin-top:10px">' + g.e + ' ' + esc(g.name) + '</div> ').join(''), foot:'<button class="btn" data-a="seg" data-p="timeline">Back to my timeline</button>'});
@@ -5889,7 +5944,7 @@ function p4Asm(){ const n = reqKeys().length, got = n - req3Missing().length, re
 // §22: nothing blocks except the 3 choices. Shown above the results when details are missing or need a look; the count is the My money checklist's.
 function missingFlags(){ return checkItems().filter(x => ['look', 'miss'].includes(x.st)); }
 function detailsBanner(){ const n = missingFlags().length; if (!n) return '';
-  return '<div class="nudge" id="miss-banner" role="status"><span aria-hidden="true">ℹ️</span><span>Based on what you\'ve told us. <b>' + n + (n === 1 ? ' detail' : ' details') + ' missing.</b> Missing figures count as €0, so this is a rough picture.</span><button class="link" data-a="addmiss">' + (n === 1 ? 'Add it' : 'Add them') + '</button></div>'; }
+  return '<div class="nudge" id="miss-banner" role="status"><span aria-hidden="true">ℹ️</span><span><b>' + n + (n === 1 ? ' detail' : ' details') + ' missing</b> · counted as €0 for now, so this is a rough picture</span><button class="link" data-a="addmiss">' + (n === 1 ? 'Add it' : 'Add them') + '</button></div>'; }
 // §27.7: one calm card for Home, Results, Report and the PDF button: how many things, each by its exact name, and a button that jumps to that box and highlights it
 function gateHTML(where){ const m = planMissing(); if (!m.length) return '';
   return '<div class="card" id="gate-' + where + '" style="border:1.5px dashed #B9C9D6;box-shadow:none"><b>To see your results we need ' + m.length + (m.length === 1 ? ' thing' : ' things') + '</b><p class="small" style="margin:4px 0 8px">Only you can choose ' + (m.length === 1 ? 'this' : 'these') + ', so we never fill ' + (m.length === 1 ? 'it' : 'them') + ' in for you. Everything else is set for you and can be changed later.</p>' +
