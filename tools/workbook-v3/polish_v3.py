@@ -9,7 +9,7 @@ HID = ['Plan pay & tax', 'Plan holdings', 'Plan debt months']
 rm = wb['READ ME']
 rm['A1'] = 'LifeMap calculators v3.0 (engine v3.0, Irish rules 2026)'
 rm['A2'] = ('Matches the LifeMap prototype (engine v3.0) for plans run on the 2026 rules. The 2027 Budget rules are not in this workbook. '
-            'Items marked "Requires Verification" on the Tax sheet are still to be confirmed against Revenue and Social Protection pages.')
+            'The CGT exemption, the 31% CGT rate and its start date, and PRSI on ARF withdrawals are verified (red on the Tax sheet). Other items marked "Requires Verification" on the Tax sheet are still to be confirmed.')
 # order: everything visible first (as is), engine sheets and hidden support sheets last
 order = [s for s in wb.sheetnames if s not in HID and wb[s].sheet_state == 'visible'] + HID + \
         [s for s in wb.sheetnames if wb[s].sheet_state != 'visible']
@@ -46,7 +46,7 @@ notes = [
  ('Tax constants', 'No differences between the workbook, Tax sheet and the prototype rules table.'),
  ('Independent tax review', '7 of 8 tax cases matched to the euro; the 8th (Employee tax credit on pension income) follows Revenue guidance.'),
  ('How to re-run', 'tools/plan-vs-xlsx/README.md and tools/calc-vs-xlsx (see tools/workbook-v3/README.md).'),
- ('Still to confirm from official pages', 'The €1,270 CGT exemption, the 7 Oct 2026 start of the 31% CGT rate, and PRSI on ARF withdrawals.'),
+ ('Verified by the proposition owner (Oct 2026)', 'The €1,270 CGT exemption, the 31% CGT rate from 7 Oct 2026, and PRSI on ARF withdrawals. All other figures on the Tax sheet keep their status.'),
  ('Not in the plan', 'Local Property Tax, stamp duty paid on a home purchase (see C03), business reliefs, tax on a life-policy lump sum, gift and inheritance tax (see C30).'),
 ]
 for a, b in notes:
@@ -95,9 +95,9 @@ RED = Font(bold=True, color='C00000')
 def flag(ws, cell, text):
     c = wb[ws][cell]; c.font = RED
     c.comment = Comment(text, 'LifeMap team', width=320, height=110)
-CGT_X = 'VERIFY AGAIN: CGT annual exemption of €1,270 per person. Checked by the proposition owner; to be confirmed once more against Revenue before sign-off.'
-CGT_D = 'VERIFY AGAIN: 31% CGT rate from 7 October 2026 (33% before). Checked by the proposition owner; to be confirmed once more against Revenue before sign-off.'
-ARF = 'VERIFY AGAIN: PRSI on ARF / PRSA withdrawals (4.24% before 66, and 66 to 70 without a contributory State Pension). Checked by the proposition owner; to be confirmed once more against Revenue / Social Protection before sign-off.'
+CGT_X = 'VERIFIED by the proposition owner (Oct 2026): CGT annual exemption of €1,270 per person. Kept red so it can be found; check again if the rule changes.'
+CGT_D = 'VERIFIED by the proposition owner (Oct 2026): 31% CGT rate from 7 October 2026 (33% before). Kept red so it can be found; check again if the rule changes.'
+ARF = 'VERIFIED by the proposition owner (Oct 2026): PRSI on ARF / PRSA withdrawals (before 66, and 66 to 70 without a contributory State Pension). Kept red so it can be found; check again if the rule changes.'
 for ref, t in [('READ ME!B44', CGT_X), ('READ ME!B78', CGT_D), ('READ ME!A80', ARF), ('READ ME!B80', ARF),
                ('Tax!H31', CGT_X), ('Tax!F137', CGT_X), ('Tax!C92', ARF), ('Tax!F92', ARF), ('Tax!C93', ARF), ('Sample walkthrough!B12', CGT_D)]:
     w, c = ref.split('!'); flag(w, c, t)
@@ -105,11 +105,26 @@ for row in wb['Tax'].iter_rows():
     for c in row:
         if isinstance(c.value, str) and ('7 Oct' in c.value) and any(k in c.value for k in ('31%','Capital gains','standard rate')) and 'Group' not in c.value and 'gifts' not in c.value and c.coordinate not in ('H31',) and c.row > 15:
             flag('Tax', c.coordinate, CGT_D)
+
+# the three verified items: status text and wording
+tx = wb['Tax']
+for c in ('E92', 'E93', 'E133', 'E134', 'E135', 'E137', 'J31', 'J32', 'J34', 'J47'): tx[c] = 'Verified'
+for c in ('F92', 'H92', 'F93', 'H93', 'C92'):
+    v = tx[c].value
+    if isinstance(v, str): tx[c] = v.replace('UNRESOLVED: ', '').replace(' (UNRESOLVED)', '')
+tx['F92'] = 'PRSI on ARF / PRSA withdrawals: deducted (Class S) before 66, and from 66 to 70 unless you receive the contributory State Pension. Verified by the proposition owner.'
+tx['H92'] = tx['F92'].value
+tx['F137'] = 'annual exemption per person each tax year (losses come off first, not transferable between spouses, unused amount lost). Verified by the proposition owner.'
+tx['F133'] = 'standard rate on disposals from 7 Oct 2026 (Revenue eBrief 142/26; verified)'
+rm['B26'] = 'The CGT exemption, the 31% CGT rate and its start date, and PRSI on ARF withdrawals are verified by the proposition owner (red). Other figures marked "Requires Verification" on the Tax sheet have not yet been checked against Revenue or Social Protection.'
+rm['B80'] = 'The plan charges 4.24% PRSI on ARF / PRSA withdrawals before 66, and from 66 to 70 if you do not get the contributory State Pension. Verified by the proposition owner.'
+wb['Assumptions']['B135'] = 'PRSI ON ARF / PRSA WITHDRAWALS  ·  verified (type 1, not an input)'
+wb['Sample walkthrough']['B24'] = 'Figures marked "Requires Verification" have not yet been checked against Revenue or the Department of Social Protection, except the CGT exemption, the 31% CGT rate and PRSI on ARF withdrawals, which are verified.'
 pi = wb['Plan inputs']
 pi['B133'] = ('Buy a home goal amount: put the deposit plus stamp duty (1% of the price up to €1m) and buying fees. '
               'The Borrowing, Deposit and Rent vs buy calculators add these for you.')
 pi['B133'].alignment = Alignment(wrap_text=True, vertical='top')
 tn.cell(r + 1, 2, 'Red cells with a comment')
-tn.cell(r + 1, 4, 'The three tax figures above are marked red with a "VERIFY AGAIN" comment (READ ME, Tax, Sample walkthrough).')
+tn.cell(r + 1, 4, 'The three verified tax figures are kept red with a comment so they can be found (READ ME, Tax, Sample walkthrough).')
 wb.active = 0
 wb.save(out)
