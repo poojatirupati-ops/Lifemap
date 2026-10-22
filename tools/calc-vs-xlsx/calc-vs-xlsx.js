@@ -90,6 +90,7 @@ Object.assign(RULEMAP, {"Set_infl": "SV(\"infl\")", "Set_wage": "SV(\"wage\")", 
 (async () => {
   const b = await chromium.launch(); const p = await (await b.newContext()).newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(URL); await p.waitForTimeout(300);
+  await p.evaluate("window.FORCE_TAX_YEAR = 2026; ASM.startYear.sug = () => 2026; S.taxYearOverride = 2026; RULES_DIRTY = true; setRulesYear(2026, true); 1");   // the workbook is 2026-only: hold the prototype to the 2026 rules
   // 1. cases from the prototype's own input definitions (seeded)
   const defs = await p.evaluate(MAP => MAP.map(([id]) => { const c = C(id); return {id, ins:c.inputs.concat(c.wi || []).map(i => ({k:i.k, v:i.v, min:i.min, max:i.max, step:i.step, u:i.u}))}; }), MAP);
   let seed = 20261002; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;

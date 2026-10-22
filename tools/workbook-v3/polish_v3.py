@@ -88,5 +88,28 @@ for ws in wb:
         ws['A1'] = '≡'
         ws['A1'].hyperlink = Hyperlink(ref='A1', location="'READ ME'!A1", display='≡')
         ws['A1'].font = Font(bold=True, color='0563C1')
+
+# owner-checked items: red text plus a comment asking for a second verification
+from openpyxl.comments import Comment
+RED = Font(bold=True, color='C00000')
+def flag(ws, cell, text):
+    c = wb[ws][cell]; c.font = RED
+    c.comment = Comment(text, 'LifeMap team', width=320, height=110)
+CGT_X = 'VERIFY AGAIN: CGT annual exemption of €1,270 per person. Checked by the proposition owner; to be confirmed once more against Revenue before sign-off.'
+CGT_D = 'VERIFY AGAIN: 31% CGT rate from 7 October 2026 (33% before). Checked by the proposition owner; to be confirmed once more against Revenue before sign-off.'
+ARF = 'VERIFY AGAIN: PRSI on ARF / PRSA withdrawals (4.24% before 66, and 66 to 70 without a contributory State Pension). Checked by the proposition owner; to be confirmed once more against Revenue / Social Protection before sign-off.'
+for ref, t in [('READ ME!B44', CGT_X), ('READ ME!B78', CGT_D), ('READ ME!A80', ARF), ('READ ME!B80', ARF),
+               ('Tax!H31', CGT_X), ('Tax!F137', CGT_X), ('Tax!C92', ARF), ('Tax!F92', ARF), ('Tax!C93', ARF), ('Sample walkthrough!B12', CGT_D)]:
+    w, c = ref.split('!'); flag(w, c, t)
+for row in wb['Tax'].iter_rows():
+    for c in row:
+        if isinstance(c.value, str) and ('7 Oct' in c.value) and any(k in c.value for k in ('31%','Capital gains','standard rate')) and 'Group' not in c.value and 'gifts' not in c.value and c.coordinate not in ('H31',) and c.row > 15:
+            flag('Tax', c.coordinate, CGT_D)
+pi = wb['Plan inputs']
+pi['B133'] = ('Buy a home goal amount: put the deposit plus stamp duty (1% of the price up to €1m) and buying fees. '
+              'The Borrowing, Deposit and Rent vs buy calculators add these for you.')
+pi['B133'].alignment = Alignment(wrap_text=True, vertical='top')
+tn.cell(r + 1, 2, 'Red cells with a comment')
+tn.cell(r + 1, 4, 'The three tax figures above are marked red with a "VERIFY AGAIN" comment (READ ME, Tax, Sample walkthrough).')
 wb.active = 0
 wb.save(out)
