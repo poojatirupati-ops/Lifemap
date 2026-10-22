@@ -3125,7 +3125,7 @@ const RI_BASE = {};   // the 2026 value of every parameter the 2027 overlay can 
 const riGet = (p) => p.split('.').reduce((o, k) => o[k], RI), riSet = (p, v) => { const ks = p.split('.'), l = ks.pop(); ks.reduce((o, k) => o[k], RI)[l] = v; };
 Object.keys(RULES_2027).forEach(p => { const v = riGet(p); RI_BASE[p] = Array.isArray(v) ? v.map(x => Array.isArray(x) ? x.slice() : x) : v; });
 let RULES_YEAR = 2026, RULES_DIRTY = false;
-const taxYearFor = y => (typeof S !== 'undefined' && S && S.taxYearOverride) || (y >= 2027 ? 2027 : 2026);   // an adviser or administrator can force one year for a comparison
+const taxYearFor = y => (typeof S !== 'undefined' && S && S.taxYearOverride) || 2026;   // plans use the 2026 rules, as the workbook does; an adviser or administrator can force 2027 for a comparison
 function taxTexts(startY){
   const e = taxYearFor(startY);
   RULES_VERSION = e === 2027 ? 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending' : 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates';
@@ -3855,7 +3855,7 @@ const ASM = {
   budgetSave:{g:'safety', b:'B27', ty:3, n:'budget split', l:'Budget split: savings and debt', t:'pct', min:0, max:100, step:5, sug:() => ST.budget[2], get by(){ return STB.budget.by; }, need:() => false, get help(){ return SG('budgetSave'); }},
   planEnd:{g:'length', b:'B12', ty:3, own:true, n:'plan-until age', l:'Plan until age (life expectancy)', t:'age', min:50, max:100, step:1, fb:() => S && S.about.partner ? 95 : 90, need:() => true,   // internal fallback only, never shown (planMissing gates results)
     help:'At 65, average life expectancy in Ireland is about ' + GD.lifeMen65 + ' for men and ' + GD.lifeWomen65 + ' for women (' + GDB.lifeMen65.by + '). Choose the age you want to plan to.'},
-  startYear:{g:'length', b:'B23', ty:3, n:'plan start year', l:'Start the plan in', t:'choice', o:[[2026, '2026'], [2027, '2027']], sug:() => (new Date() > new Date('2026-09-30T23:59:59') ? 2027 : 2026), by:'from October most of this year has passed', need:() => true, help:'Choose 2027 to use the Budget 2027 tax rules (announced 6 October 2026) from 1 January 2027: higher tax bands and credits, a wider 2% USC band, a €10 higher State Pension and exit tax at 35%. The Finance Bill may still change some details.'}
+  startYear:{g:'length', b:'B23', ty:3, n:'plan start year', l:'Start the plan in', t:'choice', o:[[2026, '2026'], [2027, '2027']], sug:() => 2026, by:'the plan starts this year, on the 2026 rules', need:() => true, help:'Choose 2027 to use the Budget 2027 tax rules (announced 6 October 2026) from 1 January 2027: higher tax bands and credits, a wider 2% USC band, a €10 higher State Pension and exit tax at 35%. The Finance Bill may still change some details.'}
 };
 // §27.3: no hard limit; a calm one-line note, never a block
 const retNote = a => a < 50 ? 'Retiring before 50 is possible. Pensions can usually be drawn from 60 (some schemes from 50) and the State Pension from ' + RI.sp.age + ', so until then your plan uses savings and other income. Your results will show any gap honestly.'
@@ -4106,11 +4106,12 @@ function makeHoldings(o){ // o: {inv, oth, alt, invCost, othCost, altCost, invYe
   const addInv = v => { if (v > 0) L.inv.push({v, b:v, age:0}); };   // new money: paid in at its value, its own 8-year clock
   cgtYear(o.startYear || YEAR0);
   return {L, lotsSum, CG, TX, TXT, cgtYear, sellFrom, grow, setLots, addInv}; }
+const STRESS_FALL = 0.2;   // stress test: pension pots and invested money fall by this share in the year before retirement
 function project(wi){
   applyAssume(); autoSafety();
   const f = finNums(), a0 = f.age, R = f.R, N = AS.end - a0, rg = S.goals.find(g => g.kind === 'retire');
   wi = wi || {}; const wg = wi.g != null ? S.goals.find(g => g.id === wi.g) : null, wm = +wi.m || 0, wl = +wi.l || 0;
-  const wgR = wg && wg.kind === 'retire';
+  const wgR = wg && wg.kind === 'retire', tStar = Math.max(0, R - 1 - a0);   // wi.stress: in year tStar only, pension pots and invested money fall by STRESS_FALL instead of growing
   // Goals funded from savings: spend, mfree, pot. Retirement uses the pension + cashflow; legacy is what is left at the end.
   const fg = S.goals.filter(g => ['spend','mfree','pot'].includes(g.kind)).map(g => Object.assign({}, g, {age:clamp(g.age, a0 + 1, AS.end)})).sort(GOAL_ORDER);
   // Mortgage balance path, so "Be mortgage-free" has a known cost at its date
@@ -4144,7 +4145,7 @@ function project(wi){
   const V = Math.max(R, +asmV('accessAge')), lsPct = +asmV('lumpSum'), rule = asmV('drawRule'), fixedReal = +asmV('drawFixed'), spG = asmV('spGrow'), flatBands = asmV('bands') === 'flat';
   const penExtraM = +(S.penExtra || 0), ownBase = f.pensionM > 0 ? f.pensionOwnM / f.pensionM : 0;
   for (let t = 0; t <= N; t++){
-    const yr = YEAR0 + t; setRulesYear(yr, true); cgtYear(yr); Object.keys(YS).forEach(k => YS[k] = 0); let lumpTaxY = 0, sftY = 0;   // each projected year uses its own tax configuration (effective dates, fallbacks)
+    const sNow = !!wi.stress && t === tStar, yr = YEAR0 + t; setRulesYear(yr, true); cgtYear(yr); Object.keys(YS).forEach(k => YS[k] = 0); let lumpTaxY = 0, sftY = 0;   // each projected year uses its own tax configuration (effective dates, fallbacks)
     const rb = RULES_YEAR, yb = Math.max(0, yr - rb);
     taxUsed.push({yr, taxYear:RULES_YEAR, band:RI.it.band, credit:RI.it.personal, usc2:RI.usc.bands[1][0], sp:RI.sp.week, exit:RI.sav.exit, cgt:CG.rate, cgtExempt:CG.left, index:flatBands ? 1 : Math.pow(1 + AS.infl, yb)});
     const a = a0 + t, infl = Math.pow(1 + AS.infl, t), wgw = Math.pow(1 + AS.wage, t), working = a < R, tI = flatBands ? 1 : Math.pow(1 + AS.infl, yb), rate = prsiRate(yr);
@@ -4157,13 +4158,13 @@ function project(wi){
       p1.emp = gR; p1.relief = reliefOn(gR / tI, E / tI, a) * tI; cashOut += E;
       let contrib = Etot; if (wgR) contrib = Math.max(0, contrib + wm * 12);
       if (f.ae){ const base = Math.min(gR / tI, RI.ae.earnCap) * tI; contrib += (RI.ae.ee + RI.ae.er + RI.ae.state) * base; cashOut += RI.ae.ee * base; }   // auto-enrolment (phase 1 rates)
-      pen = pen * (1 + f.penG) + contrib;   // same rule as pensionAt() (Retirement tool)
-    } else if (a < V){ pen = pen * (1 + f.penG); }   // retired before 60: most pensions can't be drawn yet; the fund stays invested
+      pen = pen * (sNow ? 1 - STRESS_FALL : 1 + f.penG) + contrib;   // same rule as pensionAt() (Retirement tool)
+    } else if (a < V){ pen = pen * (sNow ? 1 - STRESS_FALL : 1 + f.penG); }   // retired before 60: most pensions can't be drawn yet; the fund stays invested
     else {
       if (a === V){ const cet = RI.pen.sftRate * Math.max(0, pen - sftFor(yr)); pen -= cet; sftY = cet;   // Standard Fund Threshold (chargeable excess tax)
         if (lsPct > 0){ const L = lumpSum(pen, lsPct); pen -= L.gross; wAdd(L.net); lumpTaxY = L.tax; } }
       const mn = arfMin(a, pen), want = rule === 'min' ? pen * mn : rule === 'fixed' ? Math.max(fixedReal * infl, pen * mn) : pen * Math.max(1 / Math.max(1, AS.end - a + 1), mn);
-      const draw = Math.min(pen, want); pen = (pen - draw) * (1 + AS.penRet); p1.draw = draw;
+      const draw = Math.min(pen, want); pen = (pen - draw) * (sNow ? 1 - STRESS_FALL : 1 + AS.penRet); p1.draw = draw;
     }
     if (a >= AS.spAge) p1.sp = RI.sp.week * RI.sp.weeks * f.sp * spI + (a >= 80 && f.sp > 0 ? RI.sp.over80 * RI.sp.weeks * spI : 0);   // the over-80 increase belongs to a State Pension in payment: none counted, none added
     // --- partner (employment to 66, then their State Pension or a Qualified Adult increase paid to you)
@@ -4217,7 +4218,7 @@ function project(wi){
     }
     // 4. Growth
     const cashBase = W.cash + W.sav + Math.max(0, buffer) + fg.reduce((z, g) => { const x = G[g.id]; return z + (!x.done && x.r === AS.cash ? Math.max(0, x.pot) : 0); }, 0), dirtY = cashBase * AS.cash * RI.sav.dirt / (1 - RI.sav.dirt);   // the cash rate is after DIRT: this is the DIRT that came off the interest
-    W.cash *= 1 + AS.cash; W.sav *= 1 + AS.cash; H.grow(taxEvt ? invG : AS.inv); buffer *= 1 + AS.cash; fg.forEach(g => { const x = G[g.id]; if (!x.done) x.pot *= 1 + x.r; });
+    W.cash *= 1 + AS.cash; W.sav *= 1 + AS.cash; H.grow(sNow ? -STRESS_FALL : taxEvt ? invG : AS.inv); buffer *= 1 + AS.cash; fg.forEach(g => { const x = G[g.id]; if (!x.done) x.pot *= sNow && x.r === AS.inv && AS.inv !== AS.cash ? 1 - STRESS_FALL : 1 + x.r; });
     if (rg && !working){ gf[rg.id].cost += living; gf[rg.id].cov += living - Math.min(short, living); }
     const pots = fg.reduce((s, g) => s + G[g.id].pot, 0), liquid = wTot() + buffer + pots;
     S.goals.forEach(g => { if (g.kind === 'legacy' && t === N){ const tgt = g.amount * infl; gf[g.id].cost = tgt; gf[g.id].cov = Math.min(tgt, wTot() + buffer); } });
@@ -4235,6 +4236,16 @@ function project(wi){
   if (rg && rows.some(r => r.retired && r.shortLiving > Math.max(500, r.needs * 0.02))) pct[rg.id] = Math.min(pct[rg.id], 94);
   const s0 = rows[0], sur0 = f.age < R ? (s0.saved + s0.spent) / 12 : 0;
   return {rows, pct, goal, taxUsed, taxEvents:TXT, save:{surplusM:Math.round(sur0), saveM:Math.round(s0.saved / 12), autoM:auto0}};
+}
+// Stress test: a side run of the plan (the plan itself does not change). Returns each goal's % after the fall, the run-out age and the pension pot at retirement, with the plan's figures beside them.
+function stressInfo(wi){
+  const base = project(wi), st = project(Object.assign({}, wi || {}, {stress:true})), f = finNums(), a0 = f.age, t = Math.max(0, f.R - 1 - a0);
+  const runOut = P => { const r = P.rows.find(r => r.shortLiving > Math.max(500, r.needs * 0.02)); return r ? r.a : null; };
+  const pot = P => P.rows[Math.min(t, P.rows.length - 1)].pen;
+  const ro = runOut(st), rb = runOut(base), age = a0 + t, year = YEAR0 + t;
+  const goals = {}; S.goals.forEach(g => { const b = base.pct[g.id], x = st.pct[g.id]; goals[g.id] = {base:b, stress:x, line:x < b ? 'Falls from ' + b + '% to ' + x + '% covered' : 'Still ' + x + '% covered'}; });
+  const summary = 'If markets fell ' + Math.round(STRESS_FALL * 100) + '% in ' + year + ' (age ' + age + '): ' + (ro == null ? 'your money would still last to the end of your plan' : 'your money would run short at ' + ro + (rb == null ? ' (in your plan: it lasts to the end)' : rb === ro ? ', the same as in your plan' : ' (in your plan: ' + rb + ')')) + '.';
+  return {fall:STRESS_FALL, t, age, year, goals, runOutAge:ro, runOutAgeBase:rb, potAtRet:Math.round(pot(st)), potAtRetBase:Math.round(pot(base)), summary};
 }
 const band = p => p >= 95 ? 'good' : p >= 70 ? 'nudge' : 'alert';   // teal / gold / coral (Pooja, 1 Oct); weather emojis stay as icons
 const BANDW = {good:'On track', nudge:'Needs a nudge', alert:'Needs attention'}, BANDE = {good:'☀️', nudge:'🌦️', alert:'⛈️'};
@@ -4773,7 +4784,7 @@ function repScenarios(P, f){
   if (bc){ const alt = out.combined.find(x => x.id !== bc.id && (x.id === 'c60') !== (bc.id === 'c60') && x.id !== 'c60more'); const age = bc.id === 'c65' ? 65 : 60;
     out.pathToExplore = {id:bc.id, retireAge:age, covered:bc.covered, gapStartsAt:bc.gapStartsAt, otherRetireAge:alt ? (alt.id === 'c65' ? 65 : 60) : null, otherCovered:alt ? alt.covered : null,
       text:'Retire at ' + age + ', start a pension' + (sp ? ' and check your State Pension record' : '') + ': about ' + bc.covered + '% covered, ' + (bc.gapStartsAt != null ? 'with a gap only from age ' + bc.gapStartsAt : 'with no gap') + '.' + (alt ? ' Retiring at ' + (alt.id === 'c65' ? 65 : 60) + ' instead reaches ' + alt.covered + '%.' : '')}; }
-  out.assumesNote = 'Results from the plan engine on your plan; all rows except the State Pension and combined rows assume ' + (f.sp > 0 ? 'your current State Pension figure' : 'no State Pension') + '. A full State Pension is not confirmed. Pension money is locked until ' + (+asmV('accessAge')) + ', so retiring before then rests on savings alone. An expert can confirm every figure.';
+  out.assumesNote = 'Results from the plan engine; rows other than State Pension and combined rows assume ' + (f.sp > 0 ? 'your current State Pension figure' : 'no State Pension') + '. A full State Pension is not confirmed. Pension money is locked until ' + (+asmV('accessAge')) + ', so retiring earlier rests on savings alone. An expert can confirm every figure.';
   return out; }
 function reportModel(){
   applyAssume(); if (!S || !planReady()) return {ready:false, missing:typeof planMissing === 'function' ? planMissing().map(m => ({key:m.k, name:m.n})) : []};
@@ -4916,7 +4927,7 @@ function reportData(){
   const cashflow = {big:eur(pk.amount), bigLabel:'savings at the peak, age ' + pk.age, bigTone:gap.hasGap ? 'coral' : 'good', eyebrow:'CASHFLOW', title:gap.hasGap ? 'Your savings run out at ' + gap.runOutAge : 'Your savings last to ' + AS.end,
     savingsChart:Object.assign({title:'Your savings, age ' + a0 + ' to ' + AS.end, subtitle:'Cash and investments', yMax:cfS.axisMax, yTicks:repTicks(cfS.axisMax), series:cfS.series.map(p => ({age:p.age, value:p.savings})), peak:pk.amount > 0 ? {age:pk.age, value:pk.amount, label:'Peak ' + eur(pk.amount), sub:'at age ' + pk.age} : null, runOut:gap.hasGap ? {age:gap.runOutAge, label:'Savings run out at ' + gap.runOutAge} : null, zones:z, caption:cfS.text}),
     paidChart:{title:'How each year is paid', legend:[{tone:'good', label:'Paid from income'}, {tone:'gold', label:'Paid from savings'}, {tone:'coral', label:'Shortfall, not covered'}], yMax:cfP.axisMax, yTicks:repTicks(cfP.axisMax), bars:cfP.series.map(p => ({age:p.age, fromIncome:p.fromIncome, fromSavings:p.fromSavings, shortfall:p.shortfall})), zones:z,
-      stopMarker:rg && !retired && f.R > a0 && f.R <= AS.end ? {age:f.R, label:'Pay stops at ' + f.R} : null, lastLabel:lastP.shortfall > 0 ? {age:lastP.age, label:eur(lastP.shortfall) + ' a year at ' + lastP.age} : null, caption:cfP.text}};
+      stopMarker:rg && !retired && f.R > a0 && f.R <= AS.end ? {age:f.R, label:'Pay stops at ' + f.R} : null, lastLabel:lastP.shortfall > 0 ? {age:lastP.age, label:eur(lastP.shortfall) + ' a year at ' + lastP.age} : null, caption:cfP.text + ' ' + stressInfo().summary}};
   // ---- page 7 ----
   const rowOut = (r, idMap) => ({id:idMap[r.id] || r.id, title:r.title, sub:r.sub2 || r.sub, pct:r.covered, gapStartsAge:r.gapStartsAt});
   const rId = {payMore:'morePension', c60:'c60pension', c60more:'c60more', c65:'c65pension'}, since = n => (n === 1 ? 'One year' : repNumW(n).charAt(0).toUpperCase() + repNumW(n).slice(1) + ' years') + ' later';
@@ -4961,7 +4972,7 @@ function reportData(){
   if (f.partner){ left.push(['Partner', f.pAge ? 'Age ' + f.pAge + (S.pRetSet ? ', stops work at ' + S.pRet : '') : 'Counted as your age']); }
   const glossary = [['Today’s money · future euros', 'Today’s prices, and amounts after prices rise.'], ['Inflation', 'How fast prices rise. This plan uses ' + pcs(AS.infl) + ' a year.'], ['Shortfall', 'The part of a year’s costs your plan cannot pay.'], ['Covered %', 'How much of a goal’s cost your income and savings meet.'], ['PRSA · ARF', 'A personal pension account · a fund you draw income from.'], ['State Pension', 'Government pension from ' + RI.sp.age + '. Full rate ' + eurW(RI.sp.week) + ' a week.'], ['USC · PRSI', 'Irish charges on pay. PRSI builds your State Pension record.'], ['Capacity for loss', 'How much you could afford to lose.'], ['My Future Fund', 'Ireland’s automatic workplace pension.']];
   const assumptions = {big:String(left.length + right.length), bigLabel:'things we assumed', eyebrow:'ASSUMPTIONS AND SMALL PRINT', title:'What your plan assumes', left, right,
-    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', BUDGET27 + ' The Finance Bill may still change some details.', 'Capital gains tax is taken when assets are sold, on the gain: what you paid where you entered it, otherwise an assumed share of the value. PRSI on pension (ARF) withdrawals is unresolved and assumed to apply. Tax on life-policy lump sums, rental costs and gift or inheritance tax are not included yet.']},
+    knownLimits:{title:'Known limits', items:['Living costs stay the same through the plan, apart from prices.', 'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.', 'Tax uses the 2026 Irish rules, without Budget 2027. Capital gains tax is taken when assets are sold. Life-policy lump sums, gift and inheritance tax are not included.']},
     pleaseNote:{title:'Please note', text:'This is preliminary guidance, not financial advice. Only an authorised adviser can give advice. Investments can fall as well as rise. All projections are illustrative, not guaranteed. This tool is designed to help you explore your preferences. It does not replace a formal suitability or risk assessment where financial advice is provided.'},
     sources:'Sources: Revenue; Department of Social Protection; CSO flash inflation September 2026; ECB target; LifeMap plan engine.', glossary:{title:'Words used in this report', items:glossary}};
   // ---- page 11 ----
@@ -5250,7 +5261,7 @@ function reportData(){
     '.lmr-explore{background:' + COL.navy + ';color:#fff;border-radius:22px;padding:22px 24px;margin-top:22px;flex:none}',
     '.lmr-explore .lmx-t{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:18px;color:' + COL.mint + '}',
     '.lmr-explore .lmx-x{font-size:15px;line-height:1.5;margin-top:7px}',
-    '.lmr-foot2{font-size:12px;color:' + COL.muted + ';margin-top:16px;line-height:1.5;flex:none}',
+    '.lmr-foot2{font-size:12px;color:' + COL.muted + ';margin-top:8px;line-height:1.4;flex:none}',
     /* p8 */
     '.lmr-f1{display:flex;gap:20px;margin-top:20px;flex:none}',
     '.lmr-pyr{flex:0 0 432px;background:#f8f5ee;border-radius:22px;padding:12px 0;display:flex;flex-direction:column;justify-content:space-between;height:452px}',
@@ -5864,6 +5875,10 @@ function wiLive(){ const P = project(), base = P.save.saveM, sp = Math.max(0, P.
   const h = !m ? 'Your saving today is <b>' + eur(base) + ' a month</b> · spare money about ' + eur(sp) + '. Add an extra amount to see what changes.'
     : 'With this what-if you\'d save <b>' + eur(tot) + ' a month</b> (' + eur(base) + (m > 0 ? ' + ' + eur(m) + ' extra' : ' − ' + eur(-m) + ' less') + ') · spare money about ' + eur(sp);
   return {h:h + (over ? '<span class="wn">⚠️ That\'s more than your spare money of about ' + eur(sp) + ' a month. It may only work if you cut back elsewhere.</span>' : ''), over, base, tot, sp, m}; }
+function stressCard(){ const X = stressInfo(S.wi);
+  return '<div class="card" id="r-stress"><h3 class="h">Stress test: if markets fell</h3><p class="small" style="margin:4px 0 8px">' + esc(X.summary) + '</p>' +
+    '<ul class="small" style="margin:0;padding-left:18px">' + S.goals.slice().sort((a, b) => a.age - b.age).map(g => '<li><b>' + esc(g.name) + ':</b> ' + esc(X.goals[g.id].line) + '</li>').join('') + '</ul>' +
+    '<p class="small" style="margin:8px 0 0">Pension at retirement: ' + eur(X.potAtRet) + (X.potAtRet !== X.potAtRetBase ? ' (in your plan: ' + eur(X.potAtRetBase) + ')' : '') + '. This is a test, not a forecast: pensions and investments fall ' + Math.round(X.fall * 100) + '% in the year before retirement; cash and savings do not.</p></div>'; }
 function wiCard(){ const w = S.wi, gs = S.goals.slice().sort((a, b) => a.age - b.age), g = gById(w.g), L = wiLive();
   return '<div class="card" id="r-wi"><h3 class="h">What if…?</h3><p class="small" style="margin:0 0 10px">Try saving a bit more or less, or adding a one-off amount.</p>' +
     '<div class="wisec" id="wi-base"><h4 class="wih">Your monthly saving</h4><p class="small" style="margin:0 0 2px">What you save now. Change it here, or leave it.</p>' + saveCtl() + saveNudge() + '</div>' +
@@ -5886,6 +5901,7 @@ function resultsHTML(){ if (!planReady()) return gateHTML('res');
       (S.understood ? '<p class="pill ok" style="margin:12px 0 8px">✓ Thanks, noted</p><div class="small" style="font-weight:800;margin-bottom:6px">What would you like to ask an adviser? (optional)</div><div class="chips">' + ADV_QS.map(q => '<button class="chip sm' + (S.advQs.includes(q) ? ' sel' : '') + '" aria-pressed="' + S.advQs.includes(q) + '" data-a="advq" data-p="' + esc(q) + '">' + esc(q) + '</button>').join('') + '</div><p class="small" style="margin:6px 0 0">Sustainable / ethical options: your adviser will ask about this before recommending anything.</p>' : '<button class="btn" style="margin-top:12px" data-a="understood">That makes sense</button>') + '</div>' +
     fndCard() + wiCard() +
     '<div class="card" id="r-glancec"><h3 class="h">Your future, at a glance</h3><div id="r-glance">' + glanceHTML(P) + '</div></div>' +
+    stressCard() +
     '<div class="ends"><button class="btn navy" data-a="report">⬇ Download my plan</button><button class="btn sun" data-a="book">📅 Book my adviser meeting</button><button class="btn ghost" data-a="adjust">✏️ Adjust my goals</button></div>' +
     '<div class="disc" id="b27-res">' + taxDisclosure() + '</div><p class="disc">Guidance, not advice. Projections are illustrative, use standard assumptions and are not guaranteed. Only an authorised adviser who knows your full situation can give advice. ' + (S.versions.length ? '<button class="link" style="font-size:12px;padding:0" data-a="sheet" data-p="history">Plan history (' + S.versions.length + ')</button>' : '') + '</p>';
 }
