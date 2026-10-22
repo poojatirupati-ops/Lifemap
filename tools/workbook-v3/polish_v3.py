@@ -123,6 +123,11 @@ wb['Sample walkthrough']['B24'] = 'Figures marked "Requires Verification" have n
 pi = wb['Plan inputs']
 pi['B133'] = ('Buy a home goal amount: put the deposit plus stamp duty (1% of the price up to €1m) and buying fees. '
               'The Borrowing, Deposit and Rent vs buy calculators add these for you.')
+pi['B147'] = ('=IF(G40<=0,IF(OR(G139>0,G140>0),"Check: you typed what you paid, or years held, for your investments, but Investments (row 40) is empty, so there is nothing to tax. Type the value of your investments in row 40.",""),'
+              'IF(H_Direct=1,"8-year tax: OFF. Your investments are held as shares (row 160): capital gains tax is taken when they are sold; there is no 8-year rule.",'
+              'IF(H_TaxEvt=0,"8-year tax: OFF. A growth rate is typed in row 82, so growth is treated as already after exit tax and tax is taken only when you sell. Clear row 82 to see the 8-year tax.",'
+              '"8-year tax: ON. The first 8-year anniversary is in plan year "&(H_Deemed-MOD(MAX(0,G140),H_Deemed))&", then every "&H_Deemed&" years (Plan cashflow, column E).")))')
+pi['B147'].font = Font(bold=True, color='C00000')
 pi['B133'].alignment = Alignment(wrap_text=True, vertical='top')
 tn.cell(r + 1, 2, 'Red cells with a comment')
 tn.cell(r + 1, 4, 'The three verified tax figures are kept red with a comment so they can be found (READ ME, Tax, Sample walkthrough).')

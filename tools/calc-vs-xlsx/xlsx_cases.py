@@ -45,7 +45,9 @@ def main():
                     v = datetime.datetime.strptime(v[5:], '%Y-%m-%d')
                 cell.value = v
         wb.save(path)
-        r = subprocess.run([sys.executable, RECALC, path, '120'], cwd=os.path.dirname(RECALC), capture_output=True, text=True)
+        for attempt in range(3):   # LibreOffice sometimes stalls on a round; the same file recalculates in about 25 s on a fresh start
+            r = subprocess.run([sys.executable, RECALC, path, os.environ.get('RECALC_TIMEOUT', '120')], cwd=os.path.dirname(RECALC), capture_output=True, text=True)
+            if r.returncode == 0: break
         if r.returncode != 0:
             raise SystemExit('recalc failed: ' + r.stdout + r.stderr)
         wv = openpyxl.load_workbook(path, data_only=True)
