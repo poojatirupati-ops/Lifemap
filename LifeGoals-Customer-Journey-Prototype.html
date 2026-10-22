@@ -2989,6 +2989,16 @@ html body #screen .disc{font-size:11.5px;color:#7A8A92}
 /* v151 declutter: long helper text trimmed to two lines in choice blocks */
 html body #screen .infl > p.small{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 html body #screen .infl button,html body #screen .infl .chip{border-radius:12px!important;text-align:left}
+/* v152: one font family everywhere (no typewriter labels); adviser match note */
+:root{--fm:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important}
+html body #screen .vc-kind,html body #screen .av2-tag,html body #screen .lv2-d small,html body #screen .elg2-val small{letter-spacing:.04em!important}
+.av2-why{display:block!important;line-height:1.45}
+.av2-why > span{margin-right:6px}
+html body #screen .brand2 .bt small{letter-spacing:.02em}
+html body #screen .dday.on{background:linear-gradient(160deg,#08D9B8,#0B5880)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 20px -10px rgba(7,158,152,.7)!important}
+html body #screen .dday.on *{color:#fff!important}
+html body #screen .slots button.on,html body #screen .slot.on,html body #screen [data-a="bslot"][aria-pressed="true"]{background:#EAF7F6!important;color:#086A74!important;border-color:#079E98!important;box-shadow:0 0 0 1px #079E98!important}
+html body #screen .sheet:not(.chatsheet) h2.t{font-size:23px!important;line-height:1.2!important;padding-right:48px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
