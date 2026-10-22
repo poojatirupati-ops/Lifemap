@@ -3005,6 +3005,36 @@ html body #screen .sheet:not(.chatsheet) h2.t{font-size:23px!important;line-heig
 .ml-e.gix,.lmt-e.gix{color:#086A74!important}
 #r-goals .gs .gl{-webkit-line-clamp:1!important}
 #r-goals .gs .gl + .gl{color:#7A8A92;font-size:11.5px}
+/* v154 batch 5: desktop layouts */
+/* Me: two columns on wide desktops, one centred column otherwise */
+@media (min-width:1180px){
+body.desk #main:has(> .card.mepro){display:grid!important;grid-template-columns:320px minmax(0,1fr);column-gap:20px;align-items:start}
+body.desk #main:has(> .card.mepro) > *{grid-column:2;min-width:0}
+body.desk #main:has(> .card.mepro) > .pghead{grid-column:1 / -1}
+body.desk #main:has(> .card.mepro) > .card.mepro{grid-column:1;grid-row:2 / span 20;position:sticky;top:12px}
+body.desk #main:has(> .card.pdpro){display:grid!important;grid-template-columns:320px minmax(0,1fr);column-gap:20px;align-items:start}
+body.desk #main:has(> .card.pdpro) > *{grid-column:2;min-width:0}
+body.desk #main:has(> .card.pdpro) > .pghead{grid-column:1 / -1}
+body.desk #main:has(> .card.pdpro) > .card.pdpro{grid-column:1;grid-row:2 / span 20;position:sticky;top:12px}
+}
+body.desk #main:has(> .card.mepro) > *,body.desk #main:has(> .card.pdpro) > *{max-width:760px;margin-left:auto;margin-right:auto}
+@media (min-width:1180px){body.desk #main:has(> .card.mepro) > *,body.desk #main:has(> .card.pdpro) > *{max-width:none;margin-left:0;margin-right:0}}
+/* plan builder steps and long forms: comfortable reading width */
+body.desk .app:not(:has(> .tabs)) > .scroll > *,body.desk .app:not(:has(> .tabs)) > header.sky > :not(.topbar):not(.pbrow){max-width:760px;margin-left:auto!important;margin-right:auto!important}
+body.desk .app:not(:has(> .tabs)) > .foot{justify-content:center!important}
+/* Mortgages topic page */
+body.desk .mp .dhero2{height:260px!important;border-radius:24px;overflow:hidden;margin:0 0 -40px!important}
+body.desk .mp{max-width:980px;margin:0 auto}
+body.desk .mp .elg2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+body.desk .mp .elg2-ph{height:auto;min-height:220px}
+body.desk .mp .elg2-tx{display:flex;flex-direction:column;justify-content:center;padding:22px}
+body.desk .mp .elg2-go{width:auto;align-self:flex-start;padding:0 26px}
+body.desk .mp .elg2-t{text-align:left}
+/* wide screens */
+@media (min-width:1500px){body.desk{--dw:max(40px,calc((100% - 1160px) / 2))}}
+body.desk #main:has(> .card.mepro),body.desk #main:has(> .card.pdpro){grid-auto-rows:max-content!important;align-content:start!important}
+html body #screen .rank .rk-arr .chip.sm{height:32px!important;width:32px!important}
+html body #screen #r-prof.banner .link{min-height:34px!important;display:inline-flex!important;align-items:center}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
