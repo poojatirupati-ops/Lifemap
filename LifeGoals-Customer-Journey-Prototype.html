@@ -3071,6 +3071,31 @@ body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 .tl-guide::after{content:attr(data-y);position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);padding:2px 7px;border-radius:999px;background:#079E98;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
 .tl-guide::before{content:'';position:absolute;left:50%;bottom:-4px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;border:2.5px solid #079E98}
 .tl-hint{display:flex}
+/* v158: Check your details redesign */
+.p4-sum{display:flex;align-items:center;gap:12px;padding:0 4px}
+.p4-ck{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#EAF7F6;color:#086A74;font-weight:800}
+.p4-ck.ok{background:linear-gradient(145deg,#08D9B8,#0A7A85);color:#fff}
+.p4-sum b{display:block;font-size:16px;color:#182A54}.p4-sum small{font-size:12.5px;color:#5B6B76}
+#p4-3 > .p4-prog{margin:12px 4px 14px!important}
+#p4-3 > .field::before{content:''!important;font-size:0!important;background:#EAF7F6 center/20px no-repeat!important}
+#p4-3 > .field:has(#asm-retireAge)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23086A74%27 stroke-width=%271.9%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M3 18h18M6 18a6 6 0 0 1 12 0%27/%3E%3Cpath d=%27M12 4v3M4.9 8.9l2 2M19.1 8.9l-2 2%27/%3E%3C/svg%3E")!important}
+#p4-3 > .field:has(#asm-planEnd)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23086A74%27 stroke-width=%271.9%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9%27/%3E%3C/svg%3E")!important}
+#p4-3 > .field:has(.infl)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23086A74%27 stroke-width=%271.9%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M3 20h18%27/%3E%3Cpath d=%27M5 16l5-5 3 3 6-7%27/%3E%3Cpath d=%27M15 7h4v4%27/%3E%3C/svg%3E")!important}
+#p4-3 > .field:has(#asm-pRetireAge)::before{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23086A74%27 stroke-width=%271.9%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z%27/%3E%3C/svg%3E")!important}
+#p4-3 .asmf{align-items:center!important}
+#p4-3 .asmf .flabel{font-size:14.5px!important;line-height:1.25}
+#p4-3 .asmf .nbox{align-self:center;padding:5px 12px!important;border-radius:999px!important;background:#EAF7F6!important;border:0!important}
+#p4-3 .asmf .nbox .nbu{font-size:11.5px!important;color:#086A74!important;opacity:.8}
+#p4-3 .asmf .nbox input{font-size:16px!important}
+#p4-3 .asmf .small,#p4-3 .asmf > p,#p4-3 .infl > p.small{-webkit-line-clamp:1!important;margin-top:2px!important}
+#p4-3 .infl > div,#p4-3 .infl .chips{display:flex!important;flex-direction:column;gap:6px;margin-top:8px}
+#p4-3 .infl button,#p4-3 .infl .chip{display:flex!important;align-items:center;gap:10px;width:100%;min-height:42px!important;padding:8px 12px!important;border-radius:12px!important;background:#fff!important;border:1px solid rgba(8,106,116,.14)!important;box-shadow:none!important;font-size:13px!important;line-height:1.3}
+#p4-3 .infl button::before,#p4-3 .infl .chip::before{content:'';width:16px;height:16px;flex-shrink:0;border-radius:50%;border:2px solid #9DB3B8;box-sizing:border-box}
+#p4-3 .infl button[aria-pressed="true"],#p4-3 .infl .chip.sel{background:#EAF7F6!important;border-color:#079E98!important;box-shadow:none!important}
+#p4-3 .infl button[aria-pressed="true"]::before,#p4-3 .infl .chip.sel::before{border:5px solid #079E98}
+.p4-skip{display:block;margin:6px auto 0;font-size:13.5px!important;color:#086A74!important}
+#p4-3 .asmf .nbox{height:34px;align-items:center!important;padding:0 12px!important}
+#p4-3 .asmf .nbox input{line-height:1!important;height:auto!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4595,7 +4620,7 @@ V.P4 = () => { const it = checkItems(), flag = it.filter(x => ['look','miss'].in
   html:p4Asm() + (flag.length ? '<div class="card" style="margin-top:12px">' + skipped.map(secRow).join('') + one.map(x => '<div class="ck"><span class="i" aria-hidden="true">' + ic[x.st] + '</span><div style="flex:1"><b>' + esc(FF[x.k].l) + '</b> <span class="small">· ' + x.s.t + '</span><div class="small">' + lbl(x) + (x.st === 'look' ? ': ' + esc(S.look[x.k]) : '') + (workedNote(x.k) ? '. ' + esc(workedNote(x.k)) : '') + (S.ack[x.k] ? ' · <b>Left for my adviser</b>' : '') + '</div>' +
       '<div class="a"><button class="link" data-a="fix" data-p="' + FSEC.indexOf(x.s) + '">Fix now</button>' + (S.ack[x.k] ? '' : '<button class="link" data-a="ack" data-p="' + x.k + '">Leave for my adviser</button>') + '</div></div></div>').join('') + '</div>' : '') +
     '<details class="card" style="margin-top:12px"><summary style="cursor:pointer;font-weight:800;min-height:44px">✅ ' + good.length + ' details look good</summary>' + good.map(x => '<div class="mini"><span>' + esc(FF[x.k].l) + '</span><span>' + fmtField(x.k) + ' ' + tagFor(x.k) + '</span></div>').join('') + '</details>',
-  foot:(req3Missing().length ? '<p class="small" style="margin:0;text-align:center" id="p4-need">' + esc(chooseTxt(req3Missing()[0]).replace(/ to see this$/, '')) + ' above to see your results.</p>' : '') + '<button class="btn" data-a="toresults" id="seeres"' + (req3Missing().length ? ' disabled' : '') + '>See my results</button><button class="btn ghost" data-a="skipres" id="skipres"' + (req3Missing().length ? ' disabled' : '') + '>Skip, show my results</button>'};
+  foot:(req3Missing().length ? '<p class="small" style="margin:0;text-align:center" id="p4-need">' + esc(chooseTxt(req3Missing()[0]).replace(/ to see this$/, '')) + ' above to see your results.</p>' : '') + '<button class="btn" data-a="toresults" id="seeres"' + (req3Missing().length ? ' disabled' : '') + '>See my results</button><button class="link p4-skip" data-a="skipres" id="skipres"' + (req3Missing().length ? ' disabled' : '') + '>Skip this step</button>'};
 };
 V.U1 = () => ({id:'U1', note:'Loader. Never shows a made-up result.', head:flowHead(4, 'Step 4 · Understand', 'Building your plan', '', ''), html:'<div style="padding:60px 0;text-align:center"><div class="spin" aria-hidden="true"></div><p class="sub" style="margin-top:18px" role="status">Running your numbers…</p><p class="small">If this takes a while, we\'ll email and text you when it\'s ready.</p></div>'});
 /* ================= RESULTS ================= */
@@ -6013,7 +6038,7 @@ function asmScreen(){ applyAssume(); const open = S.asmOpen === undefined ? 'pri
     '<details class="card asmg" data-g="law"' + (open === 'law' ? ' open' : '') + '><summary style="cursor:pointer;font-weight:800;min-height:44px">' + T_GOV + '</summary><div style="margin-top:10px">' + govHTML() + '<p class="small" style="margin:8px 0 0">Set by law and the same for everyone, so you can\'t change them. ' + RULES_VERSION + '.</p></div></details>'; }
 // Plan builder step 7: one place to make the choices the results need (§14), next to the inflation choice
 function p4Asm(){ const n = reqKeys().length, got = n - req3Missing().length, rest = ASM_KEYS().filter(k => k !== 'planEnd'), mineN = rest.filter(asmMine).length;
-  return '<div id="p4-asm"><div class="card" id="p4-3"><h3 style="margin:0 0 4px;font-size:17px">' + (got === n ? 'All ' + n + ' chosen' : 'Choose ' + n + ' things') + '</h3><p class="small" style="margin:0 0 6px">' + (got === n ? 'Your results have what they need. You can change any of these.' : 'Your results need these ' + (n === 3 ? 'three' : 'four') + '. Only you can choose them, so we never fill them in for you.') + '</p><div class="p4-prog" role="status" id="p4-count"><span><i style="width:' + Math.round(got / n * 100) + '%"></i></span><b>' + got + ' of ' + n + ' chosen</b></div>' +
+  return '<div id="p4-asm"><div class="card" id="p4-3"><div class="p4-sum"><span class="p4-ck' + (got === n ? ' ok' : '') + '" aria-hidden="true">' + (got === n ? '✓' : got) + '</span><div><b>' + (got === n ? 'All ' + n + ' chosen' : 'Choose ' + n + ' things') + '</b><small>' + (got === n ? 'You can change any of these.' : 'Only you can choose these.') + '</small></div></div><div class="p4-prog" role="status" id="p4-count"><span><i style="width:' + Math.round(got / n * 100) + '%"></i></span><b class="sr">' + got + ' of ' + n + ' chosen</b></div>' +
     retireField() + asmInput('planEnd') + '<div id="p4-infl" class="field" style="margin:0 0 14px">' + inflChoice('p4') + '</div>' + pRetireField() + '</div>' +
     '<details class="card" id="p4-rest" data-g="p4"' + (S.asmOpen === 'p4' ? ' open' : '') + '><summary style="cursor:pointer;font-weight:800;min-height:44px">What we\'ve set for you (change any)</summary><p class="small" style="margin:6px 0 10px">Everything else is set from the start, so nothing else blocks your results. Figures that are the same for everyone are tagged <b>' + T_SET + '</b>; a rate we don\'t know is tagged <b>' + T_ASSUMED + '</b>. Change any one and it reads <b>' + T_MINE + '</b>.' + (mineN ? ' You have changed ' + mineN + '.' : '') + '</p>' +
     '<div style="margin-top:10px">' + rest.map(k => asmInput(k)).join('') + '</div></details></div>'; }
