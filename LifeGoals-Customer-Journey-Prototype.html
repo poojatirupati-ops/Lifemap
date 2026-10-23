@@ -3060,6 +3060,17 @@ body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 .va2{display:flex;gap:8px;margin-top:10px}
 .va2-b{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:999px;border:1.5px solid #CFE7E6;background:#fff;color:#086A74;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
 .va2-b:hover{background:#EAF7F6}
+/* v157: timeline drag feedback - year bubble and guide line */
+.tl-track .tl-chip{touch-action:none;user-select:none;-webkit-user-select:none}
+.tl-track .tl-chip.drag{transform:scale(1.06);box-shadow:0 14px 26px -10px rgba(7,158,152,.6)!important;border-color:#079E98!important;z-index:6}
+.tl-tip.tip2{position:absolute;z-index:8;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 12px 6px;border-radius:14px;background:#182A54;color:#fff;white-space:nowrap;pointer-events:none;box-shadow:0 12px 24px -10px rgba(24,42,84,.6)}
+.tl-tip.tip2::after{content:'';position:absolute;left:50%;bottom:-5px;width:10px;height:10px;margin-left:-5px;background:#182A54;transform:rotate(45deg);border-radius:2px}
+.tl-tip.tip2 b{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.tl-tip.tip2 span{font-size:11px;opacity:.85;font-weight:600}
+.tl-guide{position:absolute;z-index:5;bottom:24px;width:2px;margin-left:-1px;background:linear-gradient(180deg,#08D9B8,#079E98);pointer-events:none;border-radius:1px}
+.tl-guide::after{content:attr(data-y);position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);padding:2px 7px;border-radius:999px;background:#079E98;color:#fff;font-size:11px;font-weight:800;white-space:nowrap}
+.tl-guide::before{content:'';position:absolute;left:50%;bottom:-4px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;border:2.5px solid #079E98}
+.tl-hint{display:flex}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -7411,10 +7422,11 @@ function bindTL(){
       const mv = ev => { if (!moved && Math.abs(ev.clientX - sx) < 5) return; moved = true; const r = tr.getBoundingClientRect(), a0 = S.about.age;
         const age = Math.round(sAge + (ev.clientX - sx) / r.width * (90 - a0)); const before = g.age; moveGoal(g, age);
         if (g.age !== before || !tip){ ch.innerHTML = chipInner(g); ch.setAttribute('aria-valuenow', g.age); layoutTL();
-          if (!tip){ tip = document.createElement('div'); tip.className = 'tl-tip'; tr.appendChild(tip); }
-          tip.textContent = g.name + ' · age ' + g.age + ' · ' + (YEAR0 + g.age - a0); tip.style.left = clamp(parseFloat(ch.style.left) + ch.offsetWidth / 2, 60, tr.clientWidth - 60) + 'px'; tip.style.top = (parseFloat(ch.style.top) - 6) + 'px';
+          if (!tip){ tip = document.createElement('div'); tip.className = 'tl-tip tip2'; tr.appendChild(tip); tip.guide = document.createElement('div'); tip.guide.className = 'tl-guide'; tr.appendChild(tip.guide); }
+          const yr = YEAR0 + g.age - a0, gx = clamp(tlX(g.age, tr.clientWidth), 0, tr.clientWidth); tip.innerHTML = '<b>' + yr + '</b><span>Age ' + g.age + ' · ' + esc(g.name) + '</span>'; tip.style.left = clamp(parseFloat(ch.style.left) + ch.offsetWidth / 2, 70, tr.clientWidth - 70) + 'px'; tip.style.top = (parseFloat(ch.style.top) - 8) + 'px';
+          tip.guide.style.left = gx + 'px'; tip.guide.style.top = (parseFloat(ch.style.top) + ch.offsetHeight) + 'px'; tip.guide.setAttribute('data-y', yr); if (navigator.vibrate && g.age !== before) try { navigator.vibrate(4); } catch (_) {}
           const w = document.getElementById('when-' + g.id); if (w) w.textContent = whenTxt(g, true); } };
-      const up = () => { ch.removeEventListener('pointermove', mv); ch.removeEventListener('pointerup', up); ch.removeEventListener('pointercancel', up); ch.removeEventListener('lostpointercapture', up); ch.classList.remove('drag'); tr.classList.remove('live'); if (tip) tip.remove();
+      const up = () => { ch.removeEventListener('pointermove', mv); ch.removeEventListener('pointerup', up); ch.removeEventListener('pointercancel', up); ch.removeEventListener('lostpointercapture', up); ch.classList.remove('drag'); tr.classList.remove('live'); if (tip){ tip.guide && tip.guide.remove(); tip.remove(); }
         if (!moved){ S.tlHl = g.id; render(); const row = document.getElementById('row-' + g.id); if (row) row.scrollIntoView({block:'nearest', behavior:RM() ? 'auto' : 'smooth'}); return; }
         if (S.app) version(g.name + ' moved to age ' + g.age); focusKey = '.tl-chip[data-g="' + g.id + '"]'; render(); toast(g.name + ' · age ' + g.age); };
       ch.addEventListener('pointermove', mv); ch.addEventListener('pointerup', up); ch.addEventListener('pointercancel', up); ch.addEventListener('lostpointercapture', up);
