@@ -3035,6 +3035,12 @@ body.desk .mp .elg2-t{text-align:left}
 body.desk #main:has(> .card.mepro),body.desk #main:has(> .card.pdpro){grid-auto-rows:max-content!important;align-content:start!important}
 html body #screen .rank .rk-arr .chip.sm{height:32px!important;width:32px!important}
 html body #screen #r-prof.banner .link{min-height:34px!important;display:inline-flex!important;align-items:center}
+/* v155: Mortgages calculators as a horizontal scroll row */
+html body #screen .mp-grid{display:flex!important;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:16px;scrollbar-width:none;margin:0 -16px;padding:2px 16px 10px;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 28px),transparent)}
+html body #screen .mp-grid::-webkit-scrollbar{display:none}
+html body #screen .mp-grid .mp-gc,html body #screen .mp-grid .mp-gc.big{flex:0 0 148px!important;grid-column:auto!important;scroll-snap-align:start}
+html body #screen .mp-grid .mp-gc .gc-ph,html body #screen .mp-grid .mp-gc.big .gc-ph{height:96px!important}
+body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
