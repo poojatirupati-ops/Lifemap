@@ -79,7 +79,7 @@ const EDGE = {
   loan:{a:500, apr:0, y:1},
   loancompare:{a:500, apr1:0, y1:1, apr2:25, y2:10},
   loanafford:{inc:500, ess:600, debt:0, apr:0, y:1, share:10},   // no spare money
-  creditcard:{b:3000, apr:21, p:40, mp:2.5, mf:5, t:36},   // a payment below the monthly interest: never clears
+  creditcard:{b:3000, apr:21, p:40, mp:2.5, mf:5, t:36},   // minimum 2.5% or €5: the card payment is below the minimum and the interest   // a payment below the monthly interest: never clears
   debtplan:{b1:1000, apr1:35, m1:20, b2:0, apr2:5, m2:0, b3:0, apr3:5, m3:0, x:0}   // one debt, repayment below its interest
 };
 const INFL = [0.02, 0.039, 0, 0.04];

@@ -18,7 +18,8 @@ def sty(dst, key, fmt=None):
     s = ST[key]; dst.font = copy.copy(s.font); dst.fill = copy.copy(s.fill); dst.border = copy.copy(s.border); dst.alignment = copy.copy(s.alignment); dst.number_format = fmt or s.number_format
 EUR, PCT, NUM, TXT = '\\€#,##0', '0.00%', '#,##0', 'General'
 E2F = T['E2'].value
-def make(title, cid, question, blurb, inputs, results, how, needs, sheetname):
+def make(title, cid, question, blurb, inputs, results, how, needs, sheetname, links=None):
+    links = links or {}
     ws = wb.create_sheet(sheetname); ws.sheet_properties.tabColor = TAB
     for col, w in zip('ABCDEFG', [2, 50, 26, 24, 78, 14, 16]): ws.column_dimensions[col].width = w
     ws['A1'] = '≡'; ws['A1'].font = copy.copy(T['A1'].font); ws['A1'].hyperlink = Hyperlink(ref='A1', location="'READ ME'!A1", display='≡')
@@ -33,8 +34,14 @@ def make(title, cid, question, blurb, inputs, results, how, needs, sheetname):
         ws['E%d' % r] = allowed; sty(ws['E%d' % r], 'E6')
         if opt: ws['G%d' % r] = '=IF(ISBLANK(C%d),0,C%d)' % (r, r)
         else:
-            ws['F%d' % r] = ex; sty(ws['F%d' % r], 'F6', fmt); ws['G%d' % r] = '=IF(ISBLANK(C%d),IF(Fill_Example="Yes",F%d,""),C%d)' % (r, r, r)
+            ws['F%d' % r] = ex; sty(ws['F%d' % r], 'F6', fmt)
+            if name in links:   # pre-filled from Plan inputs, as the prototype pre-fills from Your finances
+                cond, lk, note = links[name]; ws['E%d' % r] = allowed + ' ' + note
+                lk = 'MAX(%s,MIN(%s,%s))' % (lo, hi, lk)   # the prototype keeps a pre-filled figure inside the slider's range
+                ws['G%d' % r] = '=IF(ISBLANK(C%d),IF(%s,%s,IF(Fill_Example="Yes",F%d,"")),C%d)' % (r, cond, lk, r, r)
+            else: ws['G%d' % r] = '=IF(ISBLANK(C%d),IF(Fill_Example="Yes",F%d,""),C%d)' % (r, r, r)
         sty(ws['G%d' % r], 'G6', fmt)
+        if unit == '€': hi = hi * 10; allowed = allowed.replace('€%s' % format(hi // 10, ','), '€%s' % format(hi, ','))
         dv = DataValidation(type='decimal', operator='between', formula1=str(lo), formula2=str(hi), allow_blank=True, showErrorMessage=True, showInputMessage=True, errorTitle='Outside the allowed range', error='Please enter ' + allowed.split('Allowed: ')[-1] + '.', promptTitle=label, prompt=allowed)
         ws.add_data_validation(dv); dv.add('C%d' % r)
         names[name] = '$G$%d' % r; names[name + '_Entry'] = '$C$%d' % r
@@ -99,16 +106,20 @@ res = [('Monthly_Rate', 'Monthly interest rate from the APR', '(1+APR)^(1/12)-1'
        ('Loan_Amount', 'Loan you could afford', 'PV(Monthly_Rate,Years*12,-Repayment_Used)', EUR, '€', 'PV(Monthly_Rate,Years*12,-Repayment_Used)', True),
        ('Total_Interest', 'Total interest on this loan', 'Repayment_Used*Years*12-Loan_Amount', EUR, '€', 'Repayment_Used*Years*12-Loan_Amount', False),
        ('Repayment_If_Rate_Up', 'Repayment if the rate were 3 points higher', 'PMT((1+APR+0.03)^(1/12)-1,Years*12,-Loan_Amount)', EUR, '€', 'PMT((1+APR+0.03)^(1/12)-1,Years*12,-Loan_Amount)', True),
-       ('Affordable_Now', 'Affordable now?', 'IF(Spare_Raw<=0,"Not affordable now","Yes")', TXT, '', 'IF(Spare_Raw<=0,"Not affordable now","Yes")', False)]
+       ('Affordable_Now', 'Affordable now?', 'IF(Spare_Raw<=0,"Not affordable now","Fits your spare money")', TXT, '', 'IF(Spare_Raw<=0,"Not affordable now","Fits your spare money")', False)]
 how = ['• Spare money = take-home pay − essential spending − existing loan and card repayments (never below 0). You choose what share of it to use; the rest is a buffer for surprises.',
        '• The loan is the amount that a level repayment of that size clears over the term: PV(monthly rate, months, −repayment). The stress line repeats the repayment for that loan with the APR 3 percentage points higher.',
        '• Guidance on affordability only, not a lender\'s decision (lenders also look at credit history and employment).']
-make('C32 · Loan affordability', 'loanafford', 'How much could I comfortably borrow?', 'Works back from your spare money to the loan you could comfortably repay, and shows the repayment if rates rose by 3 points.', inp, res, how, [('Needs: take-home pay, essentials, repayments, rate, years, share', N1)], 'C32 Loan affordability')
+LK = {'Take_Home': ('Has_income=1', "'Plan cashflow'!$H$8/12", 'In the app it is pre-filled from the plan: money in after tax and pension contributions, a month (Plan cashflow, first year).'),
+      'Essential_Spending': ('Has_income=1', 'F_CostsM+F_OneOffY/12+F_MortPayM', 'In the app it is pre-filled from Your finances: living costs + one-offs ÷ 12 + mortgage repayment.'),
+      'Existing_Repayments': ('Has_income=1', 'IF(F_Debt>0,F_DebtPayM,0)', 'In the app it is pre-filled from Your finances: card and loan repayments.'),
+      'APR': ('OR(AND(Has_income=1,OR(In_loanRate>0,Has_a_loanRate=1)),Has_a_loanRate=1)', 'IF(AND(Has_income=1,OR(In_loanRate>0,Has_a_loanRate=1)),D_lR,In_a_loanRate)', 'In the app it is pre-filled from your loan rate (given, or chosen in Your assumptions).')}
+make('C32 · Loan affordability', 'loanafford', 'How much could I comfortably borrow?', 'Works back from your spare money to the loan you could comfortably repay, and shows the repayment if rates rose by 3 points.', inp, res, how, [('Needs: take-home pay, essentials, repayments, rate, years, share', N1)], 'C32 Loan affordability', LK)
 # ---------- C33 Credit card repayment
 inp = [('Card_Balance', 'Card balance', '€', own + rng('€100', '€30,000', '€100', ''), 3000, EUR, 100, 30000, False),
        ('APR', 'Interest (APR)', '%', 'Type 2 · your figure · Your card\'s APR: your statement shows it. ' + rng('0%', '35%', '0.5%', ''), 0.21, PCT, 0, 0.35, False),
        ('Your_Payment', 'Your monthly payment', '€', own + rng('€10', '€3,000', '€10', ''), 150, EUR, 10, 3000, False),
-       ('Min_Percent', 'Card minimum: % of balance (0 = not entered)', '%', off + 'Your card\'s minimum rule is on your statement or in your card terms, for example "3% of the balance or €6.35, whichever is greater". Issuers differ, so there is no default. ' + rng('0%', '10%', '0.5%', ''), None, PCT, 0, 0.1, True),
+       ('Min_Percent', 'Card minimum: % of balance (0 and 0 = not entered)', '%', off + 'Your card\'s minimum rule is on your statement or in your card terms, for example "3% of the balance or €6.35, whichever is greater". Issuers differ, so there is no default. Enter the % and/or the lowest amount. ' + rng('0%', '10%', '0.5%', ''), None, PCT, 0, 0.1, True),
        ('Min_Floor', 'Card minimum: lowest amount (€)', '€', off + 'The "or €X, whichever is greater" part of the rule. ' + rng('€0', '€100', '€0.50', ''), None, '\\€#,##0.00', 0, 100, True),
        ('Clear_Within', 'I want it cleared within (months)', 'months', own + rng('6', '120', '1', ''), 36, NUM, 6, 120, False)]
 N1 = '=IF(Card_Balance="","Choose your card balance to see this",IF(APR="","Choose your credit-card rate to see this",IF(Your_Payment="","Choose your monthly payment to see this",IF(Clear_Within="","Choose how soon you want it cleared to see this",""))))'
@@ -118,21 +129,25 @@ res = [('Monthly_Rate', 'Monthly interest rate from the APR', '(1+APR)^(1/12)-1'
        ('Months_Your_Payment', 'Your payment: months to clear', 'IF(OR(Your_Payment<=Card_Balance*Monthly_Rate,Your_Payment<=0),"Never",ROUNDUP(ROUND(NPER(Monthly_Rate,-Your_Payment,Card_Balance),6),0))', '0', 'months', 'IF(Your_Payment<=Card_Balance*Monthly_Rate,"Never",ROUNDUP(ROUND(NPER(Monthly_Rate,-Your_Payment,Card_Balance),6),0))', True),
        ('Final_Payment', 'Last (part) payment', 'IF(Months_Your_Payment="Never","—",-FV(Monthly_Rate,Months_Your_Payment-1,-Your_Payment,Card_Balance)*(1+Monthly_Rate))', EUR, '€', 'IF(Months_Your_Payment="Never","—",-FV(Monthly_Rate,Months_Your_Payment-1,-Your_Payment,Card_Balance)*(1+Monthly_Rate))', False),
        ('Interest_Your_Payment', 'Your payment: total interest', 'IF(Months_Your_Payment="Never","—",Your_Payment*(Months_Your_Payment-1)+Final_Payment-Card_Balance)', EUR, '€', 'IF(Months_Your_Payment="Never","—",Your_Payment*(Months_Your_Payment-1)+Final_Payment-Card_Balance)', True),
-       ('Months_Minimum', 'Minimum only: months to clear', 'IF(Min_Percent=0,"—",IF(' + LM + '$E$1209>0.005,"Never",COUNTIF(' + LM + '$B$9:$B$1208,">0.005")))', '0', 'months', 'month-by-month table on the hidden sheet Loan months', True),
-       ('Interest_Minimum', 'Minimum only: total interest', 'IF(OR(Min_Percent=0,Months_Minimum="Never"),"—",SUM(' + LM + '$C$9:$C$1208))', EUR, '€', 'sum of the interest column of that table', True),
-       ('Interest_Saved', 'Interest saved by your payment', 'IF(OR(Min_Percent=0,Months_Minimum="Never",Months_Your_Payment="Never"),"—",Interest_Minimum-Interest_Your_Payment)', EUR, '€', 'Interest_Minimum-Interest_Your_Payment', True),
+       ('Months_Minimum', 'Minimum only: months to clear', 'IF(AND(Min_Percent=0,Min_Floor=0),"—",IF(' + LM + '$E$1209>0.005,"Never",COUNTIF(' + LM + '$B$9:$B$1208,">0.005")))', '0', 'months', 'month-by-month table on the hidden sheet Loan months', True),
+       ('Interest_Minimum', 'Minimum only: total interest', 'IF(OR(AND(Min_Percent=0,Min_Floor=0),Months_Minimum="Never"),"—",SUM(' + LM + '$C$9:$C$1208))', EUR, '€', 'sum of the interest column of that table', True),
+       ('Interest_Saved', 'Interest saved by your payment', 'IF(OR(AND(Min_Percent=0,Min_Floor=0),Months_Minimum="Never",Months_Your_Payment="Never"),"—",IF(Interest_Minimum-Interest_Your_Payment<=0,"—",Interest_Minimum-Interest_Your_Payment))', EUR, '€', 'Interest_Minimum-Interest_Your_Payment (— when it is not more than 0)', True),
        ('Months_Target', 'Months you want it cleared within', 'Clear_Within', '0', 'months', 'Clear_Within', False),
        ('Payment_Target', 'Payment to clear it within that time', 'PMT(Monthly_Rate,Clear_Within,-Card_Balance)', EUR, '€', 'PMT(Monthly_Rate,Clear_Within,-Card_Balance)', True)]
 how = ['• Monthly rate = (1 + APR)^(1/12) − 1 (an effective yearly rate, as for cards). Your payment: months = NPER(rate, −payment, balance) rounded up; total interest = full payments + last part payment − balance.',
        '• Minimum only: each month the interest is added, then the larger of the card\'s lowest amount and its % of the balance is paid (never more than is owed). The table is on the hidden sheet Loan months (up to 1,200 months; beyond that: Never).',
        '• Your card\'s minimum rule is entered by you (no default): issuers differ. Assumes no new spending, fees or promotional rates. If your payment is at or below the first month\'s interest the balance never falls.']
-make('C33 · Credit card repayment', 'creditcard', 'What does the minimum payment really cost?', 'Shows what paying only your card\'s minimum costs, against your own payment, and the payment that clears the card within a time you choose.', inp, res, how, [('Needs: card balance, rate, payment and months', N1)], 'C33 Credit card repayment')
+LK = {'Card_Balance': ('F_CardBal>0', 'F_CardBal', 'In the app it is pre-filled from Your finances: your credit card balance.'),
+      'APR': ('OR(AND(F_CardBal>0,OR(In_cardRate>0,Has_a_cardRate=1)),Has_a_cardRate=1)', 'IF(AND(F_CardBal>0,OR(In_cardRate>0,Has_a_cardRate=1)),D_cR,In_a_cardRate)', 'In the app it is pre-filled from your card rate (given, or chosen in Your assumptions).'),
+      'Your_Payment': ('F_CardBal>0', 'F_CardPayM', 'In the app it is pre-filled from Your finances: your card repayment.')}
+make('C33 · Credit card repayment', 'creditcard', 'What does the minimum payment really cost?', 'Shows what paying only your card\'s minimum costs, against your own payment, and the payment that clears the card within a time you choose.', inp, res, how, [('Needs: card balance, rate, payment and months', N1)], 'C33 Credit card repayment', LK)
 # ---------- C34 Debt payoff plan
 names3 = ['Credit card', 'Loan', 'Other debt']
 inp = []
 ex = [(4500, 0.21, 135), (2000, 0.08, 90), (9000, 0.09, 220)]
 for k in (1, 2, 3):
-    inp += [('Balance_%d' % k, '%s: balance' % names3[k - 1], '€', own + rng('€0', '€100,000', '€100', ''), ex[k - 1][0], EUR, 0, 100000, False),
+    bmax = 100000 if k == 3 else 50000
+    inp += [('Balance_%d' % k, '%s: balance' % names3[k - 1], '€', own + rng('€0', '€{:,}'.format(bmax), '€100', ''), ex[k - 1][0], EUR, 0, bmax, False),
             ('APR_%d' % k, '%s: interest (APR)' % names3[k - 1], '%', 'Type 2 · your figure · The APR on this debt. ' + rng('0%', '35%', '0.5%', ''), ex[k - 1][1], PCT, 0, 0.35, False),
             ('Payment_%d' % k, '%s: minimum or repayment a month' % names3[k - 1], '€', own + rng('€0', '€3,000', '€5', ''), ex[k - 1][2], EUR, 0, 3000, False)]
 inp.append(('Extra_Payment', 'Extra each month', '€', off + 'Optional: leave blank for none. ' + rng('€0', '€2,000', '€10', ''), 100, EUR, 0, 2000, False))
@@ -154,7 +169,10 @@ res.append(('Interest_Saved_vs_Minimums', 'Highest rate first saves vs minimums 
 how = ['• Every debt is paid its minimum each month, then the extra amount and the repayments freed up by a cleared debt go to the target debt: the highest APR first, or the smallest balance first. The third column of results pays the minimums only (no extra, nothing rolled).',
        '• Each month: interest = opening balance × monthly rate, then payments. Month-by-month tables for the three ways are on the hidden sheet Loan months (up to 1,200 months; beyond that: Never). Assumes no new borrowing.',
        '• The order a debt is paid in can change the interest, not the total you owe; the highest-rate-first way always costs the least interest for the same total monthly amount.']
-ws34, n34 = make('C34 · Debt payoff plan', 'debtplan', 'Which debt should I pay off first?', 'Up to three debts: compares paying the highest-rate debt first, the smallest balance first and the minimums only.', inp, res, how, [('Needs: all three debts and the extra amount', N1)], 'C34 Debt payoff plan')
+LK = {'Balance_1': ('F_Debt>0', 'F_CardBal', 'In the app it is pre-filled from Your finances: your credit card balance.'), 'APR_1': ('AND(F_Debt>0,OR(In_cardRate>0,Has_a_cardRate=1))', 'D_cR', 'In the app it is pre-filled from your card rate (given, or chosen in Your assumptions).'), 'Payment_1': ('F_Debt>0', 'F_CardPayM', 'In the app it is pre-filled from Your finances: your card repayment.'),
+      'Balance_2': ('F_Debt>0', 'F_LoanBal', 'In the app it is pre-filled from Your finances: your loans.'), 'APR_2': ('AND(F_Debt>0,OR(In_loanRate>0,Has_a_loanRate=1))', 'D_lR', 'In the app it is pre-filled from your loan rate (given, or chosen in Your assumptions).'), 'Payment_2': ('F_Debt>0', 'F_LoanPayM', 'In the app it is pre-filled from Your finances: your loan repayment.'),
+      'Balance_3': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Payment_3': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Extra_Payment': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances: type the extra you could pay.')}
+ws34, n34 = make('C34 · Debt payoff plan', 'debtplan', 'Which debt should I pay off first?', 'Up to three debts: compares paying the highest-rate debt first, the smallest balance first and the minimums only.', inp, res, how, [('Needs: all three debts and the extra amount', N1)], 'C34 Debt payoff plan', LK)
 # order text row (highest rate first), added under the results using helper cells in the far columns
 # ---------- hidden engine sheet
 E = wb.create_sheet('Loan months'); E.sheet_state = 'hidden'
@@ -280,7 +298,7 @@ pr['B245'].font = copy.copy(pr['B244'].font); pr['C245'].font = copy.copy(pr['C2
 rm = wb['READ ME']
 rm['B15'] = 'C01 to C34: the 34 calculators (orange tabs). C29 Investment tax and C30 Sale, gift and inheritance tax hold the 8-year rule and CGT. C27, C28 and C31 to C34 are the Loans group (loan repayment, loan comparison, loan affordability, credit card repayment, debt repayment, debt payoff plan); C31 to C34 use the hidden sheet Loan months.'
 tn = wb['Test notes']; rn = tn.max_row + 1
-tn.cell(rn, 2, 'Loans calculators C31 to C34 (added later)'); tn.cell(rn, 4, 'Compared with the prototype with tools/calc-vs-xlsx (ONLY=loancompare,loanafford,creditcard,debtplan): 25 cases and 14 gate rounds, 0 differences. The prototype side is also checked by tests/loans.js (351 checks against independent calculations). The month-by-month tables are on the hidden sheet Loan months; LibreOffice may need two recalculation passes for them, Excel does not.')
+tn.cell(rn, 2, 'Loans calculators C31 to C34 (added later)'); tn.cell(rn, 4, 'Compared with the prototype with tools/calc-vs-xlsx (ONLY=loancompare,loanafford,creditcard,debtplan): 25 cases and 14 gate rounds, 0 differences. The prototype side is also checked by tests/loans.js (356 checks against independent calculations). The month-by-month tables are on the hidden sheet Loan months; LibreOffice may need two recalculation passes for them, Excel does not.')
 for c in (2, 4): tn.cell(rn, c).alignment = Alignment(wrap_text=True, vertical='top')
 wb.save(out)
 print('saved', out)

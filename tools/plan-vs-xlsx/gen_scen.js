@@ -1,5 +1,5 @@
 const { chromium } = require('playwright'); const fs = require('fs'); const { PAGE_FNS } = require('./oracle_lib.js');
-const HTML = 'file://' + require('path').resolve(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html');
+const HTML = 'file://' + (process.env.APP_HTML ? require('path').resolve(process.env.APP_HTML) : require('path').resolve(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html'));   // APP_HTML=another copy of the prototype (for example the one on main)
 // scenario list builders ---------------------------------------------------
 const SAMPLE = {name:'sample', fill:true};   // workbook: Fill example = Yes and nothing typed
 function sampleScenario(){ return {name:'sample-typed', about:{age:38, partner:true, deps:2, married:null}, retireAge:63, pRet:66, infl:0.02, assume:'standard', q6:2,
