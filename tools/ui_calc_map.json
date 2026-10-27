@@ -1271,5 +1271,205 @@
    "Monthly_Rate"
   ],
   "extra": []
+ },
+ {
+  "id": "loancompare",
+  "sheet": "C31 Loan comparison",
+  "inputs": [
+   {
+    "key": "a",
+    "name": "Loan_Amount",
+    "kind": "n"
+   },
+   {
+    "key": "apr1",
+    "name": "APR_A",
+    "kind": "pct"
+   },
+   {
+    "key": "y1",
+    "name": "Years_A",
+    "kind": "n"
+   },
+   {
+    "key": "apr2",
+    "name": "APR_B",
+    "kind": "pct"
+   },
+   {
+    "key": "y2",
+    "name": "Years_B",
+    "kind": "n"
+   }
+  ],
+  "outputs": [
+   "Repayment_A",
+   "Interest_A",
+   "Total_A",
+   "Repayment_B",
+   "Interest_B",
+   "Total_B",
+   "Interest_Difference",
+   "Monthly_Difference"
+  ],
+  "extra": []
+ },
+ {
+  "id": "loanafford",
+  "sheet": "C32 Loan affordability",
+  "inputs": [
+   {
+    "key": "inc",
+    "name": "Take_Home",
+    "kind": "n"
+   },
+   {
+    "key": "ess",
+    "name": "Essential_Spending",
+    "kind": "n"
+   },
+   {
+    "key": "debt",
+    "name": "Existing_Repayments",
+    "kind": "n"
+   },
+   {
+    "key": "apr",
+    "name": "APR",
+    "kind": "pct"
+   },
+   {
+    "key": "y",
+    "name": "Years",
+    "kind": "n"
+   },
+   {
+    "key": "share",
+    "name": "Share_Used",
+    "kind": "pct"
+   }
+  ],
+  "outputs": [
+   "Spare_Money",
+   "Repayment_Used",
+   "Loan_Amount",
+   "Total_Interest",
+   "Repayment_If_Rate_Up"
+  ],
+  "extra": []
+ },
+ {
+  "id": "creditcard",
+  "sheet": "C33 Credit card repayment",
+  "inputs": [
+   {
+    "key": "b",
+    "name": "Card_Balance",
+    "kind": "n"
+   },
+   {
+    "key": "apr",
+    "name": "APR",
+    "kind": "pct"
+   },
+   {
+    "key": "p",
+    "name": "Your_Payment",
+    "kind": "n"
+   },
+   {
+    "key": "mp",
+    "name": "Min_Percent",
+    "kind": "pct"
+   },
+   {
+    "key": "mf",
+    "name": "Min_Floor",
+    "kind": "n"
+   },
+   {
+    "key": "t",
+    "name": "Clear_Within",
+    "kind": "n"
+   }
+  ],
+  "outputs": [
+   "Months_Minimum",
+   "Interest_Minimum",
+   "Months_Your_Payment",
+   "Interest_Your_Payment",
+   "Interest_Saved",
+   "Interest_This_Month",
+   "Months_Target",
+   "Payment_Target",
+   "Monthly_Rate"
+  ],
+  "extra": []
+ },
+ {
+  "id": "debtplan",
+  "sheet": "C34 Debt payoff plan",
+  "inputs": [
+   {
+    "key": "b1",
+    "name": "Balance_1",
+    "kind": "n"
+   },
+   {
+    "key": "apr1",
+    "name": "APR_1",
+    "kind": "pct"
+   },
+   {
+    "key": "m1",
+    "name": "Payment_1",
+    "kind": "n"
+   },
+   {
+    "key": "b2",
+    "name": "Balance_2",
+    "kind": "n"
+   },
+   {
+    "key": "apr2",
+    "name": "APR_2",
+    "kind": "pct"
+   },
+   {
+    "key": "m2",
+    "name": "Payment_2",
+    "kind": "n"
+   },
+   {
+    "key": "b3",
+    "name": "Balance_3",
+    "kind": "n"
+   },
+   {
+    "key": "apr3",
+    "name": "APR_3",
+    "kind": "pct"
+   },
+   {
+    "key": "m3",
+    "name": "Payment_3",
+    "kind": "n"
+   },
+   {
+    "key": "x",
+    "name": "Extra_Payment",
+    "kind": "n"
+   }
+  ],
+  "outputs": [
+   "Total_Owed",
+   "Months_Highest_Rate",
+   "Interest_Highest_Rate",
+   "Months_Smallest_Balance",
+   "Interest_Smallest_Balance",
+   "Months_Minimums",
+   "Interest_Minimums"
+  ],
+  "extra": []
  }
 ]

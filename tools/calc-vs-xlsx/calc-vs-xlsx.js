@@ -4,7 +4,7 @@
 // months / years / texts exactly. Assumption constants the formulas use are compared separately (CONST lines).
 // Run: NODE_PATH=/opt/node22/lib/node_modules node tools/calc-vs-xlsx/calc-vs-xlsx.js   (see README.md in this folder)   → "FAILS n of m", "ERRORS n", workbook timestamp.
 const { chromium } = require('playwright'); const fs = require('fs'); const { execFileSync } = require('child_process');
-const path = require('path'), DIR = process.env.CALC_VS_XLSX_WORK || path.join(require('os').tmpdir(), 'calc-vs-xlsx'), URL = 'file://' + path.resolve(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html');
+const path = require('path'), DIR = process.env.CALC_VS_XLSX_WORK || path.join(require('os').tmpdir(), 'calc-vs-xlsx'), URL = 'file://' + path.resolve(process.env.APP_HTML || path.join(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html'));
 fs.mkdirSync(DIR, {recursive:true});
 const P = 'pct', N = 'n', YN = 'yn';
 // [proto id, sheet, inputs [protoKey, workbookName, kind], outputs, uses inflation, has "show in today's money"]
@@ -36,8 +36,14 @@ const MAP = [
  ['surplus', 'C25 Monthly surplus', [['inc','Take_Home',N],['ess','Essentials',N],['life','Lifestyle',N],['debt','Debt_Repayments',N]], ['Surplus','Going_Out','Plan_Goal_Amount']],
  ['budget', 'C26 Budget 50 30 20', [['inc','Take_Home',N]], ['Save','Needs','Wants','Split_Check'], false, false, [['budgetNeeds','Budget_Needs'],['budgetWants','Budget_Wants'],['budgetSave','Budget_Save']]],
  ['debtpay', 'C27 Debt repayment', [['b','Balance',N],['apr','APR',P],['p','Monthly_Payment',N],['x','Extra_Payment',N]], ['Months_To_Clear','Total_Interest','Monthly_Rate']],
- ['loan', 'C28 Loan repayment', [['a','Loan_Amount',N],['apr','APR',P],['y','Years',N]], ['Monthly_Repayment','Total_Repaid','Total_Interest','Monthly_Rate']]
+ ['loan', 'C28 Loan repayment', [['a','Loan_Amount',N],['apr','APR',P],['y','Years',N]], ['Monthly_Repayment','Total_Repaid','Total_Interest','Monthly_Rate']],
+ ['loancompare', 'C31 Loan comparison', [['a','Loan_Amount',N],['apr1','APR_A',P],['y1','Years_A',N],['apr2','APR_B',P],['y2','Years_B',N]], ['Repayment_A','Interest_A','Total_A','Repayment_B','Interest_B','Total_B','Interest_Difference','Monthly_Difference']],
+ ['loanafford', 'C32 Loan affordability', [['inc','Take_Home',N],['ess','Essential_Spending',N],['debt','Existing_Repayments',N],['apr','APR',P],['y','Years',N],['share','Share_Used',P]], ['Spare_Money','Repayment_Used','Loan_Amount','Total_Interest','Repayment_If_Rate_Up']],
+ ['creditcard', 'C33 Credit card repayment', [['b','Card_Balance',N],['apr','APR',P],['p','Your_Payment',N],['mp','Min_Percent',P],['mf','Min_Floor',N],['t','Clear_Within',N]], ['Months_Minimum','Interest_Minimum','Months_Your_Payment','Interest_Your_Payment','Interest_Saved','Interest_This_Month','Months_Target','Payment_Target','Monthly_Rate']],
+ ['debtplan', 'C34 Debt payoff plan', [['b1','Balance_1',N],['apr1','APR_1',P],['m1','Payment_1',N],['b2','Balance_2',N],['apr2','APR_2',P],['m2','Payment_2',N],['b3','Balance_3',N],['apr3','APR_3',P],['m3','Payment_3',N],['x','Extra_Payment',N]], ['Total_Owed','Months_Highest_Rate','Interest_Highest_Rate','Months_Smallest_Balance','Interest_Smallest_Balance','Months_Minimums','Interest_Minimums']]
 ];
+// ONLY=ids (comma separated) runs only those calculators (no tax engine or constants); APP_HTML=another copy of the prototype
+const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null; if (ONLY) for (let i = MAP.length - 1; i >= 0; i--) if (!ONLY.includes(MAP[i][0])) MAP.splice(i, 1);
 // the customer's assumptions the workbook shows as inputs on the sheet (prototype: "Your assumptions"); varied per case on both sides
 const ASMR = {accessAge:[50, 60, 10], buyFees:[0, 10000, 250], rentRise:[0, 0.08, 0.005], upkeep:[0, 0.03, 0.001], depEarn:[0, 0.06, 0.0025], wage:[0, 0.06, 0.001], retireMult:[20, 33, 1], penChg:[0, 0.025, 0.0005], lumpSum:[0, 0.25, 0.01], ddTiming:['start', 'end'], planEnd:[85, 100, 1],
   riskMu1:[0, 0.08, 0.005], riskMu2:[0, 0.08, 0.005], riskMu3:[0, 0.08, 0.005], riskVol1:[0, 0.25, 0.01], riskVol2:[0, 0.25, 0.01], riskVol3:[0, 0.25, 0.01], lifeShare:[0.3, 1, 0.05], budgetNeeds:[0, 1, 0.05], budgetWants:[0, 1, 0.05], budgetSave:[0, 1, 0.05]};
@@ -70,7 +76,11 @@ const EDGE = {
   surplus:{inc:2500, ess:1500, life:800, debt:200},
   budget:{inc:500},
   debtpay:{b:100000, apr:0, p:10, x:0},
-  loan:{a:500, apr:0, y:1}
+  loan:{a:500, apr:0, y:1},
+  loancompare:{a:500, apr1:0, y1:1, apr2:25, y2:10},
+  loanafford:{inc:500, ess:600, debt:0, apr:0, y:1, share:10},   // no spare money
+  creditcard:{b:3000, apr:21, p:40, mp:2.5, mf:5, t:36},   // a payment below the monthly interest: never clears
+  debtplan:{b1:1000, apr1:35, m1:20, b2:0, apr2:5, m2:0, b3:0, apr3:5, m3:0, x:0}   // one debt, repayment below its interest
 };
 const INFL = [0.02, 0.039, 0, 0.04];
 // one Tax engine case per round: the workbook's tax engine vs the prototype's hhTax (same 2026 rules)
@@ -100,15 +110,15 @@ Object.assign(RULEMAP, {"Set_infl": "SV(\"infl\")", "Set_wage": "SV(\"wage\")", 
     L.push(EDGE[d.id]); cases[d.id] = L; });
   // validity: Rent vs buy deposit 10%–100% of price; Term B ≥ 5; Deposit monthly ≥ 50 (already); Retirement age above age
   // audit fix round (8 Oct 2026): the random cases keep valid values, and the extra cases below test the audited edges (deposit outside 10%–100%, retirement age at or before the age, bridge years, lump sum above €500k, Illness Benefit cap, withdrawal above the pot)
-  cases.rentbuy.slice(0, 4).forEach(c => { c.dep = Math.max(c.dep, Math.ceil(c.price * 0.1)); c.dep = Math.min(c.dep, c.price); });
-  cases.retirement.slice(0, 4).forEach(c => { if (c.ra <= c.age) c.ra = Math.min(75, c.age + 5); });
-  const base = id => Object.fromEntries(defs.find(d => d.id === id).ins.map(i => [i.k, i.v]));
+  if (cases.rentbuy) cases.rentbuy.slice(0, 4).forEach(c => { c.dep = Math.max(c.dep, Math.ceil(c.price * 0.1)); c.dep = Math.min(c.dep, c.price); });
+  if (cases.retirement) cases.retirement.slice(0, 4).forEach(c => { if (c.ra <= c.age) c.ra = Math.min(75, c.age + 5); });
+  const base = id => { const d = defs.find(x => x.id === id); return d ? Object.fromEntries(d.ins.map(i => [i.k, i.v])) : {}; };
   const EXTRA = {
     retirement:[{age:40, ra:60, d:20000, o:10000}, {age:40, ra:60, d:20000, o:20000}, {age:40, ra:60, d:20000, o:30000}, {age:40, ra:60, d:20000, o:45000}, {age:70, ra:50}, {age:40, ra:40}, {age:30, ra:65, pot:1500000, m:5000, d:150000, g:7}, {age:55, ra:65, pot:1500000, m:5000, d:60000, g:7, less:5000}].map(o => Object.assign(base('retirement'), o, {_infl:0.02})),
     incomegap:[{e:200, sp:3, s:8000, inc:60000, ib:254}, {e:2500, sp:3, s:200000, inc:60000, ib:254}, {e:2500, sp:12, s:1000, inc:60000, ib:254}].map(o => Object.assign(base('incomegap'), o)),
     lastmoney:[{pot:10000, w:24000, g:3, age:66}, {pot:10000, w:24000, g:3, age:55}].map(o => Object.assign(base('lastmoney'), o, {_infl:0.02})),
     rentbuy:[{dep:0, price:350000}, {dep:350000, price:350000}, {dep:5000, price:200000}].map(o => Object.assign(base('rentbuy'), o))};
-  Object.entries(EXTRA).forEach(([id, L]) => { cases[id] = cases[id].concat(L); });
+  Object.entries(EXTRA).forEach(([id, L]) => { if (cases[id]) cases[id] = cases[id].concat(L); });
   const NR = Math.max(...Object.values(cases).map(a => a.length)), cs = (id, k) => cases[id][Math.min(k, cases[id].length - 1)];
   // per-case assumption values (case 1 = suggested, 2–4 random, 5 = the other end)
   const asmSug = await p.evaluate(keys => { S = fresh(); applyAssume(); return Object.fromEntries(keys.map(k => [k, asmV(k)])); }, Object.keys(ASMR));   // FP round 8: the standard (type 3) or the mid-range figure (type 2)
@@ -140,6 +150,7 @@ Object.assign(RULEMAP, {"Set_infl": "SV(\"infl\")", "Set_wage": "SV(\"wage\")", 
         return {gate, infl, given, asmg, num}; });
       out.push({id:c.id, rounds, exp}); });
     return out; });
+  if (ONLY) for (let i = GS.length - 1; i >= 0; i--) if (!ONLY.includes(GS[i].id)) GS.splice(i, 1);
   const NG = Math.max(...GS.map(g => g.rounds.length));
   for (let g = 0; g < NG; g++) { const R = {}; GS.forEach(s => { if (g >= s.rounds.length) return; const e = UIMAP.find(x => x.id === s.id), ex = s.exp[g], o = {};
       e.inputs.forEach(i => { if (i.key in ex.given) { const v = ex.given[i.key]; o[i.name] = i.kind === 'pct' ? +(v / 100).toFixed(8) : i.kind === 'yn' ? (v ? 'Yes' : 'No') : v; } });
