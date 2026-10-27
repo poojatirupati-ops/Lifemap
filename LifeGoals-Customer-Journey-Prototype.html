@@ -6689,7 +6689,7 @@ function pstConfirm(){ const u = S.pst, T = DOCT[u.cat], all = T.f.concat(T.extr
   S.pst = null; S.xs = [{v:'XCAT', p:u.cat}, {v:'CALC', p:T.open}]; lastId = null; render();
   toast(S.app ? 'Added to your plan too (' + where + ')' : 'Saved. Your plan will use it when you make it'); }
 const aExp = k => { const x = EXPERT_FOR[k].toLowerCase(); return (/^[aeiou]/.test(x) ? 'an ' : 'a ') + x; };
-const TOPIC_TOOLS = {Mortgages:['repayment','borrow','overpay','deposit'], Pensions:['retirement','contrib','lastmoney'], Protection:['lifecover','incomegap','mortgageprotect'], Investing:['regularinvest','lumpsum','realreturn','fees'], Savings:['goalplanner','emergency','compound'], 'Everyday money':['budget','surplus','debtpay']};
+const TOPIC_TOOLS = {Mortgages:['repayment','borrow','overpay','deposit'], Pensions:['retirement','contrib','avc','lastmoney','drawdown'], Protection:['lifecover','incomegap','mortgageprotect'], Investing:['regularinvest','lumpsum','realreturn','fees','riskreturn'], Savings:['goalplanner','emergency','compound'], 'Everyday money':['budget','surplus','networth','debtpay','loan']};   // every calculator of a Calculators group is also on its Focus-on-one-area page (Mortgages shows all seven through MP_DATA)
 
 /* ================= MORTGAGES TOPIC PAGE (Pooja, 15 Oct 2026) ================= */
 const MP_SIT = [['Buying','🏡'], ['Switching','🔄'], ['Borrowing more','➕']];
