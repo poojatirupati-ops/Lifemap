@@ -28,7 +28,7 @@ const { chromium } = require('playwright'), path = require('path');
     else if (c.id === 'loanafford'){ const i = iEq(v.apr), nn = v.y * 12, spare = v.inc - v.ess - v.debt, use = Math.max(0, spare) * v.share / 100, L = num.Loan_Amount;
       if (!near(pmt(L, i, nn), use, 1e-6) || !near(num.Repayment_Used, use, 1e-9) || !near(num.Repayment_If_Rate_Up, pmt(L, iEq(v.apr + 3), nn), 1e-6) || !near(num.Total_Interest, use * nn - L, 1e-6)) bad('afford', c); }
     else if (c.id === 'creditcard'){ const i = iEq(v.apr), yp = fixed(v.b, i, v.p), okY = yp ? num.Months_Your_Payment === yp.m && near(num.Interest_Your_Payment, yp.ti) : num.Months_Your_Payment === 'Never';
-      const mo = v.mp > 0 ? minOnly(v.b, i, v.mp / 100, v.mf) : undefined, okM = v.mp > 0 ? (mo ? num.Months_Minimum === mo.m && near(num.Interest_Minimum, mo.ti) : num.Months_Minimum === 'Never') : num.Months_Minimum === '—';
+      const have = v.mp > 0 || v.mf > 0, mo = have ? minOnly(v.b, i, v.mp / 100, v.mf) : undefined, okM = have ? (mo ? num.Months_Minimum === mo.m && near(num.Interest_Minimum, mo.ti) : num.Months_Minimum === 'Never') : num.Months_Minimum === '—';
       let bal = v.b; const pm = num.Payment_Target; for (let k = 0; k < v.t; k++) bal = bal * (1 + i) - pm;
       if (!okY || !okM || !near(num.Interest_This_Month, v.b * i, 1e-9) || !near(bal, 0, 1e-6)) bad('card', c); }
     else if (c.id === 'debtpay'){ const i = iEq(v.apr), a = fixed(v.b, i, v.p + v.x); if (a ? !(num.Months_To_Clear === a.m && near(num.Total_Interest, a.ti)) : num.Months_To_Clear !== 'Never') bad('debtpay', c); }
@@ -41,6 +41,15 @@ const { chromium } = require('playwright'), path = require('path');
   n += 4; if (meta.cc.q === meta.dp.q) { fails++; console.log('FAIL same question'); } if (meta.mp !== 0 || meta.mf !== 0) { fails++; console.log('FAIL minimum rule has a default'); }
   const want = 'loans:loan,loancompare,loanafford,creditcard,debtpay,debtplan'; if (!meta.cats.includes(want)) { fails++; console.log('FAIL Loans group order', meta.cats); }
   if (JSON.stringify(meta.tools.Loans) !== JSON.stringify(['loan', 'loancompare', 'loanafford', 'creditcard', 'debtpay', 'debtplan'])) { fails++; console.log('FAIL Loans focus page', meta.tools.Loans); }
+  // wording and edge rules found in review: a payment below the minimum is flagged and never "saves" a negative amount; a floor-only minimum counts; no "never" mislabelled as 100 years
+  const ed = await p.evaluate(() => { const r = (id, v) => C(id).run(v); const below = r('creditcard', { b: 3000, apr: 21, p: 50, mp: 3, mf: 6.35, t: 36 }), floor = r('creditcard', { b: 3000, apr: 21, p: 150, mp: 0, mf: 25, t: 36 }), grow = r('creditcard', { b: 3000, apr: 21, p: 150, mp: 0.5, mf: 0, t: 36 }), aff = r('loanafford', { inc: 3000, ess: 1800, debt: 200, apr: 9, y: 5, share: 100 }), zero = r('debtplan', { b1: 4000, apr1: 20, m1: 100, b2: 1000, apr2: 5, m2: 0, b3: 0, apr3: 5, m3: 0, x: 0 }), one = r('debtplan', { b1: 4000, apr1: 20, m1: 100, b2: 0, apr2: 5, m2: 0, b3: 0, apr3: 5, m3: 0, x: 0 });
+    return { belowLine: below.line, belowSaved: below.rows.some(x => x && /saved/.test(x[0])), floorVal: floor.val, floorNum: floor.num.Months_Minimum, growVal: grow.val, affLbl: aff.lbl, affLine: aff.line, zeroLine: zero.line, oneLine: one.line }; });
+  const chk = (ok, what) => { n++; if (!ok) { fails++; console.log('FAIL', what); } };
+  chk(/below your card/.test(ed.belowLine) && !ed.belowSaved && !/saves about/.test(ed.belowLine), 'payment below the minimum is flagged, no saving shown');
+  chk(ed.floorVal === 'Never' && ed.floorNum === 'Never', 'a floor-only minimum below the interest never clears');
+  chk(ed.growVal === 'Never', 'a minimum that does not cover the interest says Never, not Over 100 years');
+  chk(/supports/.test(ed.affLbl) && /no buffer/.test(ed.affLine) && /more than your spare money/.test(ed.affLine) && /not a lender/.test(ed.affLine), 'affordability is a size that fits, with the buffer and stress warnings');
+  chk(/€0 repayment/.test(ed.zeroLine) && !/saves about €0/.test(ed.oneLine) && !/saves about/.test(ed.oneLine), 'debt plan: zero-repayment note, no "saves €0"');
   // every Calculators group is fully listed on its Focus page
   const cov = await p.evaluate(() => { loadSample(); return TOPICS.map(t => { const h = V.XTOPIC(t[1]), html = typeof h === 'string' ? h : h.html, nShown = (html.match(/data-a="calc"/g) || []).length, nGroup = CALCS.filter(x => x.cat === t[4]).length; return [t[1], nShown, nGroup]; }); });
   cov.forEach(([t, a, g]) => { n++; if (a < g) { fails++; console.log('FAIL focus page missing calculators', t, a, 'of', g); } });
