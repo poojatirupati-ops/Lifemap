@@ -1,0 +1,52 @@
+<!doctype html><meta charset="utf-8" /><title>fake app</title>
+<div id="curid"></div>
+<div id="screen"></div>
+<script>
+  // Fake of the React app: same view built React-style (DOM API, style properties, split text nodes, class order, live input value)
+  // behind window.__lm. ?alt changes one word so view-equal must fail.
+  const alt = location.search.includes('alt')
+  let state = null
+  function render() {
+    const screen = document.getElementById('screen')
+    screen.textContent = ''
+    const app = document.createElement('div')
+    app.className = 'app'
+    const heading = document.createElement('h2')
+    heading.tabIndex = -1
+    heading.append('Screen ', state.scr)
+    const why = document.createElement('p')
+    why.className = 'small'
+    Object.assign(why.style, { color: 'red', margin: '0px 0px 8px' })
+    why.append(alt ? 'Wy: ' : 'Why: ', state.why.join(','))
+    const addButton = document.createElement('button')
+    addButton.className = 'sel chip'
+    addButton.dataset.a = 'why'
+    addButton.textContent = 'Add'
+    addButton.onclick = () => {
+      state.why.push('x')
+      render()
+    }
+    const noteInput = document.createElement('input')
+    noteInput.setAttribute('class', 'in')
+    noteInput.defaultValue = 'stale'
+    noteInput.value = state.whyNote
+    noteInput.oninput = () => {
+      state.whyNote = noteInput.value
+    }
+    app.append(heading, why, addButton, noteInput)
+    screen.append(app)
+    document.getElementById('curid').textContent = state.scr + ' · fake'
+  }
+  window.__lm = {
+    load: (snapshot) => {
+      state = structuredClone(snapshot)
+      render()
+    },
+    get: () => JSON.parse(JSON.stringify(state)),
+    go: (id) => {
+      state.scr = id
+      state.sheet = null
+      render()
+    },
+  }
+</script>

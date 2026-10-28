@@ -1,0 +1,12 @@
+[
+  {
+    "name": "fake-why",
+    "fixture": "fresh",
+    "go": "D1",
+    "steps": [
+      { "text": "Add" },
+      { "click": "button.chip" },
+      { "type": "input.in", "value": "a note" }
+    ]
+  }
+]

@@ -1,0 +1,36 @@
+{
+  "name": "api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/dev.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "oxlint src",
+    "db:generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "deploy": "cd .. && sst deploy"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.7.13",
+    "@hono/node-server": "^1.13.0",
+    "better-auth": "^1.7.13",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.6.0",
+    "pg": "^8.23.1",
+    "sst": "^4.17.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "oxlint": "^1.88.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

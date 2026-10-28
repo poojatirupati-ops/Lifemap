@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8" /><title>fake proto</title>
+<div id="curid"></div>
+<div id="screen"></div>
+<script>
+  // Fake of the original for tests/scenarios/viewEqual.test.ts: a global `let S`, render(), go(), lastId, innerHTML markup.
+  let S = null,
+    lastId = null
+  function render() {
+    document.getElementById('screen').innerHTML =
+      '<div class="app"><h2 tabindex="-1">Screen ' +
+      S.scr +
+      '</h2><p class="small" style="margin:0 0 8px;color:red">Why: ' +
+      S.why.join(',') +
+      '</p>' +
+      '<button class="chip sel" data-a="why" onclick="S.why.push(\'x\'); render()">Add</button><input class="in" value="' +
+      S.whyNote +
+      '" oninput="S.whyNote = this.value"></div>'
+    document.getElementById('curid').textContent = S.scr + ' · fake'
+    lastId = S.scr
+  }
+  function go(id) {
+    S.scr = id
+    S.sheet = null
+    render()
+  }
+</script>

@@ -1,0 +1,13 @@
+.cover{position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;padding:24px 16px 32px;color:#fff;background:#0F1A24 center 40%/cover}
+.cover::before{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(15,26,36,.35) 0,rgba(15,26,36,.1) 35%,rgba(15,26,36,.92) 100%)}
+.cover>*{position:relative}
+.cover-logo{position:absolute;top:24px;left:16px;margin:0;font-size:1.25rem;font-weight:700}
+.cover h1{margin:0;font-size:2rem;line-height:1.15}
+.cover p{margin:0}
+.cover-under{text-align:center;font-size:.9rem}
+.cover-links{display:flex;justify-content:center;align-items:center;gap:4px}
+.cover .ui-btn-link{color:#fff}
+.why{padding:24px 16px;display:grid;gap:16px}
+.why h1{margin:0;font-size:1.5rem}
+.why-chips{display:flex;flex-wrap:wrap;gap:8px}
+.why-actions{display:flex;gap:8px;align-items:center}

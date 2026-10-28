@@ -1,0 +1,588 @@
+[
+  {
+    "name": "welcome",
+    "proto": [],
+    "app": "",
+    "appSteps": []
+  },
+  {
+    "name": "why-here",
+    "proto": [
+      {
+        "click": "Let's start"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "click": "Let's start"
+      }
+    ]
+  },
+  {
+    "name": "discover-q1",
+    "proto": [
+      {
+        "click": "Let's start"
+      },
+      {
+        "click": "Skip for now"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "click": "Let's start"
+      },
+      {
+        "click": "Skip for now"
+      }
+    ]
+  },
+  {
+    "name": "jump-D0",
+    "proto": [
+      {
+        "jump": "D0"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "D0"
+      }
+    ]
+  },
+  {
+    "name": "jump-D1",
+    "proto": [
+      {
+        "jump": "D1"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "D1"
+      }
+    ]
+  },
+  {
+    "name": "jump-D2",
+    "proto": [
+      {
+        "jump": "D2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "D2"
+      }
+    ]
+  },
+  {
+    "name": "jump-D5",
+    "proto": [
+      {
+        "jump": "D5"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "D5"
+      }
+    ]
+  },
+  {
+    "name": "jump-D6",
+    "proto": [
+      {
+        "jump": "D6"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "D6"
+      }
+    ]
+  },
+  {
+    "name": "jump-DR",
+    "proto": [
+      {
+        "jump": "DR"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "DR"
+      }
+    ]
+  },
+  {
+    "name": "jump-DS",
+    "proto": [
+      {
+        "jump": "DS"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "DS"
+      }
+    ]
+  },
+  {
+    "name": "jump-HOME-0",
+    "proto": [
+      {
+        "jump": "HOME-0"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "HOME-0"
+      }
+    ]
+  },
+  {
+    "name": "jump-XPL-01",
+    "proto": [
+      {
+        "jump": "XPL-01"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "XPL-01"
+      }
+    ]
+  },
+  {
+    "name": "jump-CALC-retirement",
+    "proto": [
+      {
+        "jump": "CALC-retirement"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "CALC-retirement"
+      }
+    ]
+  },
+  {
+    "name": "jump-VID-01",
+    "proto": [
+      {
+        "jump": "VID-01"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "VID-01"
+      }
+    ]
+  },
+  {
+    "name": "jump-PLAN-0",
+    "proto": [
+      {
+        "jump": "PLAN-0"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "PLAN-0"
+      }
+    ]
+  },
+  {
+    "name": "jump-ADMIN-SET",
+    "proto": [
+      {
+        "jump": "ADMIN-SET"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ADMIN-SET"
+      }
+    ]
+  },
+  {
+    "name": "jump-B1",
+    "proto": [
+      {
+        "jump": "B1"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "B1"
+      }
+    ]
+  },
+  {
+    "name": "jump-F1",
+    "proto": [
+      {
+        "jump": "F1"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "F1"
+      }
+    ]
+  },
+  {
+    "name": "jump-F2",
+    "proto": [
+      {
+        "jump": "F2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "F2"
+      }
+    ]
+  },
+  {
+    "name": "jump-F4",
+    "proto": [
+      {
+        "jump": "F4"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "F4"
+      }
+    ]
+  },
+  {
+    "name": "jump-B4",
+    "proto": [
+      {
+        "jump": "B4"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "B4"
+      }
+    ]
+  },
+  {
+    "name": "jump-P1",
+    "proto": [
+      {
+        "jump": "P1"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P1"
+      }
+    ]
+  },
+  {
+    "name": "jump-P1E",
+    "proto": [
+      {
+        "jump": "P1E"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P1E"
+      }
+    ]
+  },
+  {
+    "name": "jump-P2",
+    "proto": [
+      {
+        "jump": "P2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P2"
+      }
+    ]
+  },
+  {
+    "name": "jump-P3-2",
+    "proto": [
+      {
+        "jump": "P3-2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P3-2"
+      }
+    ]
+  },
+  {
+    "name": "jump-P3-6",
+    "proto": [
+      {
+        "jump": "P3-6"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P3-6"
+      }
+    ]
+  },
+  {
+    "name": "jump-P4",
+    "proto": [
+      {
+        "jump": "P4"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "P4"
+      }
+    ]
+  },
+  {
+    "name": "jump-HOME",
+    "proto": [
+      {
+        "jump": "HOME"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "HOME"
+      }
+    ]
+  },
+  {
+    "name": "jump-ASK",
+    "proto": [
+      {
+        "jump": "ASK"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ASK"
+      }
+    ]
+  },
+  {
+    "name": "jump-PLAN",
+    "proto": [
+      {
+        "jump": "PLAN"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "PLAN"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-01",
+    "proto": [
+      {
+        "jump": "ME-01"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-01"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-UM",
+    "proto": [
+      {
+        "jump": "ME-UM"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-UM"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-CHK",
+    "proto": [
+      {
+        "jump": "ME-CHK"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-CHK"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-TERMS",
+    "proto": [
+      {
+        "jump": "ME-TERMS"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-TERMS"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-UM2",
+    "proto": [
+      {
+        "jump": "ME-UM2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-UM2"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-R",
+    "proto": [
+      {
+        "jump": "ME-R"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-R"
+      }
+    ]
+  },
+  {
+    "name": "jump-ME-MONEY",
+    "proto": [
+      {
+        "jump": "ME-MONEY"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "ME-MONEY"
+      }
+    ]
+  },
+  {
+    "name": "jump-C0",
+    "proto": [
+      {
+        "jump": "C0"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "C0"
+      }
+    ]
+  },
+  {
+    "name": "jump-C1",
+    "proto": [
+      {
+        "jump": "C1"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "C1"
+      }
+    ]
+  },
+  {
+    "name": "jump-C2",
+    "proto": [
+      {
+        "jump": "C2"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "C2"
+      }
+    ]
+  },
+  {
+    "name": "jump-C3",
+    "proto": [
+      {
+        "jump": "C3"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "C3"
+      }
+    ]
+  },
+  {
+    "name": "jump-C4",
+    "proto": [
+      {
+        "jump": "C4"
+      }
+    ],
+    "app": "",
+    "appSteps": [
+      {
+        "jump": "C4"
+      }
+    ]
+  }
+]

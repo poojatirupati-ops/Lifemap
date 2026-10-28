@@ -1,0 +1,101 @@
+[
+  {
+    "name": "discover-answer-all",
+    "fixture": "fresh",
+    "go": "D2",
+    "steps": [
+      {
+        "click": ".opt >> nth=0"
+      },
+      {
+        "click": ".opt >> nth=1"
+      },
+      {
+        "click": ".opt >> nth=2"
+      },
+      {
+        "click": ".opt >> nth=3"
+      },
+      {
+        "click": ".opt >> nth=2"
+      },
+      {
+        "click": ".opt >> nth=1"
+      },
+      {
+        "text": "Add an Emergency fund goal"
+      },
+      {
+        "text": "Continue"
+      },
+      {
+        "type": "#ds-email",
+        "value": "nope"
+      },
+      {
+        "text": "Save my results"
+      },
+      {
+        "type": "#ds-email",
+        "value": "me@example.com"
+      },
+      {
+        "click": "#ds-comms"
+      },
+      {
+        "text": "Save my results"
+      }
+    ]
+  },
+  {
+    "name": "discover-skip-back",
+    "fixture": "fresh",
+    "go": "D2",
+    "steps": [
+      {
+        "text": "Skip"
+      },
+      {
+        "click": ".opt >> nth=0"
+      },
+      {
+        "text": "\u2190 Back"
+      },
+      {
+        "text": "\u2190 Back"
+      },
+      {
+        "text": "\u2190 Back"
+      }
+    ]
+  },
+  {
+    "name": "discover-too-few",
+    "fixture": "fresh",
+    "go": "DR",
+    "steps": [
+      {
+        "click": ".dn-dot >> nth=3"
+      },
+      {
+        "click": ".opt >> nth=0"
+      },
+      {
+        "click": ".qx"
+      }
+    ]
+  },
+  {
+    "name": "discover-skip-save",
+    "fixture": "fresh",
+    "go": "DR",
+    "steps": [
+      {
+        "text": "Skip for now"
+      },
+      {
+        "text": "Skip for now"
+      }
+    ]
+  }
+]

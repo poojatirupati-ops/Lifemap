@@ -1,0 +1,33 @@
+[
+  {
+    "name": "r23-plan-what-if",
+    "fixture": "sample-home",
+    "steps": [
+      { "click": "nav.tabs button:nth-of-type(3)" },
+      { "click": "[aria-label='25 euro more']" },
+      { "click": "[aria-label='25 euro more']" },
+      { "click": "[aria-label='Save 25 euro more a month']" },
+      { "text": "Save this plan" },
+      { "text": "Back to my plan" }
+    ]
+  },
+  {
+    "name": "r23-plan-rank",
+    "fixture": "sample-home",
+    "steps": [
+      { "click": "nav.tabs button:nth-of-type(3)" },
+      { "click": "details[data-g=rank] summary" },
+      { "click": "#rank-plan li:nth-child(2) .rk-arr button:first-child" }
+    ]
+  },
+  {
+    "name": "r23-add-goal",
+    "fixture": "sample-home",
+    "steps": [
+      { "click": "nav.tabs button:nth-of-type(3)" },
+      { "text": "Add a goal" },
+      { "click": "[aria-pressed=false].gtile" },
+      { "text": "Back to my timeline" }
+    ]
+  }
+]

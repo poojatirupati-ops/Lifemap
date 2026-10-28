@@ -1,0 +1,21 @@
+.navbar{padding:max(6px,env(safe-area-inset-top)) 8px 0}
+.back{display:inline-flex;align-items:center;gap:2px;min-width:44px;min-height:44px;padding:0 16px 0 10px;border:1px solid var(--g-edge);border-radius:999px;background:var(--g-bg);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(14,26,35,.06);transition:transform .3s var(--ease),box-shadow .3s var(--ease),background .2s}
+.back:hover{background:var(--g-bg2)}
+.back:active{transform:scale(.97)}
+.screen{view-transition-name:screen}
+
+@keyframes nav-in-fwd{from{transform:translateX(28px);opacity:0}}
+@keyframes nav-in-back{from{transform:translateX(-28px);opacity:0}}
+@keyframes nav-out-fwd{to{transform:translateX(-28px);opacity:0}}
+@keyframes nav-out-back{to{transform:translateX(28px);opacity:0}}
+.screen.enter-forward{animation:nav-in-fwd .32s var(--ease) backwards}
+.screen.enter-back{animation:nav-in-back .32s var(--ease) backwards}
+
+::view-transition-old(root),::view-transition-new(root){animation:none}
+::view-transition-old(screen){animation:nav-out-fwd .24s var(--ease) both}
+::view-transition-new(screen){animation:nav-in-fwd .32s var(--ease) both}
+html[data-nav=back]::view-transition-old(screen){animation:nav-out-back .24s var(--ease) both}
+html[data-nav=back]::view-transition-new(screen){animation:nav-in-back .32s var(--ease) both}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+}

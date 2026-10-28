@@ -1,0 +1,48 @@
+[
+  {
+    "name": "r26-me-pages",
+    "fixture": "sample-me",
+    "steps": [
+      { "text": "Edit profile" },
+      { "click": ".backb" },
+      { "click": "[data-a=me][data-p=privacy]" },
+      { "click": "[data-a=advq]" },
+      { "click": ".backb" },
+      { "click": "[data-a=me][data-p=terms]" }
+    ]
+  },
+  {
+    "name": "r26-household",
+    "fixture": "sample-me",
+    "steps": [{ "click": "[data-a=deps][data-p='2']" }, { "click": "[data-a=partner][data-p=No]" }]
+  },
+  {
+    "name": "r26-money-profile",
+    "fixture": "sample-me",
+    "steps": [
+      { "click": "[data-a=me][data-p=um]" },
+      { "click": "[data-a=umsec][data-p='2']" },
+      { "click": "[data-a=umpick][data-p='u10|1']" },
+      { "click": "[data-a=umsave]" }
+    ]
+  },
+  {
+    "name": "r26-recheck",
+    "fixture": "sample-me",
+    "steps": [
+      { "click": "[data-a=me][data-p=recheck]" },
+      { "click": "[data-a=umedit]" },
+      { "click": "[data-a=recheckok]" }
+    ]
+  },
+  {
+    "name": "r26-assumptions",
+    "fixture": "sample-me",
+    "steps": [
+      { "click": "[data-a=me][data-p=asm]" },
+      { "click": "[data-a=asmset][data-p='bands|flat']" },
+      { "click": "[data-a=asmback][data-p=bands]" },
+      { "click": "details[data-g=safety] summary" }
+    ]
+  }
+]

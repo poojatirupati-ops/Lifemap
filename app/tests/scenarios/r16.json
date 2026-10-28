@@ -1,0 +1,61 @@
+[
+  {
+    "name": "r16-about-you",
+    "fixture": "fresh",
+    "go": "B1",
+    "steps": [
+      { "type": "#b-name", "value": "Aoife" },
+      { "type": "#dob-d", "value": "04" },
+      { "type": "#dob-m", "value": "05" },
+      { "type": "#dob-y", "value": "1988" },
+      { "click": "[data-a=partner][data-p=Yes]" },
+      { "click": "[data-a=married][data-p=Yes]" },
+      { "click": "[data-a=married][data-p=Yes]" },
+      { "click": "[data-a=pmode][data-p=invite]" },
+      { "type": "#p-email", "value": "not-an-email" },
+      { "click": "[data-a=pinvite]" },
+      { "type": "#p-email", "value": "sam@example.com" },
+      { "click": "[data-a=pinvite]" },
+      { "click": "[data-a=pcancel]" },
+      { "click": "[data-a=pmode][data-p=manual]" },
+      { "type": "#p-name", "value": "Sam" },
+      { "type": "#pdob-d", "value": "12" },
+      { "type": "#pdob-m", "value": "12" },
+      { "type": "#pdob-y", "value": "1986" },
+      { "click": "[data-a=deps][data-p='2']" }
+    ]
+  },
+  {
+    "name": "r16-goal-pick",
+    "fixture": "goals-set",
+    "go": "F1",
+    "steps": [
+      { "click": "[data-a=gpick][data-p=travel]" },
+      { "click": "[data-a=gpick][data-p=wedding]" },
+      { "click": "[data-a=gpick][data-p=retire]" }
+    ]
+  },
+  {
+    "name": "r16-goal-review",
+    "fixture": "goals-set",
+    "go": "F4",
+    "steps": [
+      { "click": "[data-a=grank][data-p='1|up']" },
+      { "click": "[data-a=grank][data-p='2|down']" },
+      { "click": "[data-a=f4ok]" }
+    ]
+  },
+  {
+    "name": "r16-understand",
+    "fixture": "goals-set",
+    "go": "B4",
+    "steps": [
+      { "click": "[data-a=umedit][data-p=d8]" },
+      { "click": "[data-a=umpick][data-p='d8|1']" },
+      { "click": "[data-a=umpick][data-p='u10|2']" },
+      { "click": "[data-a=umpick][data-p='d6|0']" },
+      { "click": "[data-a=umchip][data-p=Pension]" },
+      { "click": "[data-a=pbprofile]" }
+    ]
+  }
+]
