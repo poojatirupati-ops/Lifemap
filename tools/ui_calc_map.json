@@ -1334,6 +1334,11 @@
     "kind": "n"
    },
    {
+    "key": "sav",
+    "name": "Saving_Goals",
+    "kind": "n"
+   },
+   {
     "key": "apr",
     "name": "APR",
     "kind": "pct"

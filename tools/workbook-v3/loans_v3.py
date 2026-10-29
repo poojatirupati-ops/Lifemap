@@ -12,6 +12,19 @@ from openpyxl.utils import get_column_letter as L
 src, out = sys.argv[1:3]
 wb = openpyxl.load_workbook(src)
 T = wb['C28 Loan repayment']
+# helper rows on Plan pay & tax for the loan calculators (kept below everything else): the loan without other-property mortgages, the plan's saving
+pp = wb['Plan pay & tax']; h0 = pp.max_row + 2
+pp['B%d' % h0] = 'LOAN CALCULATORS (added with the Loans group)'; pp['C%d' % h0] = 'Value'; pp['D%d' % h0] = 'How it is worked out'
+for c in 'BCD': pp[c + str(h0)].font = copy.copy(pp['B186'].font if c == 'B' else pp['C186'].font); pp[c + str(h0)].fill = copy.copy(pp['B186'].fill if c == 'B' else pp['C186'].fill)
+HP = [('F_LoanBalO', 'Loans owed, not counting other-property mortgages', '=D_lB0', '#,##0'),
+      ('D_iLO', 'Loan monthly rate, not counting other-property mortgages', '=(1+D_lR0)^(1/12)-1', '0.0000%'),
+      ('F_LoanPayMO', 'Loan repayment used, not counting other-property mortgages (given if it covers the interest, else a 5-year repayment)', '=IF(F_LoanBalO>0,IF(In_loanPayM+In_debtPayM>F_LoanBalO*D_iLO,In_loanPayM+In_debtPayM,IF(D_iLO<>0,F_LoanBalO*D_iLO/(1-(1+D_iLO)^-60),F_LoanBalO/60)),0)', '#,##0'),
+      ('D_DPLoan', 'Debt repayment tool starts from the loan, not the card (1/0)', '=IF(F_CardBal>0,IF(F_LoanBalO>0,IF(IFERROR(NPER(D_iC,-F_CardPayM,F_CardBal),1000000000)>=IFERROR(NPER(D_iLO,-F_LoanPayMO,F_LoanBalO),1000000000),0,1),0),1)', '0'),
+      ('F_SaveM5', 'Saving a month in the plan, first year (rounded to the nearest 5)', "=MAX(0,ROUND(ROUND('Plan cashflow'!$QI$8/12,0)/5,0)*5)", '#,##0')]
+for k, (nm, lab, fm, nf) in enumerate(HP, 1):
+    pp['B%d' % (h0 + k)] = lab; pp['C%d' % (h0 + k)] = fm; pp['C%d' % (h0 + k)].number_format = nf
+    pp['B%d' % (h0 + k)].font = copy.copy(pp['B187'].font); pp['C%d' % (h0 + k)].font = copy.copy(pp['C187'].font)
+    wb.defined_names[nm] = DefinedName(nm, attr_text="'Plan pay & tax'!$C$%d" % (h0 + k))
 TAB = T.sheet_properties.tabColor
 ST = {k: T[k] for k in ['B1', 'E1', 'B2', 'B3', 'B5', 'C5', 'B6', 'C6', 'D6', 'E6', 'F6', 'G6', 'B10', 'C10', 'B11', 'C11', 'D11', 'E11', 'C13', 'C14', 'B17', 'B22', 'B23', 'C23', 'B26', 'C26', 'B29']}
 def sty(dst, key, fmt=None):
@@ -71,10 +84,10 @@ own = 'Type 3 · your figure · Your own figure. '
 off = 'Type 3 · optional · '
 # ---------- C31 Loan comparison
 inp = [('Loan_Amount', 'Loan amount', '€', own + rng('€500', '€100,000', '€500', ''), 15000, EUR, 500, 100000, False),
-       ('APR_A', 'Offer A: interest (APR)', '%', 'Type 2 · your figure · The APR in offer A (the yearly cost of the loan including its charges). ' + rng('0%', '25%', '0.25%', ''), 0.09, PCT, 0, 0.25, False),
-       ('Years_A', 'Offer A: years', 'years', own + rng('1', '10', '1', ''), 5, NUM, 1, 10, False),
-       ('APR_B', 'Offer B: interest (APR)', '%', 'Type 2 · your figure · The APR in offer B. ' + rng('0%', '25%', '0.25%', ''), 0.075, PCT, 0, 0.25, False),
-       ('Years_B', 'Offer B: years', 'years', own + rng('1', '10', '1', ''), 7, NUM, 1, 10, False)]
+       ('APR_A', 'Offer A: interest (APR)', '%', 'Type 2 · your figure · The APR in offer A (the yearly cost of the loan including its charges). Above about 30% is unusual: check it. ' + rng('0%', '35%', '0.25%', ''), 0.09, PCT, 0, 0.35, False),
+       ('Years_A', 'Offer A: years', 'years', own + rng('1', '15', '1', ''), 5, NUM, 1, 15, False),
+       ('APR_B', 'Offer B: interest (APR)', '%', 'Type 2 · your figure · The APR in offer B. Above about 30% is unusual: check it. ' + rng('0%', '35%', '0.25%', ''), 0.075, PCT, 0, 0.35, False),
+       ('Years_B', 'Offer B: years', 'years', own + rng('1', '15', '1', ''), 7, NUM, 1, 15, False)]
 N1 = '=IF(Loan_Amount="","Choose your loan amount to see this",IF(APR_A="","Choose offer A\'s rate to see this",IF(Years_A="","Choose offer A\'s years to see this",IF(APR_B="","Choose offer B\'s rate to see this",IF(Years_B="","Choose offer B\'s years to see this","")))))'
 res = [('Monthly_Rate_A', 'Monthly interest rate, offer A', '(1+APR_A)^(1/12)-1', '0.0000%', '', '(1+APR_A)^(1/12)-1', False),
        ('Monthly_Rate_B', 'Monthly interest rate, offer B', '(1+APR_B)^(1/12)-1', '0.0000%', '', '(1+APR_B)^(1/12)-1', False),
@@ -95,29 +108,31 @@ make('C31 · Loan comparison', 'loancompare', 'Two offers: which one costs less?
 inp = [('Take_Home', 'Take-home pay a month', '€', own + rng('€500', '€15,000', '€50', ''), 3000, EUR, 500, 15000, False),
        ('Essential_Spending', 'Essential spending a month', '€', own + 'Include rent or mortgage. ' + rng('€0', '€10,000', '€50', ''), 1800, EUR, 0, 10000, False),
        ('Existing_Repayments', 'Loan and card repayments a month', '€', own + rng('€0', '€5,000', '€10', ''), 200, EUR, 0, 5000, False),
-       ('APR', 'Interest (APR)', '%', 'Type 2 · your figure · The APR you expect for the loan. ' + rng('0%', '25%', '0.25%', ''), 0.09, PCT, 0, 0.25, False),
-       ('Years', 'Years', 'years', own + rng('1', '10', '1', ''), 5, NUM, 1, 10, False),
+       ('Saving_Goals', 'Saving towards your goals a month', '€', own + 'Kept out of the spare money, so the loan repayment comes out of what is left. Enter 0 if none. ' + rng('€0', '€5,000', '€25', ''), 0, EUR, 0, 5000, False),
+       ('APR', 'Interest (APR)', '%', 'Type 2 · your figure · The APR you expect for the loan. Above about 30% is unusual: check it. ' + rng('0%', '35%', '0.25%', ''), 0.09, PCT, 0, 0.35, False),
+       ('Years', 'Years', 'years', own + rng('1', '15', '1', ''), 5, NUM, 1, 15, False),
        ('Share_Used', 'Share of spare money you would use', '%', own + 'The rest is kept as a buffer. ' + rng('10%', '100%', '5%', ''), 0.7, '0%', 0.1, 1, False)]
-N1 = '=IF(Take_Home="","Choose your take-home pay to see this",IF(Essential_Spending="","Choose your essential spending to see this",IF(Existing_Repayments="","Choose your repayments to see this",IF(APR="","Choose your loan rate to see this",IF(Years="","Choose your years to see this",IF(Share_Used="","Choose the share of spare money to see this",""))))))'
+N1 = '=IF(Take_Home="","Choose your take-home pay to see this",IF(Essential_Spending="","Choose your essential spending to see this",IF(Existing_Repayments="","Choose your repayments to see this",IF(Saving_Goals="","Choose your saving (0 if none) to see this",IF(APR="","Choose your loan rate to see this",IF(Years="","Choose your years to see this",IF(Share_Used="","Choose the share of spare money to see this","")))))))'
 res = [('Monthly_Rate', 'Monthly interest rate from the APR', '(1+APR)^(1/12)-1', '0.0000%', '', '(1+APR)^(1/12)-1', False),
-       ('Spare_Raw', 'Take-home pay − essentials − repayments', 'Take_Home-Essential_Spending-Existing_Repayments', EUR, '€', 'Take_Home-Essential_Spending-Existing_Repayments', False),
+       ('Spare_Raw', 'Take-home pay − essentials − repayments − saving', 'Take_Home-Essential_Spending-Existing_Repayments-Saving_Goals', EUR, '€', 'Take_Home-Essential_Spending-Existing_Repayments-Saving_Goals', False),
        ('Spare_Money', 'Spare money a month', 'MAX(0,Spare_Raw)', EUR, '€', 'MAX(0,Spare_Raw)', True),
        ('Repayment_Used', 'Repayment you could use', 'Spare_Money*Share_Used', EUR, '€', 'Spare_Money*Share_Used', True),
        ('Loan_Amount', 'Loan you could afford', 'PV(Monthly_Rate,Years*12,-Repayment_Used)', EUR, '€', 'PV(Monthly_Rate,Years*12,-Repayment_Used)', True),
        ('Total_Interest', 'Total interest on this loan', 'Repayment_Used*Years*12-Loan_Amount', EUR, '€', 'Repayment_Used*Years*12-Loan_Amount', False),
        ('Repayment_If_Rate_Up', 'Repayment if the rate were 3 points higher', 'PMT((1+APR+0.03)^(1/12)-1,Years*12,-Loan_Amount)', EUR, '€', 'PMT((1+APR+0.03)^(1/12)-1,Years*12,-Loan_Amount)', True),
        ('Affordable_Now', 'Affordable now?', 'IF(Spare_Raw<=0,"Not affordable now","Fits your spare money")', TXT, '', 'IF(Spare_Raw<=0,"Not affordable now","Fits your spare money")', False)]
-how = ['• Spare money = take-home pay − essential spending − existing loan and card repayments (never below 0). You choose what share of it to use; the rest is a buffer for surprises.',
+how = ['• Spare money = take-home pay − essential spending − existing loan and card repayments − the saving you keep for your goals (never below 0). You choose what share of it to use; the rest is a buffer for surprises.',
        '• The loan is the amount that a level repayment of that size clears over the term: PV(monthly rate, months, −repayment). The stress line repeats the repayment for that loan with the APR 3 percentage points higher.',
        '• Guidance on affordability only, not a lender\'s decision (lenders also look at credit history and employment).']
 LK = {'Take_Home': ('Has_income=1', "'Plan cashflow'!$H$8/12", 'In the app it is pre-filled from the plan: money in after tax and pension contributions, a month (Plan cashflow, first year).'),
       'Essential_Spending': ('Has_income=1', 'F_CostsM+F_OneOffY/12+F_MortPayM', 'In the app it is pre-filled from Your finances: living costs + one-offs ÷ 12 + mortgage repayment.'),
       'Existing_Repayments': ('Has_income=1', 'IF(F_Debt>0,F_DebtPayM,0)', 'In the app it is pre-filled from Your finances: card and loan repayments.'),
+      'Saving_Goals': ('Has_income=1', 'F_SaveM5', 'In the app it is pre-filled from the plan: what you save towards your goals a month (first year).'),
       'APR': ('OR(AND(Has_income=1,OR(In_loanRate>0,Has_a_loanRate=1)),Has_a_loanRate=1)', 'IF(AND(Has_income=1,OR(In_loanRate>0,Has_a_loanRate=1)),D_lR,In_a_loanRate)', 'In the app it is pre-filled from your loan rate (given, or chosen in Your assumptions).')}
-make('C32 · Loan affordability', 'loanafford', 'How much could I comfortably borrow?', 'Works back from your spare money to the loan you could comfortably repay, and shows the repayment if rates rose by 3 points.', inp, res, how, [('Needs: take-home pay, essentials, repayments, rate, years, share', N1)], 'C32 Loan affordability', LK)
+make('C32 · Loan affordability', 'loanafford', 'How much could I comfortably borrow?', 'Works back from your spare money to the loan you could comfortably repay, and shows the repayment if rates rose by 3 points.', inp, res, how, [('Needs: take-home pay, essentials, repayments, saving, rate, years, share', N1)], 'C32 Loan affordability', LK)
 # ---------- C33 Credit card repayment
 inp = [('Card_Balance', 'Card balance', '€', own + rng('€100', '€30,000', '€100', ''), 3000, EUR, 100, 30000, False),
-       ('APR', 'Interest (APR)', '%', 'Type 2 · your figure · Your card\'s APR: your statement shows it. ' + rng('0%', '35%', '0.5%', ''), 0.21, PCT, 0, 0.35, False),
+       ('APR', 'Interest (APR)', '%', 'Type 2 · your figure · Your card\'s APR: your statement shows it. Above about 30% is unusual: check it. ' + rng('0%', '35%', '0.5%', ''), 0.21, PCT, 0, 0.35, False),
        ('Your_Payment', 'Your monthly payment', '€', own + rng('€10', '€3,000', '€10', ''), 150, EUR, 10, 3000, False),
        ('Min_Percent', 'Card minimum: % of balance (0 and 0 = not entered)', '%', off + 'Your card\'s minimum rule is on your statement or in your card terms, for example "3% of the balance or €6.35, whichever is greater". Issuers differ, so there is no default. Enter the % and/or the lowest amount. ' + rng('0%', '10%', '0.5%', ''), None, PCT, 0, 0.1, True),
        ('Min_Floor', 'Card minimum: lowest amount (€)', '€', off + 'The "or €X, whichever is greater" part of the rule. ' + rng('€0', '€100', '€0.50', ''), None, '\\€#,##0.00', 0, 100, True),
@@ -146,9 +161,9 @@ names3 = ['Credit card', 'Loan', 'Other debt']
 inp = []
 ex = [(4500, 0.21, 135), (2000, 0.08, 90), (9000, 0.09, 220)]
 for k in (1, 2, 3):
-    bmax = 100000 if k == 3 else 50000
+    bmax = 100000
     inp += [('Balance_%d' % k, '%s: balance' % names3[k - 1], '€', own + rng('€0', '€{:,}'.format(bmax), '€100', ''), ex[k - 1][0], EUR, 0, bmax, False),
-            ('APR_%d' % k, '%s: interest (APR)' % names3[k - 1], '%', 'Type 2 · your figure · The APR on this debt. ' + rng('0%', '35%', '0.5%', ''), ex[k - 1][1], PCT, 0, 0.35, False),
+            ('APR_%d' % k, '%s: interest (APR)' % names3[k - 1], '%', 'Type 2 · your figure · The APR on this debt. Above about 30% is unusual: check it. ' + rng('0%', '35%', '0.5%', ''), ex[k - 1][1], PCT, 0, 0.35, False),
             ('Payment_%d' % k, '%s: minimum or repayment a month' % names3[k - 1], '€', own + rng('€0', '€3,000', '€5', ''), ex[k - 1][2], EUR, 0, 3000, False)]
 inp.append(('Extra_Payment', 'Extra each month', '€', off + 'Optional: leave blank for none. ' + rng('€0', '€2,000', '€10', ''), 100, EUR, 0, 2000, False))
 N1 = '=IF(COUNT(Balance_1,APR_1,Payment_1,Balance_2,APR_2,Payment_2,Balance_3,APR_3,Payment_3,Extra_Payment)<10,"Fill in your debts to see this","")'
@@ -166,12 +181,13 @@ for key, lab, si in labels:
     res.append(('Interest_' + key, lab + ': total interest', 'IF(Months_%s="Never","—",SUM(' % key + LM + '$%s$9:$%s$1208))' % (L(base(si) + 21), L(base(si) + 21)), EUR, '€', 'sum of the interest columns of that table', True))
 res.append(('Interest_Saved_vs_Smallest', 'Highest rate first saves vs smallest balance first', 'IF(OR(Months_Highest_Rate="Never",Months_Smallest_Balance="Never"),"—",Interest_Smallest_Balance-Interest_Highest_Rate)', EUR, '€', 'Interest_Smallest_Balance-Interest_Highest_Rate', False))
 res.append(('Interest_Saved_vs_Minimums', 'Highest rate first saves vs minimums only', 'IF(OR(Months_Highest_Rate="Never",Months_Minimums="Never"),"—",Interest_Minimums-Interest_Highest_Rate)', EUR, '€', 'Interest_Minimums-Interest_Highest_Rate', False))
-how = ['• Every debt is paid its minimum each month, then the extra amount and the repayments freed up by a cleared debt go to the target debt: the highest APR first, or the smallest balance first. The third column of results pays the minimums only (no extra, nothing rolled).',
+how = ['• Every debt is paid its minimum each month, then the extra amount and the repayments freed up by a cleared debt go to the target debt: the highest APR first, or the smallest balance first (ranked by the balance before that month\'s payments). A mortgage is not included. The third column of results pays the minimums only (no extra, nothing rolled).',
        '• Each month: interest = opening balance × monthly rate, then payments. Month-by-month tables for the three ways are on the hidden sheet Loan months (up to 1,200 months; beyond that: Never). Assumes no new borrowing.',
        '• The order a debt is paid in can change the interest, not the total you owe; the highest-rate-first way always costs the least interest for the same total monthly amount.']
-LK = {'Balance_1': ('F_Debt>0', 'F_CardBal', 'In the app it is pre-filled from Your finances: your credit card balance.'), 'APR_1': ('AND(F_Debt>0,OR(In_cardRate>0,Has_a_cardRate=1))', 'D_cR', 'In the app it is pre-filled from your card rate (given, or chosen in Your assumptions).'), 'Payment_1': ('F_Debt>0', 'F_CardPayM', 'In the app it is pre-filled from Your finances: your card repayment.'),
-      'Balance_2': ('F_Debt>0', 'F_LoanBal', 'In the app it is pre-filled from Your finances: your loans.'), 'APR_2': ('AND(F_Debt>0,OR(In_loanRate>0,Has_a_loanRate=1))', 'D_lR', 'In the app it is pre-filled from your loan rate (given, or chosen in Your assumptions).'), 'Payment_2': ('F_Debt>0', 'F_LoanPayM', 'In the app it is pre-filled from Your finances: your loan repayment.'),
-      'Balance_3': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Payment_3': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Extra_Payment': ('F_Debt>0', '0', 'Left at 0 when your debts are filled in from Your finances: type the extra you could pay.')}
+DP = 'F_CardBal+F_LoanBalO>0'
+LK = {'Balance_1': (DP, 'F_CardBal', 'In the app it is pre-filled from Your finances: your credit card balance.'), 'APR_1': ('AND(' + DP + ',OR(In_cardRate>0,Has_a_cardRate=1))', 'D_cR', 'In the app it is pre-filled from your card rate (given, or chosen in Your assumptions).'), 'Payment_1': (DP, 'F_CardPayM', 'In the app it is pre-filled from Your finances: your card repayment.'),
+      'Balance_2': (DP, 'F_LoanBalO', 'In the app it is pre-filled from Your finances: your loans (a mortgage on another property is not included).'), 'APR_2': ('AND(' + DP + ',OR(In_loanRate>0,Has_a_loanRate=1))', 'D_lR0', 'In the app it is pre-filled from your loan rate (given, or chosen in Your assumptions).'), 'Payment_2': (DP, 'F_LoanPayMO', 'In the app it is pre-filled from Your finances: your loan repayment.'),
+      'Balance_3': (DP, '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Payment_3': (DP, '0', 'Left at 0 when your debts are filled in from Your finances.'), 'Extra_Payment': (DP, '0', 'Left at 0 when your debts are filled in from Your finances: type the extra you could pay.')}
 ws34, n34 = make('C34 · Debt payoff plan', 'debtplan', 'Which debt should I pay off first?', 'Up to three debts: compares paying the highest-rate debt first, the smallest balance first and the minimums only.', inp, res, how, [('Needs: all three debts and the extra amount', N1)], 'C34 Debt payoff plan', LK)
 # order text row (highest rate first), added under the results using helper cells in the far columns
 # ---------- hidden engine sheet
@@ -245,7 +261,7 @@ for si, (key, lab, _) in enumerate(labels):
                         cond = '(%s$5>%s$5)' % (ge, gj) if e > j else '(%s$5>=%s$5)' % (ge, gj)
                         cond = '(%s$5>%s$5)' % (ge, gj) if e > j else '(%s$5>=%s$5)' % (ge, gj)
                     else:         # smallest balance first; ties keep debt order
-                        be, bj = cell(si, 4 + 6 * e, r), cell(si, 4 + 6 * j, r)
+                        be, bj = '(%s+%s)' % (cell(si, 1 + 6 * e, r), cell(si, 2 + 6 * e, r)), '(%s+%s)' % (cell(si, 1 + 6 * j, r), cell(si, 2 + 6 * j, r))   # balance before this month's payments (opening + interest)
                         cond = '(%s<%s)' % (be, bj) if e > j else '(%s<=%s)' % (be, bj)
                     before.append('%s*%s' % (ae, cond))
                 sb = '+'.join(before) if before else '0'
@@ -280,6 +296,20 @@ pos = lambda p: 'IFERROR(INDEX(\'Loan months\'!$H$2:$J$2,MATCH(%d,$G$%d:$G$%d,0)
 ws['C%d' % rr] = '=IF(Need_1<>"",Need_1,' + pos(1) + '&IF(' + pos(2) + '<>""," → "&' + pos(2) + ',"")&IF(' + pos(3) + '<>""," → "&' + pos(3) + ',""))'
 sty(ws['C%d' % rr], 'C13', TXT); ws['E%d' % rr] = 'ƒx  debts with a balance, highest APR first (ties keep the debt order)'; sty(ws['E%d' % rr], 'E11')
 ws.defined_names['Order_To_Pay'] = DefinedName('Order_To_Pay', attr_text="'C34 Debt payoff plan'!$C$%d" % rr)
+# ---------- refinements on the existing C27 / C28
+w28 = wb['C28 Loan repayment']
+for dv in w28.data_validations.dataValidation:
+    if str(dv.sqref) == 'C7': dv.formula2 = '0.35'
+    if str(dv.sqref) == 'C8': dv.formula2 = '15'
+w28['E7'] = w28['E7'].value.replace('Enter your own figure."', 'Above about 30% is unusual: check it. Enter your own figure."').replace('0% to 25%', '0% to 35%')
+w28['E8'] = w28['E8'].value.replace('1 to 10', '1 to 15')
+w27 = wb['C27 Debt repayment']
+DPC = 'F_CardBal+F_LoanBalO>0'
+w27['G6'] = '=IF(ISBLANK(C6),IF(%s,IF(D_DPLoan=1,F_LoanBalO,F_CardBal),IF(Fill_Example="Yes",F6,"")),C6)' % DPC
+w27['G8'] = '=IF(ISBLANK(C8),IF(%s,IF(D_DPLoan=1,F_LoanPayMO,F_CardPayM),IF(Fill_Example="Yes",F8,"")),C8)' % DPC
+w27['G7'] = '=IF(ISBLANK(C7),IF(AND(%s,IF(D_DPLoan=1,OR(In_loanRate>0,Has_a_loanRate=1),OR(In_cardRate>0,Has_a_cardRate=1))),IF(D_DPLoan=1,D_lR0,D_cR),IF(Fill_Example="Yes",F7,"")),C7)' % DPC
+w27['E7'] = w27['E7'].value.replace('Enter your own figure."', 'Above about 30% is unusual: check it. Enter your own figure."')
+for c in ('E6', 'E8'): w27[c] = w27[c].value.replace('the debt that takes longest to clear', 'the card or other loan that takes longest to clear (not a mortgage)')
 # ---------- parity edits elsewhere (labels only)
 for s in ('C27 Debt repayment', 'C28 Loan repayment'):
     wb[s]['E1'] = wb[s]['E1'].value.replace('Everyday Money', 'Loans')
@@ -298,7 +328,7 @@ pr['B245'].font = copy.copy(pr['B244'].font); pr['C245'].font = copy.copy(pr['C2
 rm = wb['READ ME']
 rm['B15'] = 'C01 to C34: the 34 calculators (orange tabs). C29 Investment tax and C30 Sale, gift and inheritance tax hold the 8-year rule and CGT. C27, C28 and C31 to C34 are the Loans group (loan repayment, loan comparison, loan affordability, credit card repayment, debt repayment, debt payoff plan); C31 to C34 use the hidden sheet Loan months.'
 tn = wb['Test notes']; rn = tn.max_row + 1
-tn.cell(rn, 2, 'Loans calculators C31 to C34 (added later)'); tn.cell(rn, 4, 'Compared with the prototype with tools/calc-vs-xlsx (ONLY=loancompare,loanafford,creditcard,debtplan): 25 cases and 14 gate rounds, 0 differences. The prototype side is also checked by tests/loans.js (356 checks against independent calculations). The month-by-month tables are on the hidden sheet Loan months; LibreOffice may need two recalculation passes for them, Excel does not.')
+tn.cell(rn, 2, 'Loans calculators C31 to C34 (added later)'); tn.cell(rn, 4, 'Compared with the prototype with tools/calc-vs-xlsx (ONLY=loan,loancompare,loanafford,creditcard,debtpay,debtplan): 35 cases and 22 gate rounds, 0 differences. The links from Your finances and the plan (saving a month, loans without other-property mortgages) are formulas on Plan pay & tax and were not compared automatically. The prototype side is also checked by tests/loans.js (361 checks against independent calculations). The month-by-month tables are on the hidden sheet Loan months; LibreOffice may need two recalculation passes for them, Excel does not.')
 for c in (2, 4): tn.cell(rn, c).alignment = Alignment(wrap_text=True, vertical='top')
 wb.save(out)
 print('saved', out)

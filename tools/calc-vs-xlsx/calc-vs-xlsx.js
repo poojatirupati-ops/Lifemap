@@ -38,7 +38,7 @@ const MAP = [
  ['debtpay', 'C27 Debt repayment', [['b','Balance',N],['apr','APR',P],['p','Monthly_Payment',N],['x','Extra_Payment',N]], ['Months_To_Clear','Total_Interest','Monthly_Rate']],
  ['loan', 'C28 Loan repayment', [['a','Loan_Amount',N],['apr','APR',P],['y','Years',N]], ['Monthly_Repayment','Total_Repaid','Total_Interest','Monthly_Rate']],
  ['loancompare', 'C31 Loan comparison', [['a','Loan_Amount',N],['apr1','APR_A',P],['y1','Years_A',N],['apr2','APR_B',P],['y2','Years_B',N]], ['Repayment_A','Interest_A','Total_A','Repayment_B','Interest_B','Total_B','Interest_Difference','Monthly_Difference']],
- ['loanafford', 'C32 Loan affordability', [['inc','Take_Home',N],['ess','Essential_Spending',N],['debt','Existing_Repayments',N],['apr','APR',P],['y','Years',N],['share','Share_Used',P]], ['Spare_Money','Repayment_Used','Loan_Amount','Total_Interest','Repayment_If_Rate_Up']],
+ ['loanafford', 'C32 Loan affordability', [['inc','Take_Home',N],['ess','Essential_Spending',N],['debt','Existing_Repayments',N],['sav','Saving_Goals',N],['apr','APR',P],['y','Years',N],['share','Share_Used',P]], ['Spare_Money','Repayment_Used','Loan_Amount','Total_Interest','Repayment_If_Rate_Up']],
  ['creditcard', 'C33 Credit card repayment', [['b','Card_Balance',N],['apr','APR',P],['p','Your_Payment',N],['mp','Min_Percent',P],['mf','Min_Floor',N],['t','Clear_Within',N]], ['Months_Minimum','Interest_Minimum','Months_Your_Payment','Interest_Your_Payment','Interest_Saved','Interest_This_Month','Months_Target','Payment_Target','Monthly_Rate']],
  ['debtplan', 'C34 Debt payoff plan', [['b1','Balance_1',N],['apr1','APR_1',P],['m1','Payment_1',N],['b2','Balance_2',N],['apr2','APR_2',P],['m2','Payment_2',N],['b3','Balance_3',N],['apr3','APR_3',P],['m3','Payment_3',N],['x','Extra_Payment',N]], ['Total_Owed','Months_Highest_Rate','Interest_Highest_Rate','Months_Smallest_Balance','Interest_Smallest_Balance','Months_Minimums','Interest_Minimums']]
 ];
@@ -77,8 +77,8 @@ const EDGE = {
   budget:{inc:500},
   debtpay:{b:100000, apr:0, p:10, x:0},
   loan:{a:500, apr:0, y:1},
-  loancompare:{a:500, apr1:0, y1:1, apr2:25, y2:10},
-  loanafford:{inc:500, ess:600, debt:0, apr:0, y:1, share:10},   // no spare money
+  loancompare:{a:500, apr1:0, y1:1, apr2:35, y2:15},
+  loanafford:{inc:500, ess:600, debt:0, sav:0, apr:0, y:1, share:10},   // no spare money
   creditcard:{b:3000, apr:21, p:40, mp:2.5, mf:5, t:36},   // minimum 2.5% or €5: the card payment is below the minimum and the interest   // a payment below the monthly interest: never clears
   debtplan:{b1:1000, apr1:35, m1:20, b2:0, apr2:5, m2:0, b3:0, apr3:5, m3:0, x:0}   // one debt, repayment below its interest
 };
