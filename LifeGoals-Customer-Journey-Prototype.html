@@ -6834,7 +6834,8 @@ const lpQ = () => { S.lps = S.lps || 0; S.lpv = S.lpv || 0; S.lpd = S.lpd || {};
 function lpVideoBlock(){ const d = lpQ(), v = d.v[S.lpv], real = v.vid && VID(v.vid) && VID(v.vid).src ? VID(v.vid) : null, c = C(v.cl);
   const stage = real ? '<div class="mp-st real" style="--c:' + v.bg + '">' + videoReal(real).replace('class="player real"', 'class="mpplayer"') + '</div>'
     : '<div class="mp-st" style="--c:' + v.bg + '"><span class="art" aria-hidden="true">' + v.ic + '</span><div class="tp">Video ' + (S.lpv + 1) + ' of ' + d.v.length + '</div><h4>' + esc(v.t) + '</h4><span class="soon">Coming soon</span></div>';
-  return stage + '<p class="mp-cap" id="mp-cap" aria-live="polite">' + (real ? '' : 'We are filming this one. Check back soon.') + '</p>' +
+  if (!real) return stage;
+  return stage + '<p class="mp-cap" id="mp-cap" aria-live="polite"></p>' +
    '<div class="mp-chap" id="mp-chap" aria-label="Chapters">' + v.ch.map((x, j) => '<span' + (j ? '' : ' class="on"') + '>' + esc(x) + '</span>').join('') + '</div>' +
    '<div class="mp-next" id="mp-next"' + (real ? ' hidden' : '') + '><span>Up next: try it with your numbers</span><button class="btn sm" data-a="calc" data-p="' + v.cl + '">' + esc(c.name) + ' →</button></div>'; }
 V.LOANS = () => { const d = lpQ(), t = TOPICS.find(x => x[1] === 'Loans'), ncal = d.c.length, doneN = d.v.filter((_, i) => S.lpd[S.lps + '-' + i]).length;
