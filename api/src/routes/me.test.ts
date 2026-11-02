@@ -1,5 +1,5 @@
-import { getTableColumns, getTableName, sql } from "drizzle-orm";
-import type { PgTable } from "drizzle-orm/pg-core";
+import { getTableColumns, getTableName, is, sql } from "drizzle-orm";
+import { PgTable } from "drizzle-orm/pg-core";
 import { expect, test, vi } from "vitest";
 import { emailHash } from "../auth";
 import { schema } from "../db";
@@ -77,7 +77,7 @@ test("DELETE /api/me erases every row for that user, their OTP rows, keeps a PII
   expect(res.headers.getSetCookie().join()).toMatch(/session_token=;/);
 
   // Every table with a user_id column has nothing left for that user.
-  const tables = (Object.values(schema) as PgTable[]).filter((t) => "userId" in getTableColumns(t));
+  const tables = (Object.values(schema) as unknown[]).filter((t) => is(t, PgTable)).filter((t) => "userId" in getTableColumns(t));
   expect(tables.length).toBeGreaterThanOrEqual(6);
   for (const t of tables) {
     const rows = await db.execute(sql`select 1 from ${t} where user_id = ${userId}`);
