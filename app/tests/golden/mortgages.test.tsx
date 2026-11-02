@@ -4,13 +4,14 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test } from 'vitest'
 import { runOriginal } from './origSlice'
-import * as Mortgages from '../../src/components/mortgages/MortgagesPage.tsx'
-import { useMortgagePage } from '../../src/state/mortgage.ts'
+import { Body } from '../../src/components/journey/JourneyPage.tsx'
+import { JOURNEY_PAGES } from '../../src/state/journeyPage.ts'
 import { seedContent } from '../content/seed.ts'
 import { PATHS, contentClient } from '../../src/content/cms.tsx'
 import { shape } from './helpers'
 
 seedContent()
+const useMortgagePage = JOURNEY_PAGES.Mortgages
 // Every article gets a body here; the original shows a placeholder where the app shows the body.
 const BODY = 'What lenders look at, step by step.'
 const PLACEHOLDER = 'TODO: content to come from docs/content/mortgage/ (not added yet).'
@@ -54,7 +55,7 @@ function ourPage({ situation, video, watched = {}, seats = {}, openReading }: Pa
   useMortgagePage.setState({ situation, video, watched, seats, openReading: openReading ?? null })
   const container = document.createElement('div')
   const root = createRoot(container)
-  act(() => root.render(<Mortgages.Body />))
+  act(() => root.render(<Body topic="Mortgages" />))
   // captions now come from the CMS, cross-origin; the rest is the original's markup
   const html = container.innerHTML
     .replace(' crossorigin="anonymous"', '')

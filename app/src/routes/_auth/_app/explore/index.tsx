@@ -21,7 +21,7 @@ function ExploreHome() {
   return (
     <AppScreen
       id="XPL-01"
-      note="Explore (journey-spec §17 order): what-ifs for slipping goals first (after a plan), Focus on one area (topics that lead to the right expert), tools for you, short videos + live sessions, then Calculators: 6 groups as list rows, 28 calculators. Works before a plan."
+      note="Explore (journey-spec §17 order): what-ifs for slipping goals first (after a plan), Focus on one area (topics that lead to the right expert), tools for you, short videos + live sessions, then Calculators: 7 groups as list rows, 32 calculators. Works before a plan."
       title="Explore"
       sub="Tools, calculators and short videos. Try anything, no plan needed."
       bell

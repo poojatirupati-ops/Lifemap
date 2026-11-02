@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
-import { topicPhotoStyle } from './explore.data.ts'
+import { topicPhotoStyle, topicVideos } from './explore.data.ts'
 import { openTopic, showFocusArea } from '../../state/explore.ts'
 import { useCardSwipe, wrap } from './useCardSwipe.ts'
 import { useTopics, useVideos } from '../../content/cms.tsx'
@@ -17,7 +17,7 @@ export default function FocusArea() {
   const chips = useRef<HTMLDivElement>(null)
   const topic = topics[index]
   const next = topics[wrap(index + 1, topics.length)]
-  const videoCount = videos.filter((video) => video.kind === topic?.expert).length
+  const videoCount = topic ? topicVideos(topic, videos).length : 0
 
   useEffect(() => {
     const strip = chips.current

@@ -260,6 +260,10 @@ export interface Video {
    * App media path (until uploaded to Vimeo).
    */
   poster?: string | null;
+  /**
+   * The focus area it is tagged with, for focus areas that show tagged videos only.
+   */
+  topic?: (number | null) | Topic;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -279,6 +283,10 @@ export interface Topic {
   art?: string | null;
   photoPosition?: string | null;
   tools?: (number | Calculator)[] | null;
+  /**
+   * Shows only the videos tagged with this focus area, not every video of its expert's kind.
+   */
+  taggedVideosOnly?: boolean | null;
   order?: number | null;
   updatedAt: string;
   createdAt: string;
@@ -368,6 +376,10 @@ export interface Article {
   kind: 'article' | 'faq' | 'link';
   emoji?: string | null;
   /**
+   * The card picture: an app media file name, e.g. home-keys.
+   */
+  photo?: string | null;
+  /**
    * For links: where it goes.
    */
   url?: string | null;
@@ -421,6 +433,10 @@ export interface Journey {
         color?: string | null;
         emoji?: string | null;
         tool?: string | null;
+        /**
+         * The thumbnail before there is a filmed video (app media file name); without one a stock photo and the emoji show.
+         */
+        photo?: string | null;
         chapters?: string[] | null;
         /**
          * The filmed video, once there is one.
@@ -810,6 +826,7 @@ export interface VideosSelect<T extends boolean = true> {
   transcript?: T;
   src?: T;
   poster?: T;
+  topic?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -828,6 +845,7 @@ export interface TopicsSelect<T extends boolean = true> {
   art?: T;
   photoPosition?: T;
   tools?: T;
+  taggedVideosOnly?: T;
   order?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -887,6 +905,7 @@ export interface ArticlesSelect<T extends boolean = true> {
   title?: T;
   kind?: T;
   emoji?: T;
+  photo?: T;
   url?: T;
   body?: T;
   updatedAt?: T;
@@ -921,6 +940,7 @@ export interface JourneysSelect<T extends boolean = true> {
         color?: T;
         emoji?: T;
         tool?: T;
+        photo?: T;
         chapters?: T;
         video?: T;
         id?: T;

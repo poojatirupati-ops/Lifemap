@@ -79,6 +79,12 @@ const Videos = content({
     // The app's current files, for videos not yet on Vimeo.
     text('src', { admin: { description: 'App media path (until uploaded to Vimeo).' } }),
     text('poster', { admin: { description: 'App media path (until uploaded to Vimeo).' } }),
+    {
+      name: 'topic',
+      type: 'relationship',
+      relationTo: 'topics',
+      admin: { description: 'The focus area it is tagged with, for focus areas that show tagged videos only.' },
+    },
   ],
   hooks: {
     beforeChange: [
@@ -134,6 +140,11 @@ const Topics = content({
     text('art'),
     text('photoPosition'),
     { name: 'tools', type: 'relationship', relationTo: 'calculators', hasMany: true },
+    {
+      name: 'taggedVideosOnly',
+      type: 'checkbox',
+      admin: { description: "Shows only the videos tagged with this focus area, not every video of its expert's kind." },
+    },
     { name: 'order', type: 'number' },
   ],
 })
@@ -161,12 +172,13 @@ const Articles = content({
       options: ['article', 'faq', 'link'].map((value) => ({ label: value, value })),
     },
     text('emoji'),
+    text('photo', { admin: { description: 'The card picture: an app media file name, e.g. home-keys.' } }),
     text('url', { admin: { description: 'For links: where it goes.' } }),
     { name: 'body', type: 'richText' },
   ],
 })
 
-/** A Mortgages-page journey (Buying, Switching, Borrowing more): its calculators, story videos, reading and live sessions. */
+/** A journey on a focus area's own page (Mortgages: Buying, Switching, Borrowing more; Loans: Taking a loan, Credit cards, Several debts): its calculators, story videos, reading and live sessions. */
 const Journeys = content({
   slug: 'journeys',
   labels: { singular: 'Journey', plural: 'Journeys' },
@@ -196,6 +208,7 @@ const Journeys = content({
         text('color'),
         text('emoji'),
         text('tool'),
+        text('photo', { admin: { description: 'The thumbnail before there is a filmed video (app media file name); without one a stock photo and the emoji show.' } }),
         text('chapters', { hasMany: true }),
         { name: 'video', type: 'relationship', relationTo: 'videos', admin: { description: 'The filmed video, once there is one.' } },
       ],

@@ -13,6 +13,7 @@
   --cover-photo:url("./art/cover-photo.jpg");
   /* Focus on one area: everyday keeps its own photo here; the other art slots are set from /media further down (v30). */
   --art-everyday:url("./art/everyday.jpg");
+  --art-loans:var(--art-everyday);   /* Loans shows the Everyday picture */
   --fh:'Bricolage Grotesque','Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   --fb:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
 }

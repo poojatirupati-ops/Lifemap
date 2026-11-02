@@ -262,15 +262,50 @@ const INPUTS: Record<string, Row[]> = {
     ['debt', 'Debt repayments', 200, 0, 5000, 25, '€', 'debt repayments'],
   ],
   budget: [['inc', 'Take-home pay per month', 3500, 500, 20000, 50, '€', 'take-home pay']],
+  loan: [
+    ['a', 'Loan amount', 15000, 500, 100000, 500, '€', 'the loan amount'],
+    ['apr', 'Interest (APR)', 8, 0, 35, 0.25, '%'],
+    ['y', 'Years', 5, 1, 15, 1, 'y', 'the loan term'],
+  ],
+  loancompare: [
+    ['a', 'Loan amount', 15000, 500, 100000, 500, '€', 'the loan amount'],
+    ['apr1', 'Offer A: interest (APR)', 9, 0, 35, 0.25, '%'],
+    ['y1', 'Offer A: years', 5, 1, 15, 1, 'y'],
+    ['apr2', 'Offer B: interest (APR)', 7.5, 0, 35, 0.25, '%'],
+    ['y2', 'Offer B: years', 7, 1, 15, 1, 'y'],
+  ],
+  loanafford: [
+    ['inc', 'Take-home pay a month', 3000, 500, 15000, 50, '€', 'take-home pay'],
+    ['ess', 'Essential spending a month', 1800, 0, 10000, 50, '€', 'essential spending'],
+    ['debt', 'Loan and card repayments a month', 200, 0, 5000, 10, '€', 'loan and card repayments'],
+    ['sav', 'Saving towards your goals a month', 0, 0, 5000, 25, '€'],
+    ['apr', 'Interest (APR)', 9, 0, 35, 0.25, '%'],
+    ['y', 'Years', 5, 1, 15, 1, 'y'],
+    ['share', 'Share of spare money you would use', 70, 10, 100, 5, '%'],
+  ],
+  creditcard: [
+    ['b', 'Card balance', 3000, 100, 30000, 100, '€', 'the card balance'],
+    ['apr', 'Interest (APR)', 21, 0, 35, 0.5, '%'],
+    ['p', 'Your monthly payment', 150, 10, 3000, 10, '€', 'monthly payment'],
+    ['mp', 'Card minimum: % of balance (0 = not entered)', 0, 0, 10, 0.5, '%'],
+    ['mf', 'Card minimum: lowest amount (€)', 0, 0, 100, 0.5, '€'],
+    ['t', 'I want it cleared within', 36, 6, 120, 1, 'm'],
+  ],
   debtpay: [
-    ['b', 'Balance', 5000, 100, 100000, 100, '€', 'the balance'],
+    ['b', 'Debt balance', 5000, 100, 100000, 100, '€', 'the balance'],
     ['apr', 'Interest (APR)', 20, 0, 35, 0.5, '%'],
     ['p', 'Monthly payment', 250, 10, 5000, 10, '€', 'monthly payment'],
   ],
-  loan: [
-    ['a', 'Loan amount', 15000, 500, 100000, 500, '€', 'the loan amount'],
-    ['apr', 'Interest (APR)', 8, 0, 25, 0.25, '%'],
-    ['y', 'Years', 5, 1, 10, 1, 'y', 'the loan term'],
+  debtplan: [
+    ['b1', 'Credit card: balance', 4500, 0, 100000, 100, '€'],
+    ['apr1', 'Credit card: interest (APR)', 21, 0, 35, 0.5, '%'],
+    ['m1', 'Credit card: minimum a month', 135, 0, 3000, 5, '€'],
+    ['b2', 'Loan: balance', 2000, 0, 100000, 100, '€'],
+    ['apr2', 'Loan: interest (APR)', 8, 0, 35, 0.5, '%'],
+    ['m2', 'Loan: repayment a month', 90, 0, 3000, 5, '€'],
+    ['b3', 'Other debt: balance', 9000, 0, 100000, 100, '€'],
+    ['apr3', 'Other debt: interest (APR)', 9, 0, 35, 0.5, '%'],
+    ['m3', 'Other debt: repayment a month', 220, 0, 3000, 5, '€'],
   ],
 }
 
@@ -284,6 +319,7 @@ const WHAT_IFS: Record<string, Row[]> = {
     ['less', 'Spend less in retirement (a year)', 0, 0, 20000, 500, '€'],
   ],
   debtpay: [['x', 'Pay extra each month', 0, 0, 1000, 10, '€']],
+  debtplan: [['x', 'Extra each month', 100, 0, 2000, 10, '€']],
 }
 
 const toInput = ([key, label, example, min, max, step, unit, missingName]: Row): CalcInput => ({

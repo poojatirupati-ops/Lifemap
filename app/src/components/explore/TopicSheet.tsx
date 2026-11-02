@@ -43,7 +43,7 @@ export default function TopicSheet({ topic, toolCount, videoCount }: Props) {
           </div>
         </div>
         <p className="sub" style={{ margin: '12px 0 0' }}>
-          {topic.blurb}. Try a calculator, watch a short video, or talk to{' '}
+          {topic.blurb}. Try a calculator, {videoCount ? 'watch a short video, ' : ''}or talk to{' '}
           {withArticle(expertName(topic.expert))}.
         </p>
       </div>
@@ -51,7 +51,7 @@ export default function TopicSheet({ topic, toolCount, videoCount }: Props) {
   )
 }
 
-/** The topic's photo with a back button (also the Mortgages page's). */
+/** The topic's photo with a back button (also on the journey pages). */
 export function TopicHero({ topic }: { topic: Topic }) {
   return (
     <div className="dhero2" style={topicPhotoStyle(topic)}>

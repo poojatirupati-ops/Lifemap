@@ -22,6 +22,10 @@ export function grownSaving(monthly: number, ratePercent: number, years: number)
 export const repayment = (loan: number, monthlyRate: number, months: number) =>
   monthlyRate ? (loan * monthlyRate) / (1 - (1 + monthlyRate) ** -months) : loan / months
 
+/** The loan a level monthly repayment clears in a number of months. */
+export const loanFromRepayment = (payment: number, monthlyRate: number, months: number) =>
+  monthlyRate ? (payment * (1 - (1 + monthlyRate) ** -months)) / monthlyRate : payment * months
+
 /** Mortgage repayment: the nominal yearly rate (in %) divided by 12. */
 export const mortgageRepayment = (loan: number, ratePercent: number, years: number) =>
   repayment(loan, ratePercent / 1200, years * 12)

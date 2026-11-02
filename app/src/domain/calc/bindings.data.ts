@@ -73,6 +73,8 @@ export const BINDINGS: Record<string, Record<string, Binding>> = {
   riskreturn: { s: { name: 'investment style', standard: 'style', format: 'style' } },
   debtpay: { apr: { assumption: 'cardRate' } },
   loan: { apr: { assumption: 'loanRate' } },
+  creditcard: { apr: { assumption: 'cardRate' } },
+  loanafford: { apr: { assumption: 'loanRate' } },
 }
 
 /** Assumptions a tool reads that are not one of its inputs ("Assumptions this tool uses"). */

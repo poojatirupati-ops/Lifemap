@@ -56,6 +56,8 @@ export interface Video {
   /** App media files, until the video is on Vimeo. */
   src: string | null
   poster: string | null
+  /** The focus area it is tagged with, for focus areas that show tagged videos only. */
+  topic: string | null
 }
 
 /** The app's own media files are stored as "media/x.mp4": served from the site root, so deep pages find them too. */
@@ -67,6 +69,7 @@ const toVideo = (doc: Doc): Video => ({
   src: fromRoot(doc.src),
   poster: fromRoot(doc.poster),
   captions: doc.captions?.url ? new URL(doc.captions.url, CMS).href : null,
+  topic: doc.topic?.name ?? null,
 })
 const toVideos = (list: Doc[]) => list.map(toVideo)
 
@@ -99,12 +102,15 @@ export interface Topic {
   art: string
   photoPosition: string | null
   tools: string[]
+  /** Shows only the videos tagged with it, not every video of its expert's kind. */
+  taggedVideosOnly: boolean
 }
 
 const toTopic = (doc: Doc): Topic => ({
   ...doc,
   category: doc.category.appId,
   tools: doc.tools.map((tool: Doc) => tool.appId),
+  taggedVideosOnly: !!doc.taggedVideosOnly,
 })
 const toTopics = (list: Doc[]) => list.map(toTopic)
 
@@ -135,12 +141,15 @@ export interface CalculatorCard {
 export interface StoryVideo {
   short: string
   title: string
+  /** Running time on the card; empty for none. */
   duration: string
   color: string
   emoji: string
   /** The calculator "Up next" opens. */
   tool: string
   chapters: string[]
+  /** The thumbnail before there is a filmed video (an app media file name). */
+  photo: string | null
   /** The filmed video, when there is one. */
   video: Video | null
 }
@@ -149,6 +158,8 @@ export interface Reading {
   kind: string
   title: string
   emoji: string
+  /** The card picture (an app media file name). */
+  photo: string | null
   /** The article's paragraphs; null when it has no text yet. */
   body: ReactNode[] | null
 }
@@ -181,8 +192,9 @@ const toJourneys = (list: Doc[]) =>
     live: doc.live,
   }))
 
-/** The Mortgages page's journeys (Buying, Switching, Borrowing more). */
-export const useJourneys = () => useDocs(PATHS.journeys, toJourneys)
+/** A focus area's journeys (Mortgages: Buying, Switching, Borrowing more). */
+export const useJourneys = (topic: string) =>
+  useDocs(PATHS.journeys, toJourneys).filter((journey) => journey.topic.name === topic)
 
 export interface AskAnswer {
   key: string
@@ -191,15 +203,24 @@ export interface AskAnswer {
 }
 
 /**
- * Lexical rich text as React, one entry per paragraph: text, bold where marked (all the copy uses).
- * @payloadcms/richtext-lexical's RichText is not used: it needs payload and Next as peers.
+ * Lexical rich text as React, one entry per paragraph: text (bold where marked), line breaks and links
+ * (all the copy uses). @payloadcms/richtext-lexical's RichText is not used: it needs payload and Next as peers.
  */
 const richText = (value: Doc): ReactNode[] =>
-  value.root.children.map((paragraph: Doc) =>
-    paragraph.children.map((text: Doc, i: number) =>
-      text.format & 1 ? <b key={i}>{text.text}</b> : text.text,
-    ),
-  )
+  value.root.children.map((paragraph: Doc) => paragraph.children.map(inline))
+
+function inline(node: Doc, i: number): ReactNode {
+  if (node.type === 'linebreak') return <br key={i} />
+  if (node.type === 'link') {
+    const newTab = node.fields.newTab && { target: '_blank', rel: 'noopener' }
+    return (
+      <a key={i} href={node.fields.url} {...newTab}>
+        {node.children.map(inline)}
+      </a>
+    )
+  }
+  return node.format & 1 ? <b key={i}>{node.text}</b> : node.text
+}
 
 const toAnswers = (list: Doc[]) =>
   list.map((doc): AskAnswer => ({

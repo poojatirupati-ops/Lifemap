@@ -1,5 +1,7 @@
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
+import { expertName, withArticle } from '../explore/explore.data.ts'
+import type { VideoKind } from '../../content/cms.tsx'
 import { useStore } from '../../state/store.ts'
 
 const typing = () => {
@@ -39,7 +41,7 @@ function useOutOfTheWay() {
 }
 
 /** The floating "Talk to a mortgage expert" button. */
-export default function ExpertFab() {
+export default function ExpertFab({ kind }: { kind: VideoKind }) {
   const hidden = useOutOfTheWay()
   const openSheet = useStore((s) => s.openSheet)
   return (
@@ -47,12 +49,12 @@ export default function ExpertFab() {
       className={clsx('btn xfab', { hid: hidden })}
       id="xfab"
       data-a="xfab"
-      data-p="mortgage"
+      data-p={kind}
       aria-haspopup="dialog"
-      onClick={() => openSheet('xpert|mortgage')}
+      onClick={() => openSheet(`xpert|${kind}`)}
     >
       <span aria-hidden="true">💬</span>
-      <span className="tx">Talk to a mortgage expert</span>
+      <span className="tx">{`Talk to ${withArticle(expertName(kind))}`}</span>
     </button>
   )
 }
