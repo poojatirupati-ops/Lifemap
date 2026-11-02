@@ -13,7 +13,7 @@ export function Body() {
       <p className="sub" style={{ marginTop: 18 }} role="status">
         Running your numbers…
       </p>
-      <p className="small">If this takes a while, we'll email and text you when it's ready.</p>
+      <p className="small">If this takes a while, we'll email you when it's ready.</p>
     </div>
   )
 }

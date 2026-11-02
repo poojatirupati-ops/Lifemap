@@ -26,10 +26,12 @@ function theirs(state: any) {
   original.syncLists()
   original.autoSafety()
   const view = original.V.EXP()
+  // Deliberate copy change: there is no SMS, so the app only promises email.
+  const noSms = (html: string) => html.replaceAll('email and SMS', 'email')
   return {
     id: view.id,
     head: shape(view.head),
-    body: shape(view.html),
+    body: shape(noSms(view.html)),
     foot: shape(view.foot ?? ''),
   }
 }

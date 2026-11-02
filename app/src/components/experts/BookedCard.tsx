@@ -47,7 +47,7 @@ export default function BookedCard() {
           </span>
         </div>
       </div>
-      <p className="bk-note">Confirmation sent by email and SMS.</p>
+      <p className="bk-note">Confirmation sent by email.</p>
       <button className="bk-cal" onClick={() => saveMeeting({ adviser: adviser.name, mode, slot })}>
         {canOnlySaveText() ? '📄 Save meeting details' : '📆 Add to my calendar'}
       </button>

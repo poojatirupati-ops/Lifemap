@@ -34,7 +34,9 @@ tweak('jump-F2', { fromApp: true })
 // bubble wraps to two lines and everything below sits ~21px lower; the app shows one line (6.09%).
 tweak('jump-ASK', { maxDiffPixelRatio: 0.065 })
 
-test.beforeEach(async ({ context }) => {
+test.beforeEach(async ({ context, page }) => {
+  // Home shows today's date and a time-of-day greeting: pin them to when the baselines were captured.
+  await page.clock.setFixedTime(new Date('2026-11-02T09:00:00'))
   // Localhost-only sign-in bypass (src/lib/lmTestHook.ts); the original ignores it.
   await context.addInitScript(() => localStorage.setItem('lm-test-auth', '1'))
 })

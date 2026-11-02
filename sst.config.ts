@@ -299,6 +299,43 @@ export default $config({
       new aws.cloudwatch.Dashboard("Dashboard", { dashboardName: `lifemap-${$app.stage}`, dashboardBody: $jsonStringify({ widgets }) });
     }
 
-    return { url: api.url, cmsUrl: cms.url };
+    // The app (card P4): static site on its own CloudFront with security headers. Vimeo plays in its iframe (no script host needed);
+    // posthog-js/no-external bundles its extensions, so PostHog needs connect-src only. 'unsafe-inline' styles: index.html and the
+    // prototype CSS carry inline style blocks/attributes.
+    const csp = $interpolate`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${cms.url} https://i.vimeocdn.com; media-src 'self' blob: ${cms.url}; font-src 'self' data:; connect-src 'self' ${api.url} ${cms.url} https://eu.i.posthog.com https://eu-assets.i.posthog.com; frame-src https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`;
+    const appHeaders = new aws.cloudfront.ResponseHeadersPolicy("AppHeaders", {
+      name: `lifemap-${$app.stage}-app-headers`,
+      securityHeadersConfig: {
+        contentSecurityPolicy: { contentSecurityPolicy: csp, override: true },
+        strictTransportSecurity: { accessControlMaxAgeSec: 63072000, includeSubdomains: true, preload: true, override: true },
+        frameOptions: { frameOption: "DENY", override: true },
+        contentTypeOptions: { override: true },
+        referrerPolicy: { referrerPolicy: "strict-origin-when-cross-origin", override: true },
+      },
+      customHeadersConfig: {
+        items: [
+          {
+            header: "Permissions-Policy",
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self "https://player.vimeo.com"), autoplay=(self "https://player.vimeo.com")',
+            override: true,
+          },
+          { header: "Cross-Origin-Opener-Policy", value: "same-origin", override: true },
+        ],
+      },
+    });
+    const app = new sst.aws.StaticSite("App", {
+      path: "app",
+      // Source maps are built (vite build.sourcemap 'hidden') and moved out of dist before upload, so they are never served;
+      // upload app/dist-maps privately to error tracking from CI.
+      build: { command: "npm run build && rm -rf dist-maps && mkdir dist-maps && find dist -name '*.map' -exec mv {} dist-maps/ ';'", output: "dist" },
+      environment: { VITE_CMS_URL: cms.url, VITE_POSTHOG_KEY: posthogProjectKey.value }, // the PostHog project key is public by design
+      transform: {
+        cdn: (args) => {
+          args.defaultCacheBehavior = $output([args.defaultCacheBehavior, appHeaders.id]).apply(([behavior, id]) => ({ ...behavior, responseHeadersPolicyId: id }));
+        },
+      },
+    });
+
+    return { url: api.url, cmsUrl: cms.url, appUrl: app.url };
   },
 });

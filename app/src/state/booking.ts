@@ -32,7 +32,7 @@ export function createBookingSlice(set: SetStore, get: () => Store) {
         ui.expertsPage = 'c4'
         addVersion(plan, 'Adviser meeting booked')
       })
-      toast('Booked. Confirmation sent by email and SMS')
+      toast('Booked. Confirmation sent by email')
     },
     /** After the cancel was saved: the share is withdrawn, so nothing stays ticked. */
     bookingCancelled: () => {

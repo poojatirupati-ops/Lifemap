@@ -44,7 +44,7 @@ function downloadCalendar({ adviser, mode, slot }: Meeting) {
 
 export async function saveMeeting(meeting: Meeting) {
   if (!(await downloads())) return downloadCalendar(meeting)
-  const text = `Your LifeMap adviser meeting\r\n\r\nWith: ${meeting.adviser}\r\nWhen: ${meeting.slot}\r\nHow: ${meeting.mode}\r\nLength: 45 minutes\r\n\r\nAdd it to your calendar by hand. Confirmation was sent by email and SMS.\r\nGuidance, not advice.\r\n`
+  const text = `Your LifeMap adviser meeting\r\n\r\nWith: ${meeting.adviser}\r\nWhen: ${meeting.slot}\r\nHow: ${meeting.mode}\r\nLength: 45 minutes\r\n\r\nAdd it to your calendar by hand. Confirmation was sent by email.\r\nGuidance, not advice.\r\n`
   const saved = await save('LifeMap-meeting.txt', new Blob([text], { type: 'text/plain' }))
   toast(
     saved
