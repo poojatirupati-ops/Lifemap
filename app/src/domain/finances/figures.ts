@@ -8,7 +8,17 @@ import { readListFigure, removeListDocument } from './items.ts'
 
 export type FinanceBook = Pick<
   Plan,
-  'figures' | 'sources' | 'confidence' | 'warnings' | 'acknowledged' | 'manual' | 'fixed' | 'documentOf' | 'lists' | 'nextItemId' | 'listsChanged'
+  | 'figures'
+  | 'sources'
+  | 'confidence'
+  | 'warnings'
+  | 'acknowledged'
+  | 'manual'
+  | 'fixed'
+  | 'documentOf'
+  | 'lists'
+  | 'nextItemId'
+  | 'listsChanged'
 >
 
 /** One set of figures with where each came from: the plan's totals, or one list item. */
@@ -47,7 +57,7 @@ export const itemFigures = (item: ListItem): Figures => ({
 /** Returns false when a statement figure stays in use (the typed one is kept for later). */
 export function typeInto(figures: Figures, key: string, value: unknown, source: Provenance) {
   if (figures.sources[key] === 'doc') {
-    if (hasValue(value)) figures.typed[key] = { value: value, source: source }
+    if (hasValue(value)) figures.typed[key] = { value, source }
     else delete figures.typed[key]
     return false
   }
@@ -90,7 +100,8 @@ export function unreadFrom(figures: Figures, key: string) {
   delete typed[key]
 }
 
-export const isFromStatement = (book: Pick<Plan, 'sources'>, key: string) => book.sources[key] === 'doc'
+export const isFromStatement = (book: Pick<Plan, 'sources'>, key: string) =>
+  book.sources[key] === 'doc'
 
 /** A figure the customer typed or picked; a statement figure stays in use. */
 export function typeFigure(

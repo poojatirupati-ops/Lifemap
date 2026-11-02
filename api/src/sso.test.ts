@@ -62,8 +62,11 @@ test("SSO: tenant A's OIDC provider signs staff into A with the mapped role; oth
   };
 
   // Not usable until the tenant proves the domain (DNS TXT; done by hand here).
+  const tenantSso = async () => ((await (await req("/api/tenant", { headers: A })).json()) as { sso: boolean }).sso;
   expect((await ssoSignIn({ sub: "1", email: "ann@cu-a.example" })).status).toBe(401);
+  expect(await tenantSso()).toBe(false);
   await db.update(ssoProvider).set({ domainVerified: true }).where(eq(ssoProvider.providerId, "cu-a-entra"));
+  expect(await tenantSso()).toBe(true);
 
   const roleOf = async (email: string) =>
     (await db.select({ role: member.role, org: member.organizationId }).from(member).innerJoin(user, eq(user.id, member.userId)).where(eq(user.email, email)));

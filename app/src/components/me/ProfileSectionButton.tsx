@@ -1,19 +1,19 @@
+import { useStore } from '../../state/store.ts'
 import type { MoneyProfileStep } from '../../domain/discovery/questions.data.ts'
 import GIcon from '../ui/GIcon.tsx'
 import { answerOf, profileQuestion } from '../../domain/discovery/profileQuestions.ts'
 import { openProfileSection } from './meActions.ts'
-import { useMePlan } from './mePlan.ts'
 
 const STATUS_WORD = { done: 'Done', part: 'In progress', none: 'Not started' }
 
 /** One of the money profile's three sections, with how far along it is. */
 export default function ProfileSectionButton({ section }: { section: MoneyProfileStep }) {
   const total = section.questions.length
-  const answered = useMePlan(
-    (plan) =>
+  const answered = useStore(
+    ({ plan }) =>
       section.questions.filter((entry) => answerOf(plan, profileQuestion(entry)) != null).length,
   )
-  const done = useMePlan((plan) => !!plan.moneyProfile.done[section.step])
+  const done = useStore(({ plan }) => !!plan.moneyProfile.done[section.step])
   const status = done ? 'done' : answered ? 'part' : 'none'
 
   return (

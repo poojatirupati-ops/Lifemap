@@ -36,7 +36,7 @@ test('P3 typed entry: a typed figure is used, a statement figure wins over a typ
   fireEvent.click(screen.getByText('Self-employed'))
   expect([plan().figures.work, plan().manual.work]).toEqual([
     'Employed',
-    { v: 'Self-employed', src: 'typed' },
+    { value: 'Self-employed', source: 'typed' },
   ])
   fireEvent.click(screen.getByText('Save this section'))
   expect(plan().savedSections.income).toBe(true)
@@ -74,12 +74,9 @@ test('PU upload: a corrected figure is the statement figure; removing the statem
   )
   fireEvent.input(screen.getByLabelText('Cash savings'), { target: { value: '9500' } })
   fireEvent.click(screen.getByText('Looks right, add them'))
-  expect([plan().figures.cash, plan().sources.cash, plan().fixed.cash, plan().manual.cash]).toEqual([
-    9500,
-    'doc',
-    true,
-    { v: 8000, src: 'typed' },
-  ])
+  expect([plan().figures.cash, plan().sources.cash, plan().fixed.cash, plan().manual.cash]).toEqual(
+    [9500, 'doc', true, { value: 8000, source: 'typed' }],
+  )
   expect(useStore.getState().screen).toBe('P2')
   review.unmount()
 

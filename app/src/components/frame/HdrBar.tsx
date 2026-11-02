@@ -3,8 +3,9 @@ import { useStore } from '../../state/store.ts'
 import { BellIcon, ChatIcon } from '../ui/icons.tsx'
 import BackButton from './BackButton.tsx'
 import Brand from './Brand.tsx'
+import { loadedTenant } from '../../shell/tenant.ts'
 
-const DEFAULT_PHOTO = 'media/profile-photo.jpg'
+export const DEFAULT_PHOTO = 'media/profile-photo.jpg'
 
 /**
  * The in-app top bar: back button or brand, then Ask, the "needs a look" bell and the profile photo.
@@ -15,19 +16,21 @@ export default function HdrBar({ back, needsLook = 0 }: { back?: () => void; nee
   const { plan, openAsk, openSheet, showMoneyLooks } = useStore.getState()
   const bellCount = plan.hasResults ? needsLook : 0
   // TODO(R-05): acct.photo is not in the Plan type yet (the profile photo upload sets it).
-  const photo = (plan.account as { photo?: string }).photo || DEFAULT_PHOTO
+  const photo = plan.account.photo || DEFAULT_PHOTO
 
   return (
     <div className="topbar hdr">
       {back ? <BackButton onClick={back} /> : <Brand />}
       <div className="hdr-ic">
-        <button
-          className="icb hdr-ask"
-          aria-label="Ask: help and plain-English explanations"
-          onClick={openAsk}
-        >
-          <ChatIcon />
-        </button>
+        {loadedTenant()?.features.ask !== false && (
+          <button
+            className="icb hdr-ask"
+            aria-label="Ask: help and plain-English explanations"
+            onClick={openAsk}
+          >
+            <ChatIcon />
+          </button>
+        )}
         {bellCount > 0 ? (
           <button
             className="icb"

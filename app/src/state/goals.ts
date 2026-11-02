@@ -1,4 +1,5 @@
 import { toast } from './shell.ts'
+import type { SetStore, Store } from './store.ts'
 import { clamp } from '../lib/clamp.ts'
 import { ageLimits, clampSafetyMonths } from '../domain/goals/goals.ts'
 import type { Goal, Plan } from './types.ts'
@@ -22,11 +23,6 @@ export interface GoalsActions {
   setSafetyMonths: (typed: string) => void
 }
 
-interface StoreCore {
-  plan: Plan
-  update: (recipe: (plan: Plan) => void) => void
-}
-
 const goalIn = (plan: Plan, id: number) => plan.goals.find((goal) => goal.id === id)
 
 const NON_DIGITS = /\D/g
@@ -37,7 +33,7 @@ const digitsOf = (typed: string) => parseInt(typed.replace(NON_DIGITS, ''))
 /** "12,000" -> 12000; blank or text -> 0. */
 const wholeEuros = (typed: string) => digitsOf(typed) || 0
 
-export function createGoalsSlice(get: () => StoreCore): GoalsActions {
+export function createGoalsSlice(set: SetStore, get: () => Store): GoalsActions {
   const editGoal = (id: number, edit: (goal: Goal, plan: Plan) => void) =>
     get().update((plan) => {
       const goal = goalIn(plan, id)
@@ -64,10 +60,7 @@ export function createGoalsSlice(get: () => StoreCore): GoalsActions {
       })
       toast(`${goal.name} · age ${goal.age}`)
     },
-    highlightGoal: (id) =>
-      get().update((plan) => {
-        plan.highlightedGoal = id
-      }),
+    highlightGoal: (id) => set({ highlightedGoal: id }),
     removeGoal: (id) => {
       get().update((plan) => {
         if (goalIn(plan, id)?.key === 'safety') {
@@ -81,26 +74,16 @@ export function createGoalsSlice(get: () => StoreCore): GoalsActions {
       toast('Goal removed')
     },
     toggleDetails: (id) =>
-      get().update((plan) => {
-        plan.timelineOpen[id] = !plan.timelineOpen[id]
-      }),
-    setGoalDetail: (id, field, value) =>
-      editGoal(id, (goal) => {
-        goal[field] = value
-      }),
+      get().update((_, ui) => void (ui.timelineOpen[id] = !ui.timelineOpen[id])),
+    setGoalDetail: (id, field, value) => editGoal(id, (goal) => void (goal[field] = value)),
     renameGoal: (id, name) =>
-      editGoal(id, (goal) => {
-        goal.name = name.slice(0, 30) || 'My goal'
-      }),
+      editGoal(id, (goal) => void (goal.name = name.slice(0, 30) || 'My goal')),
     setGoalAmount: (id, typed) =>
       editGoal(id, (goal) => {
         goal.amount = wholeEuros(typed)
         goal.auto = false
       }),
-    setGoalSaved: (id, typed) =>
-      editGoal(id, (goal) => {
-        goal.saved = wholeEuros(typed)
-      }),
+    setGoalSaved: (id, typed) => editGoal(id, (goal) => void (goal.saved = wholeEuros(typed))),
     setSafetyMonths: (typed) =>
       get().update((plan) => {
         const months = digitsOf(typed)

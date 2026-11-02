@@ -2,3 +2,13 @@ _site/
 __pycache__/
 *.pyc
 .sst
+.turbo
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+test-results/
+playwright-report/
+api/.dev-db/
+api/.dev-files/

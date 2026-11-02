@@ -3,7 +3,7 @@ import type { project } from '../../domain/planning/project'
 import { useViewport } from '../../hooks/useViewport'
 import { clamp } from '../../lib/clamp'
 import { useStore } from '../../state/store'
-import type { Plan } from '../../state/types'
+import type { Ui } from '../../state/types'
 import Emo from '../ui/Emo'
 import CashflowView from './chart/CashflowView'
 import Chapters from './Chapters'
@@ -29,13 +29,13 @@ const KEY = [
 
 /** Your future at a glance: the journey road, life chapters or the year-by-year detail. */
 export default function Glance({ projection }: Props) {
-  const view = useStore((store) => store.plan.resultsView)
+  const view = useStore((store) => store.resultsView)
   const goals = useStore((store) => store.plan.goals)
   const update = useStore((store) => store.update)
   // TODO(R-20): a named store action (setView) once the results slice exists
-  const setView = (key: Plan['resultsView']) =>
-    update((plan) => {
-      plan.resultsView = key
+  const setView = (key: Ui['resultsView']) =>
+    update((_, ui) => {
+      ui.resultsView = key
     })
   const viewport = useViewport(false)
   const { landscape } = viewport

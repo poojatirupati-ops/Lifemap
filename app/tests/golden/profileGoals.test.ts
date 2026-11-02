@@ -6,6 +6,7 @@ import { syncAges, syncSafety } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
 import { defaultSettings } from '../../src/domain/planning/settings'
 import { TODAY } from './origSlice'
+import { toOriginal } from '../../src/state/migrate'
 import { original, plain, fixtures, originalNormalized, ourNormalized } from './origProfile'
 import { pensionItem, planVariants } from './profileVariants'
 
@@ -17,7 +18,7 @@ describe('normalisers equal the original', { timeout: 30_000 }, () => {
         originalNormalized(input)
         original.syncAges()
         original.syncSafety()
-        expect(plain(plan), fixture).toEqual(plain(original.getState()))
+        expect(plain(toOriginal(plan)), fixture).toEqual(plain(original.getState()))
       }
     }
   })
@@ -43,11 +44,13 @@ describe('goals equal the original', { timeout: 30_000 }, () => {
         for (const key of ['home', 'retire', 'edu', 'legacy', 'safety', 'travel']) {
           for (const other of [undefined, OTHER_GOALS[0]]) {
             const plan = ourNormalized(input)
-            originalNormalized(plan)
+            originalNormalized(toOriginal(plan))
             const custom = other && [other.emoji, other.name, other.amount, other.years]
             const originalGoal = plain(original.mkGoal(key, custom))
             const goal = newGoal(plan, plan.nextGoalId++, key, other)
-            expect(plain(goal), fixture + key).toEqual(originalGoal)
+            expect(plain(toOriginal({ goals: [goal] }).goals[0]), fixture + key).toEqual(
+              originalGoal,
+            )
             expect(plan.nextGoalId).toBe(original.getState().gid)
           }
         }
@@ -60,20 +63,20 @@ describe('goals equal the original', { timeout: 30_000 }, () => {
       for (const input of planVariants(fixturePlan)) {
         if (input.about.age == null) continue
         const months = ourNormalized(input)
-        originalNormalized(months)
+        originalNormalized(toOriginal(months))
         original.setSafetyMonths(7)
         months.assumptions = { ...months.assumptions, safetyMonths: clampSafetyMonths(7) }
         syncSafety(months)
-        expect(plain(months)).toEqual(plain(original.getState()))
+        expect(plain(toOriginal(months))).toEqual(plain(original.getState()))
 
-        const started = { ...ourNormalized(input), app: true }
+        const started = toOriginal({ ...ourNormalized(input), hasResults: true })
         originalNormalized(started)
         original.getState().app = true
         original.autoSafety()
-        const plan = { ...ourNormalized(started), app: true }
+        const plan = { ...ourNormalized(started), hasResults: true }
         const added = emergencyFundToAdd(plan, plan.nextGoalId)
         if (added) plan.goals.push(added)
-        expect(plain(plan.goals)).toEqual(plain(original.getState().goals))
+        expect(plain(toOriginal(plan).goals)).toEqual(plain(original.getState().goals))
       }
     }
   })

@@ -29,7 +29,7 @@ test('dragging a chip snaps to whole years and shows the year bubble while it mo
   expect(document.querySelector('.tl-tip b')?.textContent).toBe(String(2027 + 50 - 38))
   fireEvent.pointerUp(travel)
   expect(document.querySelector('.tl-tip')).toBeNull()
-  expect(plan().highlightedGoal).toBeNull()
+  expect(useStore.getState().highlightedGoal).toBeNull()
   expect(document.getElementById('when-2')!.textContent).toBe('in 12 yrs · age 50 · 2039')
 })
 
@@ -37,7 +37,7 @@ test('a tap highlights the goal row instead of moving it', () => {
   const travel = screen.getByRole('slider', { name: 'Travel' })
   fireEvent.pointerDown(travel, { clientX: 100, button: 0 })
   fireEvent.pointerUp(travel)
-  expect(plan().highlightedGoal).toBe(2)
+  expect(useStore.getState().highlightedGoal).toBe(2)
   expect(document.getElementById('row-2')!.className).toBe('grow hl')
 })
 

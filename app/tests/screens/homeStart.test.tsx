@@ -14,9 +14,9 @@ const fixture: Snapshot = structuredClone(discovered)
 
 beforeEach(() => {
   useStore.getState().load(structuredClone(fixture))
-  useStore.getState().update((plan) => {
-    plan.inShell = true
-    plan.tab = 'home'
+  useStore.getState().update((plan, ui) => {
+    ui.inShell = true
+    ui.tab = 'home'
   })
 })
 
@@ -51,14 +51,14 @@ test('Home before a plan: personality pill, calculator opens in Explore', () => 
   expect(screen.getAllByText(/^◆/, { selector: '.tg' })).toHaveLength(3)
 
   fireEvent.click(screen.getByText('Goal planner').closest('button')!)
-  expect(useStore.getState().plan).toMatchObject({
+  expect(useStore.getState()).toMatchObject({
     tab: 'explore',
-    xs: [{ v: 'CALC', p: 'goalplanner' }],
+    explorePages: [{ page: 'CALC', param: 'goalplanner' }],
   })
 })
 
 test('the plan card shows where the builder is', () => {
-  useStore.getState().update((plan) => void (plan.planBuilder = true))
+  useStore.getState().update((plan, ui) => void (ui.planBuilder = true))
   useStore.getState().go('F1')
   render(<HomeStart.Body />)
   expect(screen.getByText('Carry on with your plan')).toBeTruthy()
@@ -72,5 +72,5 @@ test('Empty plan lists the 8 steps and Start my plan opens step 1', () => {
   )
 
   fireEvent.click(screen.getByText('Start my plan'))
-  expect(useStore.getState()).toMatchObject({ screen: 'B1', plan: { tab: 'plan', pb: true } })
+  expect(useStore.getState()).toMatchObject({ screen: 'B1', tab: 'plan', planBuilder: true })
 })

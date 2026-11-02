@@ -24,7 +24,7 @@ function visibleHeight() {
 /** "Your life by age": goals as chips above an age axis, dragged to change when they happen. */
 export default function TimelineBoard() {
   const goals = useStore((store) => store.plan.goals)
-  const highlighted = useStore((store) => store.plan.highlightedGoal)
+  const highlighted = useStore((store) => store.highlightedGoal)
   const ageNow = useStore((store) => store.plan.about.age ?? 0)
   const { landscape } = useViewport(useShell((shell) => shell.desk))
   const track = useRef<HTMLDivElement>(null)

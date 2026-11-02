@@ -1,4 +1,4 @@
-import type { Topic } from './topics.tsx'
+import type { AskAnswer as Topic } from '../../content/cms.tsx'
 
 interface Props {
   topics: Topic[]

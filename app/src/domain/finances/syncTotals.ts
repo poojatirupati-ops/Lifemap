@@ -3,7 +3,10 @@ import { hasValue } from '../../lib/format.ts'
 import type { ListItem, Plan } from '../../state/types.ts'
 import { LISTS } from './lists.data.ts'
 
-type PlanTotals = Pick<Plan, 'lists' | 'figures' | 'sources' | 'confidence' | 'fixed' | 'listsFedTotals'>
+type PlanTotals = Pick<
+  Plan,
+  'lists' | 'figures' | 'sources' | 'confidence' | 'fixed' | 'listsFedTotals'
+>
 
 const DEBT_LISTS = ['cards', 'loans', 'mort2'] as const
 
@@ -16,7 +19,8 @@ type FieldSum = {
 
 const isNumber = (item: ListItem, field: string) =>
   hasValue(item.fields[field]) && !isNaN(+item.fields[field])
-const isPositive = (item: ListItem, field: string) => hasValue(item.fields[field]) && +item.fields[field] > 0
+const isPositive = (item: ListItem, field: string) =>
+  hasValue(item.fields[field]) && +item.fields[field] > 0
 
 function sumField(items: ListItem[], field: string): FieldSum | null {
   const filled = items.filter((item) => isNumber(item, field))
@@ -82,7 +86,10 @@ function ownContribution(items: ListItem[], ownShare: number): number | null {
   const typed = paying.filter((item) => hasValue(item.fields.own))
   if (!typed.length) return null
   const blank = paying.filter((item) => !hasValue(item.fields.own))
-  const typedTotal = typed.reduce((sum, item) => sum + Math.min(+item.fields.own, +item.fields.monthly), 0)
+  const typedTotal = typed.reduce(
+    (sum, item) => sum + Math.min(+item.fields.own, +item.fields.monthly),
+    0,
+  )
   const blankTotal = blank.reduce((sum, item) => sum + +item.fields.monthly * ownShare, 0)
   return typedTotal + blankTotal
 }

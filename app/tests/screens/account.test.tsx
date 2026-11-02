@@ -6,22 +6,27 @@ import { fresh } from '../../src/state/fresh.ts'
 import * as Account from '../../src/screens/Account.screen.tsx'
 import * as AccountCode from '../../src/screens/AccountCode.screen.tsx'
 import * as AccountPasskey from '../../src/screens/AccountPasskey.screen.tsx'
+import * as AccountDetails from '../../src/screens/AccountDetails.screen.tsx'
 import { prefillFinances } from '../../src/domain/finances/prefill.ts'
 
 const auth = vi.hoisted(() => ({
   sendCode: vi.fn(async () => true),
   signInWithCode: vi.fn(async (): Promise<string | null> => null),
   addPasskey: vi.fn(async () => ({ error: null })),
-  postConsents: vi.fn(async () => {}),
-  restoreSavedPlan: vi.fn(async () => false),
+  postConsents: vi.fn(async () => true),
+  updateUser: vi.fn(async () => ({})),
+  enterApp: vi.fn(async () => {}),
 }))
 vi.mock('../../src/auth/client.ts', () => ({
   sendCode: auth.sendCode,
   signInWithCode: auth.signInWithCode,
-  authClient: { passkey: { addPasskey: auth.addPasskey } },
+  authClient: { passkey: { addPasskey: auth.addPasskey }, updateUser: auth.updateUser },
 }))
 vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
-vi.mock('../../src/auth/session.ts', () => ({ restoreSavedPlan: auth.restoreSavedPlan }))
+vi.mock('../../src/auth/session.ts', async (original) => ({
+  ...(await original<object>()),
+  enterApp: auth.enterApp,
+}))
 
 test('prefillFinances keeps only what the customer already told us', () => {
   expect(prefillFinances({ name: 'Aoife', age: 16, retireAge: 66, retireSet: false })).toEqual({
@@ -41,7 +46,7 @@ beforeEach(() => {
 const type = (label: string, value: string) =>
   fireEvent.input(screen.getByLabelText(label), { target: { value } })
 
-test('P1: consents start unticked and Send waits for every detail plus the required consent', async () => {
+test('P1: Send waits for an email, then sends the code', async () => {
   render(
     <>
       <Account.Body />
@@ -49,24 +54,48 @@ test('P1: consents start unticked and Send waits for every detail plus the requi
     </>,
   )
   const send = screen.getByText('Send my email code') as HTMLButtonElement
-  const [required, optional] = screen.getAllByRole('checkbox') as HTMLInputElement[]
-  expect([required.checked, optional.checked]).toEqual([false, false])
-
-  type('First name', 'Aoife')
-  type('Email', 'aoife@example.ie')
-  type('Mobile', '087 123 4567')
   expect(send.disabled).toBe(true)
-  fireEvent.click(required)
+  type('Email', 'aoife@example.ie')
   expect(send.disabled).toBe(false)
-
   fireEvent.click(send)
   await waitFor(() => expect(useStore.getState().screen).toBe('P1E'))
   expect(auth.sendCode).toHaveBeenCalledWith('aoife@example.ie')
 })
 
+test('P1D: consents start unticked, the notice is required, all three are posted', async () => {
+  render(
+    <>
+      <AccountDetails.Body />
+      <AccountDetails.Foot />
+    </>,
+  )
+  const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[]
+  expect(boxes.map((box) => box.checked)).toEqual([false, false, false])
+  type('First name', ' Aoife ')
+  fireEvent.click(screen.getByText('Continue'))
+  await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/required/))
+  expect(auth.postConsents).not.toHaveBeenCalled()
+
+  fireEvent.click(boxes[0])
+  fireEvent.click(boxes[2])
+  fireEvent.click(screen.getByText('Continue'))
+  await waitFor(() => expect(useStore.getState().screen).toBe('P1K'))
+  expect(auth.postConsents).toHaveBeenCalledWith({
+    terms: true,
+    marketing: false,
+    analytics: true,
+  })
+  expect(auth.updateUser).toHaveBeenCalledWith({ name: 'Aoife' })
+})
+
 function renderCodeScreen() {
   useStore.getState().update((plan) => {
-    Object.assign(plan.account, { name: 'Aoife', email: 'a@b.ie', c1: true, c2: false })
+    Object.assign(plan.account, {
+      name: 'Aoife',
+      email: 'a@b.ie',
+      termsAccepted: true,
+      marketingConsent: false,
+    })
   })
   render(
     <>
@@ -104,30 +133,30 @@ test('P1E: boxes advance, short codes and wrong codes and lockout show their mes
   expect(auth.postConsents).not.toHaveBeenCalled()
 })
 
-test('P1E: the right code signs in, posts consents, skips the phone step and offers a passkey', async () => {
+test('P1E: the right code signs in and enters the app', async () => {
   const boxes = renderCodeScreen()
   fireEvent.paste(boxes[0], { clipboardData: { getData: () => '654321' } })
   fireEvent.click(screen.getByText('Verify'))
-  await waitFor(() => expect(useStore.getState().screen).toBe('P1K'))
-  expect(auth.signInWithCode).toHaveBeenCalledWith('a@b.ie', '654321', 'Aoife')
-  expect(auth.postConsents).toHaveBeenCalledWith({ terms: true, marketing: false })
-  expect(auth.restoreSavedPlan).toHaveBeenCalledWith({ name: 'Aoife', email: 'a@b.ie' })
+  await waitFor(() => expect(auth.enterApp).toHaveBeenCalledWith({ name: '', email: 'a@b.ie' }))
+  expect(auth.signInWithCode).toHaveBeenCalledWith('a@b.ie', '654321')
 })
 
-test('P1K: Not now returns to the screen the wall caught; a passkey goes on to P2', async () => {
-  useStore.getState().update((plan) => {
-    plan.returnTo = 'XPL'
+test('P1K: Not now (onboarded) returns to the screen the wall caught; otherwise onboarding starts', async () => {
+  useStore.getState().update((plan, ui) => {
+    ui.returnTo = 'XPL'
     plan.account.name = 'Aoife'
+    plan.onboarded = true
   })
   const { unmount } = render(<AccountPasskey.Foot />)
   fireEvent.click(screen.getByText('Not now'))
-  expect(useStore.getState().plan.tab).toBe('explore')
-  expect(useStore.getState().plan.returnTo).toBeUndefined()
+  expect(useStore.getState().tab).toBe('explore')
+  expect(useStore.getState().returnTo).toBeUndefined()
   expect(useStore.getState().plan.figures.name).toBe('Aoife')
   unmount()
 
+  useStore.getState().load({ ...fresh(), screen: 'P1K' })
   render(<AccountPasskey.Foot />)
   fireEvent.click(screen.getByText('Add Face ID / passkey'))
-  await waitFor(() => expect(useStore.getState().screen).toBe('P2'))
+  await waitFor(() => expect(useStore.getState().screen).toBe('D0'))
   expect(useStore.getState().plan.account.passkey).toBe(true)
 })

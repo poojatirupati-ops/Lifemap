@@ -3091,5 +3091,5 @@ body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 #p4-3 .asmf .nbox{height:34px;align-items:center!important;padding:0 12px!important}
 #p4-3 .asmf .nbox input{line-height:1!important;height:auto!important}
 
-/* production: the reviewer sidebar is not shown (kept in the DOM so tools/visual-diff.mjs can use its jump list) */
+/* production: the reviewer sidebar is not shown (kept in the DOM so tests/e2e/screens.spec.ts can use its jump list) */
 .side{display:none!important}

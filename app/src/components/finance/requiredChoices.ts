@@ -7,7 +7,10 @@ import { partnerEarns } from '../../domain/finances/fields.data.ts'
 /** name is used in sentences, label on the gate card. */
 type RequiredChoice = { key: string; name: string; label: string }
 
-type ChoiceInputs = Pick<Plan, 'retireSet' | 'assumptions' | 'inflation' | 'about' | 'figures' | 'partnerRetireSet'>
+type ChoiceInputs = Pick<
+  Plan,
+  'retireSet' | 'assumptions' | 'inflation' | 'about' | 'figures' | 'partnerRetireSet'
+>
 
 export function requiredChoices(plan: ChoiceInputs): RequiredChoice[] {
   const choices = [

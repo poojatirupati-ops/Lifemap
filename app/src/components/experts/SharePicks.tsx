@@ -6,10 +6,10 @@ import type { Plan } from '../../state/types.ts'
 
 const ITEMS: { item: Share; label: string; detail: string }[] = [
   { item: 'report', label: 'Your plan report', detail: 'Goals, results and what-ifs' },
-  { item: 'finances', label: 'Your finances', detail: 'The figures in your 6 sections' },
+  { item: 'fin', label: 'Your finances', detail: 'The figures in your 6 sections' },
   { item: 'docs', label: 'Your documents', detail: 'Statements you uploaded' },
   {
-    item: 'moneyProfile',
+    item: 'um',
     label: 'Your Understand Me profile',
     detail: 'Personality and indicative risk profile',
   },
@@ -19,15 +19,20 @@ type SharePlan = Pick<Plan, 'answers' | 'sources' | 'hasResults'>
 
 const OFFERED: Record<Share, (plan: SharePlan) => boolean> = {
   report: (plan) => plan.hasResults,
-  finances: (plan) => plan.hasResults,
+  fin: (plan) => plan.hasResults,
   docs: (plan) => Object.values(plan.sources).includes('doc'),
-  moneyProfile: (plan) => hasEnoughForPersonality(plan.answers),
+  um: (plan) => hasEnoughForPersonality(plan.answers),
 }
 
 /** Consent before sharing: each item ticked on its own (all unticked at first), then the agreement. */
 export default function SharePicks({ adviserName }: { adviserName: string }) {
   const plan = useStore(
-    useShallow(({ plan }) => ({ answers: plan.answers, sources: plan.sources, hasResults: plan.hasResults, booking: plan.booking })),
+    useShallow(({ plan }) => ({
+      answers: plan.answers,
+      sources: plan.sources,
+      hasResults: plan.hasResults,
+      booking: plan.booking,
+    })),
   )
   const { setShare, setBooking, openSheet } = useStore.getState()
   return (

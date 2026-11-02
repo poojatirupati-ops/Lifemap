@@ -63,28 +63,30 @@ const typedFigures = (fin: Finances) =>
 
 /** Expects lists already synced. */
 export function householdFigures(household: Household, rules: Rules) {
-  const { about, figures: fin, assumptions: asm } = household
+  const { about, figures, assumptions } = household
   const assumed = (key: string) => assumption(household, key)
   const age = about.age
-  const work = fin.work || (toNumber(fin.income) > 0 ? 'Employed' : undefined)
+  const work = figures.work || (toNumber(figures.income) > 0 ? 'Employed' : undefined)
   const working = work !== 'Not working'
-  const ownsHome = fin.home?.startsWith('Own') ?? false
+  const ownsHome = figures.home?.startsWith('Own') ?? false
   const mortgageRate = statedRate(household, 'mortRate')
-  const mortgage = homeMortgage(fin, mortgageRate)
-  const income = working ? toNumber(fin.income) : 0
-  const monthlyPension = working && income > 0 ? toNumber(fin.pensionM) : 0
-  const monthlyOwnPension = isNumber(fin.pensionOwnM)
-    ? Math.min(monthlyPension, Number(fin.pensionOwnM))
+  const mortgage = homeMortgage(figures, mortgageRate)
+  const income = working ? toNumber(figures.income) : 0
+  const monthlyPension = working && income > 0 ? toNumber(figures.pensionM) : 0
+  const monthlyOwnPension = isNumber(figures.pensionOwnM)
+    ? Math.min(monthlyPension, Number(figures.pensionOwnM))
     : monthlyPension * assumed('ownShare')
 
   // without contribution years, the customer's own weekly amount gives the share
-  const spYears = hasValue(fin.spYears) ? fin.spYears : chosenAssumption(asm, 'spYears')
+  const spYears = hasValue(figures.spYears)
+    ? figures.spYears
+    : chosenAssumption(assumptions, 'spYears')
   const weeklyShare = (key: string) => Math.min(1, assumed(key) / rules.sp.week)
-  const fullStatePension = fin.sp === 'Expect full' ? 1 : weeklyShare('spWeek')
+  const fullStatePension = figures.sp === 'Expect full' ? 1 : weeklyShare('spWeek')
   const statePensionShare =
     spYears != null ? statePensionFraction(rules, Number(spYears)) : fullStatePension
 
-  const partnerStatePensionOption = about.partner ? fin.pSp || 'Not sure' : 'None'
+  const partnerStatePensionOption = about.partner ? figures.pSp || 'Not sure' : 'None'
   const partnerStatePensionShare = partnerStatePension(partnerStatePensionOption, () =>
     weeklyShare('pSpWeek'),
   )
@@ -94,8 +96,8 @@ export function householdFigures(household: Household, rules: Rules) {
   const credits = about.taxCredits || {}
   const married = !!about.partner && about.married === true
   // the standard pension growth assumes typical charges; a statement's own charges replace them
-  const pensionGrowth = isNumber(fin.penChg)
-    ? assumed('pen') + assumed('penChg') - Number(fin.penChg) / 100
+  const pensionGrowth = isNumber(figures.penChg)
+    ? assumed('pen') + assumed('penChg') - Number(figures.penChg) / 100
     : assumed('pen')
 
   return {
@@ -104,17 +106,17 @@ export function householdFigures(household: Household, rules: Rules) {
     work,
     married,
     partner: !!about.partner,
-    partnerAge: about.partner ? toNumber(fin.pAge) || age : 0,
+    partnerAge: about.partner ? toNumber(figures.pAge) || age : 0,
     partnerRetireAge: household.partnerRetireSet ? household.partnerRetireAge : 0,
     income,
-    partnerIncome: about.partner ? toNumber(fin.pIncome) : 0,
-    ...typedFigures(fin),
-    homeValue: ownsHome ? toNumber(fin.homeValue) : 0,
-    homeUse: ownsHome ? fin.homeUse || 'No, never' : 'No, never',
+    partnerIncome: about.partner ? toNumber(figures.pIncome) : 0,
+    ...typedFigures(figures),
+    homeValue: ownsHome ? toNumber(figures.homeValue) : 0,
+    homeUse: ownsHome ? figures.homeUse || 'No, never' : 'No, never',
 
     mortgageBalance: mortgage.balance,
     mortgageRate,
-    mortgageRateKnown: toNumber(fin.mortRate) > 0 || isChosen(asm, 'mortRate'),
+    mortgageRateKnown: toNumber(figures.mortRate) > 0 || isChosen(assumptions, 'mortRate'),
     monthlyMortgage: mortgage.monthly,
     mortgageEstimated: mortgage.estimated,
     mortgageTermKnown: mortgage.termKnown,
@@ -126,13 +128,14 @@ export function householdFigures(household: Household, rules: Rules) {
     monthlyOwnPension,
     pensionGrowth,
     statePensionShare,
-    statePensionKnown: spYears != null || fin.sp === 'Expect full' || isChosen(asm, 'spWeek'),
+    statePensionKnown:
+      spYears != null || figures.sp === 'Expect full' || isChosen(assumptions, 'spWeek'),
     partnerStatePensionShare,
     partnerStatePensionOption,
-    autoEnrolled: autoEnrolmentEligible && fin.ae !== 'No',
+    autoEnrolled: autoEnrolmentEligible && figures.ae !== 'No',
     autoEnrolmentEligible,
 
-    rentCredit: !!credits.rent && fin.home === 'Rent',
+    rentCredit: !!credits.rent && figures.home === 'Rent',
     singleParentCredit: !!credits.lone && (about.dependants ?? 0) > 0 && !about.partner,
     homeCarerCredit: !!credits.carer && married,
   }

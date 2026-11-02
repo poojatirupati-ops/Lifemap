@@ -1,4 +1,9 @@
 import { useShallow } from 'zustand/react/shallow'
+import {
+  ANALYTICS_LABEL,
+  setAnalyticsConsent,
+  useAnalyticsConsent,
+} from '../analytics/analytics.ts'
 import { meHead } from '../components/me/meHead.ts'
 import Emo from '../components/ui/Emo.tsx'
 import { backToMe } from '../components/finance/financeActions.ts'
@@ -16,9 +21,9 @@ export const Head = () => meHead({ title: 'Privacy & preferences', back: backToM
 
 const SHARED: [part: keyof Plan['booking']['share'], label: string][] = [
   ['report', 'Plan report'],
-  ['finances', 'Finances'],
+  ['fin', 'Finances'],
   ['docs', 'Documents'],
-  ['moneyProfile', 'Understand Me profile'],
+  ['um', 'Understand Me profile'],
 ]
 
 export function Body() {
@@ -30,6 +35,7 @@ export function Body() {
     })),
   )
   const openSheet = useStore((store) => store.openSheet)
+  const analytics = useAnalyticsConsent()
 
   return (
     <>
@@ -47,6 +53,16 @@ export function Body() {
           />
           <span>Send me reminders and updates</span>
         </label>
+        {analytics === null ? null : (
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={analytics}
+              onChange={(event) => void setAnalyticsConsent(event.currentTarget.checked)}
+            />
+            <span>{ANALYTICS_LABEL}</span>
+          </label>
+        )}
       </div>
       <div className="card">
         <b>Your preferences</b>

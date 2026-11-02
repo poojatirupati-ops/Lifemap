@@ -48,3 +48,44 @@ Public link: https://tejalsakpal66-tech.github.io/lifemap-redesign/ . Details in
 
 ## Archive (rollback points)
 `archive/v2.8-2026-10-10/` and the branch `archive-v2.8-final` hold a frozen copy of the final v2.8.2 version (10 Oct 2026). Never edit them. See `archive/v2.8-2026-10-10/ARCHIVE-README.md`. Older: `archive/v2.7-2026-10-08/` and the branch `archive-v2.7-final` hold a frozen copy of the final v2.7 version (8 Oct 2026). Never edit them. See `archive/v2.7-2026-10-08/ARCHIVE-README.md` to go back to it if an update goes wrong.
+
+## Release (API and CMS on AWS)
+Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx turbo run lint typecheck test build` on Node 24, which includes the app's Playwright screen suite) and `.github/workflows/deploy.yml` (push to `main` deploys stage `staging`; a published GitHub release deploys stage `production` after approval). Each deploy runs the checks, `sst deploy`, the API (Drizzle) and CMS (Payload) migrations through `sst tunnel`, then a smoke test (`/health`, CMS `/admin`). Operations: `docs/runbook.md`.
+
+### One-time setup
+1. **AWS account(s)**, region eu-west-1. Best: one account for staging and one for production (AWS Organizations), so alarms, metrics and access stay apart.
+2. **GitHub OIDC** in each account: IAM > Identity providers > add OpenID Connect, URL `https://token.actions.githubusercontent.com`, audience `sts.amazonaws.com`.
+3. **Deploy role** in each account, trusted only by that environment of this repository:
+   ```json
+   { "Version": "2012-10-17", "Statement": [{ "Effect": "Allow",
+     "Principal": { "Federated": "arn:aws:iam::<account>:oidc-provider/token.actions.githubusercontent.com" },
+     "Action": "sts:AssumeRoleWithWebIdentity",
+     "Condition": { "StringEquals": {
+       "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+       "token.actions.githubusercontent.com:sub": "repo:poojatirupati-ops/Lifemap:environment:production" } } }] }
+   ```
+   (`environment:staging` for the staging role.) Permissions: SST needs broad rights to create the stack; start with `AdministratorAccess` and narrow it later. No access keys are stored anywhere.
+4. **GitHub environments** (Settings > Environments):
+   - `staging`: deployment branches `main`. Variables: `AWS_ROLE_ARN`, `LIFEMAP_EMAIL_SENDER` (e.g. `staging.lifemap.ie`), `LIFEMAP_ALERT_EMAIL`.
+   - `production`: required reviewers (the manual approval), deployment tags `v*`. Same three variables with production values.
+   No GitHub secrets are needed.
+5. **SST secrets per stage** (once, from a laptop with that account's credentials; `<stage>` = `staging` or `production`):
+   ```
+   npx sst secret set DbPassword "$(openssl rand -hex 24)" --stage <stage>
+   npx sst secret set BetterAuthSecret "$(openssl rand -base64 32)" --stage <stage>
+   npx sst secret set PayloadSecret "$(openssl rand -hex 32)" --stage <stage>
+   npx sst secret set CmsCronSecret "$(openssl rand -hex 32)" --stage <stage>
+   npx sst secret set PosthogProjectKey <key> --stage <stage>
+   npx sst secret set PosthogPersonalApiKey <key> --stage <stage>
+   npx sst secret set BetterAuthUrl https://<api-url> --stage <stage>   # first deploy: deploy, read `url`, set, redeploy
+   ```
+6. After the first deploy: confirm the SNS email subscription, request SES production access and publish the DKIM records (api/README.md), and run the restore drill (docs/runbook.md).
+
+### Release steps
+1. Merge to `main`; the Deploy run updates `staging`. Check it.
+2. Dry run against production: `LIFEMAP_EMAIL_SENDER=<prod sender> npx sst diff --stage production` (production credentials). Read the plan: nothing in `Db`, `DataKey`, `Documents` or `CmsMedia` should be replaced or deleted.
+3. Tag and publish a release: `gh release create v1.2.3 --generate-notes` (or GitHub > Releases > Draft a new release).
+4. Approve the waiting `production` deployment in the Deploy run. It deploys, migrates and smoke-tests.
+5. Problems: docs/runbook.md "Roll back a release".
+
+Production is protected: `removal: retain` and `protect` (SST will not remove the stage), RDS deletion protection and a final snapshot, 35-day backups, KMS key `DataKey` with yearly rotation.

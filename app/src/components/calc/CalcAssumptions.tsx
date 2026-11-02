@@ -1,7 +1,6 @@
 import AssumptionField from '../me/AssumptionField.tsx'
 import { rememberOpenGroup } from '../me/assumptionActions.ts'
 import { useStore } from '../../state/store.ts'
-import type { MePlan } from '../me/mePlan.ts'
 import { TOOL_ASSUMPTIONS } from '../../domain/calc/bindings.data.ts'
 import { assumptionsToChoose } from '../../domain/calc/values.ts'
 
@@ -10,7 +9,7 @@ export default function CalcAssumptions({ toolId }: { toolId: string }) {
   const keys = TOOL_ASSUMPTIONS[toolId]
   const group = `c-${toolId}`
   const toChoose = useStore(({ plan }) => assumptionsToChoose(plan.assumptions, toolId).length)
-  const remembered = useStore(({ plan }) => (plan as MePlan).asmOpen === group)
+  const remembered = useStore(({ openAssumption }) => openAssumption === group)
   if (!keys) return null
   const open = toChoose > 0 || remembered
   return (

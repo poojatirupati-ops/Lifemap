@@ -4,7 +4,6 @@ import { useStore } from '../state/store.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
 import Emo from '../components/ui/Emo.tsx'
 import GoalTile from '../components/define/GoalTile.tsx'
-import SaveBanner from '../components/define/SaveBanner.tsx'
 
 export const key = 'F1'
 export const id = 'F1'
@@ -32,7 +31,6 @@ export function Body() {
 
   return (
     <>
-      <SaveBanner />
       <div className="eyebrow" style={{ margin: '4px 0 8px' }}>
         Suggested for you
       </div>

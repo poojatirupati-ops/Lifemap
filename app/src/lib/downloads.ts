@@ -1,5 +1,5 @@
-// Saving files from a shared Claude page, where printing and plain downloads are blocked: its
-// "downloads" capability saves them instead (journey-spec §24.3).
+// Saving files: a plain browser download, or inside a shared Claude page (where plain downloads are
+// blocked) its "downloads" capability (journey-spec §24.3).
 type Downloads = {
   save: (file: { filename: string; data: Blob | ArrayBuffer }) => Promise<unknown>
 }
@@ -15,10 +15,22 @@ export async function downloads() {
   }
 }
 
-/** Save a file through the downloads capability; false when there is none or it refused. */
+/** A plain browser download. */
+function download(filename: string, blob: Blob) {
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = filename
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(link.href), 20000)
+}
+
+/** Save a file (the downloads capability inside a shared Claude page); false when that refused. */
 export async function save(filename: string, blob: Blob) {
   const target = await downloads()
-  if (!target) return false
+  if (!target) {
+    download(filename, blob)
+    return true
+  }
   try {
     await target.save({ filename, data: blob })
     return true

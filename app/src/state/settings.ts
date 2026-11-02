@@ -20,10 +20,7 @@ export const useSettings = create<SettingsState>()(
     settings: structuredClone(defaultSettings),
     refused: null,
 
-    setPartner: (name) =>
-      set((draft) => {
-        draft.settings.partner = name.trim()
-      }),
+    setPartner: (name) => set((draft) => void (draft.settings.partner = name.trim())),
 
     setPartnerFigure: (key, figure) =>
       set((draft) => {
@@ -33,10 +30,7 @@ export const useSettings = create<SettingsState>()(
         if (draft.refused?.key === key) draft.refused = null
       }),
 
-    refuse: (key, message) =>
-      set((draft) => {
-        draft.refused = { key, message }
-      }),
+    refuse: (key, message) => set((draft) => void (draft.refused = { key, message })),
 
     backToStandards: () => set({ settings: structuredClone(defaultSettings), refused: null }),
   })),

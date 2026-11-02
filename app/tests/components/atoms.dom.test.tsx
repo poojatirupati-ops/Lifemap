@@ -11,7 +11,7 @@ import Emo from '../../src/components/ui/Emo.tsx'
 import GIcon from '../../src/components/ui/GIcon.tsx'
 
 const setPlan = (patch: Partial<Plan>, screen = 'D0') =>
-  useStore.getState().load({ ...fresh(), ...patch, screen: screen })
+  useStore.getState().load({ ...fresh(), ...patch, screen })
 
 describe('behaviour', () => {
   it('TabBar marks the current tab and switches tabs', () => {
@@ -19,7 +19,7 @@ describe('behaviour', () => {
     const { getByText } = render(<TabBar />)
     expect(getByText('Home').getAttribute('aria-current')).toBe('page')
     fireEvent.click(getByText('My Plan'))
-    expect(useStore.getState().plan).toMatchObject({ tab: 'plan', planSeg: 'main' })
+    expect(useStore.getState()).toMatchObject({ tab: 'plan', planSegment: 'main' })
     expect(getByText('My Plan').className).toBe('center on')
   })
 
@@ -50,6 +50,6 @@ describe('behaviour', () => {
     setPlan({ inShell: true, tab: 'plan', planBuilder: true }, 'F1')
     const { getByLabelText } = render(<>{FlowHead({ eye: 'Step 2', title: 'Goals' })}</>)
     fireEvent.click(getByLabelText('Back'))
-    expect(useStore.getState().plan.planBuilder).toBe(false)
+    expect(useStore.getState().planBuilder).toBe(false)
   })
 })

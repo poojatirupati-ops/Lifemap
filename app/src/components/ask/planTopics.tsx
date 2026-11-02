@@ -18,7 +18,7 @@ import { LAW_TEXT } from '../../domain/planning/rates.ts'
 import { euro } from '../../lib/format.ts'
 import type { Plan } from '../../state/types.ts'
 import { isShortYear } from '../results/journey.ts'
-import type { Topic } from './topics.tsx'
+import type { AskAnswer as Topic } from '../../content/cms.tsx'
 
 const RISK_EXPLAIN: Record<string, string> = {
   Cautious: 'You prefer steady values, even if growth is slower.',

@@ -1,6 +1,5 @@
 import { useStore } from '../state/store.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
-import SaveBanner from '../components/timeline/SaveBanner.tsx'
 import TimelineBoard from '../components/timeline/TimelineBoard.tsx'
 import GoalRow from '../components/timeline/GoalRow.tsx'
 
@@ -26,7 +25,6 @@ export function Body() {
 
   return (
     <>
-      <SaveBanner />
       <TimelineBoard />
       <div className="sec">
         <h3>Your goals</h3>

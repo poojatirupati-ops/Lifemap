@@ -24,7 +24,7 @@ describe.each([
   it.each(TOOLS.map((t) => t.id))('%s', (id) => {
     original.setState(structuredClone(state))
     original.applyAssume()
-    const tool = toolPlan(plan as never, id)
+    const tool = toolPlan(plan as never, plan as never, id)
     const { rules } = calcContext(tool, id, localToday(TODAY))
     for (const { key } of allInputs(calculatorFor(id))) {
       const std = original.calcStd(id, key)

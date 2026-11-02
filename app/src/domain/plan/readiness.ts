@@ -14,7 +14,11 @@ export function planMissing(plan: Plan): MissingAnswer[] {
     { missing: !plan.retireSet, key: 'retireAge', name: 'retirement age' },
     { missing: !isChosen(plan.assumptions, 'planEnd'), key: 'planEnd', name: 'plan-until age' },
     { missing: plan.inflation == null, key: 'infl', name: 'inflation rate' },
-    { missing: partnerEarns && !plan.partnerRetireSet, key: 'pRetireAge', name: "partner's retirement age" },
+    {
+      missing: partnerEarns && !plan.partnerRetireSet,
+      key: 'pRetireAge',
+      name: "partner's retirement age",
+    },
   ]
   return answers.filter((answer) => answer.missing).map(({ key, name }) => ({ key, name }))
 }

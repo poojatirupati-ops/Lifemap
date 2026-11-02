@@ -22,7 +22,7 @@ const MARGIN = {
 
 export function moneyPage(context: ReportContext) {
   const { plan, rows, projection } = context
-  const { figures: fin } = plan
+  const { figures } = plan
   const has = (key: string) => hasFigure(plan, key)
   const first = rows[0]
   const takeHomeM = first.inflow / 12
@@ -40,9 +40,9 @@ export function moneyPage(context: ReportContext) {
 
   const figure = (key: string, label: string): Row =>
     has(key)
-      ? { key, label, status: 'given', value: +fin[key] }
+      ? { key, label, status: 'given', value: +figures[key] }
       : { key, label, status: 'missing', value: null }
-  const mortgaged = fin.home === 'Own with mortgage'
+  const mortgaged = figures.home === 'Own with mortgage'
   const own = [
     figure('cash', 'Cash savings'),
     figure('invest', 'Investments'),
@@ -54,7 +54,7 @@ export function moneyPage(context: ReportContext) {
         label: 'Home',
         status: 'given',
         value: null,
-        text: fin.home === 'Rent' ? 'Rent' : fin.home,
+        text: figures.home === 'Rent' ? 'Rent' : figures.home,
       }
     : { key: 'home', label: 'Home', status: 'missing', value: null }
   const mortgage: Row = mortgaged
@@ -70,14 +70,17 @@ export function moneyPage(context: ReportContext) {
   const anyMissing =
     [...own, ...owe.slice(1)].some((row) => row.status === 'missing') ||
     (mortgaged && !has('homeValue'))
-  const homeValue = fin.home && fin.home !== 'Rent' ? +fin.homeValue || 0 : 0
-  const assets = own.reduce((sum, row) => sum + (row.value ?? 0), homeValue + (+fin.propValue || 0))
+  const homeValue = figures.home && figures.home !== 'Rent' ? +figures.homeValue || 0 : 0
+  const assets = own.reduce(
+    (sum, row) => sum + (row.value ?? 0),
+    homeValue + (+figures.propValue || 0),
+  )
   const debts = owe.reduce((sum, row) => sum + (row.value ?? 0), 0)
   const shown = (row: Row) =>
     row.status === 'missing'
       ? { label: row.label, status: 'missing' }
       : { label: row.label, value: row.text ?? euro(row.value ?? 0) }
-  const oweRows = owe.filter((row) => row.status !== 'none' || fin.home).map(shown)
+  const oweRows = owe.filter((row) => row.status !== 'none' || figures.home).map(shown)
   const complete = completeness(context)
 
   return {

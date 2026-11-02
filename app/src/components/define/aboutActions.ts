@@ -46,10 +46,10 @@ export const setPartnerDetail = (field: 'email' | 'name', value: string) =>
 
 // ponytail: no document precedence here; R-19's finance field owns that once pIncome moves there
 export const setPartnerIncome = (text: string) =>
-  useStore.getState().update(({ figures: fin, sources: src }) => {
+  useStore.getState().update(({ figures, sources }) => {
     const amount = parseInt(text.replace(/\D/g, ''))
-    fin.pIncome = Number.isNaN(amount) ? null : amount
-    src.pIncome = 'typed'
+    figures.pIncome = Number.isNaN(amount) ? null : amount
+    sources.pIncome = 'typed'
   })
 
 /** Returns an error to show, or null once the invite is sent. */

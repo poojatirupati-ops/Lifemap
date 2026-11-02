@@ -1,10 +1,12 @@
 import type { FinanceSection } from '../../domain/finances/sections.data.ts'
 import Emo from '../ui/Emo.tsx'
 import { useStore } from '../../state/store.ts'
+import { useDocumentUpload } from '../../documents/documents.ts'
 
 /** What the reader can take for this section: choose files or use a sample document. */
 export default function UploadPick({ section }: { section: FinanceSection }) {
   const { startUpload, chooseSectionMode } = useStore.getState()
+  const { on, pending, upload } = useDocumentUpload()
   return (
     <div className="card">
       <b>What we can read</b>
@@ -19,20 +21,22 @@ export default function UploadPick({ section }: { section: FinanceSection }) {
         ))}
       </div>
       <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-        <label className="btn ghost" style={{ cursor: 'pointer' }}>
-          <Emo>📄 Choose files</Emo>
-          <input
-            type="file"
-            multiple
-            className="sr"
-            data-file={section.id}
-            accept=".pdf,.jpg,.jpeg,.png,.heic"
-            onChange={(event) => {
-              const files = [...(event.currentTarget.files ?? [])].map((file) => file.name)
-              if (files.length) startUpload(section.id, files)
-            }}
-          />
-        </label>
+        {on ? (
+          <label className="btn ghost" style={{ cursor: 'pointer' }} aria-disabled={pending}>
+            <Emo>{pending ? '📄 Uploading…' : '📄 Choose files'}</Emo>
+            <input
+              type="file"
+              multiple
+              className="sr"
+              data-file={section.id}
+              accept=".pdf,.jpg,.jpeg,.png,.heic"
+              disabled={pending}
+              onChange={(event) =>
+                upload(event.currentTarget, (files) => startUpload(section.id, files))
+              }
+            />
+          </label>
+        ) : null}
         <button
           className="btn"
           data-a="upl"
@@ -43,8 +47,10 @@ export default function UploadPick({ section }: { section: FinanceSection }) {
         </button>
       </div>
       <p className="small" style={{ marginTop: 10 }}>
-        Documents stay on your device; we only keep the file name. You see every figure before it's
-        used.
+        {on
+          ? 'Documents are stored privately in your account.'
+          : 'Documents stay on your device; we only keep the file name.'}{' '}
+        You see every figure before it's used.
       </p>
       <button
         className="link"

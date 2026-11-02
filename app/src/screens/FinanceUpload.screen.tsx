@@ -3,11 +3,11 @@ import UploadReview from '../components/finance/UploadReview.tsx'
 import { LISTS } from '../domain/finances/lists.data.ts'
 import { readValuesToConfirm } from '../domain/finances/upload.ts'
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
+import type { Plan, Ui } from '../state/types.ts'
 
 export const key = 'PU'
-export const id = (plan: Plan) => `PU-${plan.upload?.stage ?? 'scan'}`
-export const note = ({ upload: upload }: Plan) => {
+export const id = (_: Plan, ui: Ui) => `PU-${ui.upload?.stage ?? 'scan'}`
+export const note = (_plan: Plan, { upload }: Ui) => {
   if (upload?.stage === 'fail')
     return 'Upload failed → Type it; missing doc stays on the checklist (CJ D10).'
   if (upload?.stage !== 'confirm') return 'Reading documents (mock IDP).'
@@ -30,8 +30,7 @@ const HEADS = {
 
 // ScreenHost calls Head as a plain function (no hooks), so it reads the store directly.
 export function Head() {
-  const { plan, cancelUpload } = useStore.getState()
-  const upload = plan.upload
+  const { upload, cancelUpload } = useStore.getState()
   if (upload && upload.stage !== 'scan') {
     return FlowHead({ eye: 'Your finances', ...HEADS[upload.stage], back: cancelUpload })
   }
@@ -43,7 +42,7 @@ export function Head() {
 }
 
 export function Body() {
-  const upload = useStore(({ plan }) => plan.upload)
+  const upload = useStore(({ upload }) => upload)
   if (!upload) return null
   if (upload.stage === 'scan') {
     return (
@@ -73,7 +72,7 @@ export function Body() {
 }
 
 export function Foot() {
-  const stage = useStore(({ plan }) => plan.upload?.stage)
+  const stage = useStore(({ upload }) => upload?.stage)
   const { typeInstead, addReadValues, cancelUpload } = useStore.getState()
   if (stage === 'fail') {
     return (

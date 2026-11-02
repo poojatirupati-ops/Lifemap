@@ -14,7 +14,7 @@ export default function PrefilledAnswer({ entry, index }: Props) {
   const { question } = entry
   const key = editKey(entry)
   const answer = useStore((store) => store.plan.answers[question.id])
-  const editing = useStore((store) => Boolean(store.plan.editingAnswers[key]))
+  const editing = useStore((store) => Boolean(store.editingAnswers[key]))
   const chosen = question.options[answer]
 
   return (

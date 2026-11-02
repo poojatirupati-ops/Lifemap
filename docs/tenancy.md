@@ -1,14 +1,14 @@
 # Tenancy
 
-LifeMap serves independent users and partner tenants (credit unions, white-label and channel partners) from one API and one database. Tenants are Better Auth **organizations**. All tenancy uses the plugins' own tables (`organization`, `member`, `invitation`, `sso_provider`) and the admin plugin's user fields. There is no separate tenant layer. Code: `api/src/auth.ts` (plugins and hooks), `api/src/tenant.ts` (host resolution, config, flags), `api/src/guard.ts`. Migration: `api/drizzle/0003_tenancy.sql`.
+LifeMap serves independent users and partner tenants (credit unions, white-label and channel partners) from one API and one database. Tenants are Better Auth **organizations**. All tenancy uses the plugins' own tables (`organization`, `member`, `invitation`, `sso_provider`) and the admin plugin's user fields. There is no separate tenant layer. Code: `api/src/auth.ts` (plugins and hooks), `api/src/tenant.ts` (host resolution, config, flags via PostHog), `api/src/guard.ts`. Migration: `api/drizzle/0003_tenancy.sql`.
 
 ## Model
 
 | Who | How it is stored | Gets |
 |---|---|---|
-| Platform admin (LifeMap staff) | `user.role = 'admin'` (admin plugin) | Creates tenants and edits any tenant's config. Cannot impersonate users (refused). Has no route to other people's plans or consents. |
+| Platform admin (LifeMap staff) | `user.role = 'admin'` (admin plugin) | Creates tenants and edits any tenant's config. Switches feature flags per tenant in PostHog. Cannot impersonate users (refused). Has no route to other people's plans or consents. |
 | Independent user | `member` of **LifeMap Direct** (`organization.id = 'lifemap-direct'`), role `customer` | Their own data in LifeMap Direct. |
-| Tenant staff | `member` of the tenant, role `admin` | Edit their own tenant's branding and features, and register its SSO provider. Cannot read customers' plans. |
+| Tenant staff | `member` of the tenant, role `admin` | Edit their own tenant's branding and rates, and register its SSO provider. Cannot change feature flags. Cannot read customers' plans. |
 | Tenant customer | `member` of the tenant, role `customer` | Their own data in that tenant. |
 | Adviser firm (later) | Another organization (for example `metadata.kind = 'adviser'`) | Not built. |
 
@@ -18,7 +18,7 @@ One person (one `user`, one email) can belong to several tenants. They have a se
 
 | Permission | `admin` (tenant staff) | `customer` |
 |---|---|---|
-| `organization:update` (name, logo, metadata: colours, features, rates) | yes | no |
+| `organization:update` (name, logo, metadata: colours, rates) | yes | no |
 | Register or manage the tenant's SSO provider (plugin checks the `admin` role) | yes | no |
 | Members and invitations | no (not needed yet) | no |
 | Read other members' plans or consents | no (no route exists) | no |
@@ -42,15 +42,15 @@ Only platform admins can create organizations (`allowUserToCreateOrganization`).
 
 ## White-label config and feature flags
 
-Everything is stored in the plugin's `organization.metadata` JSON, validated by one zod schema (`tenantMetadata` in `api/src/tenant.ts`):
+Branding, host and rates are stored in the plugin's `organization.metadata` JSON, validated by one zod schema (`tenantMetadata` in `api/src/tenant.ts`):
 
 ```json
-{ "host": "app.cu-a.ie", "colors": { "primary": "#0a3d62" }, "features": { "ask": false }, "rates": { "growth": 0.04 } }
+{ "host": "app.cu-a.ie", "colors": { "primary": "#0a3d62" }, "rates": { "growth": 0.04 } }
 ```
 
-`name` and `logo` (https only) are the plugin's own columns. An update merges top-level keys over the stored config. Unknown keys and bad values get 400.
+`name` and `logo` (https only) are the plugin's own columns. An update merges top-level keys over the stored config. Unknown keys (including the old `features`) and bad values get 400.
 
-- `GET /api/tenant` is public and needs no session. It returns `{ id, slug, name, logo, colors, features, rates }` for the current host. `features` is already resolved against the defaults.
+- `GET /api/tenant` is public and needs no session. It returns `{ id, slug, name, logo, colors, features, rates }` for the current host. `features` is resolved on the server (PostHog, then code defaults), so the browser never calls PostHog for flags and flags work without analytics consent.
 - Tenant admins: `POST /api/auth/organization/update` `{ organizationId, data: { name?, logo?, metadata? } }`. This works for their own tenant only. They cannot change `host` (403).
 - Platform admins: `PATCH /api/admin/organizations/:id/config` `{ logo?, metadata? }`. This works for any tenant, including `host`.
 
@@ -59,12 +59,18 @@ Everything is stored in the plugin's `organization.metadata` JSON, validated by 
 | Flag | Default | Gates |
 |---|---|---|
 | `ask` | on | The "Ask" questions screen |
-| `adviserBooking` | off | Booking and sharing with an adviser (waits on GDPR G-12) |
-| `documentUpload` | off | Real document upload (card B9; it is a mock today) |
+| `adviserBooking` | off | Creating adviser bookings and share consents, `POST /api/bookings` (F4; legal sign-off on G-12 still needed) |
+| `documentUpload` | off | Real document upload, `POST /api/documents` (F3). Listing, reading and deleting stay open so people can always reach and erase their files |
 
-Server code checks a flag with `isEnabled(org, "flag")` (`api/src/tenant.ts`). If a tenant has not set a flag, the default applies.
+| `analytics` | on | PostHog product analytics for the tenant's users (each user must still opt in) |
 
-**To add a flag:** add `name: default` to `FEATURE_DEFAULTS` in `api/src/tenant.ts`. The zod schema, `GET /api/tenant` and `isEnabled` pick it up automatically. Then add a row to the table above. No migration is needed.
+**Managed by LifeMap staff in PostHog** (EU Cloud, `https://eu.i.posthog.com`). Each flag is a PostHog feature flag with the same key, aggregated by the group type `organization`; the group key is the organization id (for example `lifemap-direct`, `org-a`). To switch a flag for one tenant, add a release condition on that group. Tenant admins cannot change flags; there is no API for it.
+
+The API evaluates flags with `posthog-node` **local evaluation**: it polls the flag definitions with a personal API key and evaluates them in process, so no per-request call to PostHog. If PostHog is unreachable it keeps using the last definitions it fetched; before any have loaded, or for a flag PostHog does not return, the code default applies. Without `POSTHOG_API_KEY` (dev, tests) only code defaults apply. Production secrets (SST): `PosthogProjectKey` and `PosthogPersonalApiKey` (`npx sst secret set ...`); `api/src/lambda.ts` passes them on.
+
+Server code checks a flag with `await isEnabled(org, "flag")` or the `requireFeature(db, "flag")` route middleware (`api/src/tenant.ts`).
+
+**To add a flag:** add `name: default` to `FEATURE_DEFAULTS` in `api/src/tenant.ts`, create the flag in PostHog (group type `organization`) if any tenant needs a non-default value, then add a row to the table above. No migration is needed.
 
 ## SSO (per-tenant identity providers)
 

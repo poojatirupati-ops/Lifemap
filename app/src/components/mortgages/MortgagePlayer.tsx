@@ -4,7 +4,7 @@ import { openCalculator } from '../../state/explore.ts'
 import { useMortgagePlayer } from '../../hooks/useMortgagePlayer.ts'
 import { useMortgagePage } from '../../state/mortgage.ts'
 import FilmedPlayer from '../video/FilmedPlayer.tsx'
-import { videoFor, type StoryVideo } from './mortgages.data.ts'
+import type { StoryVideo } from '../../content/cms.tsx'
 
 /** The picked story video: the filmed one when there is one, else a "coming soon" card. */
 export default function MortgagePlayer({
@@ -21,7 +21,7 @@ export default function MortgagePlayer({
     story.chapters.length,
     markWatched,
   )
-  const filmed = videoFor(story)
+  const filmed = story.video
   const stageStyle = { '--c': story.color } as CSSProperties
 
   return (
@@ -52,7 +52,7 @@ export default function MortgagePlayer({
           </span>
         ))}
       </div>
-      <div className="mp-next" id="mp-next" hidden={!!filmed && !nextShown}>
+      <div className="mp-next" id="mp-next" hidden={!!filmed?.src && !filmed.vimeoId && !nextShown}>
         <span>Up next: try it with your numbers</span>
         <button
           className="btn sm"

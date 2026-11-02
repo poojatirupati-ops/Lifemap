@@ -57,7 +57,11 @@ function whatYouSave(reader: AssumptionReader, ready: boolean) {
   const { plan, settings, mine } = reader
   const tag = plan.monthlySaving != null || mine('saveShare') ? MINE : SET
   if (plan.monthlySaving != null)
-    return { label: 'What you save', value: `${euro(plan.monthlySaving)} a month (your choice)`, tag }
+    return {
+      label: 'What you save',
+      value: `${euro(plan.monthlySaving)} a month (your choice)`,
+      tag,
+    }
   const towardsGoals = ready
     ? `About ${euro(project(plan).saving.savingMonthly)} a month towards your goals, `
     : ''
@@ -71,10 +75,10 @@ function whatYouSave(reader: AssumptionReader, ready: boolean) {
 
 /** Life cover and income protection needs from the calculators, if any were noted. */
 function protectionNeeds({ plan }: AssumptionReader): AssumptionRow[] {
-  const { life, incomeProtection: ip } = plan.needs ?? {}
+  const { life, incomeProtection } = plan.needs ?? {}
   const needs = [
     life ? `life cover ${euro(life)}` : '',
-    ip ? `income protection ${euro(ip)} a month` : '',
+    incomeProtection ? `income protection ${euro(incomeProtection)} a month` : '',
   ].filter(Boolean)
   if (!needs.length) return []
   return [{ label: 'Protection needs noted for your adviser', value: needs.join(', '), tag: MINE }]

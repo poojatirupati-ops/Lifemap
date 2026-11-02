@@ -1,10 +1,10 @@
 import { addItem, itemsOf, removeItemDocument, typeItemField } from '../domain/finances/items.ts'
 import { ITEM_DOCUMENTS } from '../domain/finances/itemDocuments.data.ts'
 import { LISTS, type ListKey } from '../domain/finances/lists.data.ts'
-import { STATEMENT_REMOVED, updateFinances, type StoreCore } from './finances.ts'
+import { STATEMENT_REMOVED, updateFinances } from './finances.ts'
+import type { Store } from './store.ts'
 import { toast } from './shell.ts'
 import type { ListItem } from './types.ts'
-import type { UploadActions } from './uploads.ts'
 
 /** The items of a list in Your finances: cards, loans, pensions and policies. */
 export interface ListActions {
@@ -21,7 +21,7 @@ export interface ListActions {
   removeItemStatement: (list: ListKey, id: number) => void
 }
 
-export function createListsSlice(get: () => StoreCore & UploadActions): ListActions {
+export function createListsSlice(get: () => Store): ListActions {
   const update = updateFinances(get)
   const changeItem = (list: ListKey, id: number, change: (item: ListItem) => void) =>
     update((plan) => {

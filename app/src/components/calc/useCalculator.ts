@@ -39,13 +39,14 @@ function calculatorView(calculator: Calculator, plan: ToolPlan) {
     adjustable,
     adjusted,
     choosingInflation: usesInflation && (plan.inflation == null || plan.editingInflation),
-    inflationChosen: usesInflation && plan.inflation != null && !plan.editingInflation ? plan.inflation : null,
+    inflationChosen:
+      usesInflation && plan.inflation != null && !plan.editingInflation ? plan.inflation : null,
     expert: EXPERT_FOR_GROUP[tool.category] ?? 'planner',
   }
 }
 
 export function useCalculator(param: string) {
   const calculator = calculatorFor(param)
-  const plan = useStore(useShallow((store) => toolPlan(store.plan, calculator.id)))
+  const plan = useStore(useShallow((store) => toolPlan(store.plan, store, calculator.id)))
   return useMemo(() => calculatorView(calculator, plan), [calculator, plan])
 }

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { runOriginal } from './origSlice'
 import { plain, fixtures } from './origProfile'
+import { fromOriginal } from '../../src/state/migrate'
 import * as tax from '../../src/domain/planning/tax'
 import * as levies from '../../src/domain/planning/levies'
 import * as loans from '../../src/domain/planning/loans'
@@ -89,7 +90,8 @@ const FIGURE_NAMES: Record<string, string> = {
 }
 
 // householdFigures, essentialMonthly and otherMortgages against the original
-function sameFigures(mine: any, year: number, id: string) {
+function sameFigures(theirState: any, year: number, id: string) {
+  const mine: any = fromOriginal(theirState)
   const ours = cashflow.householdFigures(mine, rulesFor(year))
   const theirs = Object.fromEntries(
     Object.entries(original.finNums()).map(([key, v]) => [FIGURE_NAMES[key] ?? key, v]),

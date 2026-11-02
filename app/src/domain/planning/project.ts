@@ -31,7 +31,11 @@ export function project(inputs: ProjectionInputs, whatIf: WhatIf = NO_WHAT_IF) {
   const { pots, wallet, balances, target, towardsPension } = startingPosition(plan, inputs, whatIf)
   const coverage: Coverage = new Map(inputs.goals.map((goal) => [goal.id, { cost: 0, covered: 0 }]))
   const saving: Omit<SavingPlan, 'ruleToday'> = {
-    choice: { answer: inputs.answers['6'], saveM: inputs.monthlySaving, saveUp: inputs.savingAtRule },
+    choice: {
+      answer: inputs.answers['6'],
+      saveM: inputs.monthlySaving,
+      saveUp: inputs.savingAtRule,
+    },
     rules: plan.saving,
     less: towardsPension ? 0 : Math.min(0, whatIf.monthly),
     more: towardsPension ? 0 : Math.max(0, whatIf.monthly),

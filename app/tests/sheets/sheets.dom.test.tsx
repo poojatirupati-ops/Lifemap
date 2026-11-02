@@ -35,7 +35,7 @@ const maskExitTax = (lines: string[]) =>
 const fixture = (name: string) => fixtures.find(([file]) => file === name)![1]
 
 // whyask and save carry the sign-in copy (the login-wall cards changed it on purpose), so they differ
-const SIMPLE = ['money', 'invite', 'saveprompt', 'delete', 'history', 'profile', 'other']
+const SIMPLE = ['money', 'invite', 'delete', 'history', 'profile', 'other']
 const WITH_PLAN = [
   'assume',
   'explain|str',

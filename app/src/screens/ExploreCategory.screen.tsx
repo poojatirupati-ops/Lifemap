@@ -10,7 +10,7 @@ import StatementCard from '../components/explore/StatementCard.tsx'
 
 export const key = 'XCAT'
 export const id = 'XPL-CAT'
-export const note = (_plan: unknown, param = '') =>
+export const note = (_plan: unknown, _ui: unknown, param = '') =>
   'Tools in one life-need group.' +
   (param in STATEMENTS ? ' Statement upload card at the top (gated by a verified account).' : '')
 

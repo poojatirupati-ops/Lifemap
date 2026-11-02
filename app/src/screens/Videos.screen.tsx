@@ -2,16 +2,15 @@ import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import AppHead from '../components/frame/AppHead.tsx'
 import { unseenLooks } from '../components/home/useHome.ts'
-import { LIVE_SESSIONS } from '../components/explore/explore.data.ts'
 import { exploreBack, openVideo, remindMe, showVideoKind } from '../state/explore.ts'
 import VideoCard from '../components/explore/VideoCard.tsx'
 import {
-  VIDEOS,
   VIDEO_KIND_LABEL,
-  splitWho,
+  useLiveSessions,
+  useVideos,
   videoLength,
   type VideoKind,
-} from '../components/explore/videos.data.ts'
+} from '../content/cms.tsx'
 import { useStore } from '../state/store.ts'
 
 export const key = 'VIDS'
@@ -36,8 +35,9 @@ export function Head() {
 }
 
 export function Body() {
-  const shown = useStore((store) => store.plan.videoFilter)
-  const [featured, ...more] = VIDEOS.filter((video) => shown === 'all' || video.kind === shown)
+  const shown = useStore((store) => store.videoFilter)
+  const sessions = useLiveSessions()
+  const [featured, ...more] = useVideos().filter((video) => shown === 'all' || video.kind === shown)
 
   return (
     <>
@@ -70,7 +70,7 @@ export function Body() {
           <span className="vf-b">
             <small>{VIDEO_KIND_LABEL[featured.kind]}</small>
             <b>{featured.title}</b>
-            <span>{splitWho(featured).role}</span>
+            <span>{featured.role}</span>
           </span>
         </button>
       ) : null}
@@ -91,7 +91,7 @@ export function Body() {
         <h3>Live with experts</h3>
       </div>
       {/* TODO(R-27): use LiveCard once R-27 gives it a `who` (subtitle) prop. */}
-      {LIVE_SESSIONS.map(({ when, title }) => {
+      {sessions.map(({ when, title }) => {
         const [day, ...time] = when.split(' ')
         return (
           <div key={title} className="card lv3" style={{ marginBottom: 8 }}>

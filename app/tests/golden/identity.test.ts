@@ -16,6 +16,7 @@ import {
 import { makeSlots } from '../../src/domain/identity/slots'
 import { localToday } from '../../src/lib/today'
 import * as dob from '../../src/domain/identity/dob'
+import { fromOriginal, toOriginal } from '../../src/state/migrate'
 
 const original = runOriginal(
   `TYPES, WHY, DISC_FORMAL, ADVISERS, EXPERT_FOR, EXPERT_BLURB, EXPERT_ICON, ESG_Q, ADV_QS, SLOTS,
@@ -86,7 +87,8 @@ describe('date of birth', { timeout: 30_000 }, () => {
   ]
 
   it('checks, ages and dates equal the original', () => {
-    for (const date of dates) {
+    for (const theirDate of dates) {
+      const date = { day: theirDate.d, month: theirDate.m, year: theirDate.y }
       for (const who of ['you', 'partner'] as const) {
         for (const startYear of [2026, 2027]) {
           const name = who === 'you' ? 'Ann' : 'Bo'
@@ -99,25 +101,27 @@ describe('date of birth', { timeout: 30_000 }, () => {
             src: {},
           })
           expect(dob.checkDob(date, who, { today, name, startYear })).toEqual(
-            plain(original.dobCheck(date, who)),
+            plain(original.dobCheck(theirDate, who)),
           )
         }
       }
-      expect(dob.isDobValid(date, today)).toBe(original.dobValid(date))
-      expect(dob.isDobComplete(date)).toBe(original.dobFilled(date))
+      expect(dob.isDobValid(date, today)).toBe(original.dobValid(theirDate))
+      expect(dob.isDobComplete(date)).toBe(original.dobFilled(theirDate))
       if (!dob.isDobValid(date, today)) continue
-      expect(dob.ageOn(date, today)).toBe(original.ageTodayOf(date))
-      expect(dob.nextBirthday(date, today).getTime()).toBe(original.nextBirthday(date).getTime())
+      expect(dob.ageOn(date, today)).toBe(original.ageTodayOf(theirDate))
+      expect(dob.nextBirthday(date, today).getTime()).toBe(
+        original.nextBirthday(theirDate).getTime(),
+      )
     }
   })
 
   const syncBoth = (state: any, startYear: number) => {
-    const ours = structuredClone(state)
+    const ours: any = fromOriginal(structuredClone(state))
     const theirs = structuredClone({ ...state, asm: { ...state.asm, startYear } })
     original.setState(theirs)
     original.syncAges()
     dob.agesFromDob(ours, { startYear, today })
-    return [plain(ours), plain(original.getState())]
+    return [plain(toOriginal(ours)), plain(original.getState())]
   }
 
   it('syncAges equals the original on every fixture', () => {

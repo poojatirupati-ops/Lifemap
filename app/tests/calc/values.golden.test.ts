@@ -37,7 +37,7 @@ describe.each(plans)('%s', (_, state) => {
     const plan = fromOriginal<Plan>(structuredClone(state))
     normalize(plan, localToday(TODAY))
     const ours = calculatorFor(id)
-    const figures = toolFigures(ours, toolPlan(plan, ours.id))
+    const figures = toolFigures(ours, toolPlan(plan, plan, ours.id))
     expect(rounded(figures.figures)).toEqual(theirs)
     expect(missingFigures(ours, figures, plan.assumptions)).toEqual(theirMissing)
     expect(showsExample(ours, figures, plan.hasResults)).toBe(theirExample)

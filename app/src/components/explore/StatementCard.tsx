@@ -1,11 +1,8 @@
+import { useDocumentUpload } from '../../documents/documents.ts'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
 import { withArticle, type Statement } from './explore.data.ts'
 import type { CategoryId } from './tools.data.ts'
-
-// TODO(R-28): the upload flow (pstStart, pstRemove) lands with the statement uploads card.
-const startUpload = (_category: CategoryId, _files?: string[]) => {}
-const removeStatement = (_category: CategoryId) => {}
 
 /** The upload card at the top of a calculator group whose tools a statement can fill in. */
 export default function StatementCard({
@@ -17,6 +14,8 @@ export default function StatementCard({
 }) {
   const uploaded = useStore((store) => store.plan.statements[category])
   const verified = useStore((store) => store.plan.account.emailVerified)
+  const { startStatement, removeUploadedStatement } = useStore.getState()
+  const { on, pending, upload } = useDocumentUpload()
 
   return (
     <div className="card pst">
@@ -39,7 +38,7 @@ export default function StatementCard({
               className="link"
               data-a="pstup"
               data-p={category}
-              onClick={() => startUpload(category)}
+              onClick={() => startStatement(category)}
             >
               Replace statement
             </button>
@@ -47,7 +46,7 @@ export default function StatementCard({
               className="link"
               data-a="pstrem"
               data-p={category}
-              onClick={() => removeStatement(category)}
+              onClick={() => removeUploadedStatement(category)}
             >
               Remove statement
             </button>
@@ -55,27 +54,34 @@ export default function StatementCard({
         </div>
       ) : (
         <div className="grid2">
-          <label className="btn sm" style={{ width: '100%', cursor: 'pointer' }}>
-            Upload a statement
-            <input
-              type="file"
-              className="sr"
-              data-pfile={category}
-              accept=".pdf,.jpg,.jpeg,.png,.heic"
-              onChange={(event) =>
-                startUpload(
-                  category,
-                  [...(event.target.files ?? [])].map((file) => file.name),
-                )
-              }
-            />
-          </label>
+          {on ? (
+            <label
+              className="btn sm"
+              style={{ width: '100%', cursor: 'pointer' }}
+              aria-disabled={pending}
+            >
+              {pending ? 'Uploading…' : 'Upload a statement'}
+              <input
+                type="file"
+                className="sr"
+                data-pfile={category}
+                accept=".pdf,.jpg,.jpeg,.png,.heic"
+                disabled={pending}
+                onChange={(event) => {
+                  // Documents need a secured account first: startStatement shows the gate, then reads the sample.
+                  if (useStore.getState().plan.account.emailVerified)
+                    upload(event.currentTarget, (files) => startStatement(category, files))
+                  else startStatement(category)
+                }}
+              />
+            </label>
+          ) : null}
           <button
             className="btn sm ghost"
             style={{ width: '100%' }}
             data-a="pstup"
             data-p={category}
-            onClick={() => startUpload(category)}
+            onClick={() => startStatement(category)}
           >
             Use a sample statement
           </button>
@@ -83,7 +89,7 @@ export default function StatementCard({
       )}
       {verified ? null : (
         <p className="small" style={{ margin: '8px 0 0' }}>
-          🔐 First we'll secure your account (email and mobile code), so your documents stay
+          🔐 First we'll secure your account (email code), so your documents stay
           private.
         </p>
       )}

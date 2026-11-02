@@ -1,13 +1,19 @@
+import { useBook } from '../../bookings/bookings.ts'
+import { useFeature } from '../../shell/tenant.ts'
 import { adviserOf, firstName, stageOf } from '../../domain/identity/booking.ts'
 import { useStore } from '../../state/store.ts'
 
 /** Each step's main button. */
 export default function ExpertsFoot() {
-  const stage = useStore(({ plan }) => stageOf(plan))
+  const stage = useStore((store) => stageOf(store.expertsPage, store.plan.booking.done))
   const book = useStore((store) => store.plan.booking)
   const adviserFirstName = useStore(({ plan }) => firstName(adviserOf(plan).name))
-  const { showStage, answerProfileFirst, confirmBooking, switchTab, bookAdviser } =
-    useStore.getState()
+  const canBook = useFeature('adviserBooking')
+  const confirm = useBook()
+  const { showStage, answerProfileFirst, switchTab, bookAdviser } = useStore.getState()
+  // tenant without adviserBooking: no way into the booking steps
+  if (!canBook && (stage === 'home' || stage === 'c1' || stage === 'c2' || stage === 'c3'))
+    return null
   switch (stage) {
     case 'c0':
       return (
@@ -36,7 +42,11 @@ export default function ExpertsFoot() {
     }
     case 'c3':
       return (
-        <button className="btn" disabled={!book.slot} onClick={confirmBooking}>
+        <button
+          className="btn"
+          disabled={!book.slot || confirm.isPending}
+          onClick={() => confirm.mutate()}
+        >
           Confirm booking
         </button>
       )

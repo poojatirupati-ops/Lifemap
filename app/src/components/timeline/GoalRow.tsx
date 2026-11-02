@@ -18,8 +18,8 @@ const AMOUNT_LABEL: Record<string, string> = {
 /** One goal's editable row under the timeline. */
 export default function GoalRow({ goal }: { goal: Goal }) {
   const timing = useTiming()
-  const highlighted = useStore((store) => store.plan.highlightedGoal === goal.id)
-  const open = useStore((store) => !!store.plan.timelineOpen[goal.id])
+  const highlighted = useStore((store) => store.highlightedGoal === goal.id)
+  const open = useStore((store) => !!store.timelineOpen[goal.id])
   const fromLiabilities = useStore((store) => goal.kind === 'mfree' && !!store.plan.figures.mortBal)
   const moveGoal = useStore((store) => store.moveGoal)
   const removeGoal = useStore((store) => store.removeGoal)

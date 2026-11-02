@@ -20,7 +20,15 @@ export const itemIsEmpty = (item: ListItem) => !Object.values(item.fields).some(
 
 export function addItem(book: FinanceBook, list: string) {
   book.nextItemId = (book.nextItemId ?? 0) + 1
-  const item: ListItem = { id: book.nextItemId, fields: {}, sources: {}, confidence: {}, manual: {}, fixed: {}, docFrom: null }
+  const item: ListItem = {
+    id: book.nextItemId,
+    fields: {},
+    sources: {},
+    confidence: {},
+    manual: {},
+    fixed: {},
+    docFrom: null,
+  }
   ;(book.lists[list] ??= []).push(item)
   return item
 }
@@ -46,7 +54,9 @@ export function removeItemDocument(item: ListItem) {
 function moveTotalsIntoList(book: FinanceBook, list: ListKey) {
   const totals = listOf(list).totals
   if (!totals || itemsOf(book, list).length) return
-  const given = Object.entries(totals).filter(([, key]) => book.sources[key] && hasValue(book.figures[key]))
+  const given = Object.entries(totals).filter(
+    ([, key]) => book.sources[key] && hasValue(book.figures[key]),
+  )
   if (!given.length) return
   const item = addItem(book, list)
   for (const [field, key] of given) {
@@ -109,7 +119,14 @@ export function removeListDocument(book: FinanceBook, key: string) {
     if (itemHasDocument(item) && (!from || item.docFrom === from)) removeItemDocument(item)
   }
   book.lists[list] = itemsOf(book, list).filter((item) => !(item.fromDoc && itemIsEmpty(item)))
-  for (const record of [book.warnings, book.acknowledged, book.fixed, book.manual, book.documentOf, book.confidence]) {
+  for (const record of [
+    book.warnings,
+    book.acknowledged,
+    book.fixed,
+    book.manual,
+    book.documentOf,
+    book.confidence,
+  ]) {
     delete record[key]
   }
 }

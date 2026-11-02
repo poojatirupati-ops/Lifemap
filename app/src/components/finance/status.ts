@@ -10,7 +10,8 @@ import {
   type FieldContext,
 } from '../../domain/finances/fields.data.ts'
 
-export type FinancePlan = FieldContext & Pick<Plan, 'sources' | 'assumptions' | 'warnings' | 'acknowledged' | 'savedSections'>
+export type FinancePlan = FieldContext &
+  Pick<Plan, 'sources' | 'assumptions' | 'warnings' | 'acknowledged' | 'savedSections'>
 export type SectionStatus = 'done' | 'look' | 'part' | 'none'
 
 const RATES_YOU_CAN_CHOOSE = ['mortRate', 'cardRate', 'loanRate']
@@ -20,7 +21,7 @@ const isPositive = (value: unknown) => hasValue(value) && +value! > 0
 // an other-property mortgage with neither a repayment nor a term still needs one
 const otherMortgageNeedsTerm = ({ lists }: Pick<Plan, 'lists'>) =>
   (lists?.mort2 ?? []).some(
-    ({ fields: f }) => isPositive(f.owed) && !isPositive(f.pay) && !isPositive(f.years),
+    ({ fields }) => isPositive(fields.owed) && !isPositive(fields.pay) && !isPositive(fields.years),
   )
 
 /** Where a figure came from; a rate chosen in Your assumptions counts as typed. */

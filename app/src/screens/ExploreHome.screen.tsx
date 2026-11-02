@@ -7,9 +7,8 @@ import FocusArea from '../components/explore/FocusArea.tsx'
 import Strip from '../components/explore/Strip.tsx'
 import ToolCard from '../components/explore/ToolCard.tsx'
 import WatchPicks from '../components/explore/WatchPicks.tsx'
-import { toolsForYou, videosForYou } from '../domain/explore/picks.ts'
+import { toolsForYou } from '../domain/explore/picks.ts'
 import { useGoalPicks } from '../hooks/useGoalPicks.ts'
-import { VIDEOS } from '../components/explore/videos.data.ts'
 import { openCategory, tryWhatIf } from '../state/explore.ts'
 import { useStore } from '../state/store.ts'
 
@@ -62,7 +61,7 @@ export function Body() {
           <ToolCard key={toolId} id={toolId} />
         ))}
       </Strip>
-      <WatchPicks videos={videosForYou(VIDEOS, specs, nudge?.spec)} nudgeGoal={nudge?.name} />
+      <WatchPicks specs={specs} nudgeSpec={nudge?.spec} nudgeGoal={nudge?.name} />
       <div className="sec">
         <h3>Calculators</h3>
       </div>

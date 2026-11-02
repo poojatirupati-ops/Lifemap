@@ -13,7 +13,7 @@ export default function AnswersNeeded() {
   const answers = useStore((store) => store.plan.answers)
   const showQuestion = useStore((store) => store.showQuestion)
   const backFromReveal = useStore((store) => store.backFromReveal)
-  const go = useStore((store) => store.go)
+  const finishOnboarding = useStore((store) => store.finishOnboarding)
   const answered = DISCOVER_SIX.map((q) => answers[q.id] != null)
   const count = answered.filter(Boolean).length
   const firstOpen = answered.indexOf(false)
@@ -56,7 +56,7 @@ export default function AnswersNeeded() {
         <button className="wbtn" onClick={() => showQuestion(firstOpen)}>
           Answer a few more
         </button>
-        <button className="qback" onClick={() => go('DS')}>
+        <button className="qback" onClick={finishOnboarding}>
           Skip for now
         </button>
       </ColumnFoot>

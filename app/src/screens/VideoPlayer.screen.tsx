@@ -9,13 +9,12 @@ import VideoCard from '../components/explore/VideoCard.tsx'
 import FilmedPlayer from '../components/video/FilmedPlayer.tsx'
 import MockPlayer from '../components/video/MockPlayer.tsx'
 import {
-  VIDEOS,
   VIDEO_KIND_LABEL,
-  splitWho,
   transcriptFor,
-  videoById,
+  useVideos,
   videoLength,
-} from '../components/explore/videos.data.ts'
+  type Video,
+} from '../content/cms.tsx'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 
@@ -39,12 +38,17 @@ export function Head() {
 }
 
 export function Body({ param }: { param: string }) {
-  const video = videoById(param)
+  const videos = useVideos()
+  const video = videos.find((v) => v.id === param)
+  return video ? <Player video={video} videos={videos} /> : null
+}
+
+function Player({ video, videos }: { video: Video; videos: Video[] }) {
   const { goals, percent, ready } = useGoalPicks()
   const why = whyThisVideo(goals, percent, ready, video.kind)
   const tool = toolById(video.tool)
-  const { presenter, role } = splitWho(video)
-  const filmed = Boolean(video.src)
+  const { presenter, role } = video
+  const filmed = Boolean(video.src || video.vimeoId)
   const captionNote = filmed ? (video.captions ? CAPTIONS_ON : CAPTIONS_MISSING) : null
   const transcript = transcriptFor(video)
 
@@ -123,7 +127,8 @@ export function Body({ param }: { param: string }) {
         <h3>Up next</h3>
       </div>
       <Strip>
-        {VIDEOS.filter((other) => other.id !== video.id)
+        {videos
+          .filter((other) => other.id !== video.id)
           .slice(0, 3)
           .map((other) => (
             <VideoCard key={other.id} video={other} />

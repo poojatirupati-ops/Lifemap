@@ -19,7 +19,7 @@ test('Your finances lists the six sections and opens one', () => {
     screen.getAllByRole('button', { name: /^.*(Done|In progress|Not started|Needs a look)$/ }),
   ).toHaveLength(6)
   fireEvent.click(screen.getByText('Income and expenses'))
-  expect(useStore.getState()).toMatchObject({ screen: 'P3', plan: { fsec: 1 } })
+  expect(useStore.getState()).toMatchObject({ screen: 'P3', financeSection: 1 })
 })
 
 test('Check your details: choices gate the results, then Building opens the results', () => {
@@ -44,11 +44,10 @@ test('Check your details: choices gate the results, then Building opens the resu
   fireEvent.click(screen.getByText('See my results'))
   expect(useStore.getState().screen).toBe('U1')
   vi.runAllTimers()
-  expect(useStore.getState().plan).toMatchObject({
-    app: true,
+  expect(useStore.getState()).toMatchObject({
+    plan: { hasResults: true, checked: true },
     tab: 'plan',
-    planGo: 'results',
-    checked: true,
+    planScrollTo: 'results',
   })
   vi.useRealTimers()
 })

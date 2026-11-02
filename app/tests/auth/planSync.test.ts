@@ -6,6 +6,7 @@ import { returnTo } from '../../src/shell/wall.ts'
 import { fresh } from '../../src/state/fresh.ts'
 import { useShell } from '../../src/state/shell.ts'
 import { useStore } from '../../src/state/store.ts'
+import samplePlan from '../../src/state/sample-plan.json'
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
@@ -39,17 +40,19 @@ afterEach(() => {
 })
 
 describe('plan sync', () => {
-  it('saves only the persisted fields, never screen position or dev flags', () => {
-    const plan = { ...fresh(), rt: 'XPL', admin: true, scr: 'B1', sheet: 'ask' }
-    expect(Object.keys(savedFields(plan)).sort()).toMatchSnapshot()
-    expect(savedFields(plan).acct).toEqual({
-      name: '',
-      email: '',
-      mobile: '',
-      c1: false,
-      c2: false,
-      pk: false,
+  it('loads a plan saved in the old shape under the readable names', async () => {
+    server.plan = samplePlan // the prototype's short names, as plans were saved before the rename
+    const { plan } = await loadPlan()
+    expect(plan).toMatchObject({
+      answers: { 2: 0 },
+      account: { name: 'Aoife', termsAccepted: true, passkey: true },
+      whatIf: { goalId: null, monthlyExtra: 0, lumpSum: 0 },
+      assumptions: { planEnd: 95 },
     })
+    expect(plan!.goals[0]).toMatchObject({ key: 'edu', emoji: '🎓', priority: 'Must have' })
+    useStore.getState().load(plan!) // the screen state it carried goes to the store, not the plan
+    expect(useStore.getState().plan).not.toHaveProperty('tab')
+    expect(savedFields(plan!).account).not.toHaveProperty('emailVerified')
   })
 
   it('debounces changes into one save 1.5s after the last one', async () => {
@@ -101,12 +104,16 @@ describe('plan sync', () => {
 describe('returnTo', () => {
   it('lands on the tab the wall caught, or the screen itself', () => {
     returnTo('XPL')
-    expect(useStore.getState().plan).toMatchObject({ shell: true, tab: 'explore', rt: undefined })
+    expect(useStore.getState()).toMatchObject({
+      inShell: true,
+      tab: 'explore',
+      returnTo: undefined,
+    })
     returnTo('B1')
-    expect(useStore.getState().plan).toMatchObject({ tab: 'plan', pb: true })
+    expect(useStore.getState()).toMatchObject({ tab: 'plan', planBuilder: true })
     expect(useStore.getState().screen).toBe('B1')
     returnTo('F1')
-    expect(useStore.getState().plan).toMatchObject({ shell: false, app: false })
+    expect(useStore.getState()).toMatchObject({ inShell: false, plan: { hasResults: false } })
     expect(useStore.getState().screen).toBe('F1')
   })
 })

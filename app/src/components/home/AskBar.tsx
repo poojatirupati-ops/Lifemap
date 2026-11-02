@@ -1,8 +1,10 @@
 import { useStore } from '../../state/store.ts'
+import { useFeature } from '../../shell/tenant.ts'
 
 /** The "Ask Life Map" bar: opens the Ask sheet. */
 export default function AskBar() {
   const openAsk = useStore((store) => store.openAsk)
+  if (!useFeature('ask')) return null
   return (
     <button className="askbar" data-a="ask" onClick={openAsk}>
       <span className="ab-spark" aria-hidden="true">

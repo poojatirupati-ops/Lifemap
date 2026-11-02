@@ -10,12 +10,18 @@ import {
   weakestGoal,
   whyThisVideo,
 } from '../../src/domain/explore/picks'
-import { TOPICS } from '../../src/components/explore/explore.data'
 import { CATEGORIES, TOOLS } from '../../src/components/explore/tools.data'
-import { VIDEOS } from '../../src/components/explore/videos.data'
+import { fromOriginal } from '../../src/state/migrate'
+import snapshot from '../content/cms.json'
+
+// the seeded CMS videos, as the app keys them
+const VIDEOS = snapshot['videos?limit=100&depth=1&sort=createdAt'].map((v) => ({
+  ...v,
+  id: v.appId,
+}))
 
 const original = runOriginal(
-  'applyAssume, syncLists, toolsForYou, videosForYou, xWorst, CALCS, CATS, TOPICS, TOPIC_TOOLS, VIDEOS',
+  'applyAssume, syncLists, toolsForYou, videosForYou, xWorst, CALCS, CATS',
 )
 
 describe('Explore picks', () => {
@@ -23,10 +29,10 @@ describe('Explore picks', () => {
     original.setState(structuredClone(state))
     original.applyAssume()
     original.syncLists()
-    const plan = structuredClone(original.getState())
+    const plan: any = fromOriginal(structuredClone(original.getState()))
     const specs = plan.goals.map((goal: { spec: string }) => goal.spec)
-    const percent = plan.app ? project(plan).percent : {}
-    const ready = plan.app && !planMissing(plan).length
+    const percent = plan.hasResults ? project(plan).percent : {}
+    const ready = plan.hasResults && !planMissing(plan).length
     const weakest = ready ? weakestGoal(plan.goals, percent) : null
 
     expect(toolsForYou(specs)).toEqual(original.toolsForYou())
@@ -45,17 +51,11 @@ describe('Explore picks', () => {
     expect(whyThisVideo(goals, { 1: 62 }, true, 'mortgage')).toBeNull()
   })
 
-  it('lists the same calculators, groups, topics and videos', () => {
+  it('lists the same calculators and groups', () => {
     const calcs = original.CALCS.map((c: any) => [c.id, c.cat, c.name, c.q, c.em])
     expect(TOOLS.map((t) => [t.id, t.category, t.name, t.question, t.emoji])).toEqual(calcs)
     expect(CATEGORIES.map((c) => [c.id, c.name, c.emoji, c.color, c.blurb])).toEqual(
       original.CATS.map((c: any) => [c.id, c.name, c.em, c.color, c.blurb]),
-    )
-    expect(TOPICS.map((t) => [t.emoji, t.name, t.blurb, t.expert, t.category, t.tools])).toEqual(
-      original.TOPICS.map((t: string[]) => [...t, original.TOPIC_TOOLS[t[1]]]),
-    )
-    expect(VIDEOS.map((v) => [v.id, v.title, v.kind, v.tool, v.art, v.transcript])).toEqual(
-      original.VIDEOS.map((v: any) => [v.id, v.t, v.kind, v.tool, v.art, v.transcript]),
     )
   })
 })

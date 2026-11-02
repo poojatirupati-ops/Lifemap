@@ -6,6 +6,9 @@ import { afterEach, expect, test } from 'vitest'
 import { runOriginal } from './origSlice'
 import * as Mortgages from '../../src/screens/Mortgages.screen.tsx'
 import { useMortgagePage } from '../../src/state/mortgage.ts'
+import { seedContent } from '../content/seed.ts'
+
+seedContent()
 
 const original = runOriginal('V, fresh')
 // a DOM for React to render into; this file runs in node because the original is read from disk
@@ -63,7 +66,10 @@ function ourPage({ situation, video, watched = {}, seats = {}, openReading }: Pa
   const container = document.createElement('div')
   const root = createRoot(container)
   act(() => root.render(<Mortgages.Body />))
+  // captions now come from the CMS, cross-origin; the rest is the original's markup
   const html = container.innerHTML
+    .replace(' crossorigin="anonymous"', '')
+    .replace('http://localhost:3000/api/media/file/', 'media/')
   act(() => root.unmount())
   return shape(html)
 }

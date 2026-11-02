@@ -77,7 +77,9 @@ function questions(context: ReportContext) {
           retireAge < statePensionAge &&
           retireAge > age &&
           `How do I cover ${retireAge} to ${statePensionAge} before the State Pension starts?`,
-    working && plan.figures.ip !== 'Yes' && 'What income protection do I need, and what does it cost?',
+    working &&
+      plan.figures.ip !== 'Yes' &&
+      'What income protection do I need, and what does it cost?',
     !context.fullStatePension && 'How do I check my State Pension record and fill any gaps?',
     (plan.about.partner || (plan.about.dependants ?? 0) > 0) &&
       plan.figures.life !== 'Yes' &&

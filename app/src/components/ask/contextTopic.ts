@@ -1,4 +1,4 @@
-import type { Topic } from './topics.tsx'
+import type { AskAnswer as Topic } from '../../content/cms.tsx'
 
 // [the screens it is for, question, answer]; the first match wins
 const BY_SCREEN: [RegExp, string, string][] = [
@@ -60,7 +60,7 @@ const BY_SCREEN: [RegExp, string, string][] = [
   [
     /^P1/,
     'Why do I need an account?',
-    'So your money details are stored safely and only you can see them. We check your email and mobile to keep your account secure.',
+    'So your money details are stored safely and only you can see them. We check your email to keep your account secure.',
   ],
   [
     /^(P[234]|PU)/,

@@ -40,7 +40,9 @@ const positive = (value: unknown) => Math.max(0, toNumber(value))
 
 // Mortgages on other properties count as other loans: total balance, repayment and a balance-weighted rate.
 export function otherMortgages(items: ListItem[], fallbackRate: number) {
-  const mortgages = items.map((item) => item.fields).filter((mortgage) => positive(mortgage.owed) > 0)
+  const mortgages = items
+    .map((item) => item.fields)
+    .filter((mortgage) => positive(mortgage.owed) > 0)
   const rateOf = (mortgage: ListItem['fields']) => positive(mortgage.rate) / 100 || fallbackRate
   // no term and no repayment: 25 years assumed
   const repaymentOf = (mortgage: ListItem['fields']) =>
@@ -113,19 +115,20 @@ function debtRepayment(balance: number, stated: number, apr: number) {
 
 // Cards and loans amortise separately at their APR.
 export function debts(inputs: DebtInputs) {
-  const { figures: fin, assumptions: asm } = inputs
+  const { figures, assumptions } = inputs
   const mortgages = otherMortgages(inputs.lists?.mort2 ?? [], assumption(inputs, 'mortRate'))
-  const ownLoans = toNumber(fin.loanBal) + toNumber(fin.debt)
+  const ownLoans = toNumber(figures.loanBal) + toNumber(figures.debt)
   const cardRate = statedRate(inputs, 'cardRate')
   const loanRate = blendedLoanRate(ownLoans, statedRate(inputs, 'loanRate'), mortgages)
-  const cardBal = toNumber(fin.cardBal)
+  const cardBal = toNumber(figures.cardBal)
   const loanBal = ownLoans + mortgages.balance
-  const statedLoanPay = toNumber(fin.loanPayM) + toNumber(fin.debtPayM) + mortgages.repayment
-  const card = debtRepayment(cardBal, toNumber(fin.cardPayM), cardRate)
+  const statedLoanPay =
+    toNumber(figures.loanPayM) + toNumber(figures.debtPayM) + mortgages.repayment
+  const card = debtRepayment(cardBal, toNumber(figures.cardPayM), cardRate)
   const loan = debtRepayment(loanBal, statedLoanPay, loanRate)
   return {
-    cardRateKnown: toNumber(fin.cardRate) > 0 || isChosen(asm, 'cardRate'),
-    loanRateKnown: toNumber(fin.loanRate) > 0 || isChosen(asm, 'loanRate'),
+    cardRateKnown: toNumber(figures.cardRate) > 0 || isChosen(assumptions, 'cardRate'),
+    loanRateKnown: toNumber(figures.loanRate) > 0 || isChosen(assumptions, 'loanRate'),
     cardBalance: cardBal,
     cardRate,
     monthlyCardPayment: card.monthly,

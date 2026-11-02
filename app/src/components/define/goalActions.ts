@@ -10,7 +10,9 @@ export function toggleGoal(key: string) {
   const { plan, update, openSheet } = useStore.getState()
   const picked = plan.goals.some((goal) => goal.key === key)
   if (!canPickGoal(key, plan.figures.home, picked)) {
-    toast(`Be mortgage-free is for homeowners with a mortgage. Your finances say: ${plan.figures.home}`)
+    toast(
+      `Be mortgage-free is for homeowners with a mortgage. Your finances say: ${plan.figures.home}`,
+    )
     return
   }
   if (key === 'other') {
@@ -20,7 +22,8 @@ export function toggleGoal(key: string) {
   update((draft) => {
     if (picked) draft.goals = draft.goals.filter((goal) => goal.key !== key)
     else draft.goals.push(newGoal(draft, draft.nextGoalId++, key))
-    const whatIfGone = draft.whatIf.goalId != null && !draft.goals.some((goal) => goal.id === draft.whatIf.goalId)
+    const whatIfGone =
+      draft.whatIf.goalId != null && !draft.goals.some((goal) => goal.id === draft.whatIf.goalId)
     if (whatIfGone) draft.whatIf = { goalId: null, monthlyExtra: 0, lumpSum: 0 }
     if (draft.hasResults) addVersion(draft, 'Goals changed')
   })
@@ -31,7 +34,6 @@ export function confirmGoals() {
   const { update, go } = useStore.getState()
   update((plan) => {
     if (!plan.versions.length) addVersion(plan, 'LifeMap confirmed')
-    if (plan.account.email === '' && plan.save.email) plan.account.email = plan.save.email
   })
   go('B4')
 }
@@ -39,11 +41,11 @@ export function confirmGoals() {
 /** "Change the date" on a goal whose date has passed: open it on My Plan's timeline. */
 export function changeGoalDate(id: number) {
   const { update, closeSheet } = useStore.getState()
-  update((plan) => {
-    plan.tab = 'plan'
-    plan.planSegment = ''
-    plan.editingGoals = false
-    plan.highlightedGoal = id
+  update((_, ui) => {
+    ui.tab = 'plan'
+    ui.planSegment = ''
+    ui.editingGoals = false
+    ui.highlightedGoal = id
   })
   closeSheet()
 }

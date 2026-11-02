@@ -4,7 +4,7 @@ import { useStore } from '../../state/store.ts'
 
 /** The card under Home's hero: start the plan builder, or carry on where the customer left it. */
 export default function PlanCard() {
-  const step = useStore((store) => (store.plan.planBuilder ? planBuilderStep(store.screen) : 0))
+  const step = useStore((store) => (store.planBuilder ? planBuilderStep(store.screen) : 0))
   const card = step
     ? {
         title: 'Carry on with your plan',

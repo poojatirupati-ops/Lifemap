@@ -1,6 +1,7 @@
 import clsx from 'clsx'
 import { useMortgagePage } from '../../state/mortgage.ts'
-import { READING_PHOTOS, photoAt, type Reading } from './mortgages.data.ts'
+import type { Reading } from '../../content/cms.tsx'
+import { READING_PHOTOS, photoAt } from './mortgages.data.ts'
 
 // TODO(R-29): the original shows this placeholder until docs/content/mortgage/ has the body text.
 const PLACEHOLDER = 'TODO: content to come from docs/content/mortgage/ (not added yet).'

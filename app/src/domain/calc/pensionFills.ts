@@ -28,7 +28,8 @@ function contributions(known: Known): Fill {
 }
 
 function drawdown({ has, figures, plan, age, settings }: Known): Values {
-  const fixedWithdrawal = plan.assumptions.drawRule === 'fixed' && Number(plan.assumptions.drawFixed) > 0
+  const fixedWithdrawal =
+    plan.assumptions.drawRule === 'fixed' && Number(plan.assumptions.drawFixed) > 0
   const potKnown = (has('pension') || has('pensionM')) && plan.retireSet
   const pot = () =>
     pensionPotAfter(

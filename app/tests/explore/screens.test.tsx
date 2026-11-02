@@ -2,12 +2,16 @@
 import { render } from '@testing-library/react'
 import { beforeEach, expect, test } from 'vitest'
 import { fresh } from '../../src/state/fresh.ts'
+import { seedContent } from '../content/seed.ts'
 import { useStore } from '../../src/state/store.ts'
 import * as Home from '../../src/screens/ExploreHome.screen.tsx'
 import * as Topic from '../../src/screens/ExploreTopic.screen.tsx'
 import * as Category from '../../src/screens/ExploreCategory.screen.tsx'
 
-beforeEach(() => useStore.getState().load({ ...fresh(), tab: 'explore' }))
+beforeEach(() => {
+  seedContent()
+  useStore.getState().load({ ...fresh(), tab: 'explore' })
+})
 
 test('XPL-01: works before a plan, with no what-ifs', () => {
   const { container } = render(<Home.Body />)

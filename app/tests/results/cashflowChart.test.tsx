@@ -8,6 +8,7 @@ import { fixtures } from '../golden/origProfile'
 import { viewLines } from '../../tools/normalise.mjs'
 import { project } from '../../src/domain/planning/project'
 import { whatIfFrom } from '../../src/domain/planning/wi'
+import { fromOriginal } from '../../src/state/migrate'
 import { useStore } from '../../src/state/store'
 import CashflowView from '../../src/components/results/chart/CashflowView'
 
@@ -66,8 +67,9 @@ function ourLines() {
 afterEach(cleanup)
 
 describe.each(fixtures)('cashflow detail on %s', (_, fixture) => {
-  const plan = prepared(fixture)
-  const rows = project(plan, whatIfFrom(plan.wi)).rows
+  const theirPlan = prepared(fixture)
+  const plan: any = fromOriginal(theirPlan)
+  const rows = project(plan, whatIfFrom(plan.whatIf)).rows
 
   it('matches the original after a default view, a key step, End, a tap and the savings toggle', () => {
     useStore.setState({ plan })
@@ -76,20 +78,20 @@ describe.each(fixtures)('cashflow detail on %s', (_, fixture) => {
         <CashflowView rows={rows} />
       </div>,
     )
-    expect(ourLines()).toEqual(theirLines(plan, null, false))
-    const first = original.chartDefaultSel(original.project(plan.wi).rows) // S is this plan now
+    expect(ourLines()).toEqual(theirLines(theirPlan, null, false))
+    const first = original.chartDefaultSel(original.project(theirPlan.wi).rows) // S is this plan now
 
     const slider = document.querySelector('.cwrap')!
     fireEvent.keyDown(slider, { key: 'ArrowRight' })
-    expect(ourLines()).toEqual(theirLines(plan, Math.min(first + 1, rows.length - 1), false))
+    expect(ourLines()).toEqual(theirLines(theirPlan, Math.min(first + 1, rows.length - 1), false))
 
     fireEvent.keyDown(slider, { key: 'End' })
     fireEvent.keyDown(slider, { key: 'ArrowUp' })
-    expect(ourLines()).toEqual(theirLines(plan, rows.length - 1, false))
+    expect(ourLines()).toEqual(theirLines(theirPlan, rows.length - 1, false))
 
     fireEvent.click(document.querySelectorAll('.cchart rect[fill="transparent"]')[3])
     fireEvent.click(document.querySelector('.chead button')!)
     expect(document.querySelector('.chead button')!.getAttribute('aria-pressed')).toBe('true')
-    expect(ourLines()).toEqual(theirLines(plan, 3, true))
+    expect(ourLines()).toEqual(theirLines(theirPlan, 3, true))
   })
 })

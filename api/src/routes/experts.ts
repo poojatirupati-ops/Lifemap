@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
+import { validator } from "hono-openapi";
 import { z } from "zod";
 import type { Db } from "../db";
-import { booking, consentEvent } from "../db/schema";
+import { sendMail } from "../auth";
+import { booking, consentEvent, user } from "../db/schema";
 import type { Env } from "../guard";
-import { requireFeature } from "../tenant";
+import { doc, errors } from "../openapi";
+import { requireFeature, tenantById } from "../tenant";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
 const newBooking = z.object({
@@ -26,7 +28,11 @@ export const expertRoutes = (db: Db) => {
   const r = new Hono<Env>();
   const mine = (userId: string, orgId: string) => and(eq(booking.userId, userId), eq(booking.organizationId, orgId));
 
-  r.post("/bookings", requireFeature(db, "adviserBooking"), zValidator("json", newBooking, (res, c) => (res.success ? undefined : c.json({ error: "invalid booking" }, 400))), async (c) => {
+  r.post("/bookings", doc({
+    tags: ["bookings"], flag: "adviserBooking", summary: "Book an adviser and record the share consent",
+    description: "Also writes a consent_event (kind adviser_share, detail = booking, adviser and exactly what is shared).",
+    responses: { 201: { description: "`{ booking }`" }, 400: errors[400] },
+  }), requireFeature(db, "adviserBooking"), validator("json", newBooking, (res, c) => (res.success ? undefined : c.json({ error: "invalid booking" }, 400))), async (c) => {
     const { userId, orgId: organizationId } = c.var;
     const { shareVersion, ...b } = c.req.valid("json");
     const id = randomUUID();
@@ -38,14 +44,18 @@ export const expertRoutes = (db: Db) => {
       });
       return created;
     });
+    // Confirmation email; the booking stands even if it fails (logged without the address).
+    const [[me], tenant] = await Promise.all([db.select({ email: user.email }).from(user).where(eq(user.id, userId)), tenantById(db, organizationId)]);
+    await sendMail(me.email, `Your ${tenant.name} adviser booking`, `Your adviser booking with ${tenant.name} is confirmed: ${row.slot} (${row.mode}).\n\nYou can cancel it in the app.`, tenant.name)
+      .catch((e) => console.error("booking email failed", e instanceof Error ? e.name : e));
     return c.json({ booking: row }, 201);
   });
 
-  r.get("/bookings", async (c) =>
+  r.get("/bookings", doc({ tags: ["bookings"], summary: "The caller's bookings", responses: { 200: { description: "`{ bookings }`, newest first" } } }), async (c) =>
     c.json({ bookings: await db.select(fields).from(booking).where(mine(c.var.userId, c.var.orgId)).orderBy(desc(booking.createdAt)) }));
 
   // Idempotent: cancelling a cancelled booking returns it unchanged.
-  r.post("/bookings/:id/cancel", async (c) => {
+  r.post("/bookings/:id/cancel", doc({ tags: ["bookings"], summary: "Cancel a booking (records the share withdrawal; idempotent)", responses: { 200: { description: "`{ booking }`" }, 404: errors[404] } }), async (c) => {
     const { userId, orgId: organizationId } = c.var;
     const ofMine = and(mine(userId, organizationId), eq(booking.id, c.req.param("id")));
     const row = await db.transaction(async (tx) => {

@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { useShell } from '../state/shell.ts'
 import { useViewport } from '../hooks/useViewport.ts'
 import { useWall } from '../auth/useWall.ts'
+import { useAnalytics } from '../analytics/analytics.ts'
+import { useBranding } from './tenant.ts'
 import Side from './Side.tsx'
 import Phone from './Phone.tsx'
 import ReportHost from '../report/ReportHost.tsx'
@@ -10,6 +12,8 @@ export default function App() {
   const desk = useShell((shell) => shell.desk)
   const viewport = useViewport(desk)
   useWall()
+  useAnalytics()
+  useBranding()
   useEffect(() => {
     document.body.classList.toggle('desk', viewport.isDesk)
   }, [viewport.isDesk])

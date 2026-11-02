@@ -7,6 +7,8 @@ import type { Db } from "../db";
 import { schema } from "../db";
 import { pgliteDb } from "../db/devSetup";
 import type { Env } from "../guard";
+import { organization } from "../db/schema";
+import { testApp } from "../testing";
 import { planRoutes } from "./plan";
 
 const plan0 = { whyNote: "", goals: [], ans: {}, retireAge: null };
@@ -88,4 +90,35 @@ test("plan API: auth, round trip, stale 409, invalid 400, per-user isolation", a
   expect((await put(b, { version: 0, userId: "x", plan: { ...plan0, whyNote: "B" } })).status).toBe(200);
   expect(((await (await get(a)).json()) as { plan: { whyNote: string }; version: number })).toMatchObject({ version: 6, plan: { whyNote: "v2" } });
   expect(((await (await get(b)).json()) as { plan: { whyNote: string } }).plan.whyNote).toBe("B");
+});
+
+test("plan versions: snapshot on save, list, restore keeps the replaced plan; other users and tenants get 404", async () => {
+  const { db, req, login } = await testApp();
+  await db.insert(organization).values({ id: "org-a", name: "CU A", slug: "cu-a", metadata: JSON.stringify({ host: "app.cu-a.example" }) });
+  expect((await req("/api/plan/versions")).status).toBe(401);
+  const a = await login("a@example.com");
+  const put = (version: number, whyNote: string, snapshot?: string) => req("/api/plan", { method: "PUT", body: { version, plan: { whyNote }, snapshot } }, a);
+  await put(0, "first", "LifeMap confirmed");
+  await put(1, "draft"); // no snapshot: not a version
+  await put(2, "second", "Goals changed");
+
+  type V = { id: number; note: string };
+  const list = async (cookie: string) => ((await (await req("/api/plan/versions", {}, cookie)).json()) as { versions: V[] }).versions;
+  const versions = await list(a);
+  expect(versions.map((v) => v.note)).toEqual(["Goals changed", "LifeMap confirmed"]);
+  const first = versions[1].id;
+  const restore = (cookie: string, id: number | string, version: number) => req(`/api/plan/versions/${id}/restore`, { method: "POST", body: { version } }, cookie);
+
+  expect((await restore(a, first, 1)).status).toBe(409); // stale
+  expect(await (await restore(a, first, 3)).json()).toEqual({ version: 4, plan: { whyNote: "first" } });
+  expect(await (await req("/api/plan", {}, a)).json()).toEqual({ version: 4, plan: { whyNote: "first" } });
+  expect((await list(a))[0].note).toBe('Before restoring "LifeMap confirmed"');
+
+  // another user, and the same person in another tenant, see nothing and cannot restore it
+  const b = await login("b@example.com");
+  const aOnA = await login("a@example.com", { "x-forwarded-host": "app.cu-a.example" });
+  for (const other of [b, aOnA]) {
+    expect(await list(other)).toEqual([]);
+    expect((await restore(other, first, 0)).status).toBe(404);
+  }
 });

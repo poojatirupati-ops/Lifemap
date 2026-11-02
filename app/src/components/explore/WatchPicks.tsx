@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react'
-import { LIVE_SESSIONS } from './explore.data.ts'
 import { openVideo, openVideos } from '../../state/explore.ts'
 import LiveCard from './LiveCard.tsx'
 import Strip from './Strip.tsx'
 import VideoCard from './VideoCard.tsx'
-import { videoLength, type Video } from './videos.data.ts'
+import { videosForYou } from '../../domain/explore/picks.ts'
+import { useLiveSessions, useVideos, videoLength } from '../../content/cms.tsx'
 
 const EYEBROW: CSSProperties = {
   margin: '0 0 4px',
@@ -15,13 +15,19 @@ const EYEBROW: CSSProperties = {
 }
 
 interface Props {
-  videos: Video[]
+  /** The plan's goal kinds; videos about them come first. */
+  specs: string[]
+  /** The weakest goal's kind, whose videos come first of all. */
+  nudgeSpec?: string
   /** The goal that needs a nudge, when the featured video is picked for it. */
   nudgeGoal?: string
 }
 
 /** Watch · picked for you: one big video, four more in a strip and the next live session. */
-export default function WatchPicks({ videos: [featured, ...more], nudgeGoal }: Props) {
+export default function WatchPicks({ specs, nudgeSpec, nudgeGoal }: Props) {
+  const [featured, ...more] = videosForYou(useVideos(), specs, nudgeSpec)
+  const [session] = useLiveSessions()
+  if (!featured) return null
   const style = {
     width: '100%',
     minHeight: 180,
@@ -50,14 +56,16 @@ export default function WatchPicks({ videos: [featured, ...more], nudgeGoal }: P
           {nudgeGoal ? `Because ${nudgeGoal.toLowerCase()} needs a nudge` : 'A good place to start'}
         </small>
         <b style={{ fontSize: 18 }}>{featured.title}</b>
-        <small>{featured.who}</small>
+        <small>
+          {featured.presenter} · {featured.role}
+        </small>
       </button>
       <Strip style={{ marginTop: 10 }}>
         {more.slice(0, 4).map((video) => (
           <VideoCard key={video.id} video={video} />
         ))}
       </Strip>
-      <LiveCard session={LIVE_SESSIONS[0]} style={{ marginTop: 10 }} />
+      {session ? <LiveCard session={session} style={{ marginTop: 10 }} /> : null}
     </>
   )
 }

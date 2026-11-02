@@ -1,6 +1,6 @@
 // "Add to my plan" from a calculator: what the result would add, and adding it.
 import { calculatorFor } from '../calc/calculators.ts'
-import { calcContext, toolPlan } from '../calc/context.ts'
+import { calcContext, type ToolPlan } from '../calc/context.ts'
 import type { Figures, Handoff } from '../calc/types.ts'
 import { missingFigures, toolFigures } from '../calc/values.ts'
 import { years } from '../calc/words.ts'
@@ -12,11 +12,10 @@ import { newGoal, retirementGoal } from './goals.ts'
 import { retirementRange } from './retirement.ts'
 
 /** What a calculator's result would add to the plan, or what it still needs first. */
-export function calcHandoff(plan: Plan, toolId: string) {
+export function calcHandoff(tool: ToolPlan, toolId: string) {
   const calculator = calculatorFor(toolId)
-  const tool = toolPlan(plan, calculator.id)
   const figures = toolFigures(calculator, tool)
-  const missing = missingFigures(calculator, figures, plan.assumptions)
+  const missing = missingFigures(calculator, figures, tool.assumptions)
   if (missing.length) return { missing, goal: null }
   // what-ifs left blank count as 0
   const result = calculator.run(figures.figures as Figures, calcContext(tool, calculator.id))

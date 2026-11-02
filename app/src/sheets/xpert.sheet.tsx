@@ -1,3 +1,4 @@
+import { useFeature } from '../shell/tenant.ts'
 import { talkToExpert } from '../state/explore.ts'
 import { EXPERTS } from '../domain/identity/advisers.data.ts'
 import { toast } from '../state/shell.ts'
@@ -40,6 +41,8 @@ function contact(kind: string, way: string, note: string) {
 export function Body({ param: kind = 'planner' }: { param?: string }) {
   const title = EXPERTS[kind as keyof typeof EXPERTS]?.title ?? ''
   const mortgage = kind === 'mortgage'
+  // calls and video calls are booked; a tenant without adviserBooking keeps only messages
+  const ways = useFeature('adviserBooking') ? WAYS : WAYS.filter(({ way }) => way === 'msg')
   return (
     <div className="xsh">
       <div className="xwho">
@@ -54,7 +57,7 @@ export function Body({ param: kind = 'planner' }: { param?: string }) {
         </div>
       </div>
       <span className="xtag">First call free</span>
-      {WAYS.map(({ icon, title, detail, way, note }) => (
+      {ways.map(({ icon, title, detail, way, note }) => (
         <button className="xo" key={way} onClick={() => contact(kind, way, note)}>
           <span className="e" aria-hidden="true">
             {icon}

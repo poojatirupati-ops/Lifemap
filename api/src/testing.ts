@@ -1,13 +1,17 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect } from "vitest";
 import { buildApp } from "./app";
 import { pgliteDb } from "./db/devSetup";
+import { type Files, devFiles } from "./files";
 
-/** Test-only: a real app on in-memory Postgres; OTP codes land in `codes` instead of an email. */
-export const testApp = async (db?: Awaited<ReturnType<typeof pgliteDb>>) => {
+/** Test-only: a real app on in-memory Postgres; OTP codes land in `codes` instead of an email; documents in a fresh temp folder unless `files` is given. */
+export const testApp = async (db?: Awaited<ReturnType<typeof pgliteDb>>, files: Files = devFiles(mkdtempSync(join(tmpdir(), "lifemap-files-")))) => {
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
   db ??= await pgliteDb();
   const codes: Record<string, string> = {};
-  const app = buildApp(db, (e, otp) => void (codes[e] = otp));
+  const app = buildApp(db, (e, otp) => void (codes[e] = otp), files);
   const req = (path: string, init: Omit<RequestInit, "body"> & { body?: unknown } = {}, cookie = "") =>
     app.request(path, {
       ...init,
@@ -22,5 +26,5 @@ export const testApp = async (db?: Awaited<ReturnType<typeof pgliteDb>>) => {
     expect(res.status).toBe(200);
     return res.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
   };
-  return { db, app, codes, req, sendCode, login };
+  return { db, app, codes, req, sendCode, login, files };
 };

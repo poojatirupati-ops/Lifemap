@@ -3,7 +3,8 @@ import { toast } from './shell.ts'
 import type { Plan } from './types.ts'
 import { fillKnownFinances } from './finances.ts'
 import { authClient, sendCode } from '../auth/client.ts'
-import { returnTo } from '../shell/wall.ts'
+import { postConsents } from '../auth/consents.ts'
+import { enterApp, land } from '../auth/session.ts'
 
 export function setAccount(patch: Partial<Plan['account']>) {
   useStore.getState().update((plan) => {
@@ -11,28 +12,46 @@ export function setAccount(patch: Partial<Plan['account']>) {
   })
 }
 
-/** The name and email as typed on P1, without stray spaces. */
-export function typedContact() {
-  const { name, email } = useStore.getState().plan.account
-  return { name: name.trim(), email: email.trim() }
-}
+/** The email as typed on sign-in, without stray spaces. */
+export const typedEmail = () => useStore.getState().plan.account.email.trim()
 
 /** Emails a sign-in code to the typed address; says so when it could not be sent. */
 export async function sendEmailCode() {
-  const sent = await sendCode(typedContact().email)
+  const sent = await sendCode(typedEmail())
   if (!sent) toast("Couldn't send the code. Check your connection and try again.")
   return sent
 }
 
-/** On to the screen the sign-in wall caught, or Your finances when the customer came from the plan builder. */
+/** Returning users who added Face ID / a passkey sign in with it instead of a code. */
+export async function signInWithPasskey() {
+  const { error } = await authClient.signIn.passkey()
+  const user = (await authClient.getSession()).data?.user
+  if (error || !user) return toast("Couldn't sign in with a passkey. Use an email code instead.")
+  await enterApp(user)
+}
+
+export interface Details {
+  name: string
+  terms: boolean
+  marketing: boolean
+  analytics: boolean
+}
+
+/** A new account's first name and consents: recorded on the server, then a passkey is offered. */
+export async function saveDetails({ name, terms, marketing, analytics }: Details) {
+  if (!(await postConsents({ terms, marketing, analytics }))) return
+  await authClient.updateUser({ name })
+  setAccount({ name, termsAccepted: terms, marketingConsent: marketing })
+  useStore.getState().go('P1K')
+}
+
+/** After the passkey offer: on into onboarding (or Home when it is done). */
 export function finishAccount(passkey: boolean) {
-  const { plan, update, go } = useStore.getState()
-  update((draft) => {
+  useStore.getState().update((draft) => {
     draft.account.passkey = passkey
     fillKnownFinances(draft)
   })
-  if (plan.returnTo) returnTo(plan.returnTo)
-  else go('P2')
+  land()
 }
 
 export async function addPasskey() {

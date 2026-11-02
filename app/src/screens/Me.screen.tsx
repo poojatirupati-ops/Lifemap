@@ -1,6 +1,6 @@
 import { resolve, type Screen } from '../shell/screens.tsx'
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
+import type { Plan, Ui } from '../state/types.ts'
 import * as Hub from './MeHub.screen.tsx'
 import * as Details from './MeDetails.screen.tsx'
 import * as Privacy from './MePrivacy.screen.tsx'
@@ -25,17 +25,17 @@ const PAGES: Record<string, Screen> = {
   umr: ProfileResult,
 }
 
-const pageOf = (plan: Plan) => PAGES[plan.mePage] ?? Hub
+const pageOf = (ui: Ui) => PAGES[ui.mePage] ?? Hub
 
 export const key = 'ME'
-export const id = (plan: Plan) => resolve(pageOf(plan).id, plan)
-export const note = (plan: Plan) => resolve(pageOf(plan).note, plan)
+export const id = (plan: Plan, ui: Ui) => resolve(pageOf(ui).id, plan, ui)
+export const note = (plan: Plan, ui: Ui) => resolve(pageOf(ui).note, plan, ui)
 
-export const Head = () => pageOf(useStore.getState().plan).Head?.({}) ?? null
+export const Head = () => pageOf(useStore.getState()).Head?.({}) ?? null
 
 export function Body() {
-  const Page = useStore(({ plan }) => pageOf(plan).Body)
+  const Page = useStore((store) => pageOf(store).Body)
   return <Page />
 }
 
-export const footFor = (plan: Plan) => pageOf(plan).Foot
+export const footFor = (_plan: Plan, ui: Ui) => pageOf(ui).Foot

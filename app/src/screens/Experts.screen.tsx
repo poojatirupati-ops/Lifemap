@@ -13,22 +13,23 @@ import SlotPicker from '../components/experts/SlotPicker.tsx'
 import SpecialistBoxes from '../components/experts/SpecialistBoxes.tsx'
 import { headOf, STAGES } from '../components/experts/stages.ts'
 import { useSpecialist } from '../components/experts/useSpecialist.ts'
+import { useActiveBooking } from '../bookings/bookings.ts'
 import AppHead from '../components/frame/AppHead.tsx'
 import { unseenLooks } from '../components/home/useHome.ts'
 import { adviserOf, firstName, stageOf } from '../domain/identity/booking.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
+import type { Plan, Ui } from '../state/types.ts'
 
 export const key = 'EXP'
-export const id = (plan: Plan) => STAGES[stageOf(plan)].id
-export const note = (plan: Plan) => STAGES[stageOf(plan)].note
+export const id = (plan: Plan, ui: Ui) => STAGES[stageOf(ui.expertsPage, plan.booking.done)].id
+export const note = (plan: Plan, ui: Ui) => STAGES[stageOf(ui.expertsPage, plan.booking.done)].note
 export const Foot = ExpertsFoot
 
 // ScreenHost calls Head as a plain function (no hooks) and splits AppHead's top bar out of it
 export function Head() {
-  const { plan, showStage } = useStore.getState()
-  const { title, sub, back } = headOf(plan)
+  const { plan, expertsPage, showStage } = useStore.getState()
+  const { title, sub, back } = headOf(plan, stageOf(expertsPage, plan.booking.done))
   return AppHead({
     title,
     sub,
@@ -38,7 +39,8 @@ export function Head() {
 }
 
 export function Body() {
-  const stage = useStore(({ plan }) => stageOf(plan))
+  useActiveBooking() // loads the saved booking; a booking made or cancelled elsewhere shows here
+  const stage = useStore((store) => stageOf(store.expertsPage, store.plan.booking.done))
   const adviser = useStore(({ plan }) => adviserOf(plan))
   const specialist = useSpecialist()
   const adviserFirstName = firstName(adviser.name)

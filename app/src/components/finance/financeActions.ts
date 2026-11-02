@@ -9,8 +9,8 @@ import { prefersReducedMotion } from '../../hooks/reducedMotion.ts'
 
 /** From Check your details: the section's Back returns to the check. */
 export function fixSection(index: number) {
-  useStore.getState().update((plan) => {
-    if (!plan.hasResults) plan.cameFrom = 'check'
+  useStore.getState().update((plan, ui) => {
+    if (!plan.hasResults) ui.cameFrom = 'check'
   })
   useStore.getState().openSection(index)
 }
@@ -26,11 +26,11 @@ export const leaveSectionForAdviser = (section: FinanceSection) =>
   })
 
 export const backToMe = () =>
-  useStore.getState().update((plan) => {
-    plan.mePage = 'home'
-    plan.financeSection = null
-    plan.upload = null
-    if (plan.tab === 'exp') plan.expertsPage = 'home'
+  useStore.getState().update((_, ui) => {
+    ui.mePage = 'home'
+    ui.financeSection = null
+    ui.upload = null
+    if (ui.tab === 'exp') ui.expertsPage = 'home'
   })
 
 /** Shows Building your plan, then opens the results in My Plan. */
@@ -45,13 +45,13 @@ function showResults(checked: boolean) {
   useStore.getState().go('U1')
   setTimeout(
     () =>
-      useStore.getState().update((plan) => {
+      useStore.getState().update((plan, ui) => {
         plan.hasResults = true
-        plan.planBuilder = false
-        plan.inShell = true
-        plan.tab = 'plan'
-        plan.planSegment = 'main'
-        plan.planScrollTo = 'results'
+        ui.planBuilder = false
+        ui.inShell = true
+        ui.tab = 'plan'
+        ui.planSegment = 'main'
+        ui.planScrollTo = 'results'
         // TODO(R-17): the version history slice; the original keeps a fixed date
         if (!plan.versions.some(({ note }) => /results/.test(note))) {
           addVersion(plan, 'First results')

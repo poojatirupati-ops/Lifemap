@@ -2,7 +2,9 @@ import { useMemo } from 'react'
 import { missingText } from '../domain/calc/values.ts'
 import { makePlan } from '../components/me/meActions.ts'
 import { useStore } from '../state/store.ts'
+import { useShallow } from 'zustand/react/shallow'
 import { calcHandoff } from '../domain/goals/handoff.ts'
+import { toolPlan } from '../domain/calc/context.ts'
 import CloseButton from './CloseButton.tsx'
 import HandoffBody from './HandoffBody.tsx'
 import SheetTitle from './SheetTitle.tsx'
@@ -11,9 +13,9 @@ export const key = 'calcadd'
 
 /** "Add to my plan" from a calculator: needs an age, then every figure the result uses. */
 export function Body({ param: toolId = '' }: { param?: string }) {
-  const plan = useStore((store) => store.plan)
-  const adult = (plan.about.age ?? 0) >= 18
-  const result = useMemo(() => (adult ? calcHandoff(plan, toolId) : null), [adult, plan, toolId])
+  const tool = useStore(useShallow((store) => toolPlan(store.plan, store, toolId)))
+  const adult = (tool.about.age ?? 0) >= 18
+  const result = useMemo(() => (adult ? calcHandoff(tool, toolId) : null), [adult, tool, toolId])
 
   if (!result)
     return (

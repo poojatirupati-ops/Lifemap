@@ -23,10 +23,10 @@ export function monthsToClear(balance: number, apr: number, monthly: number) {
 function coverTotal(plan: FoundationInputs, list: 'life' | 'workCover' | 'ip') {
   if (plan.figures[list] !== 'Yes') return 0
   const income = toNumber(plan.figures.income)
-  return (plan.lists[list] ?? []).reduce((total, { fields: f }) => {
-    if (hasValue(f.amount)) return total + Number(f.amount)
-    if (list === 'workCover' && hasValue(f.mult) && income > 0)
-      return total + Number(f.mult) * income
+  return (plan.lists[list] ?? []).reduce((total, { fields }) => {
+    if (hasValue(fields.amount)) return total + Number(fields.amount)
+    if (list === 'workCover' && hasValue(fields.mult) && income > 0)
+      return total + Number(fields.mult) * income
     return total
   }, 0)
 }
@@ -100,14 +100,14 @@ function debtChecks(plan: FoundationInputs, figures: HouseholdFigures): Check[] 
 }
 
 function lifeCoverCheck(plan: FoundationInputs): Check | null {
-  const { figures: fin, about } = plan
+  const { figures, about } = plan
   const dependants = (about.dependants ?? 0) > 0
   if (!about.partner && !dependants) return null
   if (!hasFigure(plan, 'life'))
     return { status: 'na', text: 'Add your protection to check life cover', section: 4 }
 
   const work = coverTotal(plan, 'workCover')
-  if (fin.life === 'Yes') {
+  if (figures.life === 'Yes') {
     const life = coverTotal(plan, 'life')
     const covered = life > 0 ? ` (${euro(life)} covered)` : ''
     const throughWork = work > 0 ? `, plus ${euro(work)} through work` : ''
@@ -115,21 +115,21 @@ function lifeCoverCheck(plan: FoundationInputs): Check | null {
   }
   if (work > 0) return { status: 'ok', text: `Cover through work in place (${euro(work)})` }
 
-  const cover = fin.life === 'No' ? 'No life cover' : 'Not sure about life cover'
+  const cover = figures.life === 'No' ? 'No life cover' : 'Not sure about life cover'
   const why = dependants ? 'people rely on you' : 'you plan with a partner'
   return {
-    status: fin.life === 'No' ? 'bad' : 'mid',
+    status: figures.life === 'No' ? 'bad' : 'mid',
     text: `${cover}, and ${why}`,
     tool: 'lifecover',
   }
 }
 
 function incomeProtectionCheck(plan: FoundationInputs): Check | null {
-  const { figures: fin } = plan
-  if (!fin.work || fin.work === 'Not working') return null
+  const { figures } = plan
+  if (!figures.work || figures.work === 'Not working') return null
   if (!hasFigure(plan, 'ip'))
     return { status: 'na', text: 'Add your protection to check income protection', section: 4 }
-  if (fin.ip !== 'Yes')
+  if (figures.ip !== 'Yes')
     return { status: 'mid', text: "No income protection if you couldn't work", tool: 'incomegap' }
   const monthly = coverTotal(plan, 'ip')
   const amount = monthly > 0 ? ` (${euro(monthly)} a month)` : ''

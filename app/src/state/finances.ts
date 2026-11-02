@@ -10,7 +10,8 @@ import { normalize } from '../domain/plan/normalize.ts'
 import { chooseRetireAge } from '../components/finance/choiceActions.ts'
 import { retirementRange } from '../domain/goals/retirement.ts'
 import { toast } from './shell.ts'
-import type { Plan } from './types.ts'
+import type { Store } from './store.ts'
+import type { Plan, Ui } from './types.ts'
 
 export const STATEMENT_REMOVED = 'Statement removed. Your own figures are used again'
 
@@ -21,21 +22,14 @@ const HIDDEN_STATEMENT_FIGURES: Record<string, string[]> = {
 }
 
 /** The open section of Your finances (P3), if any. */
-export const currentSection = (plan: Pick<Plan, 'financeSection'>) =>
-  plan.financeSection == null ? null : FINANCE_SECTIONS[plan.financeSection]
+export const currentSection = ({ financeSection }: Pick<Ui, 'financeSection'>) =>
+  financeSection == null ? null : FINANCE_SECTIONS[financeSection]
 
 /** Upload when the section can take documents and the customer chose it, else Type it. */
-export function sectionMode(plan: Pick<Plan, 'financeSection' | 'entryMode'>) {
-  const section = currentSection(plan)
+export function sectionMode(plan: Pick<Plan, 'entryMode'>, ui: Pick<Ui, 'financeSection'>) {
+  const section = currentSection(ui)
   if (!section?.documents.length) return 'type'
   return plan.entryMode[section.id] === 'upload' ? 'upload' : 'type'
-}
-
-export interface StoreCore {
-  plan: Plan
-  update: (recipe: (plan: Plan) => void) => void
-  go: (screen: string) => void
-  closeSheet: () => void
 }
 
 /**
@@ -43,17 +37,17 @@ export interface StoreCore {
  * starter item) whenever they show. The totals the lists fed are refreshed first, so a list just
  * emptied does not take its old total back.
  */
-export const updateFinances = (get: () => StoreCore) => (recipe: (plan: Plan) => void) =>
-  get().update((plan) => {
-    recipe(plan)
-    const section = currentSection(plan)
-    if (!section || plan.upload || sectionMode(plan) !== 'type') return
+export const updateFinances = (get: () => Store) => (recipe: (plan: Plan, ui: Ui) => void) =>
+  get().update((plan, ui) => {
+    recipe(plan, ui)
+    const section = currentSection(ui)
+    if (!section || ui.upload || sectionMode(plan, ui) !== 'type') return
     normalize(plan)
     prepareSectionLists(plan, section.id)
   })
 
 /** Leaves for a flow screen, or in the app closes the sheet over the page just changed. */
-export function show(get: () => StoreCore, screen: string) {
+export function show(get: () => Store, screen: string) {
   if (get().plan.hasResults) get().closeSheet()
   else get().go(screen)
 }
@@ -72,34 +66,34 @@ export interface FinancesActions {
   toggleCredit: (key: string) => void
 }
 
-export function createFinancesSlice(get: () => StoreCore & FinancesActions): FinancesActions {
+export function createFinancesSlice(get: () => Store): FinancesActions {
   const update = updateFinances(get)
 
   return {
     openSection: (index) => {
-      update((plan) => {
-        plan.financeSection = index
-        plan.upload = null
-        if (plan.hasResults && plan.tab !== 'exp') {
-          plan.tab = 'me'
-          plan.mePage = 'fin'
+      update((plan, ui) => {
+        ui.financeSection = index
+        ui.upload = null
+        if (plan.hasResults && ui.tab !== 'exp') {
+          ui.tab = 'me'
+          ui.mePage = 'fin'
         }
       })
       show(get, 'P3')
     },
 
     leaveSection: () => {
-      const fromCheck = get().plan.cameFrom === 'check'
-      update((plan) => {
-        plan.financeSection = null
-        if (fromCheck) plan.cameFrom = null
-        else if (plan.hasResults && plan.tab === 'me') plan.mePage = 'money'
+      const fromCheck = get().cameFrom === 'check'
+      update((plan, ui) => {
+        ui.financeSection = null
+        if (fromCheck) ui.cameFrom = null
+        else if (plan.hasResults && ui.tab === 'me') ui.mePage = 'money'
       })
       if (!get().plan.hasResults) get().go(fromCheck ? 'P4' : 'P2')
     },
 
     saveSection: () => {
-      const section = currentSection(get().plan)!
+      const section = currentSection(get())!
       update((plan) => {
         plan.savedSections[section.id] = true
         if (section.id === 'about' && plan.figures.name) plan.account.name = plan.figures.name
@@ -109,12 +103,12 @@ export function createFinancesSlice(get: () => StoreCore & FinancesActions): Fin
     },
 
     chooseSectionMode: (mode) =>
-      update((plan) => {
-        plan.entryMode[currentSection(plan)!.id] = mode
+      update((plan, ui) => {
+        plan.entryMode[currentSection(ui)!.id] = mode
       }),
 
     removeSectionStatement: () => {
-      const section = currentSection(get().plan)!
+      const section = currentSection(get())!
       const keys = [...section.fields, ...(HIDDEN_STATEMENT_FIGURES[section.id] ?? [])]
       update((plan) => removeStatementFigures(plan, keys))
       // TODO(R-28): also remove a pension statement uploaded from Explore (the original's pstRemove)
@@ -146,9 +140,13 @@ export function createFinancesSlice(get: () => StoreCore & FinancesActions): Fin
     },
 
     toggleCredit: (key) =>
-      update((plan) => {
-        plan.about.taxCredits = { ...plan.about.taxCredits, [key]: !plan.about.taxCredits?.[key] }
-      }),
+      update(
+        (plan) =>
+          void (plan.about.taxCredits = {
+            ...plan.about.taxCredits,
+            [key]: !plan.about.taxCredits?.[key],
+          }),
+      ),
   }
 }
 

@@ -10,9 +10,9 @@ export type Share = keyof Plan['booking']['share']
 const STEPS: readonly Stage[] = ['c0', 'c1', 'c2', 'c3', 'c4']
 const isStep = (exp: string): exp is Stage => (STEPS as readonly string[]).includes(exp)
 
-export function stageOf(plan: Pick<Plan, 'expertsPage' | 'booking'>): Stage {
-  if (isStep(plan.expertsPage)) return plan.expertsPage
-  return plan.booking.done ? 'booked' : 'home'
+export function stageOf(expertsPage: string, booked: boolean): Stage {
+  if (isStep(expertsPage)) return expertsPage
+  return booked ? 'booked' : 'home'
 }
 
 export const adviserOf = (plan: Pick<Plan, 'booking'>) => ADVISERS[plan.booking.adviser]

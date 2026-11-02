@@ -1,7 +1,8 @@
 import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import { pageKey, useMortgagePage } from '../../state/mortgage.ts'
-import { VIDEO_PHOTOS, photoAt, videoFor, type StoryVideo } from './mortgages.data.ts'
+import type { StoryVideo } from '../../content/cms.tsx'
+import { VIDEO_PHOTOS, photoAt } from './mortgages.data.ts'
 
 const SHADE = 'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45))'
 
@@ -23,7 +24,7 @@ export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
       </div>
       <div className="mp-bub mp-vrow" role="group" aria-label="Videos">
         {videos.map((story, i) => {
-          const poster = videoFor(story)?.poster
+          const poster = story.video?.thumbnailUrl ?? story.video?.poster
           const done = watched[pageKey(situation, i)]
           const playing = i === current
           const art = {

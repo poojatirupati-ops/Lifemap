@@ -1,10 +1,11 @@
+import { useStore } from '../../state/store.ts'
 import type { CSSProperties } from 'react'
 import { changePhoto } from './meActions.ts'
-import { DEFAULT_PHOTO, useMePlan } from './mePlan.ts'
+import { DEFAULT_PHOTO } from '../frame/HdrBar.tsx'
 
 /** The profile photo with its camera button; `ring` is the profile's percent done, drawn around it. */
 export default function Avatar({ ring }: { ring?: number }) {
-  const photo = useMePlan((plan) => plan.account.photo)
+  const photo = useStore(({ plan }) => plan.account.photo)
   // the details page always says Change; the hub says Add until there is a photo
   const change = !!photo || ring == null
 

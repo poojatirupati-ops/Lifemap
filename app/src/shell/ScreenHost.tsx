@@ -15,23 +15,25 @@ import { resolve, screenFor } from './screens.tsx'
 import { splitHead } from './splitHead.tsx'
 import { isWalled, sendToSignIn } from './wall.ts'
 import SheetHost from './SheetHost.tsx'
+import ErrorBoundary from './ErrorBoundary.tsx'
+import UpdatePrompt from './UpdatePrompt.tsx'
 
 export default function ScreenHost() {
-  // TODO(R-06): whole-plan subscription goes when screens become TanStack Router routes (REACT-PLAN.md).
-  const plan = useStore((store) => store.plan)
-  const current = useStore((store) => store.screen)
+  // TODO(R-06): whole-store subscription goes when screens become TanStack Router routes (REACT-PLAN.md).
+  const store = useStore()
+  const { plan } = store
   const authed = useShell((shell) => shell.authed)
   const renderCount = useShell((shell) => shell.renderCount)
   const desk = useShell((shell) => shell.desk)
   const { landscape } = useViewport(desk)
   const ref = useRef<HTMLDivElement>(null)
 
-  const picked = pickScreen(plan, current)
+  const picked = pickScreen(plan, store)
   const walled = isWalled(picked.key, authed)
   const { key, param } = walled ? { key: 'P1' } : picked
-  const screen = screenFor(key, plan)
-  const id = resolve(screen.id, plan, param)
-  const note = resolve(screen.note, plan, param)
+  const screen = screenFor(key, plan, store)
+  const id = resolve(screen.id, plan, store, param)
+  const note = resolve(screen.note, plan, store, param)
   const renderKey = `${id}:${renderCount}`
 
   useEffect(() => {
@@ -52,8 +54,12 @@ export default function ScreenHost() {
   // TODO(R-06): goes with the TanStack Router layouts, where each route renders its pinned bar itself.
   const head = screen.Head?.({ param }) ?? null
   const [pinnedHead, pageHead] = landscape ? [head, null] : splitHead(head)
-  const Foot = screen.footFor ? screen.footFor(plan) : screen.Foot
-  const body = <screen.Body param={param} />
+  const Foot = screen.footFor ? screen.footFor(plan, store) : screen.Foot
+  const body = (
+    <ErrorBoundary>
+      <screen.Body param={param} />
+    </ErrorBoundary>
+  )
   const sky = <header className="sky">{pinnedHead}</header>
 
   // .enter stays on: a new screen remounts the keyed child below, which replays the rise animation.
@@ -75,10 +81,11 @@ export default function ScreenHost() {
               <Foot param={param} />
             </div>
           )}
-          {showsTabBar(plan) && !walled && <TabBar />}
+          {showsTabBar(plan, store) && !walled && <TabBar />}
         </div>
       )}
       <SheetHost />
+      <UpdatePrompt />
     </div>
   )
 }

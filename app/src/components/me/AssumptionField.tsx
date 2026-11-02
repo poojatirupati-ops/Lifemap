@@ -1,3 +1,4 @@
+import { useStore } from '../../state/store.ts'
 import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import ChoiceNumberBox from '../finance/ChoiceNumberBox.tsx'
@@ -15,7 +16,6 @@ import {
   typedFigure,
   valueInUse,
 } from '../../domain/planning/assumptionText.ts'
-import { useMePlan } from './mePlan.ts'
 import UnknownRateChips from './UnknownRateChips.tsx'
 
 const UNIT = {
@@ -31,8 +31,8 @@ const UNIT = {
 /** One assumption: label and tag, a number box or chips, a way back, and how LifeMap sets it. */
 export default function AssumptionField({ name }: { name: string }) {
   const field = ASSUMPTIONS[name]
-  const view = useMePlan(
-    useShallow((plan) => ({
+  const view = useStore(
+    useShallow(({ plan }) => ({
       mine: isMine(plan, name),
       value: valueInUse(plan, name),
       standard: standardFor(plan, name),

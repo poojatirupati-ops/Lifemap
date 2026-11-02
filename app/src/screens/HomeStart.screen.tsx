@@ -4,9 +4,8 @@ import PlanCard from '../components/home/PlanCard.tsx'
 import ProfileCard from '../components/home/ProfileCard.tsx'
 import StartHero from '../components/home/StartHero.tsx'
 import ToolList from '../components/home/ToolList.tsx'
-import { toolsForYou, videosForYou } from '../domain/explore/picks.ts'
+import { toolsForYou } from '../domain/explore/picks.ts'
 import WatchPicks from '../components/explore/WatchPicks.tsx'
-import { VIDEOS } from '../components/explore/videos.data.ts'
 import HdrBar from '../components/frame/HdrBar.tsx'
 import { useStore } from '../state/store.ts'
 
@@ -27,7 +26,7 @@ export function Body() {
       <AskBar />
       <ToolList ids={toolsForYou(specs)} />
       <ProfileCard />
-      <WatchPicks videos={videosForYou(VIDEOS, specs)} />
+      <WatchPicks specs={specs} />
       <p className="disc">Guidance, not advice.</p>
     </>
   )

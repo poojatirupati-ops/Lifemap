@@ -95,9 +95,13 @@ describe('profile scoring equals the original', { timeout: 30_000 }, () => {
             original.suggestU9(),
           )
           for (const id of ['2', '6', '7', '8', '9']) {
-            expect(optionScore(discoverQuestion(id), plan.answers[id])).toBe(original.dsc(id) ?? null)
+            expect(optionScore(discoverQuestion(id), plan.answers[id])).toBe(
+              original.dsc(id) ?? null,
+            )
           }
-          expect(optionScore(moneyQuestion('u9'), plan.moneyProfile.answers.u9)).toBe(original.umS('u9') ?? null)
+          expect(optionScore(moneyQuestion('u9'), plan.moneyProfile.answers.u9)).toBe(
+            original.umS('u9') ?? null,
+          )
           const originalCushion = plain(original.cushionM())
           for (const complete of [false, true]) {
             const read = riskRead(answers, riskContext(plan, complete, originalCushion))

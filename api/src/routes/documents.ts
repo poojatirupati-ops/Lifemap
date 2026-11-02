@@ -2,14 +2,15 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { and, desc, eq } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import { validator } from "hono-openapi";
 import { z } from "zod";
 import type { Db } from "../db";
 import { document } from "../db/schema";
 import { type Files, removeDocuments } from "../files";
 import type { Env } from "../guard";
+import { doc, errors } from "../openapi";
 import { requireFeature } from "../tenant";
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -29,7 +30,11 @@ export const documentRoutes = (db: Db, files: Files) => {
   const mine = (userId: string, orgId: string, id?: string) =>
     and(eq(document.userId, userId), eq(document.organizationId, orgId), id === undefined ? undefined : eq(document.id, id));
 
-  r.post("/documents", requireFeature(db, "documentUpload"), zValidator("json", newDocument, (res, c) => (res.success ? undefined : c.json({ error: "invalid document" }, 400))), async (c) => {
+  r.post("/documents", doc({
+    tags: ["documents"], flag: "documentUpload", summary: "Create a document and get its upload URL",
+    description: "PUT the file bytes to `upload.url` with `upload.headers` within 5 minutes. Max 10 MB.",
+    responses: { 201: { description: "`{ document, upload: { url, method: \"PUT\", headers } }`" }, 400: errors[400] },
+  }), requireFeature(db, "documentUpload"), validator("json", newDocument, (res, c) => (res.success ? undefined : c.json({ error: "invalid document" }, 400))), async (c) => {
     const { userId, orgId } = c.var;
     const { name, contentType, size } = c.req.valid("json");
     const id = randomUUID();
@@ -39,17 +44,17 @@ export const documentRoutes = (db: Db, files: Files) => {
     return c.json({ document: doc, upload: { url: await files.putUrl(key, contentType, size), method: "PUT", headers: { "content-type": contentType } } }, 201);
   });
 
-  r.get("/documents", async (c) =>
+  r.get("/documents", doc({ tags: ["documents"], summary: "The caller's documents", responses: { 200: { description: "`{ documents: [{ id, name, contentType, size, createdAt }] }`, newest first" } } }), async (c) =>
     c.json({ documents: await db.select(fields).from(document).where(mine(c.var.userId, c.var.orgId)).orderBy(desc(document.createdAt)) }));
 
-  r.get("/documents/:id", async (c) => {
+  r.get("/documents/:id", doc({ tags: ["documents"], summary: "A document and a 5-minute read URL", responses: { 200: { description: "`{ document, url }`" }, 404: errors[404] } }), async (c) => {
     const [doc] = await db.select({ ...fields, key: document.key }).from(document).where(mine(c.var.userId, c.var.orgId, c.req.param("id")));
     if (!doc) return c.json({ error: "not found" }, 404);
     const { key, ...rest } = doc;
     return c.json({ document: rest, url: await files.getUrl(key, doc.name) });
   });
 
-  r.delete("/documents/:id", async (c) =>
+  r.delete("/documents/:id", doc({ tags: ["documents"], summary: "Delete a document (stored file, then row)", responses: { 200: { description: "`{ success: true }`" }, 404: errors[404] } }), async (c) =>
     (await removeDocuments(db, files, mine(c.var.userId, c.var.orgId, c.req.param("id")))) ? c.json({ success: true }) : c.json({ error: "not found" }, 404));
 
   // Dev stand-in for the presigned S3 URLs: only the session's own `<org>/<user>/<id>` keys, only for a document row that exists.
@@ -59,7 +64,8 @@ export const documentRoutes = (db: Db, files: Files) => {
       p.org === v.orgId && p.user === v.userId
         ? (await db.select({ key: document.key, contentType: document.contentType, size: document.size }).from(document).where(mine(v.userId, v.orgId, p.id)))[0]
         : undefined;
-    r.put("/dev-files/:org/:user/:id", bodyLimit({ maxSize: MAX_SIZE, onError: (c) => c.json({ error: "too large" }, 413) }), async (c) => {
+    const devDoc = { tags: ["documents"], description: "Dev and tests only (not mounted in production, where the URLs are presigned S3 URLs). Only the session's own keys." };
+    r.put("/dev-files/:org/:user/:id", doc({ ...devDoc, summary: "Dev stand-in for the S3 upload URL", responses: { 200: { description: "Stored" }, 403: { description: "Size or content type differs from the document" }, 404: errors[404], 413: errors[413] } }), bodyLimit({ maxSize: MAX_SIZE, onError: (c) => c.json({ error: "too large" }, 413) }), async (c) => {
       const doc = await own(c.var, c.req.param());
       if (!doc) return c.json({ error: "not found" }, 404);
       const bytes = new Uint8Array(await c.req.arrayBuffer());
@@ -68,7 +74,7 @@ export const documentRoutes = (db: Db, files: Files) => {
       await writeFile(join(dir, doc.key), bytes);
       return c.body(null, 200);
     });
-    r.get("/dev-files/:org/:user/:id", async (c) => {
+    r.get("/dev-files/:org/:user/:id", doc({ ...devDoc, summary: "Dev stand-in for the S3 read URL", responses: { 200: { description: "The file bytes" }, 404: errors[404] } }), async (c) => {
       const doc = await own(c.var, c.req.param());
       const bytes = doc && (await readFile(join(dir, doc.key)).catch(() => null));
       if (!doc || !bytes) return c.json({ error: "not found" }, 404);

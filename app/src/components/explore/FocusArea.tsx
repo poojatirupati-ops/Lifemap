@@ -1,21 +1,23 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
-import { TOPICS, topicPhotoStyle } from './explore.data.ts'
+import { topicPhotoStyle } from './explore.data.ts'
 import { openTopic, showFocusArea } from '../../state/explore.ts'
 import { useCardSwipe, wrap } from './useCardSwipe.ts'
-import { videosBy } from './videos.data.ts'
+import { useTopics, useVideos } from '../../content/cms.tsx'
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 /** Focus on one area: chips, a swipeable photo card for the chosen area, and arrows with dots. */
 export default function FocusArea() {
-  const index = useStore((store) => store.plan.focusArea ?? 0)
-  const { swipe, card, back, bind, onKeyDown } = useCardSwipe(TOPICS.length, index, showFocusArea)
+  const index = useStore((store) => store.focusArea ?? 0)
+  const topics = useTopics()
+  const videos = useVideos()
+  const { swipe, card, back, bind, onKeyDown } = useCardSwipe(topics.length, index, showFocusArea)
   const chips = useRef<HTMLDivElement>(null)
-  const topic = TOPICS[index]
-  const next = TOPICS[wrap(index + 1, TOPICS.length)]
-  const videoCount = videosBy(topic.expert).length
+  const topic = topics[index]
+  const next = topics[wrap(index + 1, topics.length)]
+  const videoCount = videos.filter((video) => video.kind === topic?.expert).length
 
   useEffect(() => {
     const strip = chips.current
@@ -24,10 +26,11 @@ export default function FocusArea() {
     if (strip && chip) strip.scrollTo?.({ left: chip.offsetLeft - 18, behavior: 'smooth' })
   }, [index])
 
+  if (!topic) return null
   return (
     <>
       <div className="chips xchips" role="group" aria-label="Choose an area" ref={chips}>
-        {TOPICS.map((area, i) => (
+        {topics.map((area, i) => (
           <button
             key={area.name}
             className={i === index ? 'chip sel' : 'chip'}
@@ -87,7 +90,7 @@ export default function FocusArea() {
           ‹
         </button>
         <span className="xh-dots" aria-hidden="true">
-          {TOPICS.map((area, i) => (
+          {topics.map((area, i) => (
             <i key={area.name} className={i === index ? 'on' : undefined}></i>
           ))}
         </span>

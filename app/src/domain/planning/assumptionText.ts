@@ -22,7 +22,8 @@ const GROWTH_SET = new Set<string>(GROWTH_KEYS)
 
 const isGrowthKey = (key: string): key is StandardKey => GROWTH_SET.has(key)
 
-export const isMine = (plan: AssumptionPlan, key: string) => chosenAssumption(plan.assumptions, key) != null
+export const isMine = (plan: AssumptionPlan, key: string) =>
+  chosenAssumption(plan.assumptions, key) != null
 
 const isStandard = ({ standard, fromPlan }: AssumptionField) => !!standard || !!fromPlan
 

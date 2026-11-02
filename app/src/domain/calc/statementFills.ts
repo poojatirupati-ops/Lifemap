@@ -45,7 +45,8 @@ export function toolFills(
     }
   }
   const age = plan.about.age ?? 0
-  const retireAt = plan.hasResults && retirementGoal(plan.goals) ? plan.retireAge : figureOf(read, 'nra')
+  const retireAt =
+    plan.hasResults && retirementGoal(plan.goals) ? plan.retireAge : figureOf(read, 'nra')
   const yearsLeft = age >= 18 ? Math.max(1, retireAt - age) : null
   // growth after the statement's own charges, the same rule as the plan
   const growth: Read =

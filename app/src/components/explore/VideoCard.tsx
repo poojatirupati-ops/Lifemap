@@ -1,10 +1,9 @@
 import type { CSSProperties } from 'react'
-import { VIDEO_KIND_LABEL, splitWho, videoLength, type Video } from './videos.data.ts'
+import { VIDEO_KIND_LABEL, videoLength, type Video } from '../../content/cms.tsx'
 import { openVideo } from '../../state/explore.ts'
 
 /** A video card with the picture on top; `grid` for the video library's grid. */
 export default function VideoCard({ video, grid }: { video: Video; grid?: boolean }) {
-  const { role } = splitWho(video)
   return (
     <button
       className={grid ? 'vcard grid' : 'vcard'}
@@ -21,7 +20,7 @@ export default function VideoCard({ video, grid }: { video: Video; grid?: boolea
       <span className="vc-body">
         <span className="vc-kind">{VIDEO_KIND_LABEL[video.kind]}</span>
         <b>{video.title}</b>
-        <small>{role}</small>
+        <small>{video.role}</small>
       </span>
     </button>
   )

@@ -55,7 +55,9 @@ export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
   )
   const retirement = retirementRange(plan)
   const planEnd = chosenAssumption(plan.assumptions, 'planEnd')
-  const accessAge = Number(chosenAssumption(plan.assumptions, 'accessAge') ?? standardValue('accessAge'))
+  const accessAge = Number(
+    chosenAssumption(plan.assumptions, 'accessAge') ?? standardValue('accessAge'),
+  )
 
   const partnerChoice = partnerEarns(plan) ? (
     <AgeChoice
@@ -65,7 +67,11 @@ export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
       age={plan.partnerRetireSet ? (plan.partnerRetireAge ?? null) : null}
       range={partnerRetirementRange(plan)}
       help="We count their pay until this age, then only their State Pension. Only you can choose it, so we never fill it in for you."
-      note={plan.partnerRetireSet ? { id: 'pret-note', text: partnerRetirementNote(plan.partnerRetireAge!) } : undefined}
+      note={
+        plan.partnerRetireSet
+          ? { id: 'pret-note', text: partnerRetirementNote(plan.partnerRetireAge!) }
+          : undefined
+      }
       onChoose={choosePartnerRetireAge}
     />
   ) : null

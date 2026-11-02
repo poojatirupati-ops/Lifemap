@@ -34,7 +34,7 @@ export default function PersonalityReveal({ type }: { type: PersonalityType }) {
   const cushion = useStore(useShallow(({ plan }) => readCushion(plan)))
   const horizon = useStore(({ plan }) => suggestedHorizonFor(plan))
   const backFromReveal = useStore((store) => store.backFromReveal)
-  const go = useStore((store) => store.go)
+  const finishOnboarding = useStore((store) => store.finishOnboarding)
   const read = riskRead(answers, { complete: false, cushion, suggestedHorizon: horizon })
 
   return (
@@ -84,7 +84,7 @@ export default function PersonalityReveal({ type }: { type: PersonalityType }) {
       </div>
       <ColumnFoot>
         <p className="fnote">Get a more accurate picture</p>
-        <button className="wbtn" onClick={() => go('DS')}>
+        <button className="wbtn" onClick={finishOnboarding}>
           Continue
         </button>
       </ColumnFoot>

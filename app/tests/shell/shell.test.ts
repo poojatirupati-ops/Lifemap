@@ -2,12 +2,12 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { fresh } from '../../src/state/fresh.ts'
+import { fresh, freshUi } from '../../src/state/fresh.ts'
 import type { Plan, Snapshot } from '../../src/state/types.ts'
 import type { Screen } from '../../src/shell/screens.tsx'
 import { JUMPS } from '../../src/shell/jumps.data.ts'
 import { fallbackKey, pickScreen } from '../../src/shell/pickScreen.ts'
-import { PUBLIC, isWalled, sendToSignIn } from '../../src/shell/wall.ts'
+import { isWalled, sendToSignIn } from '../../src/shell/wall.ts'
 import { splitHead } from '../../src/shell/splitHead.tsx'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement as h, Fragment } from 'react'
@@ -40,9 +40,8 @@ const html = readFileSync(
 )
 
 describe('wall', () => {
-  it('lets public keys and signed-in visitors through, walls the rest', () => {
-    expect(PUBLIC).toEqual(['D0', 'D1', 'DQ', 'DR', 'DS'])
-    PUBLIC.forEach((key) => expect(isWalled(key, false)).toBe(false))
+  it('walls everything but sign-in until signed in, Welcome included', () => {
+    expect(isWalled('D0', false)).toBe(true)
     expect(isWalled('B1', true)).toBe(false)
     expect(isWalled('B1', false)).toBe(true)
     expect(isWalled('HOME', false)).toBe(true)
@@ -56,12 +55,12 @@ describe('wall', () => {
     ]
     cases.forEach(([want, patch]) => {
       useStore.getState().load({ ...fresh(), ...patch })
-      const { plan, screen } = useStore.getState()
-      sendToSignIn(pickScreen(plan, screen).key)
+      const before = useStore.getState()
+      sendToSignIn(pickScreen(before.plan, before).key)
       const after = useStore.getState()
-      expect(pickScreen(after.plan, after.screen).key).toBe('P1')
+      expect(pickScreen(after.plan, after).key).toBe('P1')
       expect(isWalled('P1', false)).toBe(false)
-      expect(after.plan.returnTo).toBe(want)
+      expect(after.returnTo).toBe(want)
     })
   })
 })
@@ -93,9 +92,9 @@ describe('splitHead', () => {
 
 describe('pickScreen', () => {
   const pick = (f: (s: Snapshot) => void) => {
-    const s: Snapshot = fresh()
+    const s = { ...fresh(), ...freshUi() }
     f(s)
-    return pickScreen(s, s.screen ?? 'D0')
+    return pickScreen(s, s)
   }
   it('follows the original current()', () => {
     expect(pick(() => {}).key).toBe('D0')
@@ -182,25 +181,27 @@ describe('pickScreen', () => {
 
 describe('fallbackKey', () => {
   it('unknown ids show D0, or B1 in the shell plan branch', () => {
-    const s: any = fresh()
-    expect(fallbackKey(s)).toBe('D0')
-    s.shell = true
+    const s = { ...fresh(), ...freshUi() }
+    expect(fallbackKey(s, s)).toBe('D0')
+    s.inShell = true
     s.tab = 'plan'
-    expect(fallbackKey(s)).toBe('B1')
-    s.app = true
-    expect(fallbackKey(s)).toBe('D0')
+    expect(fallbackKey(s, s)).toBe('B1')
+    s.hasResults = true
+    expect(fallbackKey(s, s)).toBe('D0')
   })
 })
 
 describe('jumps', () => {
-  it('ids and labels match the original JUMPS', () => {
+  it('ids and labels match the original JUMPS, less its save step and the sign-in moved first (O-01)', () => {
     const block = html.slice(html.indexOf('const JUMPS = ['), html.indexOf('function side()'))
     const orig = [...block.matchAll(/\['([A-Za-z0-9-]+)',\s*(?:"([^"]*)"|'([^']*)')/g)].map((m) => [
       m[1],
       m[2] ?? m[3],
     ])
-    expect(JUMPS.flatMap(({ jumps }) => jumps.map(({ id, label }) => [id, label]))).toEqual(orig)
+    const ours = JUMPS.slice(1).flatMap(({ jumps }) => jumps.map(({ id, label }) => [id, label]))
+    expect(ours).toEqual(orig.filter(([id]) => !['DS', 'P1', 'P1E'].includes(id!)))
     expect(JUMPS.map(({ group }) => group)).toEqual([
+      'Sign in',
       'Onboarding',
       'App before a plan',
       'Admin (not for customers)',
@@ -217,13 +218,14 @@ describe('jumps', () => {
 
 describe('ScreenHost', () => {
   it('a state-derived id (DQ: D + (di + 2)) is a new screen: its page remounts (enter replays), #curid follows; same id keeps it', () => {
+    useShell.setState({ authed: true })
     const set = (f: (s: any) => void, screen?: string) =>
       act(() => {
         if (screen) useStore.getState().go(screen)
         useStore.getState().update(f)
       })
     set((s) => {
-      s.di = 0
+      s.discoverStep = 0
     }, 'D2')
     const { container } = render(h(ScreenHost)),
       el = container.querySelector('#screen')!
@@ -236,7 +238,7 @@ describe('ScreenHost', () => {
     })
     expect(page()).toBe(first) // same id: no replay
     set((s) => {
-      s.di = 1
+      s.discoverStep = 1
     }, 'D3')
     expect(page()).not.toBe(first)
     expect(useShell.getState()).toMatchObject({

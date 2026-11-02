@@ -27,26 +27,31 @@ test('a result shows live, and a typed figure above the limit is capped with a h
   )
   const box = container.querySelector<HTMLInputElement>('#co-pot')!
   fireEvent.input(box, { target: { value: '99,000,000' } })
-  expect(plan().calcValues.retirement.pot).toBe(15000000)
+  expect(useStore.getState().calcValues.retirement.pot).toBe(15000000)
   expect(screen.getByText('Max €15,000,000')).toBeTruthy()
   expect(container.querySelector<HTMLInputElement>('#c-pot')!.value).toBe('15000000')
 })
 
 test('without a mortgage rate the result waits, and the suggested rate fills it', () => {
-  useStore.getState().load({ ...(fresh as never), explorePages: [{ page: 'CALC', param: 'repayment' }] })
+  useStore
+    .getState()
+    .load({ ...(fresh as never), explorePages: [{ page: 'CALC', param: 'repayment' }] })
   const { container } = render(<Calculator.Body param="repayment" />)
   expect(container.querySelector('#cgate b')!.textContent).toBe(
     'Choose your mortgage rate to see this',
   )
   fireEvent.click(container.querySelector('[data-a=ckstd][data-p=rate]')!)
   expect(container.querySelector('#cgate')).toBeNull()
-  expect(plan().calcTouched.repayment).toEqual({ rate: true })
+  expect(useStore.getState().calcTouched.repayment).toEqual({ rate: true })
 })
 
 test('a statement is read, confirmed into Your finances and fills in its tool', () => {
   useStore.getState().load({
     ...(fresh as never),
-    account: { ...(fresh as never as { acct: object }).acct, emailVerified: true, mobileVerified: true },
+    account: {
+      ...(fresh as never as { acct: object }).acct,
+      emailVerified: true,
+    },
     inShell: true,
     tab: 'explore',
     explorePages: [{ page: 'XCAT', param: 'home' }],
@@ -66,9 +71,9 @@ test('a statement is read, confirmed into Your finances and fills in its tool', 
     'doc',
     true,
   ])
-  expect(plan().explorePages).toEqual([
-    { v: 'XCAT', p: 'home' },
-    { v: 'CALC', p: 'repayment' },
+  expect(useStore.getState().explorePages).toEqual([
+    { page: 'XCAT', param: 'home' },
+    { page: 'CALC', param: 'repayment' },
   ])
-  expect(plan().calcStatementKeys.repayment).toEqual(['loan', 'rate', 'term'])
+  expect(useStore.getState().calcStatementKeys.repayment).toEqual(['loan', 'rate', 'term'])
 })

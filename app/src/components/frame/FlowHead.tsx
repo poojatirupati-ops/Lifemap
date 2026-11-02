@@ -6,6 +6,7 @@ import BrandBar from './BrandBar.tsx'
 import PbBar from './PbBar.tsx'
 import TitleBlock from './TitleBlock.tsx'
 import { planBuilderStep } from '../../domain/journey/planBuilderSteps.ts'
+import { loadedTenant } from '../../shell/tenant.ts'
 
 interface Props {
   /** The eyebrow above the title; "Step ..." eyebrows are left out. */
@@ -26,8 +27,8 @@ function leavePlanBuilder() {
  * Hook-free: return FlowHead({...}) from a Head.
  */
 export default function FlowHead({ eye, title, sub, back }: Props) {
-  const { plan, screen, openAsk } = useStore.getState()
-  const inPlanBuilder = !plan.hasResults && plan.inShell && plan.tab === 'plan'
+  const { plan, screen, inShell, tab, openAsk } = useStore.getState()
+  const inPlanBuilder = !plan.hasResults && inShell && tab === 'plan'
   // TODO(R-05): callers still pass "Step ..." eyebrows; drop this check once they stop.
   const eyebrow = eye && !eye.startsWith('Step ') ? <Emo>{eye}</Emo> : null
 
@@ -43,13 +44,15 @@ export default function FlowHead({ eye, title, sub, back }: Props) {
           <span className="pbn" aria-hidden="true">
             {planBuilderStep(screen)}/8
           </span>
-          <button
-            className="pbask"
-            aria-label="Ask: help and plain-English explanations"
-            onClick={openAsk}
-          >
-            ?
-          </button>
+          {loadedTenant()?.features.ask !== false && (
+            <button
+              className="pbask"
+              aria-label="Ask: help and plain-English explanations"
+              onClick={openAsk}
+            >
+              ?
+            </button>
+          )}
         </div>
         <TitleBlock title={title} sub={sub} />
       </>

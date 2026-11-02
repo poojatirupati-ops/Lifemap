@@ -1,6 +1,4 @@
-import type { useStore } from './store.ts'
-
-type StoreState = ReturnType<typeof useStore.getState>
+import type { SetStore, Store } from './store.ts'
 
 /** What Home's buttons do that no other slice's actions already cover. */
 export interface HomeActions {
@@ -12,24 +10,22 @@ export interface HomeActions {
   changeGoalDate: (goalId: number) => void
 }
 
-export function createHomeSlice(get: () => StoreState): HomeActions {
+export function createHomeSlice(set: SetStore, get: () => Store): HomeActions {
   return {
     tryWhatIf: (goalId) => {
       get().showSection('wi')
       if (goalId == null) return
-      get().update((plan) => {
-        plan.whatIf.goalId = goalId
-      })
+      get().update((plan) => void (plan.whatIf.goalId = goalId))
     },
     openFoundation: (index) => get().openSheet(`fnd|${index}`),
     changeGoalDate: (goalId) => {
-      get().update((plan) => {
-        plan.tab = 'plan'
-        plan.planSegment = ''
-        plan.editingGoals = false
-        plan.highlightedGoal = goalId
+      set({
+        tab: 'plan',
+        planSegment: '',
+        editingGoals: false,
+        highlightedGoal: goalId,
+        sheet: null,
       })
-      get().closeSheet()
     },
   }
 }

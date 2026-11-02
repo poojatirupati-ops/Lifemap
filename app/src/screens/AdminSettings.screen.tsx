@@ -13,8 +13,8 @@ export const note =
   'ADMIN VIEW (journey-spec §19.6, option C): the Settings block, controlled by LifeMap or a partner. Not shown to customers.'
 
 const closeAdmin = () =>
-  useStore.getState().update((plan) => {
-    plan.adminView = false
+  useStore.getState().update((_, ui) => {
+    ui.adminView = false
   })
 
 export const Head = () =>

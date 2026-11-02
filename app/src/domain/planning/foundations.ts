@@ -76,7 +76,8 @@ function goalsAndRetirement(
   figures: HouseholdFigures,
   projection: Projection,
 ): Check & Pick<Foundation, 'makePlan'> {
-  if (!plan.hasResults) return { status: 'na', text: 'Make your plan to check this', makePlan: true }
+  if (!plan.hasResults)
+    return { status: 'na', text: 'Make your plan to check this', makePlan: true }
   const goals = plan.goals.filter((goal) => goal.kind !== 'legacy')
   if (!goals.length) return { status: 'na', text: 'Add goals to check this' }
   const onTrack = goals.filter((goal) => isCovered(projection, goal.id)).length

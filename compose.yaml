@@ -1,0 +1,14 @@
+# Local databases for development. Run with Podman: `podman compose up -d` (tests keep using in-memory PGlite).
+services:
+  postgres:
+    image: docker.io/library/postgres:17
+    environment:
+      POSTGRES_USER: lifemap
+      POSTGRES_PASSWORD: lifemap-dev
+      POSTGRES_DB: lifemap
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+volumes:
+  pgdata:

@@ -23,7 +23,7 @@ vi.mock('../../src/auth/client.ts', () => ({
 }))
 
 const plan = () => useStore.getState().plan as MePlan
-const open = (page: string) => useStore.getState().update((p) => void (p.mePage = page))
+const open = (page: string) => useStore.getState().update((p, ui) => void (ui.mePage = page))
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -35,8 +35,8 @@ test('the hub opens its pages; sign out shows only with a session', () => {
   const { rerender } = render(<Me.Body />)
   expect(screen.queryByText('Sign out')).toBeNull()
   fireEvent.click(screen.getByText('Privacy & preferences'))
-  expect(plan().mePage).toBe('privacy')
-  expect(Me.id(plan())).toBe('ME-PRIV')
+  expect(useStore.getState().mePage).toBe('privacy')
+  expect(Me.id(plan(), useStore.getState())).toBe('ME-PRIV')
 
   open('home')
   auth.user = { email: 'aoife@example.ie' }
@@ -57,25 +57,28 @@ test('privacy: reminders are recorded both ways, export and delete are offered',
 })
 
 test('recheck confirms the first answers; only pages with a foot get one', () => {
-  expect(Me.footFor(plan())).toBeUndefined()
+  expect(Me.footFor(plan(), useStore.getState())).toBeUndefined()
   open('recheck')
-  expect(Me.footFor(plan())).toBe(Recheck.Foot)
+  expect(Me.footFor(plan(), useStore.getState())).toBe(Recheck.Foot)
   render(<Recheck.Foot />)
   fireEvent.click(screen.getByText('These still look right'))
-  expect(plan()).toMatchObject({ me: 'home', um: { rechecked: true } })
+  expect(useStore.getState()).toMatchObject({
+    mePage: 'home',
+    plan: { moneyProfile: { rechecked: true } },
+  })
 })
 
 test('saving a profile section marks it done and fills an unanswered horizon', () => {
-  useStore.getState().update((p) => {
-    p.mePage = 'ums'
+  useStore.getState().update((p, ui) => {
+    ui.mePage = 'ums'
     p.moneyProfile.section = 1
   })
-  expect(Me.id(plan())).toBe('ME-UM1')
+  expect(Me.id(plan(), useStore.getState())).toBe('ME-UM1')
   render(<Section.Foot />)
   fireEvent.click(screen.getByText('Save this section'))
   expect(plan().moneyProfile.done[1]).toBe(true)
   expect(plan().moneyProfile.answers.u9).toBeTypeOf('number')
-  expect(plan().mePage).toBe('um')
+  expect(useStore.getState().mePage).toBe('um')
 })
 
 test('an assumption typed as a percent is kept as a fraction, and Back restores the standard', () => {

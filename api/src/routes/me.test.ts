@@ -1,6 +1,6 @@
 import { getTableColumns, getTableName, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { emailHash } from "../auth";
 import { schema } from "../db";
 import { testApp } from "../testing";
@@ -18,15 +18,20 @@ test("consents: append-only, withdrawal recorded, history and versions kept; not
 
   await post({ notice: "n1", marketing: { granted: true, version: "m1" } });
   await post({ notice: "n1" }); // re-acknowledging keeps the first time
-  const res = await post({ marketing: { granted: false, version: "m2" } });
+  await post({ analytics: { granted: true, version: "a1" } });
+  const res = await post({ marketing: { granted: false, version: "m2" }, analytics: { granted: false, version: "a1" } });
   expect(res.status).toBe(200);
-  const state = (await res.json()) as { consents: { marketing: { granted: boolean; version: string } }; notice: { version: string } };
+  const state = (await res.json()) as { consents: Record<"marketing" | "analytics", { granted: boolean; version: string }>; notice: { version: string } };
   expect(state.consents.marketing).toMatchObject({ granted: false, version: "m2" });
+  expect(state.consents.analytics).toMatchObject({ granted: false, version: "a1" });
   expect(state.notice.version).toBe("n1");
   expect(await (await req("/api/consents", {}, a)).json()).toEqual(JSON.parse(JSON.stringify(state)));
 
   const exp = (await (await req("/api/me/export", {}, a)).json()) as { consents: unknown[]; notices: unknown[] };
-  expect(exp.consents).toMatchObject([{ kind: "marketing", granted: true, version: "m1" }, { kind: "marketing", granted: false, version: "m2" }]);
+  expect(exp.consents).toMatchObject([
+    { kind: "marketing", granted: true, version: "m1" }, { kind: "analytics", granted: true, version: "a1" },
+    { kind: "marketing", granted: false, version: "m2" }, { kind: "analytics", granted: false, version: "a1" },
+  ]);
   expect(exp.notices).toHaveLength(1);
 });
 
@@ -101,4 +106,24 @@ test("DELETE /api/me erases every row for that user, their OTP rows, keeps a PII
   expect(stale.status).toBe(400);
   expect(((await stale.json()) as { code: string }).code).toBe("SESSION_EXPIRED");
   expect((await req("/api/plan", {}, b)).status).toBe(200);
+});
+
+test("DELETE /api/me also erases the PostHog person, events and recordings by user id", async () => {
+  const { req, login } = await testApp();
+  const a = await login("ph@example.com");
+  const userId = ((await (await req("/api/me", {}, a)).json()) as { user: { id: string } }).user.id;
+  vi.stubEnv("POSTHOG_PERSONAL_API_KEY", "phx_test");
+  const posthog = vi.fn(async () => new Response(null, { status: 202 }));
+  vi.stubGlobal("fetch", posthog);
+  try {
+    expect((await req("/api/me", { method: "DELETE" }, a)).status).toBe(200);
+  } finally {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  }
+  expect(posthog).toHaveBeenCalledWith("https://eu.i.posthog.com/api/projects/@current/persons/bulk_delete/", expect.objectContaining({
+    method: "POST",
+    headers: expect.objectContaining({ authorization: "Bearer phx_test" }),
+    body: JSON.stringify({ distinct_ids: [userId], delete_events: true, delete_recordings: true }),
+  }));
 });

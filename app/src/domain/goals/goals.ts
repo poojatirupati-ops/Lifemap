@@ -22,7 +22,7 @@ export function newGoal(plan: GoalInputs, id: number, key: string, other?: Other
   if (!category) throw new Error(`unknown goal ${key}`)
   return {
     id,
-    key: key,
+    key,
     name: other?.name ?? category.title,
     emoji: other?.emoji ?? category.emoji,
     kind: category.kind,

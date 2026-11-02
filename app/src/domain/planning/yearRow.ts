@@ -50,4 +50,4 @@ export function yearRow({
   }
 }
 
-const pick = ({ id, name, emoji: e, kind }: Goal) => ({ id, name, e, kind })
+const pick = ({ id, name, emoji, kind }: Goal) => ({ id, name, e: emoji, kind })

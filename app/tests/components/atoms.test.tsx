@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { runOriginal } from '../golden/origSlice.ts'
 import { fresh } from '../../src/state/fresh.ts'
 import { useStore } from '../../src/state/store.ts'
-import type { Plan } from '../../src/state/types.ts'
+import type { Plan, Snapshot } from '../../src/state/types.ts'
+import { fromOriginal, toOriginal } from '../../src/state/migrate.ts'
 import financesPartial from '../fixtures/finances-partial.json'
 import AppHead from '../../src/components/frame/AppHead.tsx'
 import Brand from '../../src/components/frame/Brand.tsx'
@@ -20,13 +21,13 @@ const original = runOriginal(
 )
 
 /** Puts the same plan and screen into both apps. */
-function setBoth(patch: Partial<Plan>, screen = 'D0') {
+function setBoth(patch: Partial<Snapshot>, screen = 'D0') {
   const plan = { ...fresh(), ...patch }
-  useStore.getState().load({ ...plan, screen: screen })
+  useStore.getState().load({ ...plan, screen })
   // Static rendering reads the store's initial state object (zustand's hook closes over it, so a
   // spy on useStore.getInitialState is never called); copy the state each test sets into it.
   Object.assign(useStore.getInitialState(), useStore.getState())
-  original.setState({ ...original.fresh(), ...patch, scr: screen })
+  original.setState({ ...original.fresh(), ...toOriginal(patch), scr: screen })
 }
 
 /** The original's markup without its data-a dispatcher attributes. */
@@ -62,7 +63,7 @@ describe('frame atoms match the original markup', () => {
     expect(markup(<>{AppHead({ title: 'Home', sub: 'Hello', back })}</>)).toBe(
       sameDom(withoutActions(original.appHead('Home', 'Hello', 'go|D0'))),
     )
-    setBoth({ ...financesPartial, hasResults: true } as Partial<Plan>)
+    setBoth({ ...fromOriginal<Plan>(financesPartial), hasResults: true })
     const needsLook = original.hdrBar().match(/class="badge" aria-hidden="true">(\d+)/)?.[1]
     expect(needsLook).toBeDefined()
     expect(markup(<HdrBar needsLook={Number(needsLook)} />)).toBe(
@@ -84,7 +85,7 @@ describe('frame atoms match the original markup', () => {
         sameDom(withoutActions(original.flowHead(1, 'Step 1', 'T', '', 'go|D0'))),
       )
     }
-    const verified = { ...fresh().account, ev: true, sv: true }
+    const verified = { ...fresh().account, emailVerified: true }
     setBoth({ inShell: true, tab: 'plan', account: verified }, 'P2')
     expect(markup(<PbBar />)).toBe(sameDom(original.pbBar()))
   })

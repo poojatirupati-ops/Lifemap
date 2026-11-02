@@ -18,7 +18,7 @@ export const Head = () =>
   AppHead({ title: 'My Plan', sub: 'Drag your goals. Your results update below.' })
 
 export function Body() {
-  const editAll = useStore((store) => store.plan.editingGoals)
+  const editAll = useStore((store) => store.editingGoals)
   const openAddGoal = useStore((store) => store.openAddGoal)
   const toggleEditGoals = useStore((store) => store.toggleEditGoals)
   useScrollToSection()

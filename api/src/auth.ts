@@ -4,10 +4,10 @@ import { sso } from "@better-auth/sso";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
-import { admin, emailOTP, organization } from "better-auth/plugins";
+import { admin, captcha, emailOTP, openAPI, organization } from "better-auth/plugins";
 import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/organization/access";
-import { SendEmailCommand, type SESv2Client } from "@aws-sdk/client-sesv2";
+import { SendEmailCommand, SESv2Client } from "@aws-sdk/client-sesv2";
 import { eq, sql } from "drizzle-orm";
 import type { Hono } from "hono";
 import type { Db } from "./db";
@@ -16,9 +16,9 @@ import { type Files, removeDocuments } from "./files";
 import { DIRECT_ORG_ID, hostOf, mergeTenantConfig, tenantForHost } from "./tenant";
 const { erasedUser, member, otpEmailLimit, ssoProvider, verification } = schema;
 
-// Tenant roles (organization plugin). Only what is used now: tenant admins edit their tenant's branding; customers have no tenant permissions (their own data is reached by user id, not by role).
+// Tenant roles (organization plugin). Only what is used now: tenant admins edit their tenant's branding and invite people; customers have no tenant permissions (their own data is reached by user id, not by role).
 const ac = createAccessControl(defaultStatements);
-export const tenantRoles = { admin: ac.newRole({ organization: ["update"] }), customer: ac.newRole({}) };
+export const tenantRoles = { admin: ac.newRole({ organization: ["update"], invitation: ["create", "cancel"] }), customer: ac.newRole({}) };
 
 /** The provider's organization, if this auth request is an SSO sign-in (OIDC callback or SAML ACS carry :providerId). */
 const ssoOrg = async (db: Db, providerId: unknown) => {
@@ -30,23 +30,34 @@ const ssoOrg = async (db: Db, providerId: unknown) => {
 /** `tenant`: display name of the tenant the code was asked for on (organization name), for the From name and subject. */
 export type SendOtp = (email: string, otp: string, tenant?: string) => void | Promise<void>;
 
-// Dev sender: logs the code (never wire in production: codes would reach CloudWatch). Production uses sesOtp.
-export const logOtp: SendOtp = (email, otp) => console.log(`[otp] ${email.replace(/^(.).*(@.*)$/, "$1***$2")}: ${otp}`);   // masked address: the dev log carries no full email
+const mask = (email: string) => email.replace(/^(.).*(@.*)$/, "$1***$2"); // the dev log carries no full email
 
-/** Production sender: SESv2 SendEmail from a verified identity (eu-west-1). Plain text, no tracking (no configuration set); never logs the code or address. */
-export const sesOtp = (ses: SESv2Client, from: string): SendOtp => async (email, otp, tenant = "LifeMap") => {
+// Dev sender: logs the code (never wire in production: codes would reach CloudWatch). Production uses sesOtp.
+export const logOtp: SendOtp = (email, otp) => console.log(`[otp] ${mask(email)}: ${otp}`);
+
+/** Plain-text email from `tenant` (the From display name). */
+export type SendMail = (to: string, subject: string, body: string, tenant?: string) => Promise<void>;
+
+/** SESv2 SendEmail from a verified identity (eu-west-1). Plain text, no tracking (no configuration set); never logs the address or body. */
+export const sesMail = (ses: SESv2Client, from: string): SendMail => async (to, subject, body, tenant = "LifeMap") => {
   await ses.send(new SendEmailCommand({
     // RFC 2047 encoded display name: safe for any tenant name (accents, quotes) without header injection.
     FromEmailAddress: `=?UTF-8?B?${Buffer.from(tenant).toString("base64")}?= <${from}>`,
-    Destination: { ToAddresses: [email] },
-    Content: {
-      Simple: {
-        Subject: { Data: `Your ${tenant} sign-in code`, Charset: "UTF-8" },
-        Body: { Text: { Data: `Your ${tenant} sign-in code is ${otp}\n\nIt expires in 5 minutes. If you did not ask for it, you can ignore this email.`, Charset: "UTF-8" } },
-      },
-    },
+    Destination: { ToAddresses: [to] },
+    Content: { Simple: { Subject: { Data: subject, Charset: "UTF-8" }, Body: { Text: { Data: body, Charset: "UTF-8" } } } },
   }));
 };
+
+/** Production OTP sender. */
+export const sesOtp = (ses: SESv2Client, from: string): SendOtp => (email, otp, tenant = "LifeMap") =>
+  sesMail(ses, from)(email, `Your ${tenant} sign-in code`, `Your ${tenant} sign-in code is ${otp}\n\nIt expires in 5 minutes. If you did not ask for it, you can ignore this email.`, tenant);
+
+let ses: SESv2Client | undefined;
+/** Notification emails (invitations, bookings): SES when lambda.ts set OTP_SENDER=ses, else the masked dev log (subject only). Read per call so tests can stub env. */
+export const sendMail: SendMail = (to, subject, body, tenant) =>
+  process.env.OTP_SENDER === "ses"
+    ? sesMail((ses ??= new SESv2Client({ region: "eu-west-1" })), process.env.OTP_FROM ?? "")(to, subject, body, tenant)
+    : Promise.resolve(console.log(`[mail] ${mask(to)}: ${subject}`));
 
 /** sha256 of the lower-cased email: the only form an erased or rate-limited address is kept in. Same as Postgres `encode(sha256(convert_to(lower(email),'UTF8')),'hex')`. */
 export const emailHash = (email: string) => createHash("sha256").update(email.toLowerCase()).digest("hex");
@@ -94,7 +105,15 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) =>
     baseURL: baseURL(),
     database: drizzleAdapter(db, { provider: "pg", schema }),
     // Per-IP limits kept in Postgres, so they hold across Lambda instances. Off in dev/tests, where every request shares one IP-less bucket.
+    // The emailOTP plugin's own rules already cap OTP send and sign-in at 3 per minute per IP; the per-email cap is the hook below.
     rateLimit: { enabled: process.env.NODE_ENV === "production", storage: "database" },
+    // Session lifetime (Better Auth defaults, stated): 7 days, refreshed daily; deleteUser needs a session under freshAge (me.ts reads it).
+    // Sign out everywhere: Better Auth's own /revoke-sessions and /revoke-other-sessions.
+    session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24, freshAge: 60 * 60 * 24 },
+    // Secure (and __Secure- prefixed) cookies in production even if a request arrives over http; httpOnly + SameSite=Lax are Better Auth defaults.
+    advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
+    // The openAPI plugin's own HTTP endpoints are off: its schema is served only through GET /api/openapi.json (platform admins in production).
+    disabledPaths: ["/open-api/generate-schema"],
     // A tenant's own host is trusted for requests made on it (hosts are set by platform admins only).
     trustedOrigins: async (req) => {
       const host = hostOf(req?.headers);
@@ -132,6 +151,7 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) =>
         if (ctx.path === "/sso/register" && !ctx.body?.organizationId)
           throw new APIError("FORBIDDEN", { message: "An SSO provider must belong to an organization" });
         // Per-email OTP limit, on in every environment: stops email-bombing and code cycling from many IPs.
+        // Better Auth gap: its rateLimit (customRules, customStorage) always keys on IP + path, never on the request body, so it cannot count per email.
         if (ctx.path !== "/email-otp/send-verification-otp") return;
         if ((await countOtpSend(db, String(ctx.body?.email ?? ""))) > OTP_SENDS_PER_EMAIL)
           throw new APIError("TOO_MANY_REQUESTS", { message: "Too many codes sent to this email. Try again in an hour." });
@@ -146,6 +166,9 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) =>
         ac,
         roles: tenantRoles,
         creatorRole: "admin",
+        // The app opens the invitation from ?invitation=<id> (accept via /api/auth/organization/accept-invitation).
+        sendInvitationEmail: ({ id, email, organization: org }) =>
+          sendMail(email, `You're invited to ${org.name}`, `You have been invited to join ${org.name} on LifeMap.\n\nAccept: ${baseURL() ?? ""}/?invitation=${id}\n\nIf you were not expecting this, you can ignore this email.`, org.name),
         allowUserToCreateOrganization: (user) => user.role === "admin",
         // Tenant config lives in the plugin's own `metadata`: validated and merged here; only platform admins touch `host`.
         organizationHooks: {
@@ -167,6 +190,11 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) =>
           getRole: async ({ userInfo }) => (userInfo.lifemapRole === "admin" ? "admin" : "customer") as "member",
         },
       }),
+      openAPI({ disableDefaultReference: true }),
+      // Bot check (Cloudflare Turnstile) on OTP send and OTP sign-in: off unless CAPTCHA_ENABLED=true and TURNSTILE_SECRET_KEY is set. The client sends the widget token in x-captcha-response.
+      ...(process.env.CAPTCHA_ENABLED === "true" && process.env.TURNSTILE_SECRET_KEY
+        ? [captcha({ provider: "cloudflare-turnstile", secretKey: process.env.TURNSTILE_SECRET_KEY, endpoints: ["/email-otp/send-verification-otp", "/sign-in/email-otp"] })]
+        : []),
     ],
   });
 export type Auth = ReturnType<typeof createAuth>;

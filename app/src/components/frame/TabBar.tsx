@@ -13,7 +13,7 @@ const TABS = [
 
 /** The main tab bar; the brand shows on desktop only (CSS) and My Plan is the raised centre button. */
 export default function TabBar() {
-  const currentTab = useStore((store) => store.plan.tab)
+  const currentTab = useStore((store) => store.tab)
   const switchTab = useStore((store) => store.switchTab)
 
   return (

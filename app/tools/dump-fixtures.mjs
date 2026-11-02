@@ -1,6 +1,6 @@
 // Captures JSON snapshots of the ORIGINAL prototype's state S from :8080 into tests/fixtures/*.json.
 // Usage: node tools/dump-fixtures.mjs   (fixed __TODAY, reduced motion; re-runnable)
-import { chromium } from 'playwright-core'
+import { chromium } from '@playwright/test'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { TODAY } from './today.mjs'
 

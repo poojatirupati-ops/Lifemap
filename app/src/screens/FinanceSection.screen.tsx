@@ -5,12 +5,12 @@ import Emo from '../components/ui/Emo.tsx'
 import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
 import { currentSection, sectionMode } from '../state/finances.ts'
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
+import type { Plan, Ui } from '../state/types.ts'
 
 export const key = 'P3'
-export const id = (plan: Plan) => `P3-${plan.financeSection! + 1}`
-export const note = (plan: Plan) =>
-  `Section ${plan.financeSection! + 1} of 6 · ${currentSection(plan)!.title}. Upload vs Type it; every field has "Not sure? See an example" (§15), which never fills the field.`
+export const id = (_: Plan, ui: Ui) => `P3-${ui.financeSection! + 1}`
+export const note = (_: Plan, ui: Ui) =>
+  `Section ${ui.financeSection! + 1} of 6 · ${currentSection(ui)!.title}. Upload vs Type it; every field has "Not sure? See an example" (§15), which never fills the field.`
 
 const SUBTITLE: Record<string, string> = {
   about: 'Mostly filled in from your answers. Just check it.',
@@ -23,10 +23,10 @@ const MODES = [
 
 // ScreenHost calls Head as a plain function (no hooks), so it reads the store directly.
 export function Head() {
-  const { plan, leaveSection } = useStore.getState()
-  const { id, emoji, title } = currentSection(plan)!
+  const { financeSection, leaveSection } = useStore.getState()
+  const { id, emoji, title } = currentSection({ financeSection })!
   return FlowHead({
-    eye: `Your finances · ${plan.financeSection! + 1} of 6`,
+    eye: `Your finances · ${financeSection! + 1} of 6`,
     title: <Emo>{`${emoji} ${title}`}</Emo>,
     sub: SUBTITLE[id] ?? 'Upload a document or type it in. Round figures are fine.',
     back: leaveSection,
@@ -34,8 +34,8 @@ export function Head() {
 }
 
 export function Body() {
-  const section = useStore(({ plan }) => currentSection(plan))
-  const mode = useStore(({ plan }) => sectionMode(plan))
+  const section = useStore(currentSection)
+  const mode = useStore((store) => sectionMode(store.plan, store))
   const chooseSectionMode = useStore((store) => store.chooseSectionMode)
   if (!section) return null
 

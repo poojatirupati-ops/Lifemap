@@ -1,6 +1,4 @@
-// The customer's plan, grouped by context. Field names follow the original so captured fixtures load as they are.
-// TODO(Q-01): rename the prototype names (k, e, f, di, tlHl, fsec, upl, um, wi, xs, vf, ...) once every
-// caller has moved off them; map them only in load/toSnapshot, as listsFedTotals <-> dv already is.
+// The customer's plan (saved) and the screen state (never saved); savedPlan in migrate.ts checks a loaded plan.
 import type { Upload } from '../domain/finances/upload.ts'
 import type { StatementUpload } from '../domain/calc/statements.ts'
 import type { ExpertKind } from '../domain/identity/advisers.data.ts'
@@ -68,20 +66,19 @@ interface Identity {
   whyNote: string
   discoverStep: number
   answers: Record<string, number>
+  /** Welcome, Discover and the reveal are done: sign-in lands on Home from now on. */
+  onboarded?: boolean
   about: About
   account: {
     name: string
     email: string
-    mobile: string
     termsAccepted: boolean
     marketingConsent: boolean
     emailVerified: boolean
-    mobileVerified: boolean
     passkey: boolean
     photo?: string
   }
   partner: { mode: string | null; email: string; sent: boolean; name: string }
-  adminView?: boolean
 }
 
 /** Goals, the timeline and the planning assumptions. */
@@ -99,7 +96,6 @@ interface Goals {
   preferredWhatIf: Goals['whatIf'] | null
   inflation: number | null
   inflOther: boolean
-  editingInflation: boolean
   assumptionSet: string
   monthlySaving: number | null
   /** The chosen saving reaches the rule's saving, so the plan saves at least that. */
@@ -134,9 +130,7 @@ interface Finances {
   /** Documents that could not be read; they stay on the checklist. */
   missingDocs?: string[]
   listsFedTotals?: Record<string, boolean>
-  financeSection: number | null
   entryMode: Record<string, string>
-  upload: Upload | null
   checked: boolean
   moneyProfile: {
     answers: Record<string, number>
@@ -148,15 +142,13 @@ interface Finances {
     /** Where the money profile returns to when it closes. */
     returnTo?: string | null
   }
-  /** The Explore statement being read or confirmed. */
-  statement: StatementUpload | null
   /** Statements uploaded, by calculator group. */
   statements: Record<string, UploadedStatement>
   /** Rates the customer doesn't know, left for their adviser. */
   ratesForAdviser?: Record<string, boolean>
 }
 
-/** A statement the customer uploaded and confirmed; `v` holds the figures read from it. */
+/** A statement the customer uploaded and confirmed, with the figures read from it. */
 export interface UploadedStatement {
   name: string
   date: string
@@ -166,9 +158,10 @@ export interface UploadedStatement {
 /** The My Plan sections a link can scroll to. */
 export type PlanSection = 'timeline' | 'results' | 'wi' | 'fnd'
 
-/** Where the customer is in the app, plus open/closed UI flags that the original kept in its state. */
-interface Navigation {
-  hasResults: boolean
+/** Where the customer is and what is open: never saved with the plan. */
+export interface Ui {
+  screen: string
+  sheet: string | null
   inShell: boolean
   planBuilder: boolean
   tab: string
@@ -179,12 +172,12 @@ interface Navigation {
   expertsPage: string
   resultsView: 'journey' | 'chapters' | 'detail'
   cameFrom: string | null
+  /** The screen the sign-in wall caught the visitor on. */
   returnTo?: string
   timelineOpen: Record<string, boolean>
   highlightedGoal: number | null
   /** index of the open life chapter */
   openChapter: number | null
-  understood: boolean
   explorePages: { page: string; param?: string }[]
   /** The focus area Explore's card shows. */
   focusArea?: number
@@ -199,16 +192,24 @@ interface Navigation {
   calcStatementKeys: Record<string, string[]>
   calcValues: Record<string, Record<string, number>>
   editingAnswers: Record<string, unknown>
+  editingInflation: boolean
+  financeSection: number | null
+  upload: Upload | null
+  /** The Explore statement being read or confirmed. */
+  statement: StatementUpload | null
+  adminView?: boolean
+  /** The open box on Your assumptions, and where its Back goes. */
+  openAssumption?: string | null
+  assumptionsBack?: string
 }
 
 /** Saving the plan and booking an adviser. */
 interface Booking {
-  save: { email: string; comms: boolean; done: boolean; asked: boolean }
   adviserQuestions: string[]
   booking: {
     stage: string | null
     adviser: number
-    share: { report: boolean; finances: boolean; docs: boolean; moneyProfile: boolean }
+    share: { report: boolean; fin: boolean; docs: boolean; um: boolean }
     agree: boolean
     mode: string
     day?: string
@@ -220,12 +221,12 @@ interface Booking {
   }
   /** Protection needs from the calculators, noted for the adviser. */
   needs?: { life?: number; incomeProtection?: number }
+  /** Results have been shown once. */
+  hasResults: boolean
+  understood: boolean
 }
 
-export type Plan = Identity & Goals & Finances & Navigation & Booking
+export type Plan = Identity & Goals & Finances & Booking
 
-/** A plan in the original's saved shape (fixtures, reviewer jumps, view-equal): it also carries the screen and sheet. */
-export type Snapshot = Plan & { screen?: string; sheet?: string | null }
-
-// TODO(Q-01): old name; callers move to Plan
-export type State = Plan
+/** A whole start point (fixtures, reviewer jumps, a restored plan): the plan plus any screen state. */
+export type Snapshot = Plan & Partial<Ui>

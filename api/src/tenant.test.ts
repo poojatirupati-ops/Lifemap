@@ -1,8 +1,12 @@
 import { and, eq } from "drizzle-orm";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { member, organization, planRow, user } from "./db/schema";
 import { FEATURE_DEFAULTS, isEnabled } from "./tenant";
 import { testApp } from "./testing";
+
+// PostHog client stub: flags per organization group, used once POSTHOG_API_KEY is set.
+const groups = vi.hoisted(() => ({}) as Record<string, Record<string, boolean>>);
+vi.mock("posthog-node", () => ({ PostHog: class { waitForLocalEvaluationReady = async () => true; getAllFlags = async (_: string, o: { groups: { organization: string } }) => groups[o.groups.organization] ?? {}; } }));
 
 const A = { "x-forwarded-host": "app.cu-a.example" };
 const B = { "x-forwarded-host": "app.cu-b.example" };
@@ -70,7 +74,22 @@ test("isolation: plans and consents per tenant and per user; no switching into a
   await expect(db.insert(planRow).values({ userId: ann.id, organizationId: "lifemap-direct", version: 1, data: {} as never })).rejects.toThrow();
 });
 
-test("tenant admin updates own tenant's branding and features only; customers and bad config refused; host is platform-only", async () => {
+test("flags: code defaults without PostHog; with it, the organization group's flags override them", async () => {
+  const { req } = await tenants();
+  const flagsOf = async (headers: Record<string, string>) => ((await (await req("/api/tenant", { headers })).json()) as { features: unknown }).features;
+  groups["org-a"] = { ask: false, adviserBooking: true };
+  expect(await flagsOf(A)).toEqual(FEATURE_DEFAULTS); // no POSTHOG_API_KEY
+  process.env.POSTHOG_API_KEY = "phc_test";
+  try {
+    expect(await flagsOf(A)).toEqual({ ...FEATURE_DEFAULTS, ask: false, adviserBooking: true });
+    expect(await flagsOf(B)).toEqual(FEATURE_DEFAULTS);
+    expect([await isEnabled({ id: "org-a" }, "adviserBooking"), await isEnabled({ id: "org-b" }, "adviserBooking")]).toEqual([true, false]);
+  } finally {
+    delete process.env.POSTHOG_API_KEY;
+  }
+});
+
+test("tenant admin updates own tenant's branding only; customers and bad config refused; host is platform-only", async () => {
   const { req, login, db } = await tenants();
   const adm = await login("staff@cu-a.example", A);
   await db.update(member).set({ role: "admin" }).where(eq(member.organizationId, "org-a"));
@@ -79,36 +98,32 @@ test("tenant admin updates own tenant's branding and features only; customers an
     req("/api/auth/organization/update", { method: "POST", body: { organizationId, data } }, cookie);
   const tenantA = async () => (await (await req("/api/tenant", { headers: A })).json()) as Record<string, unknown>;
 
-  // Defaults until a tenant overrides; missing keys keep falling back.
-  expect((await tenantA()).features).toEqual(FEATURE_DEFAULTS);
-  const brand = { name: "CU A", logo: "https://cdn.cu-a.example/logo.svg", metadata: { colors: { primary: "#0a3d62" }, features: { ask: false }, rates: { growth: 0.04 } } };
+  const brand = { name: "CU A", logo: "https://cdn.cu-a.example/logo.svg", metadata: { colors: { primary: "#0a3d62" }, rates: { growth: 0.04 } } };
   expect((await update(adm, "org-a", brand)).status).toBe(200);
-  expect(await tenantA()).toEqual({ id: "org-a", slug: "cu-a", name: "CU A", logo: brand.logo, colors: { primary: "#0a3d62" }, features: { ...FEATURE_DEFAULTS, ask: false }, rates: { growth: 0.04 } });
+  expect(await tenantA()).toEqual({ id: "org-a", slug: "cu-a", name: "CU A", logo: brand.logo, colors: { primary: "#0a3d62" }, features: FEATURE_DEFAULTS, rates: { growth: 0.04 }, sso: false });
   const [orgA] = await db.select().from(organization).where(eq(organization.id, "org-a"));
-  expect([isEnabled(orgA, "ask"), isEnabled(orgA, "adviserBooking")]).toEqual([false, false]);
   expect(JSON.parse(orgA.metadata!).host).toBe("app.cu-a.example"); // a partial update keeps the host
 
   // Tenant A's admin cannot touch B (plugin: not a member, 400); A's customers cannot touch A.
-  expect((await update(adm, "org-b", { metadata: { features: { ask: false } } })).status).toBe(400);
-  expect((await update(cust, "org-a", { metadata: { features: { ask: true } } })).status).toBe(403);
-  expect(((await (await req("/api/tenant", { headers: B })).json()) as { features: unknown }).features).toEqual(FEATURE_DEFAULTS);
-  for (const bad of [{ logo: "javascript:alert(1)" }, { metadata: { colors: { primary: "red;}" } } }, { metadata: { script: "x" } }, { metadata: { features: { unknownFlag: true } } }])
+  expect((await update(adm, "org-b", { metadata: { colors: { primary: "#000" } } })).status).toBe(400);
+  expect((await update(cust, "org-a", { metadata: { colors: { primary: "#000" } } })).status).toBe(403);
+  // Flags are no longer tenant config (PostHog, LifeMap staff only).
+  for (const bad of [{ logo: "javascript:alert(1)" }, { metadata: { colors: { primary: "red;}" } } }, { metadata: { script: "x" } }, { metadata: { features: { ask: false } } }])
     expect((await update(adm, "org-a", bad)).status, JSON.stringify(bad)).toBe(400);
   expect((await update(adm, "org-a", { metadata: { host: "app.cu-b.example" } })).status).toBe(403);
-  expect((await tenantA()).features).toEqual({ ...FEATURE_DEFAULTS, ask: false });
 
   // Platform admins: create tenants and change any tenant's config (host too) without membership; nobody else can.
   expect((await req("/api/auth/organization/create", { method: "POST", body: { name: "X", slug: "x" } }, cust)).status).toBe(403);
   const patch = (cookie: string, id: string, body: unknown) => req(`/api/admin/organizations/${id}/config`, { method: "PATCH", body }, cookie);
-  expect((await patch(adm, "org-b", { metadata: { features: { ask: false } } })).status).toBe(403);
+  expect((await patch(adm, "org-b", { metadata: { colors: { primary: "#000" } } })).status).toBe(403);
   const ops = await login("ops@lifemap.example");
   await db.update(user).set({ role: "admin" }).where(eq(user.email, "ops@lifemap.example"));
   expect((await req("/api/auth/organization/create", { method: "POST", body: { name: "CU C", slug: "cu-c", metadata: { host: "app.cu-c.example" } } }, ops)).status).toBe(200);
   expect(((await (await req("/api/tenant", { headers: { "x-forwarded-host": "app.cu-c.example" } })).json()) as { slug: string }).slug).toBe("cu-c");
-  expect((await patch(ops, "org-b", { metadata: { features: { adviserBooking: true } } })).status).toBe(200);
-  expect(((await (await req("/api/tenant", { headers: B })).json()) as { features: unknown }).features).toEqual({ ...FEATURE_DEFAULTS, adviserBooking: true });
+  expect((await patch(ops, "org-b", { metadata: { rates: { growth: 0.05 } } })).status).toBe(200);
+  expect(((await (await req("/api/tenant", { headers: B })).json()) as { rates: unknown }).rates).toEqual({ growth: 0.05 });
   expect((await patch(ops, "org-b", { metadata: { host: "app.cu-a.example" } })).status).toBe(400); // host taken
-  expect((await patch(ops, "org-b", { metadata: { features: { nope: true } } })).status).toBe(400);
+  expect((await patch(ops, "org-b", { metadata: { features: { adviserBooking: true } } })).status).toBe(400);
   expect((await patch(ops, "missing", {})).status).toBe(404);
 
   // ...and no customer data: impersonation is refused.

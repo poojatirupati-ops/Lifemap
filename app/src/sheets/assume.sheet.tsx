@@ -3,7 +3,6 @@ import { useShallow } from 'zustand/react/shallow'
 import InflationChoice from '../components/finance/InflationChoice.tsx'
 import { missingChoices } from '../components/finance/requiredChoices.ts'
 import GrowthSetToggle from '../components/me/GrowthSetToggle.tsx'
-import { updateMe } from '../components/me/mePlan.ts'
 import GateNote from '../components/ui/GateNote.tsx'
 import { assumption } from '../domain/planning/assumptions.ts'
 import { budget2027Note, rulesVersion } from '../domain/planning/rates.ts'
@@ -19,10 +18,10 @@ export const key = 'assume'
 const GAP = { marginTop: 12 }
 
 function changeAssumptions() {
-  updateMe((plan) => {
-    plan.tab = 'me'
-    plan.mePage = 'asm'
-    plan.asmBack = 'meback'
+  useStore.getState().update((_, ui) => {
+    ui.tab = 'me'
+    ui.mePage = 'asm'
+    ui.assumptionsBack = 'meback'
   })
   useStore.getState().closeSheet()
 }

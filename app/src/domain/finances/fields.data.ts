@@ -25,23 +25,23 @@ export type FinanceField = {
   visible?: (plan: FieldContext) => boolean
 }
 
-export const ownsHome = ({ figures: fin }: Pick<Plan, 'figures'>) => /^Own/.test(fin.home || '')
-const hasMortgage = ({ figures: fin }: FieldContext) => fin.home === 'Own with mortgage'
+export const ownsHome = ({ figures }: Pick<Plan, 'figures'>) => /^Own/.test(figures.home || '')
+const hasMortgage = ({ figures }: FieldContext) => figures.home === 'Own with mortgage'
 const downsizing = (plan: FieldContext) =>
   ownsHome(plan) && plan.figures.homeUse === "Yes, I'd downsize"
 /** A partner whose income counts in the plan. */
-export const partnerEarns = ({ about, figures: fin }: Pick<Plan, 'about' | 'figures'>) =>
-  !!about.partner && toNumber(fin.pIncome) > 0
+export const partnerEarns = ({ about, figures }: Pick<Plan, 'about' | 'figures'>) =>
+  !!about.partner && toNumber(figures.pIncome) > 0
 const YES_NO_NOT_SURE = ['Yes', 'No', 'Not sure']
 const { ae } = rules2026
 
-const autoEnrolmentApplies = ({ figures: fin, about }: FieldContext) =>
-  fin.work === 'Employed' &&
+const autoEnrolmentApplies = ({ figures, about }: FieldContext) =>
+  figures.work === 'Employed' &&
   about.age != null &&
   about.age >= ae.ageMin &&
   about.age <= ae.ageMax &&
-  +fin.income > ae.earnMin &&
-  !(+fin.pensionM > 0)
+  +figures.income > ae.earnMin &&
+  !(+figures.pensionM > 0)
 
 const otherMortgageOwed = ({ lists }: FieldContext) =>
   (lists?.mort2 ?? []).some((item) => hasValue(item.fields.owed) && +item.fields.owed > 0)
@@ -156,7 +156,7 @@ export const FINANCE_FIELDS: Record<string, FinanceField> = {
     min: 18,
     max: 100,
     optional: true,
-    visible: ({ figures: fin }) => toNumber(fin.polLump) > 0,
+    visible: ({ figures }) => toNumber(figures.polLump) > 0,
   },
   polInc: {
     label: 'Policy or annuity paying a regular income: € a year',
@@ -170,7 +170,7 @@ export const FINANCE_FIELDS: Record<string, FinanceField> = {
     min: 18,
     max: 100,
     optional: true,
-    visible: ({ figures: fin }) => toNumber(fin.polInc) > 0,
+    visible: ({ figures }) => toNumber(figures.polInc) > 0,
   },
   propValue: { label: 'Other property: value', type: 'eur', optional: true, hint: 'Optional' },
   rentM: {
@@ -201,7 +201,7 @@ export const FINANCE_FIELDS: Record<string, FinanceField> = {
     label: 'Credit cards: interest rate (APR %)',
     type: 'pct',
     fromList: true,
-    visible: ({ figures: fin }) => toNumber(fin.cardBal) > 0,
+    visible: ({ figures }) => toNumber(figures.cardBal) > 0,
   },
   loanBal: {
     label: 'Other loans (car, personal, credit union): total owed',
@@ -213,7 +213,7 @@ export const FINANCE_FIELDS: Record<string, FinanceField> = {
     label: 'Other loans: interest rate (APR %)',
     type: 'pct',
     fromList: true,
-    visible: ({ figures: fin }) => toNumber(fin.loanBal) + toNumber(fin.debt) > 0,
+    visible: ({ figures }) => toNumber(figures.loanBal) + toNumber(figures.debt) > 0,
   },
   mort2: {
     label: 'Other-property mortgage: years left or repayment',
@@ -239,7 +239,7 @@ export const FINANCE_FIELDS: Record<string, FinanceField> = {
     optional: true,
     hint: 'Optional. Only your own share gets tax relief. If you leave it blank, you choose your share in Your assumptions',
     fromList: true,
-    visible: ({ figures: fin }) => +fin.pensionM > 0 && fin.work !== 'Not working',
+    visible: ({ figures }) => +figures.pensionM > 0 && figures.work !== 'Not working',
   },
   ae: {
     label: 'Have you been auto-enrolled in My Future Fund?',
@@ -269,10 +269,10 @@ export const isFieldVisible = (key: string, plan: FieldContext) =>
   FINANCE_FIELDS[key].visible?.(plan) ?? true
 
 /** "Do you have a mortgage?" answers from Your home when they own it. */
-export function mortgageAnswer({ figures: fin }: Pick<Plan, 'figures'>): string | null {
-  if (fin.home === 'Own with mortgage') return 'Yes'
-  if (fin.home === 'Own outright') return 'No'
-  return fin.mortYN || null
+export function mortgageAnswer({ figures }: Pick<Plan, 'figures'>): string | null {
+  if (figures.home === 'Own with mortgage') return 'Yes'
+  if (figures.home === 'Own outright') return 'No'
+  return figures.mortYN || null
 }
 
 /** A field's value as stored, or the mortgage answer for the virtual field. */

@@ -60,18 +60,18 @@ export function choosePlanEnd(age: number) {
 
 /** One of the inflation chips. */
 export const chooseInflation = (rate: number) =>
-  useStore.getState().update((plan) => {
+  useStore.getState().update((plan, ui) => {
     plan.inflation = rate
     plan.inflOther = false
-    plan.editingInflation = false
+    ui.editingInflation = false
     // TODO(R-17): the version history slice; the original keeps a fixed date
     addVersion(plan, `Inflation: ${percent(rate)}`)
   })
 
 export const chooseOwnInflation = () =>
-  useStore.getState().update((plan) => {
+  useStore.getState().update((plan, ui) => {
     plan.inflOther = true
-    plan.editingInflation = true
+    ui.editingInflation = true
   })
 
 /** A rate typed as a percentage. */

@@ -17,17 +17,17 @@ import Emo from '../components/ui/Emo.tsx'
 import { useStore } from '../state/store.ts'
 
 export const key = 'CALC'
-export const id = (_plan: unknown, param = '') => 'CALC-' + param
+export const id = (_plan: unknown, _ui: unknown, param = '') => 'CALC-' + param
 export const note =
   'Calculator (Lifecast): pre-filled from what you told us, live result, what-if sliders. "Add to my plan" adds a goal after a confirm step.'
 
 // A call, not <AppHead />: the shell's splitHead pins the top bar by reading the returned tree.
 // Head runs inside ScreenHost's render, which subscribes to the plan, so getState() is current.
 export function Head({ param = '' }: { param?: string }) {
-  const plan = useStore.getState().plan
+  const store = useStore.getState()
   const { id, tip } = calculatorFor(param)
   const tool = toolById(id)
-  const tipText = tip?.(calcContext(toolPlan(plan, id), id))
+  const tipText = tip?.(calcContext(toolPlan(store.plan, store, id), id))
   return AppHead({
     title: <Emo>{`${tool.emoji} ${tool.name}`}</Emo>,
     sub: (
@@ -41,7 +41,7 @@ export function Head({ param = '' }: { param?: string }) {
       </>
     ),
     back: exploreBack,
-    needsLook: unseenLooks(plan),
+    needsLook: unseenLooks(store.plan),
   })
 }
 

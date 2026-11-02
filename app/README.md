@@ -34,3 +34,7 @@ See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rule
 ## Layout check
 
 `scripts/overflow-check.js`: paste into the console of the running app (`npm run dev`) to check Welcome, Discover, Reveal and Sign-in for overflow at 320, 375, 768 and 1280.
+
+## Screen check
+
+`npm run test:e2e` compares the app (`npm run dev`, :5173) with the screenshot baselines in `tests/e2e/__screenshots__/` (Chrome, 375x812). Refresh the baselines from the original prototype on :8080 with `LM_BASELINE=1 npx playwright test --update-snapshots`; P1 and P1E are always captured from the app.

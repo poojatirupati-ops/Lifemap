@@ -2,13 +2,7 @@
 import { EXPERTS } from '../../domain/identity/advisers.data.ts'
 import { project } from '../../domain/planning/project.ts'
 import type { Plan } from '../../state/types.ts'
-import {
-  adviserOf,
-  firstName,
-  specialistFor,
-  stageOf,
-  type Stage,
-} from '../../domain/identity/booking.ts'
+import { adviserOf, firstName, specialistFor, type Stage } from '../../domain/identity/booking.ts'
 
 export const STAGES: Record<Stage, { id: string; note: string }> = {
   c0: {
@@ -33,9 +27,9 @@ export const STAGES: Record<Stage, { id: string; note: string }> = {
 }
 
 /** The step's title, subtitle and the step Back returns to. */
-export function headOf(plan: Plan): { title: string; sub?: string; back?: Stage } {
+export function headOf(plan: Plan, stage: Stage): { title: string; sub?: string; back?: Stage } {
   const adviser = firstName(adviserOf(plan).name)
-  switch (stageOf(plan)) {
+  switch (stage) {
     case 'c0':
       return { title: 'Help your adviser know you', back: 'home' }
     case 'c1': {

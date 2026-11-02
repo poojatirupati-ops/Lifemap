@@ -59,3 +59,6 @@ Before writing any non-trivial helper, search npm for a maintained library that 
 - Date maths: date-fns. Forms: react-hook-form + zod. Dialogs, focus traps: Radix. Drag: dnd-kit / @use-gesture. Class names: clsx. Number/currency: Intl.
 - Line counting (npm run size): cloc.
 Every agent reports any hand-written utility it kept, with the library it checked and why it did not fit.
+
+## Testing: do not over-test (user)
+One test per real behaviour or bug, through the public API of the module. No exhaustive matrices, no per-function suites, no snapshot dumps of whole screens beyond the screen baselines. Prefer the few end-to-end checks (Playwright screens + the journey spec) over many unit tests. When touching an area, delete redundant tests.

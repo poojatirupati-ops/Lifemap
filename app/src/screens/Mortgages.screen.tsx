@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import CalculatorGrid from '../components/mortgages/CalculatorGrid.tsx'
 import EligibilityCard from '../components/mortgages/EligibilityCard.tsx'
 import ExpertFab from '../components/mortgages/ExpertFab.tsx'
@@ -6,8 +5,8 @@ import MortgagePlayer from '../components/mortgages/MortgagePlayer.tsx'
 import ReadingCards from '../components/mortgages/ReadingCards.tsx'
 import SeatCard from '../components/mortgages/SeatCard.tsx'
 import VideoRow from '../components/mortgages/VideoRow.tsx'
-import { SITUATIONS } from '../components/mortgages/mortgages.data.ts'
-import { topicNamed } from '../components/explore/explore.data.ts'
+import { topicPhotoStyle } from '../components/explore/explore.data.ts'
+import { useJourneys } from '../content/cms.tsx'
 import { exploreBack } from '../state/explore.ts'
 import { pageKey, useMortgagePage } from '../state/mortgage.ts'
 
@@ -31,19 +30,19 @@ const jumpTo = (sectionId: string) => {
     ?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
 }
 
-const topic = topicNamed('Mortgages')
-const heroStyle = { '--art': 'var(--art-mortgage)', '--pos': topic.photoPosition } as CSSProperties
-
 export function Body() {
   const situation = useMortgagePage((p) => p.situation)
   const video = useMortgagePage((p) => p.video)
   const pickSituation = useMortgagePage((p) => p.pickSituation)
-  const page = SITUATIONS[situation]
+  const journeys = useJourneys()
+  const page = journeys[situation]
+  if (!page) return null
+  const { topic } = page
 
   return (
     <>
       <div className="mp">
-        <div className="dhero2" style={heroStyle}>
+        <div className="dhero2" style={topicPhotoStyle(topic)}>
           <span className="art" aria-hidden="true"></span>
           <button className="dcirc" data-a="xback" aria-label="Back" onClick={exploreBack}>
             ‹
@@ -59,7 +58,7 @@ export function Body() {
           </div>
         </div>
         <div className="mp-sit" role="group" aria-label="Your situation">
-          {SITUATIONS.map(({ name }, i) => (
+          {journeys.map(({ name }, i) => (
             <button
               key={name}
               data-a="mpsit"

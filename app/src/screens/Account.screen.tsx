@@ -1,109 +1,58 @@
 import { useState } from 'react'
 import { useStore } from '../state/store.ts'
-import { sendEmailCode, setAccount } from '../state/account.ts'
+import { sendEmailCode, setAccount, signInWithPasskey } from '../state/account.ts'
 import { useCodeEntry } from '../state/codeEntry.ts'
+import { signInWithOrganisation } from '../auth/client.ts'
+import { useTenant } from '../shell/tenant.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
-import { canSendCode, looksLikeEmail } from '../domain/identity/signIn.ts'
+import { CODE_LENGTH, looksLikeEmail } from '../domain/identity/signIn.ts'
 
 export const key = 'P1'
 export const id = key
 export const note =
-  'Account creation once, before Your finances. Consents start UNTICKED (CBI 2025).'
+  'Sign in first (O-01): one screen for new and returning users. Email code, organisation SSO for SSO tenants, passkey for returning users.'
 
-// Head is called as a plain function by ScreenHost (no hooks allowed), so it reads the store directly.
 export function Head() {
-  const { plan, go } = useStore.getState()
-  const prefilled = plan.save.done
-    ? ' Your email is filled in from when you saved your results.'
-    : ''
   return FlowHead({
-    eye: 'Step 3 · Prepare',
-    title: 'Secure your account',
-    sub: `Before you add any money figures, we check your email and mobile once.${prefilled}`,
-    back: () => go('B4'),
+    title: 'Sign in to LifeMap',
+    sub: `Enter your email and we'll send you a ${CODE_LENGTH}-digit code. New here? The same code creates your account.`,
   })
 }
 
 export function Body() {
-  // Read once: the inputs are uncontrolled, and the email hint shows for what was there on arrival.
-  const [account] = useState(() => useStore.getState().plan.account)
-  const openSheet = useStore((store) => store.openSheet)
+  // Read once: the input is uncontrolled.
+  const [email] = useState(() => useStore.getState().plan.account.email)
+  const tenant = useTenant()
 
   return (
     <>
       <div className="card">
-        <div className="field">
-          <label htmlFor="a-name">First name</label>
-          <input
-            className="in"
-            id="a-name"
-            autoComplete="given-name"
-            defaultValue={account.name}
-            onInput={(event) => setAccount({ name: event.currentTarget.value })}
-          />
-        </div>
-        <div className="field">
+        <div className="field" style={{ margin: 0 }}>
           <label htmlFor="a-email">Email</label>
           <input
             className="in"
             id="a-email"
             type="email"
-            autoComplete="email"
-            defaultValue={account.email}
+            autoComplete="email webauthn"
+            defaultValue={email}
             onInput={(event) => setAccount({ email: event.currentTarget.value })}
           />
-          {account.email !== '' && !looksLikeEmail(account.email) ? (
-            <span className="small" style={{ color: 'var(--gap-t)' }}>
-              Check your email address
-            </span>
-          ) : null}
-        </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label htmlFor="a-mob">Mobile</label>
-          <input
-            className="in"
-            id="a-mob"
-            type="tel"
-            autoComplete="tel"
-            placeholder="08x xxx xxxx"
-            defaultValue={account.mobile}
-            onInput={(event) => setAccount({ mobile: event.currentTarget.value })}
-          />
         </div>
       </div>
-      <div className="card">
-        <label className="check">
-          <input
-            type="checkbox"
-            defaultChecked={account.termsAccepted}
-            onChange={(event) => setAccount({ termsAccepted: event.currentTarget.checked })}
-          />
-          <span>
-            <b>Required:</b> Use my details to build my plan
-          </span>
-        </label>
-        <label className="check">
-          <input
-            type="checkbox"
-            defaultChecked={account.marketingConsent}
-            onChange={(event) => setAccount({ marketingConsent: event.currentTarget.checked })}
-          />
-          <span>Optional: Send me reminders and updates</span>
-        </label>
-        <p className="small" style={{ margin: '6px 0 0' }}>
-          Stored in the EU · never sold · nothing shared with an adviser unless you choose · delete
-          everything any time.
-        </p>
-        <button className="link" onClick={() => openSheet('money')}>
-          How LifeMap makes money
+      {tenant?.sso ? (
+        <button className="btn ghost" onClick={() => signInWithOrganisation(tenant.slug)}>
+          Sign in with your organisation
         </button>
-      </div>
+      ) : null}
+      <button className="link" onClick={signInWithPasskey}>
+        Sign in with Face ID or a passkey
+      </button>
     </>
   )
 }
 
 export function Foot() {
-  const ready = useStore((store) => canSendCode(store.plan.account))
+  const ready = useStore((store) => looksLikeEmail(store.plan.account.email.trim()))
   const go = useStore((store) => store.go)
   const [sending, setSending] = useState(false)
 

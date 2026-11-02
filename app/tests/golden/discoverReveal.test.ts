@@ -30,7 +30,7 @@ describe('reveal reads equal the original', () => {
         expect(plain(cushion(ours as any)), `${name} #${i}`).toEqual(
           plain(asCushion(original.cushionM())),
         )
-        const terms = moneyTerms(profileAnswers(theirs)).map(({ section, terms }) => ({
+        const terms = moneyTerms(profileAnswers(ours)).map(({ section, terms }) => ({
           k: section,
           tags: terms,
         }))

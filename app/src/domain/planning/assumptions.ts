@@ -35,28 +35,31 @@ export const isChosen = (asm: AssumptionInputs['assumptions'], key: string) =>
   chosenAssumption(asm, key) != null
 
 // two incomes, both employed: a smaller emergency fund is enough
-const twoSecureIncomes = ({ about, figures: fin }: AssumptionInputs) =>
-  !!about.partner && Number(fin.income) > 0 && Number(fin.pIncome) > 0 && fin.work === 'Employed'
+const twoSecureIncomes = ({ about, figures }: AssumptionInputs) =>
+  !!about.partner &&
+  Number(figures.income) > 0 &&
+  Number(figures.pIncome) > 0 &&
+  figures.work === 'Employed'
 
 // a State Pension a week: a share of the full rate, smaller when only partly earned
 const weeklyStatePension = (inputs: AssumptionInputs, today: Date, partly: boolean) =>
   rulesFor(assumption(inputs, 'startYear', today)).sp.week * (partly ? 0.6 : 0.8)
 
 function fallback(key: string, inputs: AssumptionInputs, today: Date) {
-  const { figures: fin, about } = inputs
+  const { figures, about } = inputs
   switch (key) {
     case 'startYear':
       return today > START_2027_FROM ? 2027 : 2026
     case 'ownShare':
-      return fin.work === 'Self-employed' ? 1 : standardValue('ownShare')
+      return figures.work === 'Self-employed' ? 1 : standardValue('ownShare')
     case 'safetyMonths':
       return standardValue(twoSecureIncomes(inputs) ? 'safetyMonthsTwo' : 'safetyMonths')
     case 'planEnd':
       return about.partner ? 95 : 90
     case 'spWeek':
-      return weeklyStatePension(inputs, today, fin.sp === 'Partly')
+      return weeklyStatePension(inputs, today, figures.sp === 'Partly')
     case 'pSpWeek':
-      return weeklyStatePension(inputs, today, (fin.pSp || 'Not sure') === 'Own partial')
+      return weeklyStatePension(inputs, today, (figures.pSp || 'Not sure') === 'Own partial')
   }
   if (!(key in FROM_STANDARD)) throw new Error(`assumption ${key} is not supported yet`)
   const [standard, marketRate] = FROM_STANDARD[key]

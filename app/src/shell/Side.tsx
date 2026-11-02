@@ -14,9 +14,9 @@ export default function Side() {
         <span className="mark"></span>LifeMap
       </h1>
       <p>
-        <b>Clickable customer-journey prototype.</b> 6 Discover questions → money personality → save
-        or skip → app (Home · Explore · My Plan · Me · Experts) → Make my plan (8 steps). Everything
-        is simulated; no data leaves this page.
+        <b>Clickable customer-journey prototype.</b> Sign in → 6 Discover questions → money
+        personality → app (Home · Explore · My Plan · Me · Experts) → Make my plan (8 steps).
+        Everything is simulated; no data leaves this page.
       </p>
       <button className="big" id="startnew" onClick={() => startFrom(fresh())}>
         ▶ Start as a new customer

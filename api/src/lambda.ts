@@ -1,4 +1,5 @@
 import { Resource } from "sst";
+import type { Context } from "aws-lambda";
 import { handle } from "hono/aws-lambda";
 
 // Resource is typed by `sst install`; cast so tsc passes without it.
@@ -12,6 +13,23 @@ process.env.DOCUMENTS_BUCKET = (Resource as unknown as Record<string, { name: st
 const sender = (Resource as unknown as Record<string, { sender: string }>).Email.sender;
 process.env.OTP_FROM = sender.includes("@") ? sender : `noreply@${sender}`;
 process.env.OTP_SENDER = "ses";
+// Feature flags (src/tenant.ts): PostHog EU, local evaluation with the personal API key.
+process.env.POSTHOG_API_KEY = r.PosthogProjectKey.value;
+process.env.POSTHOG_PERSONAL_API_KEY = r.PosthogPersonalApiKey.value;
+process.env.POSTHOG_HOST = "https://eu.i.posthog.com";
 
 const { app } = await import("./app");
-export const handler = handle(app);
+const { logger, metrics, tracer } = await import("./observe");
+const hono = handle(app);
+
+// Powertools without middy: Lambda context on every log line, cold-start annotation/metric, metrics flushed per invocation.
+export const handler = async (event: Parameters<typeof hono>[0], context: Context) => {
+  logger.addContext(context);
+  tracer.annotateColdStart();
+  metrics.captureColdStartMetric();
+  try {
+    return await hono(event, context);
+  } finally {
+    metrics.publishStoredMetrics();
+  }
+};

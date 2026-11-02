@@ -1,3 +1,4 @@
+import { useStore } from '../state/store.ts'
 import { meHead } from '../components/me/meHead.ts'
 import { backToMe } from '../components/finance/financeActions.ts'
 import { missingChoices } from '../components/finance/requiredChoices.ts'
@@ -5,7 +6,6 @@ import AssumptionGroup from '../components/me/AssumptionGroup.tsx'
 import { rememberOpenGroup } from '../components/me/assumptionActions.ts'
 import { ASSUMPTION_GROUPS, GOVERNMENT_TITLE } from '../domain/planning/assumptionFields.data.ts'
 import { governmentRules } from '../domain/planning/governmentRules.ts'
-import { useMePlan } from '../components/me/mePlan.ts'
 import { assumption } from '../domain/planning/assumptions.ts'
 import { rulesFor, rulesVersion } from '../domain/planning/rates.ts'
 
@@ -14,7 +14,7 @@ export const id = 'ME-ASM'
 export const note =
   "Your assumptions (journey-spec §27): LifeMap standards are set automatically (Set by LifeMap) and can be changed (Your choice, with Back to LifeMap's figure); market rates we do not know use a suggested or planning rate (Assumed: add yours); only retirement age, plan-until age and inflation (and a working partner's retirement age) block results; type 1 values are shown as Set by Government. Drives the plan and the calculators live."
 
-// TODO(R-26): the original's Back returns to S.asmBack (set by the calculators); only Me home is wired
+// TODO(R-26): the original's Back returns to S.assumptionsBack (set by the calculators); only Me home is wired
 export const Head = () =>
   meHead({
     title: 'Your assumptions',
@@ -23,9 +23,9 @@ export const Head = () =>
   })
 
 export function Body() {
-  const left = useMePlan((plan) => missingChoices(plan).length)
-  const lawOpen = useMePlan((plan) => plan.asmOpen === 'law')
-  const year = useMePlan((plan) => assumption(plan, 'startYear'))
+  const left = useStore(({ plan }) => missingChoices(plan).length)
+  const lawOpen = useStore(({ openAssumption }) => openAssumption === 'law')
+  const year = useStore(({ plan }) => assumption(plan, 'startYear'))
 
   return (
     <>

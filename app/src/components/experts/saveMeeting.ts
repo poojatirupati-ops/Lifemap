@@ -38,11 +38,7 @@ function downloadCalendar({ adviser, mode, slot }: Meeting) {
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n')
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(new Blob([calendar], { type: 'text/calendar' }))
-  link.download = 'lifemap-meeting.ics'
-  link.click()
-  setTimeout(() => URL.revokeObjectURL(link.href), 20000)
+  void save('lifemap-meeting.ics', new Blob([calendar], { type: 'text/calendar' }))
   toast('Calendar file prepared. Check your downloads.')
 }
 

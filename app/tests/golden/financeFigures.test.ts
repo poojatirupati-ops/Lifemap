@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { runOriginal } from './origSlice'
 import { plain } from './origProfile'
+import { fromOriginal, toOriginal } from '../../src/state/migrate'
 import { answerMortgage } from '../../src/domain/finances/mortgage'
 import {
   removeStatementFigures,
@@ -37,14 +38,14 @@ function compare(steps: [name: string, step: Step][]) {
   )
   original.setRender(() => {})
   original.setState(original.fresh())
-  const ours = plain(original.getState()) as FinanceBook & Record<string, any>
+  const ours = fromOriginal(plain(original.getState())) as FinanceBook & Record<string, any>
   for (const [name, step] of steps) {
     step(original, ours)
     original.syncLists()
     syncTotals(ours as never, assumption(ours as never, 'ownShare'))
     const theirs = plain(original.getState())
     const pick = (state: any) => Object.fromEntries(FIGURES.map((key) => [key, state[key] ?? {}]))
-    expect(pick(ours), name).toEqual(pick(theirs))
+    expect(pick(toOriginal(ours)), name).toEqual(pick(theirs))
   }
 }
 
@@ -145,9 +146,9 @@ describe('finance figures follow the original', () => {
         (['Yes', 'No'] as const).map((answer): [string, Step] => [
           `${home} ${answer}`,
           (o, s) => {
-            for (const book of [o.getState(), s]) {
-              if (home) book.fin.home = home
-              else delete book.fin.home
+            for (const figures of [o.getState().fin, s.figures]) {
+              if (home) figures.home = home
+              else delete figures.home
             }
             o.setMortYN(answer)
             answerMortgage(s, answer)

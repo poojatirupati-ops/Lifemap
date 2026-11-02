@@ -12,7 +12,7 @@ const SECTION_IDS: Record<PlanSection, string | null> = {
 
 /** Scroll My Plan to the section asked for (results, what-if, foundations), or to the top; once. */
 export function useScrollToSection() {
-  const section = useStore((store) => store.plan.planScrollTo)
+  const section = useStore((store) => store.planScrollTo)
   const sectionShown = useStore((store) => store.sectionShown)
   useLayoutEffect(() => {
     if (section == null) return

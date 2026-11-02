@@ -18,7 +18,7 @@ function extraHint(extra: number, goal: Goal | undefined) {
 /** "Try an extra amount": the goal, an extra each month, a one-off amount and the live total. */
 export default function WhatIfExtra({ saving, spare }: { saving: number; spare: number }) {
   const goals = useStore((store) => store.plan.goals)
-  const { goalId: goalId, monthlyExtra: extra, lumpSum: lumpSum } = useStore((store) => store.plan.whatIf)
+  const { goalId, monthlyExtra: extra, lumpSum } = useStore((store) => store.plan.whatIf)
   const pickWhatIfGoal = useStore((store) => store.pickWhatIfGoal)
   const stepExtra = useStore((store) => store.stepExtra)
   const setExtra = useStore((store) => store.setExtra)

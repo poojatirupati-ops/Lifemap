@@ -71,7 +71,7 @@ export function runBoth(plan: Plan, id: string, figures: Figures) {
   const theirs = rounded(original.C(id).run(structuredClone(figures)))
   const result = calculatorFor(id).run(
     figures,
-    calcContext(toolPlan(fromOriginal(plan), id), id, localToday(TODAY)),
+    calcContext(toolPlan(fromOriginal(plan), fromOriginal(plan), id), id, localToday(TODAY)),
   )
   const ours = rounded({
     lbl: result.label,

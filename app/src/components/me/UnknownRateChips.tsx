@@ -1,17 +1,18 @@
+import type { Plan } from '../../state/types.ts'
+import { useStore } from '../../state/store.ts'
 import { useShallow } from 'zustand/react/shallow'
 import { percent, toNumber } from '../../lib/format.ts'
 import { rules2026 } from '../../domain/planning/rates.ts'
 import type { AdviserRateField } from '../../domain/planning/assumptionFields.data.ts'
 import { capCardRate, leaveRateForAdviser } from './assumptionActions.ts'
 import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
-import { useMePlan, type MePlan } from './mePlan.ts'
 
 const CARD_CAP = rules2026.guide.cardCap
 
 // a balance with no rate on the statement
-function rateMissing({ figures: fin }: MePlan, key: string, balances: string[]) {
-  const owed = balances.reduce((sum, balance) => sum + toNumber(fin[balance]), 0)
-  return owed > 0 && !(toNumber(fin[key]) > 0)
+function rateMissing({ figures }: Plan, key: string, balances: string[]) {
+  const owed = balances.reduce((sum, balance) => sum + toNumber(figures[balance]), 0)
+  return owed > 0 && !(toNumber(figures[key]) > 0)
 }
 
 /** M4: an unknown card or loan rate is never a dead end: the legal cap, or a planning rate left for the adviser. */
@@ -22,8 +23,8 @@ export default function UnknownRateChips({
   rate: string
   field: AdviserRateField
 }) {
-  const { leftForAdviser, mine, missing, value } = useMePlan(
-    useShallow((plan) => ({
+  const { leftForAdviser, mine, missing, value } = useStore(
+    useShallow(({ plan }) => ({
       leftForAdviser: !!plan.ratesForAdviser?.[rate] && plan.assumptions[rate] != null,
       mine: isMine(plan, rate),
       missing: rateMissing(plan, rate, field.balances),

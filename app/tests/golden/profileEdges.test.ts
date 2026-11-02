@@ -5,6 +5,7 @@ import { riskRead } from '../../src/domain/discovery/riskRead'
 import { emergencyFundToAdd, essentialSpending } from '../../src/domain/goals/goals'
 import { assumption } from '../../src/domain/planning/assumptions'
 import { original, plain, fixtures, originalNormalized, ourNormalized } from './origProfile'
+import { toOriginal } from '../../src/state/migrate'
 import { asOriginalRead, profileAnswers, riskContext } from './profileAdapters'
 
 const withAge = fixtures.filter(([, plan]) => plan.about.age != null)
@@ -94,7 +95,7 @@ describe('emergency fund cash tolerance', { timeout: 30_000 }, () => {
         const plan = ourNormalized(input)
         const added = emergencyFundToAdd(plan, plan.nextGoalId)
         if (added) plan.goals.push(added)
-        expect(plain(plan.goals), `${fixture} ${belowTarget}`).toEqual(
+        expect(plain(toOriginal(plan).goals), `${fixture} ${belowTarget}`).toEqual(
           plain(original.getState().goals),
         )
       }

@@ -64,7 +64,11 @@ function actionFor(level: Foundation): { label: string; run: () => void } {
 export function Body({ param }: { param?: string }) {
   const { inputs, base } = useProjection()
   const rest = useStore(
-    useShallow(({ plan }) => ({ lists: plan.lists, moneyProfile: plan.moneyProfile, hasResults: plan.hasResults })),
+    useShallow(({ plan }) => ({
+      lists: plan.lists,
+      moneyProfile: plan.moneyProfile,
+      hasResults: plan.hasResults,
+    })),
   )
   const levels = useMemo(() => foundations({ ...inputs, ...rest }, base), [inputs, rest, base])
   const level = levels[Number(param)]

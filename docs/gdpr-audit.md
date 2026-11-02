@@ -103,3 +103,10 @@ What blocks launch:
 - Whether the Workbox navigation fallback intercepts `/api/me/export` (G-07).
 - What Better Auth's logger writes on errors (G-16).
 - Whether a future "Ask" chat or document extractor sends data outside the EU.
+
+## Sub-processors added after the audit (to confirm with the DPO)
+| Processor | Purpose | Region | Data | Needs |
+|---|---|---|---|---|
+| PostHog (EU cloud) | Product analytics, masked session recordings, error tracking, feature flags (server-side) | EU (eu.i.posthog.com) | User id, organization id, masked UI events and recordings; no names, emails or money figures | DPA; only after the user opts in (consent kind "analytics"); erased with DELETE /api/me |
+| Vimeo | Video hosting and playback | US/EU | Viewer IP when a video is played (player loads only on play, dnt=1) | DPA or standard contractual clauses |
+| AWS (Lambda, RDS, S3, SES, CloudWatch, WAF) | Hosting, database, documents, email, logs | eu-west-1 (WAF ACL in us-east-1 for CloudFront) | All app data | AWS DPA (GDPR addendum) |

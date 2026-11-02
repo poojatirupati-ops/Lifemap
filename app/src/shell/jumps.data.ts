@@ -36,7 +36,8 @@ const from =
   }
 
 const sample = (patch?: Patch) => from(sampleCustomer, patch)
-const builder = (scr: string, patch?: Patch) => from(() => ({ ...inPlanBuilder(), screen: scr }), patch)
+const builder = (scr: string, patch?: Patch) =>
+  from(() => ({ ...inPlanBuilder(), screen: scr }), patch)
 
 const meJump = (id: string, label: string, me: string): Jump => ({
   id,
@@ -51,15 +52,30 @@ const expertJump = (id: string, label: string, exp: string): Jump => ({
 
 export const JUMPS: { group: string; jumps: Jump[] }[] = [
   {
+    group: 'Sign in',
+    jumps: [
+      { id: 'P1', label: 'Sign in (email)', build: from(fresh, { screen: 'P1' }) },
+      { id: 'P1E', label: 'Email code', build: from(fresh, { screen: 'P1E' }) },
+      { id: 'P1D', label: 'New account: name + consents', build: from(fresh, { screen: 'P1D' }) },
+    ],
+  },
+  {
     group: 'Onboarding',
     jumps: [
       { id: 'D0', label: 'Welcome', build: from(fresh) },
       { id: 'D1', label: 'What brought you here?', build: from(fresh, { screen: 'D1' }) },
       { id: 'D2', label: 'Question 1 of 6', build: from(fresh, { screen: 'D2', discoverStep: 0 }) },
-      { id: 'D5', label: 'Question 4 (road)', build: from(fresh, { screen: 'D5', discoverStep: 3 }) },
-      { id: 'D6', label: 'Question 5 (scenario)', build: from(fresh, { screen: 'D6', discoverStep: 4 }) },
+      {
+        id: 'D5',
+        label: 'Question 4 (road)',
+        build: from(fresh, { screen: 'D5', discoverStep: 3 }),
+      },
+      {
+        id: 'D6',
+        label: 'Question 5 (scenario)',
+        build: from(fresh, { screen: 'D6', discoverStep: 4 }),
+      },
       { id: 'DR', label: 'Money personality + terms', build: from(discovered, { screen: 'DR' }) },
-      { id: 'DS', label: 'Save your results', build: from(discovered, { screen: 'DS' }) },
     ],
   },
   {
@@ -70,7 +86,11 @@ export const JUMPS: { group: string; jumps: Jump[] }[] = [
         label: 'Home (no plan yet)',
         build: from(discovered, { inShell: true, tab: 'home' }),
       },
-      { id: 'XPL-01', label: 'Explore', build: from(discovered, { inShell: true, tab: 'explore' }) },
+      {
+        id: 'XPL-01',
+        label: 'Explore',
+        build: from(discovered, { inShell: true, tab: 'explore' }),
+      },
       {
         id: 'CALC-retirement',
         label: 'A calculator',
@@ -83,7 +103,11 @@ export const JUMPS: { group: string; jumps: Jump[] }[] = [
       {
         id: 'VID-01',
         label: 'A video',
-        build: from(discovered, { inShell: true, tab: 'explore', explorePages: [{ page: 'VID', param: 'v2' }] }),
+        build: from(discovered, {
+          inShell: true,
+          tab: 'explore',
+          explorePages: [{ page: 'VID', param: 'v2' }],
+        }),
       },
       {
         id: 'PLAN-0',
@@ -112,28 +136,21 @@ export const JUMPS: { group: string; jumps: Jump[] }[] = [
       {
         id: 'B4',
         label: '4 · Your money profile',
-        build: builder('B4', ({ answers: ans }) => ({
-          answers: Object.fromEntries(Object.entries(ans).filter(([question]) => question !== '6')),
+        build: builder('B4', ({ answers }) => ({
+          answers: Object.fromEntries(
+            Object.entries(answers).filter(([question]) => question !== '6'),
+          ),
         })),
-      },
-      {
-        id: 'P1',
-        label: '5 · Secure your account',
-        build: builder('P1', ({ account: acct }) => ({
-          account: { ...acct, termsAccepted: false, emailVerified: false, mobileVerified: false },
-        })),
-      },
-      {
-        id: 'P1E',
-        label: '5 · Email code',
-        build: builder('P1E', ({ account: acct }) => ({ account: { ...acct, emailVerified: false, mobileVerified: false } })),
       },
       { id: 'P2', label: '6 · Your finances hub', build: builder('P2') },
       { id: 'P3-2', label: '6 · Income (type it)', build: builder('P3', { financeSection: 1 }) },
       {
         id: 'P3-6',
         label: '6 · Pension (upload)',
-        build: builder('P3', ({ entryMode: fmode }) => ({ financeSection: 5, entryMode: { ...fmode, pension: 'upload' } })),
+        build: builder('P3', ({ entryMode }) => ({
+          financeSection: 5,
+          entryMode: { ...entryMode, pension: 'upload' },
+        })),
       },
       { id: 'P4', label: '7 · Check your details', build: builder('P4', { checked: false }) },
     ],
@@ -152,17 +169,21 @@ export const JUMPS: { group: string; jumps: Jump[] }[] = [
       {
         id: 'ME-UM2',
         label: 'Money profile · capacity',
-        build: sample(({ moneyProfile: um }) => ({ tab: 'me', mePage: 'ums', moneyProfile: { ...um, section: 2 } })),
+        build: sample(({ moneyProfile }) => ({
+          tab: 'me',
+          mePage: 'ums',
+          moneyProfile: { ...moneyProfile, section: 2 },
+        })),
       },
       {
         id: 'ME-R',
         label: 'Profile result',
-        build: sample(({ moneyProfile: um }) => ({
+        build: sample(({ moneyProfile }) => ({
           tab: 'me',
           mePage: 'umr',
           moneyProfile: {
-            ...um,
-            answers: { ...um.answers, u4: 1, u9: 3, u10: 1, u11: 1, u12: 2, u14: 2 },
+            ...moneyProfile,
+            answers: { ...moneyProfile.answers, u4: 1, u9: 3, u10: 1, u11: 1, u12: 2, u14: 2 },
             done: { 1: true, 2: true, 3: true },
           },
         })),
@@ -180,10 +201,10 @@ export const JUMPS: { group: string; jumps: Jump[] }[] = [
       {
         id: 'C4',
         label: "You're booked",
-        build: sample(({ booking: book }) => ({
+        build: sample(({ booking }) => ({
           tab: 'exp',
           expertsPage: 'c4',
-          booking: { ...book, done: true, slot: makeSlots()[1] },
+          booking: { ...booking, done: true, slot: makeSlots()[1] },
         })),
       },
     ],

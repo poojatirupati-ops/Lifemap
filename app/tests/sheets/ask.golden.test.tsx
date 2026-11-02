@@ -8,9 +8,15 @@ import { fixtures } from '../golden/origProfile'
 import { contextTopic } from '../../src/components/ask/contextTopic'
 import { matchQuestion } from '../../src/components/ask/matchQuestion'
 import { planTopics } from '../../src/components/ask/planTopics'
-import { GENERAL_TOPICS, type Topic } from '../../src/components/ask/topics'
+import type { AskAnswer as Topic } from '../../src/content/cms'
+import { useAskAnswers } from '../../src/content/cms'
+import { renderHook } from '@testing-library/react'
+import { seedContent } from '../content/seed'
 import { project } from '../../src/domain/planning/project'
 import { whatIfFrom } from '../../src/domain/planning/wi'
+
+seedContent()
+const { general: GENERAL_TOPICS, guard } = renderHook(() => useAskAnswers()).result.current
 
 // slow when the machine is busy: the original runs in node:vm
 vi.setConfig({ testTimeout: 30000 })
@@ -31,8 +37,11 @@ const topicsOf = (plan: any) => planTopics(plan, project(plan), whatIfFrom(plan.
 
 // the original says "this one is best covered" in Ask but "the best covered" in the explain sheet;
 // we use one sentence for both
+// and there is no SMS, so we check only the email
 const sameStrength = (text: string) =>
-  text.replace('this one is best covered', 'this one is the best covered')
+  text
+    .replace('this one is best covered', 'this one is the best covered')
+    .replace('your email and mobile', 'your email')
 
 const html = (node: unknown) => shape(rendered(<>{node}</>))
 const ourItems = (topics: Topic[]) =>
@@ -108,9 +117,9 @@ describe('typed questions', () => {
         const plan = prepared(fixtures.find(([file]) => file === name)![1])
         const own = topicsOf(plan)
         for (const question of TYPED)
-          expect(html(matchQuestion(question, [...own, ...GENERAL_TOPICS], plan.hasResults))).toEqual(
-            shape(sameStrength(original.askMatch(question))),
-          )
+          expect(
+            html(matchQuestion(question, [...own, ...GENERAL_TOPICS], plan.hasResults, guard)),
+          ).toEqual(shape(sameStrength(original.askMatch(question))))
       },
       30000,
     )

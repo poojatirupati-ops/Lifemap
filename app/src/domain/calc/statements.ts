@@ -3,7 +3,9 @@
 import { readFigure, removeStatementFigures } from '../finances/figures.ts'
 import type { Rules } from '../planning/rates.ts'
 import { allInputs, calculatorFor } from './calculators.ts'
-import type { Plan } from '../../state/types.ts'
+import type { Plan, Ui } from '../../state/types.ts'
+
+type CalcFigures = Pick<Ui, 'calcStatementFigures' | 'calcStatementKeys' | 'calcTouched'>
 import { figureOf, statePensionFromYears, toolFills, type Read } from './statementFills.ts'
 import { OLD_STATEMENT, STATEMENT_KINDS, type StatementKind } from './statements.data.ts'
 
@@ -79,7 +81,12 @@ function feedFinances(plan: Plan, cat: string, read: Read, sure: Read, rules: Ru
 }
 
 /** "Looks right, fill in my tools". */
-export function confirmStatement(plan: Plan, upload: StatementUpload, rules: Rules) {
+export function confirmStatement(
+  plan: Plan,
+  ui: CalcFigures,
+  upload: StatementUpload,
+  rules: Rules,
+) {
   const kind = STATEMENT_KINDS[upload.cat]
   const { values, sure } = confirmed(kind, upload.edit)
   feedFinances(plan, upload.cat, values, sure, rules)
@@ -98,14 +105,16 @@ export function confirmStatement(plan: Plan, upload: StatementUpload, rules: Rul
     const kept = Object.entries(fill.figures).filter(
       (entry): entry is [string, number] => entry[1] != null && keys.includes(entry[0]),
     )
-    plan.calcStatementFigures[toolId] = Object.fromEntries(kept)
-    plan.calcStatementKeys[toolId] = kept.map(([key]) => key).filter((key) => !fill.untagged?.includes(key))
-    plan.calcTouched[toolId] = {}
+    ui.calcStatementFigures[toolId] = Object.fromEntries(kept)
+    ui.calcStatementKeys[toolId] = kept
+      .map(([key]) => key)
+      .filter((key) => !fill.untagged?.includes(key))
+    ui.calcTouched[toolId] = {}
   }
 }
 
 /** "Remove statement": the customer's own figures are used again. */
-export function removeStatement(plan: Plan, cat: string, rules: Rules) {
+export function removeStatement(plan: Plan, ui: CalcFigures, cat: string, rules: Rules) {
   const document = plan.statements[cat] as { figures: Read } | undefined
   if (!document) return
   const tools = Object.keys(toolFills(plan, cat, document.figures, rules))
@@ -115,8 +124,8 @@ export function removeStatement(plan: Plan, cat: string, rules: Rules) {
   )
   delete plan.statements[cat]
   for (const toolId of tools) {
-    delete plan.calcStatementFigures[toolId]
-    delete plan.calcStatementKeys[toolId]
-    delete plan.calcTouched[toolId]
+    delete ui.calcStatementFigures[toolId]
+    delete ui.calcStatementKeys[toolId]
+    delete ui.calcTouched[toolId]
   }
 }

@@ -8,7 +8,10 @@ import type { Cushion } from '../../src/domain/discovery/riskMismatch'
 
 // the original's plan can lack um.chips
 export const profileAnswers = (plan: any) =>
-  ourProfileAnswers({ ...plan, moneyProfile: { ...plan.um, chips: plan.um.chips ?? [] } })
+  ourProfileAnswers({
+    ...plan,
+    moneyProfile: { ...plan.moneyProfile, chips: plan.moneyProfile.chips ?? [] },
+  })
 
 /** The original's cushionM() result. */
 export const cushion = (originalCushion: any): Cushion => ({

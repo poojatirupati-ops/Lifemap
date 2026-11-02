@@ -46,7 +46,7 @@ const SOURCE_NAMES: Record<string, string> = {
   otherAssets: 'oth',
   alternatives: 'alt',
 }
-const rename = (object: object, names: Record<string, string>) =>
+const rename = (object, names: Record<string, string>) =>
   Object.fromEntries(Object.entries(object).map(([key, value]) => [names[key] ?? key, value]))
 
 // our result in the original's shape; fields no screen reads are derived here

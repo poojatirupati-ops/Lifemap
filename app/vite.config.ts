@@ -3,11 +3,15 @@ import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // hidden: maps are built for private upload (error tracking) but no bundle points at them; sst.config.ts keeps them out of the site
+  build: { sourcemap: 'hidden' },
   server: { proxy: { '/api': 'http://localhost:8787', '/health': 'http://localhost:8787' } },
   test: {
     setupFiles: ['src/legacy/test/setup.ts'],
     // the persistent module cache keeps a stale import.meta.glob, so new screens render as placeholders
     fsModuleCache: false,
+    // src/legacy is dead code awaiting deletion (R-34): do not spend test time on it
+    exclude: ['**/node_modules/**', 'src/legacy/**', 'tests/e2e/**'], // tests/e2e is Playwright
     // golden tests run the original in node:vm and are slow under load
     testTimeout: 30_000,
     hookTimeout: 30_000,
@@ -15,7 +19,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // shell/UpdatePrompt.tsx asks before reloading into a new version
       // API calls (export, plan) must reach the server, never the cached app shell
       workbox: { navigateFallbackDenylist: [/^\/api\//, /^\/health$/] },
       includeAssets: ['icons/apple-touch-icon.png'],

@@ -5,7 +5,8 @@ import { suggestedHorizonFor } from './profile.ts'
 import { COMFORT_LABELS } from './profile.data.ts'
 import { riskRead, type RiskRead } from './riskRead.ts'
 
-export type ProfileCardInputs = CushionInputs & Pick<Plan, 'goals' | 'about' | 'retireAge' | 'moneyProfile'>
+export type ProfileCardInputs = CushionInputs &
+  Pick<Plan, 'goals' | 'about' | 'retireAge' | 'moneyProfile'>
 
 /** The first read of risk comfort and cushion, before the money profile is complete. */
 export function profileRead(plan: ProfileCardInputs) {

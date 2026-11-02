@@ -9,7 +9,12 @@ const { buildApp } = await import("./app");
 const { logOtp } = await import("./auth");
 const { connect } = await import("./db");
 
-const app = buildApp(await connect(new URL("../.dev-db", import.meta.url).pathname), logOtp);
+const db = await connect(new URL("../.dev-db", import.meta.url).pathname);
+if (process.env.DATABASE_URL) {
+  const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+  await migrate(db, { migrationsFolder: new URL("../drizzle", import.meta.url).pathname });
+}
+const app = buildApp(db, logOtp);
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port });
 console.log(`api on http://localhost:${port}`);

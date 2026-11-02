@@ -2,14 +2,14 @@ import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import { togglePlay } from '../../state/explore.ts'
 import { useStore } from '../../state/store.ts'
-import type { Video } from '../explore/videos.data.ts'
+import type { Video } from '../../content/cms.tsx'
 
 /** Kinds with a picture of their own; the rest use the video's art. */
 const KIND_ART = ['pension', 'mortgage', 'protection']
 
 /** A stand-in player for videos not filmed yet: play shows the opening caption. */
 export default function MockPlayer({ video }: { video: Video }) {
-  const playing = useStore((store) => store.plan.playing)
+  const playing = useStore((store) => store.playing)
   const art = KIND_ART.includes(video.kind) ? video.kind : video.art
 
   return (

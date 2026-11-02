@@ -138,6 +138,7 @@ export function standardTag(
 ): StandardTag {
   const binding = bindingOf(toolId, key)
   if (!binding || !isStandardBinding(binding)) return null
-  const chosen = 'assumption' in binding && chosenAssumption(plan.assumptions, binding.assumption) != null
+  const chosen =
+    'assumption' in binding && chosenAssumption(plan.assumptions, binding.assumption) != null
   return chosen || plan.moved[key] ? 'mine' : 'set'
 }

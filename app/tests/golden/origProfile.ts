@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { runOriginal, TODAY } from './origSlice'
 import { normalize } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
+import { fromOriginal } from '../../src/state/migrate'
 import type { Plan } from '../../src/state/types'
 import samplePlan from '../../src/state/sample-plan.json'
 
@@ -32,9 +33,8 @@ export function originalNormalized(state: unknown) {
 }
 
 /** Our state after the same normalisation. */
-export function ourNormalized(state: Plan) {
-  const copy = structuredClone(state)
+export function ourNormalized(state: object) {
+  const copy = fromOriginal<Plan>(structuredClone(state))
   normalize(copy, localToday(TODAY))
-  const { listsFedTotals, ...rest } = copy // the original calls it dv
-  return { ...rest, dv: listsFedTotals }
+  return copy
 }

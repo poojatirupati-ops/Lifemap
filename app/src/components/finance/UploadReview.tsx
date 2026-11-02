@@ -2,6 +2,9 @@ import type { ReadDocument } from '../../domain/finances/upload.ts'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
 
+/** Until a real reader exists the figures shown are the sample ones, whatever was uploaded. */
+export const EXAMPLE_FIGURES = 'Example figures'
+
 function sureTag(confidence: number) {
   if (confidence >= 80) return <span className="tag doc">✓ {confidence}% sure</span>
   return (
@@ -24,7 +27,8 @@ export default function UploadReview({
     <div className="card">
       <b>
         <Emo>{title}</Emo>
-      </b>
+      </b>{' '}
+      <span className="tag est">{EXAMPLE_FIGURES}</span>
       {documents ? <div className="small">{documents}</div> : null}
       {figures.map(({ field, label, value, confidence, stale }) => (
         <div key={field} className="mini" style={{ alignItems: 'center' }}>

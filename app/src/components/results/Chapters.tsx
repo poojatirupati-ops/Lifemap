@@ -13,12 +13,12 @@ interface Props {
 
 /** Your future as decades: the weather of each, its goals, and its years on demand. */
 export default function Chapters({ rows, goals, percent, hasRetireGoal }: Props) {
-  const open = useStore((store) => store.plan.openChapter)
+  const open = useStore((store) => store.openChapter)
   const update = useStore((store) => store.update)
   // TODO(R-20): a named store action (toggleChapter) once the results slice exists
   const toggle = (index: number) =>
-    update((plan) => {
-      plan.openChapter = open === index ? null : index
+    update((_, ui) => {
+      ui.openChapter = open === index ? null : index
     })
 
   return (

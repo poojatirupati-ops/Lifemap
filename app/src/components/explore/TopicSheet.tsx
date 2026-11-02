@@ -1,6 +1,7 @@
 import { EXPERTS } from '../../domain/identity/advisers.data.ts'
 import { exploreBack } from '../../state/explore.ts'
-import { expertName, topicPhotoStyle, withArticle, type Topic } from './explore.data.ts'
+import type { Topic } from '../../content/cms.tsx'
+import { expertName, topicPhotoStyle, withArticle } from './explore.data.ts'
 
 interface Props {
   topic: Topic

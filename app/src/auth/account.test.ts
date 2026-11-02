@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, expect, test, vi } from 'vitest'
-import { MARKETING_VERSION, NOTICE_VERSION, postConsents } from './consents.ts'
+import { ANALYTICS_VERSION, MARKETING_VERSION, NOTICE_VERSION, postConsents } from './consents.ts'
 import { startPlanSync } from './planSync.ts'
 import { deleteAccount } from './session.ts'
 import { useShell } from '../state/shell.ts'
@@ -58,13 +58,14 @@ test('delete: 2xx resets this browser, says deleted, and the blank plan is never
   expect(calls(fetch)[0]).toBe('DELETE /api/me')
 })
 
-test('consents: notice acknowledgement + marketing event with versions; withdrawal sent; failure retried then told', async () => {
+test('consents: notice acknowledgement + marketing and analytics events with versions; failure retried then told', async () => {
   vi.useFakeTimers()
   const ok = stubFetch(200)
-  await postConsents({ terms: true, marketing: false })
+  await postConsents({ terms: true, marketing: false, analytics: true })
   expect(JSON.parse(String(ok.mock.calls[0]?.[1]?.body))).toEqual({
     notice: NOTICE_VERSION,
     marketing: { granted: false, version: MARKETING_VERSION },
+    analytics: { granted: true, version: ANALYTICS_VERSION },
   })
 
   const down = stubFetch(503)

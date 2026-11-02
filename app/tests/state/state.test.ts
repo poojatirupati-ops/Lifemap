@@ -1,43 +1,65 @@
 import { expect, test } from 'vitest'
 import { origSlice, runOriginal } from '../golden/origSlice'
-import { fresh } from '../../src/state/fresh'
+import { fresh, freshUi } from '../../src/state/fresh'
+import { toOriginal } from '../../src/state/migrate'
 import { useStore } from '../../src/state/store'
 import { syncTotals } from '../../src/domain/finances/syncTotals'
 import { assumption } from '../../src/domain/planning/assumptions'
 import { plain } from '../golden/origProfile'
 import type { ListItem, Plan } from '../../src/state/types'
 
-test('fresh() deep-equals the original (same key order)', () => {
-  const { scr: _screen, sheet: _sheet, ...proto } = origSlice().fresh()
+test('fresh() and freshUi() deep-equal the original', () => {
+  const {
+    scr: _screen,
+    sheet: _sheet,
+    ask: _ask,
+    toast: _toast,
+    save: _save,
+    ...proto
+  } = origSlice().fresh()
+  // Login-first (O-01) dropped the save sheet and the unverified mobile.
+  const { mobile: _mobile, sv: _sv, ...acct } = proto.acct
+  proto.acct = acct
   // The app stores whether the saving was capped (saveNote's only non-empty value), not the copy.
   const original = Object.fromEntries(
     Object.entries(proto).map(([key, value]) =>
       key === 'saveNote' ? ['savingCapped', value !== ''] : [key, value],
     ),
   )
-  const mine = fresh()
-  expect(mine).toEqual(original)
-  expect(JSON.stringify(mine)).toBe(JSON.stringify(original))
-  expect(mine.about).not.toBe(fresh().about)
+  const { screen: _s, sheet: _h, ...ui } = freshUi()
+  const plan = toOriginal(fresh())
+  expect(toOriginal({ ...fresh(), ...ui })).toEqual(original)
+  // the plan keeps the original's key order
+  const inOrder = Object.keys(original).filter((key) => key in plan)
+  const originalPlan = Object.fromEntries(inOrder.map((key) => [key, original[key]]))
+  expect(JSON.stringify(plan)).toBe(JSON.stringify(originalPlan))
+  expect(fresh().about).not.toBe(fresh().about)
 })
 
 function item(
   id: number,
   fields: ListItem['fields'],
-  { source = 'typed', confidence: conf = {}, fixed: fix = {} }: { source?: 'typed' | 'doc' } & Partial<ListItem> = {},
+  {
+    source = 'typed',
+    confidence = {},
+    fixed = {},
+  }: { source?: 'typed' | 'doc' } & Partial<ListItem> = {},
 ): ListItem {
   return {
     id,
-    fields: fields,
+    fields,
     sources: Object.fromEntries(Object.keys(fields).map((key) => [key, source])),
-    confidence: conf,
+    confidence,
     manual: {},
-    fixed: fix,
+    fixed,
     docFrom: null,
   }
 }
 
-function makeState(fin: Partial<Plan['figures']> = {}, asm: Partial<Plan['assumptions']> = {}): Plan {
+function makeState(
+  fin: Partial<Plan['figures']> = {},
+  asm: Partial<Plan['assumptions']> = {},
+): Plan {
   const state = fresh()
   state.lists = {
     // doc-sourced cards with differing conf and one fix flag: min(conf) and the fix branch are exercised
@@ -51,7 +73,11 @@ function makeState(fin: Partial<Plan['figures']> = {}, asm: Partial<Plan['assump
     ],
     // three rated loans: unequal owed, plus one with owed blank (weight-1 fallback) -> weighted mean with long decimals
     loans: [
-      item(5, { owed: 3000, pay: 90, rate: 7 }, { source: 'doc', confidence: { owed: 0.8, pay: 0.8 } }),
+      item(
+        5,
+        { owed: 3000, pay: 90, rate: 7 },
+        { source: 'doc', confidence: { owed: 0.8, pay: 0.8 } },
+      ),
       item(6, { owed: 1000, pay: 30, rate: 3 }),
       item(8, { pay: 5, rate: 5 }),
     ],
@@ -67,10 +93,7 @@ function makeState(fin: Partial<Plan['figures']> = {}, asm: Partial<Plan['assump
 
 const original = runOriginal('syncLists')
 
-/** Our state under the original's field names (listsFedTotals was dv). */
-function inOriginalShape({ listsFedTotals, ...rest }: Plan) {
-  return plain({ ...rest, dv: listsFedTotals })
-}
+const inOriginalShape = (state: Plan) => plain(toOriginal(state))
 
 /** Runs the original syncLists on a copy of the state, ours on the state itself, and compares. */
 function compareWithOriginal(state: Plan) {
@@ -105,7 +128,7 @@ test('syncLists matches the original: emptied list, stale typed rate, partial co
   state.lists.loans = [{ ...base.loans[0], fields: { owed: 3000, pay: 90 } }]
   state.figures.loanRate = 9
   state.sources.loanRate = 'typed'
-  const docOwedAndPay = { src: { owed: 'doc', pay: 'doc' }, f: { owed: 10, pay: 1 } }
+  const docOwedAndPay = { sources: { owed: 'doc', pay: 'doc' }, fields: { owed: 10, pay: 1 } }
   state.lists.mort2 = [
     { ...base.mort2[0], ...docOwedAndPay, confidence: { owed: 0.9 } },
     { ...base.mort2[0], ...docOwedAndPay, id: 9, confidence: { owed: 0.8, pay: 0.7 } },
@@ -165,7 +188,7 @@ test.each([
   const state = makeState()
   state.lists.pens = rows.map((fields, index) => ({
     ...item(index + 1, { value: 1000, ...fields }),
-    src: {},
+    sources: {},
   }))
   compareWithOriginal(state)
   expect(state.figures.pensionOwnM).toBe(own)
@@ -180,20 +203,4 @@ test('store update runs normalize and keeps state immutable', () => {
   expect(after.figures.cardBal).toBe(50)
   expect(before.figures.cardBal).toBeUndefined()
   expect(after).not.toBe(before)
-})
-
-test('named actions: switchTab, openAsk, wallVisitor', () => {
-  const { switchTab, openAsk, wallVisitor } = useStore.getState()
-  useStore.getState().update((plan) => {
-    plan.financeSection = 2
-  })
-  openAsk()
-  expect(useStore.getState()).toMatchObject({ sheet: 'ask', plan: { ask: { log: [] } } })
-  switchTab('plan')
-  expect(useStore.getState()).toMatchObject({
-    sheet: null,
-    plan: { tab: 'plan', planGo: 'timeline', fsec: null },
-  })
-  wallVisitor({ cameFrom: 'F2' })
-  expect(useStore.getState()).toMatchObject({ screen: 'P1', plan: { from: 'F2' } })
 })

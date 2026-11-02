@@ -1,16 +1,17 @@
 import LiveCard from '../explore/LiveCard.tsx'
-import { LIVE_SESSIONS } from '../explore/explore.data.ts'
+import { useLiveSessions } from '../../content/cms.tsx'
 
 const SPACED = { marginBottom: 8 }
 
 /** "What's on": every live session with an expert. */
 export default function LiveSessions() {
+  const sessions = useLiveSessions()
   return (
     <>
       <div className="sec">
         <h3>What's on · live with experts</h3>
       </div>
-      {LIVE_SESSIONS.map((session) => (
+      {sessions.map((session) => (
         <LiveCard key={session.title} session={session} style={SPACED} />
       ))}
     </>

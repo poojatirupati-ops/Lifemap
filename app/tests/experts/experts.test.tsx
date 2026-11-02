@@ -8,6 +8,10 @@ import { runOriginal, TODAY } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
 import * as Experts from '../../src/screens/Experts.screen'
 import { useStore } from '../../src/state/store'
+import { toOriginal } from '../../src/state/migrate'
+import { seedContent } from '../content/seed'
+
+seedContent()
 
 // slow when the machine is busy: the original runs in node:vm
 vi.setConfig({ testTimeout: 30000 })
@@ -32,9 +36,9 @@ function theirs(state: any) {
 
 function ours(state: any) {
   useStore.getState().load(structuredClone(state))
-  const plan = useStore.getState().plan
+  const store = useStore.getState()
   return {
-    id: Experts.id(plan),
+    id: Experts.id(store.plan, store),
     head: shape(rendered(<>{Experts.Head()}</>)),
     body: shape(rendered(<Experts.Body />)),
     foot: shape(rendered(<Experts.Foot />)),
@@ -84,7 +88,9 @@ describe('Experts equals the original', () => {
 })
 
 describe('booking journey', () => {
-  it('match, share with consent, pick a time and confirm', () => {
+  it('match, share with consent, pick a time and confirm', async () => {
+    const fetch = vi.fn(async () => new Response('{"booking":{"id":"b1"}}', { status: 201 }))
+    vi.stubGlobal('fetch', fetch)
     const state = fixture('sample-exp.json')
     useStore.getState().load(structuredClone(state))
     const container = document.createElement('div')
@@ -109,7 +115,7 @@ describe('booking journey', () => {
 
     click('Book my adviser meeting')
     // the profile is not finished, so the optional profile step comes first
-    expect(useStore.getState().plan.expertsPage).toBe('c0')
+    expect(useStore.getState().expertsPage).toBe('c0')
     click('Skip for now')
     click('See another match')
     click('Choose')
@@ -121,10 +127,13 @@ describe('booking journey', () => {
     click('In person')
     click('10:00')
     click('Confirm booking')
+    await vi.waitFor(() => expect(useStore.getState().expertsPage).toBe('c4'))
+    expect(fetch).toHaveBeenCalledWith('/api/bookings', expect.objectContaining({ method: 'POST' }))
+    vi.unstubAllGlobals()
 
-    const { plan } = useStore.getState()
-    expect(plan.expertsPage).toBe('c4')
-    expect(plan.booking).toMatchObject({
+    const { plan, expertsPage } = useStore.getState()
+    expect(expertsPage).toBe('c4')
+    expect(toOriginal(plan).book).toMatchObject({
       adv: 1,
       share: { report: true, fin: false, docs: false, um: false },
       agree: true,

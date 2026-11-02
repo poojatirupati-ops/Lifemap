@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
-import { expertName, type LiveSession } from './explore.data.ts'
+import type { LiveSession } from '../../content/cms.tsx'
+import { expertName } from './explore.data.ts'
 import { remindMe } from '../../state/explore.ts'
 
 /** A free live session with an expert, and a reminder button. */

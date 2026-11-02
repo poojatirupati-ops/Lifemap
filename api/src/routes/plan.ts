@@ -1,11 +1,13 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
-import { zValidator } from "@hono/zod-validator";
 import { type Context, Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import { resolver, validator } from "hono-openapi";
 import { z } from "zod";
 import type { Db } from "../db";
 import { planRow, planVersion } from "../db/schema";
 import type { Env } from "../guard";
+import { problem } from "../observe";
+import { doc, errors } from "../openapi";
 
 // The prototype owns the shape of its state object, so the API stores it opaque (size-limited, per user).
 const planSchema = z.record(z.string(), z.unknown());
@@ -35,20 +37,20 @@ export const planRoutes = (db: Db) => {
     await tx.delete(planVersion).where(and(myVersions(userId, orgId), notInArray(planVersion.id, newest)));
   };
 
-  r.get("/plan", async (c) => {
+  r.get("/plan", doc({ tags: ["plan"], summary: "The caller's plan in this tenant", responses: { 200: { description: "`{ version, plan }`; version 0 and plan null when nothing is saved" } } }), async (c) => {
     const [row] = await db.select().from(planRow).where(mine(c.var.userId, c.var.orgId));
     return c.json({ version: row?.version ?? 0, plan: row?.data ?? null });
   });
 
-  // Never log the driver error: Drizzle's message carries the query params, i.e. the whole plan (PII). Log the code only.
-  // Postgres class 22 = data exception (U+0000, lone surrogate: jsonb refuses them): the client's data, so 400, not 500.
-  r.onError((e, c) => {
-    const code = (e as { cause?: { code?: string } }).cause?.code;
-    console.error("plan db error", code);
-    return code?.startsWith("22") ? c.json({ error: "invalid plan" }, 400) : c.json({ error: "server error" }, 500);
-  });
+  // Sub-app handler too, so the class-22 -> 400 mapping holds wherever these routes are mounted (src/observe.ts).
+  r.onError(problem);
 
-  r.put("/plan", bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "plan too large" }, 413) }), async (c) => {
+  r.put("/plan", doc({
+    tags: ["plan"], summary: "Save the plan (compare-and-set on version)",
+    description: "`version` is the one last read. `snapshot` also keeps the saved plan as a version with that note (newest 50 kept).",
+    requestBody: { required: true, content: { "application/json": { schema: resolver(putBody) } } },
+    responses: { 200: { description: "`{ version }` (the new version)" }, 400: errors[400], 409: errors[409], 413: errors[413] },
+  }), bodyLimit({ maxSize: 1024 * 1024, onError: (c) => c.json({ error: "plan too large" }, 413) }), async (c) => {
     const text = await c.req.text();
     const raw = (() => { try { return JSON.parse(text); } catch { return null; } })();
     const body = putBody.safeParse(raw);
@@ -72,11 +74,14 @@ export const planRoutes = (db: Db) => {
     return c.json({ error: "stale version", version: cur?.version ?? 0 }, 409);
   });
 
-  r.get("/plan/versions", async (c) =>
+  r.get("/plan/versions", doc({ tags: ["plan"], summary: "Saved plan versions", responses: { 200: { description: "`{ versions: [{ id, note, at }] }`, newest first" } } }), async (c) =>
     c.json({ versions: await db.select({ id: planVersion.id, note: planVersion.note, at: planVersion.at }).from(planVersion)
       .where(myVersions(c.var.userId, c.var.orgId)).orderBy(desc(planVersion.id)) }));
 
-  r.post("/plan/versions/:id/restore", zValidator("param", restoreParam, invalidRestore), zValidator("json", restoreBody, invalidRestore), async (c) => {
+  r.post("/plan/versions/:id/restore", doc({
+    tags: ["plan"], summary: "Restore a saved version", description: "`version` is the current plan version. The plan it replaces is kept as a version first.",
+    responses: { 200: { description: "`{ version, plan }`" }, 400: errors[400], 404: errors[404], 409: errors[409] },
+  }), validator("param", restoreParam, invalidRestore), validator("json", restoreBody, invalidRestore), async (c) => {
     const { id } = c.req.valid("param");
     const { userId, orgId } = c.var;
     const [snap] = await db.select({ note: planVersion.note, data: planVersion.data }).from(planVersion).where(and(myVersions(userId, orgId), eq(planVersion.id, id)));

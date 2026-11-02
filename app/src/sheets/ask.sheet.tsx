@@ -5,8 +5,8 @@ import { contextTopic } from '../components/ask/contextTopic.ts'
 import { matchQuestion } from '../components/ask/matchQuestion.ts'
 import { planTopics } from '../components/ask/planTopics.tsx'
 import Suggestions from '../components/ask/Suggestions.tsx'
-import { GENERAL_TOPICS, type Topic } from '../components/ask/topics.tsx'
 import { useAskChat } from '../components/ask/useAskChat.ts'
+import { useAskAnswers, type AskAnswer as Topic } from '../content/cms.tsx'
 import SheetTitle from './SheetTitle.tsx'
 import { useProjection } from '../hooks/useProjection.ts'
 import { toast, useShell } from '../state/shell.ts'
@@ -22,8 +22,13 @@ const MAX_QUESTION = 140
 export function Body({ param }: { param?: string }) {
   const { inputs, base, whatIf } = useProjection()
   const { hasResults, moneyProfile, name } = useStore(
-    useShallow(({ plan }) => ({ hasResults: plan.hasResults, moneyProfile: plan.moneyProfile, name: plan.account.name })),
+    useShallow(({ plan }) => ({
+      hasResults: plan.hasResults,
+      moneyProfile: plan.moneyProfile,
+      name: plan.account.name,
+    })),
   )
+  const { general, guard } = useAskAnswers()
   const screenId = useShell((shell) => shell.screenId)
   const input = useRef<HTMLInputElement>(null)
   const chatLog = useRef<HTMLDivElement>(null)
@@ -43,8 +48,8 @@ export function Body({ param }: { param?: string }) {
   })
   const topics = useMemo(() => {
     const context = contextTopic(screenId)
-    return [...(context ? [context] : []), ...ownTopics, ...GENERAL_TOPICS]
-  }, [screenId, ownTopics])
+    return [...(context ? [context] : []), ...ownTopics, ...general]
+  }, [screenId, ownTopics, general])
   const asked = new Set(log.map((message) => message.topic).filter(Boolean))
   const left = topics.filter((topic) => !asked.has(topic.key))
   const waiting = log.at(-1)?.typing
@@ -64,7 +69,7 @@ export function Body({ param }: { param?: string }) {
     if (!typed) return toast('Type a question first')
     const question = typed.slice(0, MAX_QUESTION)
     field.value = ''
-    ask(question, null, matchQuestion(question, [...ownTopics, ...GENERAL_TOPICS], hasResults))
+    ask(question, null, matchQuestion(question, [...ownTopics, ...general], hasResults, guard))
     field.focus()
   }
 

@@ -24,8 +24,8 @@ const longDate = new Intl.DateTimeFormat('en-GB', {
 
 function birthDate({ about }: Pick<Plan, 'about'>) {
   if (!isDobValid(about.dob, localToday())) return ''
-  const { day: d, month: m, year: y } = about.dob
-  return longDate.format(new Date(Number(y), Number(m) - 1, Number(d)))
+  const { day, month, year } = about.dob
+  return longDate.format(new Date(Number(year), Number(month) - 1, Number(day)))
 }
 
 function ageText({ about }: Pick<Plan, 'about'>) {
@@ -33,12 +33,12 @@ function ageText({ about }: Pick<Plan, 'about'>) {
   return age ? `${age}${about.ageToday ? ' today' : ''}` : ''
 }
 
-function partnerText({ about, partner, figures: fin }: Pick<Plan, 'about' | 'partner' | 'figures'>) {
+function partnerText({ about, partner, figures }: Pick<Plan, 'about' | 'partner' | 'figures'>) {
   if (!about.partner) return 'No'
   if (partner.mode === 'invite')
     return partner.sent ? `Invite saved · ${partner.email}` : 'Invite not sent yet'
   if (partner.mode === 'manual')
-    return [partner.name || 'Added by you', fin.pAge ? `age ${fin.pAge}` : '']
+    return [partner.name || 'Added by you', figures.pAge ? `age ${figures.pAge}` : '']
       .filter(Boolean)
       .join(', ')
   return 'Yes'
@@ -49,7 +49,6 @@ export function Body() {
     useShallow(({ plan }) => ({
       name: plan.account.name || plan.figures.name || '',
       email: plan.account.email,
-      mobile: plan.account.mobile,
       birthDate: birthDate(plan),
       age: ageText(plan),
       partner: partnerText(plan),
@@ -80,7 +79,6 @@ export function Body() {
       <div className="pd-list">
         <DetailRow emoji="👤" label="Name" value={view.name} />
         <DetailRow emoji="✉️" label="Email" value={view.email} />
-        <DetailRow emoji="📱" label="Mobile" value={view.mobile} />
         <DetailRow emoji="🎂" label="Date of birth" value={view.birthDate} />
         <DetailRow emoji="⏳" label="Age" value={view.age} />
       </div>

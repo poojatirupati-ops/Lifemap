@@ -101,7 +101,7 @@ export function datedAges(about: DatedAgesInput, { startYear, today }: AgeOption
 
 // TODO(R-09): apply datedAges in the identity slice action / normalize, then delete this
 export function agesFromDob(
-  { about, figures: fin, sources: src }: Pick<Plan, 'about' | 'figures' | 'sources'>,
+  { about, figures, sources }: Pick<Plan, 'about' | 'figures' | 'sources'>,
   options: AgeOptions,
 ) {
   const ages = datedAges(about, options)
@@ -112,16 +112,16 @@ export function agesFromDob(
   if (ages.fromDob) {
     about.age = ages.age
     about.dobAge = ages.age
-    fin.age = ages.age ?? undefined
-    if (ages.age != null) src.age ||= 'pre'
+    figures.age = ages.age ?? undefined
+    if (ages.age != null) sources.age ||= 'pre'
   }
   about.ageToday = ages.ageToday
   if (ages.partnerAge === undefined) return
   if (ages.partnerAge === null) {
-    delete fin.pAge
-    delete src.pAge
+    delete figures.pAge
+    delete sources.pAge
   } else {
-    fin.pAge = ages.partnerAge
-    src.pAge = 'typed'
+    figures.pAge = ages.partnerAge
+    sources.pAge = 'typed'
   }
 }

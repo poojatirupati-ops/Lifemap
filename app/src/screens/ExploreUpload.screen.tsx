@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { exploreBack } from '../state/explore.ts'
 import StatementFigureRow from '../components/calc/StatementFigureRow.tsx'
 import StatementTextRow from '../components/calc/StatementTextRow.tsx'
+import { EXAMPLE_FIGURES } from '../components/finance/UploadReview.tsx'
 import { STATEMENT_KINDS } from '../domain/calc/statements.data.ts'
 import { statePensionFromYears } from '../domain/calc/statementFills.ts'
 import AppHead from '../components/frame/AppHead.tsx'
@@ -12,13 +13,13 @@ import { assumption } from '../domain/planning/assumptions.ts'
 import { prsiYears } from '../domain/calc/statements.ts'
 import { prefersReducedMotion } from '../hooks/reducedMotion.ts'
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
+import type { Plan, Ui } from '../state/types.ts'
 
 export const key = 'PST'
-export const id = (plan: Plan) => `PST-${plan.statement?.stage ?? 'scan'}`
-export const note = (plan: Plan) => {
-  const what = plan.statement ? STATEMENT_KINDS[plan.statement.cat].what : ''
-  return plan.statement?.stage === 'confirm'
+export const id = (_: Plan, ui: Ui) => `PST-${ui.statement?.stage ?? 'scan'}`
+export const note = (_: Plan, ui: Ui) => {
+  const what = ui.statement ? STATEMENT_KINDS[ui.statement.cat].what : ''
+  return ui.statement?.stage === 'confirm'
     ? `"We read these values, please confirm" (${what}): confidence tags, editable values, statement date + old flag. Optional values (charges, projection, holdings, valuation) apply only if shown. Feeds the tools and Your finances.`
     : `Reading your ${what} statement (mock document reader).`
 }
@@ -26,13 +27,13 @@ export const note = (plan: Plan) => {
 // A call, not <AppHead />: the shell's splitHead pins the top bar by reading the returned tree.
 // Head runs inside ScreenHost's render, which subscribes to the plan, so getState() is current.
 export function Head() {
-  const plan = useStore.getState().plan
-  const confirming = plan.statement?.stage === 'confirm'
+  const { plan, statement } = useStore.getState()
+  const confirming = statement?.stage === 'confirm'
   return AppHead({
     title: confirming ? 'We read these values' : 'Reading your statement…',
     sub: confirming
       ? 'Please confirm. Change anything that looks wrong.'
-      : plan.statement?.files.join(', '),
+      : statement?.files.join(', '),
     back: exploreBack,
     needsLook: unseenLooks(plan),
   })
@@ -58,7 +59,7 @@ function Scanning({ what }: { what: string }) {
 }
 
 export function Body() {
-  const upload = useStore((store) => store.plan.statement)
+  const upload = useStore((store) => store.statement)
   const startYear = useStore((store) => assumption(store.plan, 'startYear'))
   if (!upload) return null
   const kind = STATEMENT_KINDS[upload.cat]
@@ -68,7 +69,8 @@ export function Body() {
       <div className="card">
         <b>
           <Emo>{`${kind.emoji} ${kind.title}`}</Emo>
-        </b>
+        </b>{' '}
+        <span className="tag est">{EXAMPLE_FIGURES}</span>
         <div className="small">{upload.files.join(', ')}</div>
         {kind.figures.map((figure) => (
           <StatementFigureRow key={figure.key} figure={figure} typed={upload.edit[figure.key]} />
@@ -112,7 +114,7 @@ export function Body() {
 }
 
 export function Foot() {
-  const stage = useStore((store) => store.plan.statement?.stage)
+  const stage = useStore((store) => store.statement?.stage)
   const confirmUpload = useStore((store) => store.confirmUpload)
   if (stage !== 'confirm') return null
   return (

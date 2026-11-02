@@ -17,7 +17,9 @@ const BAND_EMOJI = { good: '☀️', nudge: '🌦️', alert: '⛈️' }
 function goalWhen(goal: Goal, timing: TimingInputs) {
   if (isPassed(timing, goal)) return 'Date has passed'
   if (goal.kind === 'legacy') {
-    const planEnd = isChosen(timing.assumptions, 'planEnd') ? ` (${assumption(timing, 'planEnd')})` : ''
+    const planEnd = isChosen(timing.assumptions, 'planEnd')
+      ? ` (${assumption(timing, 'planEnd')})`
+      : ''
     return `at the end of your plan${planEnd}`
   }
   if (goal.kind === 'retire')

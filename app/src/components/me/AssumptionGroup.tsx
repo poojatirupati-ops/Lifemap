@@ -1,3 +1,4 @@
+import { useStore } from '../../state/store.ts'
 import { useShallow } from 'zustand/react/shallow'
 import AgeChoices from '../finance/AgeChoices.tsx'
 import InflationChoice from '../finance/InflationChoice.tsx'
@@ -9,7 +10,6 @@ import {
 import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
 import GrowthSetToggle from './GrowthSetToggle.tsx'
 import { rememberOpenGroup } from './assumptionActions.ts'
-import { useMePlan } from './mePlan.ts'
 
 const BUDGET = ['budgetNeeds', 'budgetWants', 'budgetSave']
 
@@ -22,9 +22,9 @@ function budgetOff(plan: Parameters<typeof valueInUse>[0]) {
 
 /** One folding group of Your assumptions. */
 export default function AssumptionGroup({ group, title }: { group: Group; title: string }) {
-  const { open, budgetTotal } = useMePlan(
-    useShallow((plan) => ({
-      open: (plan.asmOpen === undefined ? 'prices' : plan.asmOpen) === group,
+  const { open, budgetTotal } = useStore(
+    useShallow(({ plan, openAssumption }) => ({
+      open: (openAssumption === undefined ? 'prices' : openAssumption) === group,
       budgetTotal: group === 'safety' ? budgetOff(plan) : null,
     })),
   )

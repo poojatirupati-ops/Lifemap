@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ADVICE_GUARD, type Topic } from './topics.tsx'
+import type { AskAnswer as Topic } from '../../content/cms.tsx'
 
 const ASKS_FOR_ADVICE =
   /\b(should i|shall i|which (fund|product|pension|provider|bank)|recommend|best (fund|investment|pension|mortgage|option)|buy|sell|invest in|worth it|tell me what to do)\b/
@@ -31,10 +31,17 @@ const RULES: [RegExp, string | ((plan: PlanKeys) => string)][] = [
   [/cost|free|fee|charge|money do you make/, 'free'],
 ]
 
-/** A typed question's answer: never advice; else the first topic whose words match. */
-export function matchQuestion(text: string, topics: Topic[], inApp: boolean): ReactNode {
+/** A typed question's answer: never advice (`guard`); else the first topic whose words match. */
+export function matchQuestion(
+  text: string,
+  topics: Topic[],
+  inApp: boolean,
+  guard: ReactNode,
+): ReactNode {
   const typed = text.toLowerCase()
-  if (ASKS_FOR_ADVICE.test(typed)) return ADVICE_GUARD
+  const book = inApp ? ', or book a free adviser meeting for personal advice' : ''
+  const fallback = `I can explain how LifeMap works and what your results mean. Try one of the questions above${book}.`
+  if (ASKS_FOR_ADVICE.test(typed)) return guard ?? fallback
   const answer = (key: string) => topics.find((topic) => topic.key === key)?.answer
   // the plan's own topics always include its gap (or "on track")
   const hasPlan = answer('pgap') != null || answer('pok') != null
@@ -43,6 +50,5 @@ export function matchQuestion(text: string, topics: Topic[], inApp: boolean): Re
     const key = typeof rule === 'string' ? rule : rule(plan)
     if (words.test(typed) && answer(key)) return answer(key)
   }
-  const book = inApp ? ', or book a free adviser meeting for personal advice' : ''
-  return `I can explain how LifeMap works and what your results mean. Try one of the questions above${book}.`
+  return fallback
 }

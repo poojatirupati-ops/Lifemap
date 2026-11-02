@@ -4,23 +4,18 @@ import { EXTRA_MAX, EXTRA_MIN, leastCovered, stepSaving } from '../domain/planni
 import { GROWTH_KEYS, growthRate } from '../domain/planning/settings.ts'
 import { euro } from '../lib/format.ts'
 import { toast } from './shell.ts'
-import type { Plan, PlanSection } from './types.ts'
+import type { SetStore, Store } from './store.ts'
+import type { Plan, PlanSection, Ui } from './types.ts'
 import { addVersion } from './versions.ts'
-
-interface StoreCore {
-  plan: Plan
-  update: (recipe: (plan: Plan) => void) => void
-  closeSheet: () => void
-}
 
 const setName = (set: 'standard' | 'cautious') => (set === 'cautious' ? 'Cautious' : 'Standard')
 
 /** What My Plan's buttons do: sections, goal edit, the results' links, saving and what-if. */
-export function createPlanSlice(get: () => StoreCore) {
-  const update = (recipe: (plan: Plan) => void) => get().update(recipe)
+export function createPlanSlice(set: SetStore, get: () => Store) {
+  const update = (recipe: (plan: Plan, ui: Ui) => void) => get().update(recipe)
 
   /** Leave for another tab's page and close any sheet. */
-  const leaveFor = (recipe: (plan: Plan) => void) => {
+  const leaveFor = (recipe: (plan: Plan, ui: Ui) => void) => {
     update(recipe)
     get().closeSheet()
   }
@@ -38,51 +33,30 @@ export function createPlanSlice(get: () => StoreCore) {
   return {
     /** My Plan, scrolled to a section: 'timeline', 'results', 'wi' or 'fnd'. */
     showSection: (section: PlanSection) =>
-      leaveFor((plan) => {
-        plan.tab = 'plan'
-        plan.planSegment = 'main'
-        plan.planScrollTo = section
-      }),
+      set({ tab: 'plan', planSegment: 'main', planScrollTo: section, sheet: null }),
     /** The section has been scrolled to. */
-    sectionShown: () =>
-      update((plan) => {
-        plan.planScrollTo = null
-      }),
-    openAddGoal: () =>
-      update((plan) => {
-        plan.planSegment = 'add'
-      }),
+    sectionShown: () => set({ planScrollTo: null }),
+    openAddGoal: () => set({ planSegment: 'add' }),
     toggleEditGoals: () =>
-      update((plan) => {
-        plan.editingGoals = !plan.editingGoals
-        plan.highlightedGoal = null
+      update((_, ui) => {
+        ui.editingGoals = !ui.editingGoals
+        ui.highlightedGoal = null
       }),
-    closeGoalEdit: () =>
-      update((plan) => {
-        plan.highlightedGoal = null
-      }),
-    openMe: (page: string) =>
-      leaveFor((plan) => {
-        plan.tab = 'me'
-        plan.mePage = page
-      }),
+    closeGoalEdit: () => set({ highlightedGoal: null }),
+    openMe: (page: string) => set({ tab: 'me', mePage: page, sheet: null }),
     /** A required choice is missing: open Your assumptions (at the top, no jump to the box). */
-    fixChoice: () =>
-      leaveFor((plan) => {
-        plan.tab = 'me'
-        plan.mePage = 'asm'
-      }),
+    fixChoice: () => set({ tab: 'me', mePage: 'asm', sheet: null }),
     openProfile: () =>
-      leaveFor((plan) => {
+      leaveFor((plan, ui) => {
         plan.moneyProfile.returnTo = 'plan'
-        plan.tab = 'me'
-        if (!isProfileComplete(plan)) plan.mePage = 'um'
-        else plan.mePage = plan.moneyProfile.rechecked ? 'umr' : 'recheck'
+        ui.tab = 'me'
+        if (!isProfileComplete(plan)) ui.mePage = 'um'
+        else ui.mePage = plan.moneyProfile.rechecked ? 'umr' : 'recheck'
       }),
     bookAdviser: () =>
-      update((plan) => {
-        plan.tab = 'exp'
-        plan.expertsPage = isProfileComplete(plan) ? 'c1' : 'c0'
+      update((plan, ui) => {
+        ui.tab = 'exp'
+        ui.expertsPage = isProfileComplete(plan) ? 'c1' : 'c0'
         plan.booking.from = 'plan'
       }),
     markUnderstood: () =>
@@ -125,29 +99,26 @@ export function createPlanSlice(get: () => StoreCore) {
         plan.monthlySaving = null
         plan.savingCapped = false
       }),
-    pickWhatIfGoal: (id: number) =>
-      update((plan) => {
-        plan.whatIf.goalId = id
-      }),
+    pickWhatIfGoal: (id: number) => update((plan) => void (plan.whatIf.goalId = id)),
     stepExtra: (change: number) =>
-      changeWhatIf((whatIf) => {
-        whatIf.monthlyExtra = Math.min(EXTRA_MAX, Math.max(EXTRA_MIN, whatIf.monthlyExtra + change))
-      }),
-    setExtra: (amount: number) =>
-      changeWhatIf((whatIf) => {
-        whatIf.monthlyExtra = amount
-      }),
-    setLumpSum: (amount: number) =>
-      changeWhatIf((whatIf) => {
-        whatIf.lumpSum = amount
-      }),
+      changeWhatIf(
+        (whatIf) =>
+          void (whatIf.monthlyExtra = Math.min(
+            EXTRA_MAX,
+            Math.max(EXTRA_MIN, whatIf.monthlyExtra + change),
+          )),
+      ),
+    setExtra: (amount: number) => changeWhatIf((whatIf) => void (whatIf.monthlyExtra = amount)),
+    setLumpSum: (amount: number) => changeWhatIf((whatIf) => void (whatIf.lumpSum = amount)),
     saveWhatIf: () => {
       update((plan) => {
-        const { goalId: g, monthlyExtra: m, lumpSum: l } = plan.whatIf
+        const { goalId, monthlyExtra, lumpSum } = plan.whatIf
         plan.preferredWhatIf = { ...plan.whatIf }
-        const extra = m ? `${m > 0 ? '+' : ''}${euro(m)}/month ` : ''
-        const once = l ? `+${euro(l)} once` : ''
-        const goal = plan.goals.find((each) => each.id === g)
+        const extra = monthlyExtra
+          ? `${monthlyExtra > 0 ? '+' : ''}${euro(monthlyExtra)}/month `
+          : ''
+        const once = lumpSum ? `+${euro(lumpSum)} once` : ''
+        const goal = plan.goals.find((each) => each.id === goalId)
         addVersion(plan, `Preferred plan: ${extra}${once}${goal ? ` → ${goal.name}` : ''}`)
       })
       toast(`Saved as your preferred plan (version ${get().plan.versions.length})`)

@@ -21,7 +21,7 @@ export const user = pgTable("user", {
   ...stamps,
 });
 
-// A tenant (organization plugin, its own columns only). Tenant config (host, colours, features, rates) is JSON in `metadata`, shaped by src/tenant.ts.
+// A tenant (organization plugin, its own columns only). Tenant config (host, colours, rates) is JSON in `metadata`, shaped by src/tenant.ts.
 export const organization = pgTable(
   "organization",
   {

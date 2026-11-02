@@ -8,6 +8,9 @@ import { fresh } from '../../src/state/fresh'
 import { useStore } from '../../src/state/store'
 import samplePlan from '../../src/state/sample-plan.json'
 import type { Plan } from '../../src/state/types'
+import { seedContent } from '../content/seed'
+
+seedContent()
 
 const open = (sheet: string, plan: Partial<Plan> = {}) => {
   useStore.getState().load({ ...fresh(), ...plan, sheet })
@@ -30,24 +33,11 @@ describe('simple sheets', () => {
     expect(toast()).toBe('Invite linked')
   })
 
-  it('save checks the email first', () => {
-    open('save')
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'nope' } })
-    fireEvent.click(screen.getByRole('button', { name: /email|save my/i }))
-    expect(screen.getByRole('alert').textContent).toBe('Please enter a valid email.')
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.ie' } })
-    fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: /email|save my/i }))
-    expect(state().plan.save).toEqual({ email: 'a@b.ie', comms: true, done: true, asked: true })
-    expect(state().plan.account.email).toBe('a@b.ie')
-    expect(state().sheet).toBeNull()
-  })
-
   it('something else adds an idea or a named goal', () => {
     open('other', { about: { age: 30, partner: false, dependants: 0, married: null } })
     fireEvent.click(screen.getByText('📚 Fund a course'))
     expect(state().plan.goals.at(-1)).toMatchObject({
-      k: 'other',
+      key: 'other',
       name: 'Fund a course',
       amount: 8000,
     })
@@ -57,16 +47,16 @@ describe('simple sheets', () => {
     expect(toast()).toBe('Type a name for your goal')
     fireEvent.change(screen.getByLabelText('Name it yourself'), { target: { value: 'Kitchen' } })
     fireEvent.click(screen.getByText('Add my goal'))
-    expect(state().plan.goals.at(-1)).toMatchObject({ name: 'Kitchen', e: '⭐', amount: 10000 })
+    expect(state().plan.goals.at(-1)).toMatchObject({ name: 'Kitchen', emoji: '⭐', amount: 10000 })
   })
 
   it('talking to an expert opens the Experts tab with that kind picked', () => {
     open('xpert|pension', { hasResults: true })
     fireEvent.click(screen.getByText('Book a video call'))
-    expect(state().plan).toMatchObject({
+    expect(state()).toMatchObject({
       tab: 'exp',
-      exp: 'home',
-      book: { spec: 'pension', mode: 'Video' },
+      expertsPage: 'home',
+      plan: { booking: { spec: 'pension', mode: 'Video' } },
     })
     expect(state().sheet).toBeNull()
     expect(toast()).toBe('Pick a time for your video call')
