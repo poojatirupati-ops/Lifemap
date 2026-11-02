@@ -4,7 +4,7 @@ import { rules2026 } from '../../domain/planning/rates.ts'
 import { standardSource, standardValue } from '../../domain/planning/settings.ts'
 import { percent } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
-import { chooseInflation, chooseOwnInflation, typeInflation } from './choiceActions.ts'
+import { chooseInflation, chooseOwnInflation, typeInflation } from '../../state/choices.ts'
 import ChoiceNumberBox from './ChoiceNumberBox.tsx'
 import ChoiceTag from './ChoiceTag.tsx'
 

@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { defineConfig } from 'vitest/config'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -7,16 +8,17 @@ export default defineConfig({
   build: { sourcemap: 'hidden' },
   server: { proxy: { '/api': 'http://localhost:8787', '/health': 'http://localhost:8787' } },
   test: {
-    setupFiles: ['src/legacy/test/setup.ts'],
-    // the persistent module cache keeps a stale import.meta.glob, so new screens render as placeholders
+    setupFiles: ['src/test/setup.ts'],
+    // the persistent module cache keeps a stale import.meta.glob, so new sheets render as placeholders
     fsModuleCache: false,
-    // src/legacy is dead code awaiting deletion (R-34): do not spend test time on it
-    exclude: ['**/node_modules/**', 'src/legacy/**', 'tests/e2e/**'], // tests/e2e is Playwright
+    exclude: ['**/node_modules/**', 'tests/e2e/**'], // tests/e2e is Playwright
     // golden tests run the original in node:vm and are slow under load
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },
   plugins: [
+    // file-based routes in src/routes; must come before react()
+    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
     react(),
     VitePWA({
       registerType: 'prompt', // shell/UpdatePrompt.tsx asks before reloading into a new version

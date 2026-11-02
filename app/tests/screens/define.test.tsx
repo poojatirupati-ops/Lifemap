@@ -1,28 +1,20 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, expect, test } from 'vitest'
 import goalsSet from '../fixtures/goals-set.json'
 import { useStore } from '../../src/state/store.ts'
 import type { Snapshot } from '../../src/state/types.ts'
-import * as AboutYou from '../../src/screens/AboutYou.screen.tsx'
-import * as GoalPick from '../../src/screens/GoalPick.screen.tsx'
-import * as GoalReview from '../../src/screens/GoalReview.screen.tsx'
-import * as Understand from '../../src/screens/Understand.screen.tsx'
+import { path, renderAt, settle } from '../renderAt.tsx'
 
 const plan = () => useStore.getState().plan
 
 beforeEach(() => useStore.getState().load(structuredClone(goalsSet) as unknown as Snapshot))
 
-test('About you: Next needs an age, a partner answer and dependants', () => {
+test('About you: Next needs an age, a partner answer and dependants', async () => {
   useStore.getState().update((draft) => {
     draft.about = { age: null, partner: null, dependants: null }
   })
-  render(
-    <>
-      <AboutYou.Body />
-      <AboutYou.Foot />
-    </>,
-  )
+  await renderAt('/build/about')
   const next = screen.getByText('Next: your goals') as HTMLButtonElement
   expect(next.disabled).toBe(true)
 
@@ -39,8 +31,8 @@ test('About you: Next needs an age, a partner answer and dependants', () => {
   expect(next.disabled).toBe(false)
 })
 
-test('Goal picker toggles a goal and opens Something else as a sheet', () => {
-  render(<GoalPick.Body />)
+test('Goal picker toggles a goal and opens Something else as a sheet', async () => {
+  await renderAt('/build/goals')
   fireEvent.click(screen.getByText('Wedding'))
   expect(plan().goals.at(-1)).toMatchObject({ key: 'wedding', id: 6 })
   fireEvent.click(screen.getByText('Wedding'))
@@ -49,8 +41,8 @@ test('Goal picker toggles a goal and opens Something else as a sheet', () => {
   expect(useStore.getState().sheet).toBe('other')
 })
 
-test('Your LifeMap reorders goals with the arrows and says where one went', () => {
-  render(<GoalReview.Body />)
+test('Your LifeMap reorders goals with the arrows and says where one went', async () => {
+  await renderAt('/build/review')
   const names = () => [...document.querySelectorAll('.rk-t')].map((name) => name.textContent)
   const first = names()
   fireEvent.click(screen.getByLabelText(`Move ${first[1]} up, now 2 of 5`))
@@ -61,11 +53,11 @@ test('Your LifeMap reorders goals with the arrows and says where one went', () =
   expect(names()).toEqual(first)
 })
 
-test('Money profile: finishing suggests a horizon once others are answered, then goes on to P2', () => {
-  render(<Understand.Body />)
+test('Money profile: finishing suggests a horizon once others are answered, then goes on to P2', async () => {
+  await renderAt('/build/profile')
   fireEvent.click(document.querySelector('[data-p="u10|2"]')!)
-  render(<Understand.Foot />)
   fireEvent.click(screen.getByText('Save and continue'))
+  await settle()
   expect(plan().moneyProfile.answers).toMatchObject({ u10: 2, u9: expect.any(Number) })
-  expect(useStore.getState().screen).toBe('P2')
+  expect(path()).toBe('/build/finances')
 })

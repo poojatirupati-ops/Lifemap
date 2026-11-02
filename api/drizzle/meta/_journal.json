@@ -50,6 +50,41 @@
       "when": 1793587553868,
       "tag": "0006_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793606563906,
+      "tag": "0007_document_read",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793609387850,
+      "tag": "0008_drop_tenant_host",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793622047529,
+      "tag": "0009_cal_bookings",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793622052851,
+      "tag": "0010_booking_slot_from_cal",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793643672280,
+      "tag": "0011_booking_status_check",
+      "breakpoints": true
     }
   ]
 }

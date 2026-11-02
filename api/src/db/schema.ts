@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { type AnyPgColumn, bigint, boolean, foreignKey, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique, uniqueIndex } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, bigint, boolean, check, foreignKey, index, integer, jsonb, pgTable, primaryKey, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
 
 const stamps = {
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -18,23 +18,21 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  // additionalFields (src/auth.ts), set by the adviser through updateUser: their Cal.com booking link and what their card shows
+  calLink: text("cal_link"),
+  adviserProfile: jsonb("adviser_profile").$type<{ qualifications: string; languages: string; location: string; meetingMode: string }>(),
   ...stamps,
 });
 
-// A tenant (organization plugin, its own columns only). Tenant config (host, colours, rates) is JSON in `metadata`, shaped by src/tenant.ts.
-export const organization = pgTable(
-  "organization",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
-    logo: text("logo"),
-    metadata: text("metadata"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  // One tenant per host, enforced by Postgres, and the per-request host lookup is indexed.
-  (t) => [uniqueIndex("organization_host_unique").on(sql`((${t.metadata})::jsonb->>'host')`)],
-);
+// A tenant (organization plugin, its own columns only). Tenant config (colours, rates) is JSON in `metadata`, shaped by src/tenant.ts.
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
 
 export const member = pgTable(
   "member",
@@ -211,23 +209,51 @@ export const document = pgTable(
     contentType: text("content_type").notNull(),
     size: integer("size").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    // The last read (POST /api/documents/:id/read): done | failed, the figures under LifeMap keys, which reader, when.
+    readStatus: text("read_status"),
+    readFields: jsonb("read_fields").$type<{ key: string; value: number | string; confidence: number }[]>(),
+    readProvider: text("read_provider"),
+    readAt: timestamp("read_at"),
   },
   (t) => [ownedBy(t), index("document_owner_idx").on(t.userId, t.organizationId)],
 );
 
-// Adviser meetings. Advisers are the app's seeded list (no adviser accounts yet). `share` = what the customer agreed to share; the consent itself is a consent_event (kind adviser_share).
+/** pending until Cal.com's webhook books it; then cancelled, ended or no_show (CalService). */
+export const BOOKING_STATUSES = ["pending", "booked", "cancelled", "ended", "no_show"] as const;
+export type BookingStatus = (typeof BOOKING_STATUSES)[number];
+
+// Adviser meetings, booked through Cal.com. `adviserId` = the adviser's user id (a member with role adviser). `share` = what the customer agreed to share;
+// the consent itself is a consent_event (kind adviser_share). Created pending before the Cal.com embed opens; Cal.com's webhooks set the rest.
 export const booking = pgTable(
   "booking",
   {
     id: text("id").primaryKey(),
     ...owner,
     adviserId: text("adviser_id").notNull(),
-    slot: text("slot").notNull(),
-    mode: text("mode").notNull(),
     share: jsonb("share").$type<Record<string, boolean>>().notNull(),
-    status: text("status").notNull().default("booked"), // booked | cancelled
+    status: text("status").$type<BookingStatus>().notNull().default("pending"),
+    calUid: text("cal_uid"), // the Cal.com booking (a reschedule gives it a new uid)
+    startsAt: timestamp("starts_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     cancelledAt: timestamp("cancelled_at"),
   },
-  (t) => [ownedBy(t), index("booking_owner_idx").on(t.userId, t.organizationId)],
+  (t) => [
+    ownedBy(t),
+    index("booking_owner_idx").on(t.userId, t.organizationId),
+    index("booking_cal_uid_idx").on(t.calUid),
+    check("booking_status_check", sql.raw(`status in (${BOOKING_STATUSES.map((st) => `'${st}'`).join(", ")})`)),
+  ],
+);
+
+// Cal.com webhook deliveries, one row per (cal uid, trigger): a retried delivery never adds a second row. Billing reads the published events, not this table.
+export const bookingEvent = pgTable(
+  "booking_event",
+  {
+    id: serial("id").primaryKey(),
+    bookingId: text("booking_id").notNull().references(() => booking.id, { onDelete: "cascade" }),
+    calUid: text("cal_uid").notNull(),
+    trigger: text("trigger").notNull(),
+    at: timestamp("at").notNull().defaultNow(),
+  },
+  (t) => [unique("booking_event_cal_uid_trigger_unique").on(t.calUid, t.trigger), index("booking_event_booking_idx").on(t.bookingId)],
 );

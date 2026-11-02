@@ -1,11 +1,8 @@
 import { clsx } from 'clsx'
-import { useStore } from '../../state/store.ts'
-import { PLAN_BUILDER_STEPS, planBuilderStep } from '../../domain/journey/planBuilderSteps.ts'
+import { PLAN_BUILDER_STEPS } from '../../domain/journey/planBuilderSteps.ts'
 
 /** The plan builder's progress ticks. Everyone signs in before the builder, so the account step is simply done. */
-export default function PbBar() {
-  const current = useStore((s) => planBuilderStep(s.screen))
-
+export default function PbBar({ current }: { current: number }) {
   return (
     <div
       className="pbbar"

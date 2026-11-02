@@ -1,5 +1,10 @@
 import { createAuthClient } from 'better-auth/react'
-import { adminClient, emailOTPClient, organizationClient } from 'better-auth/client/plugins'
+import {
+  adminClient,
+  emailOTPClient,
+  inferAdditionalFields,
+  organizationClient,
+} from 'better-auth/client/plugins'
 import { passkeyClient } from '@better-auth/passkey/client'
 import { ssoClient } from '@better-auth/sso/client'
 
@@ -11,12 +16,19 @@ export const authClient = createAuthClient({
     organizationClient(),
     adminClient(),
     ssoClient({ domainVerification: { enabled: true } }),
+    // the adviser's own Cal.com link and card (api/src/auth.ts), saved from Me > Your adviser profile
+    inferAdditionalFields({
+      user: {
+        calLink: { type: 'string', required: false },
+        adviserProfile: { type: 'json', required: false },
+      },
+    }),
   ],
 })
 
-export const WRONG_CODE = "That code doesn't match. Try again."
+const WRONG_CODE = "That code doesn't match. Try again."
 /** After 3 wrong codes even the right one is rejected until a new code is sent. */
-export const LOCKED_OUT = 'Too many tries. Tap Send a new code.'
+const LOCKED_OUT = 'Too many tries. Tap Send a new code.'
 
 /** Emails a sign-in code; false when it could not be sent. */
 export async function sendCode(email: string) {

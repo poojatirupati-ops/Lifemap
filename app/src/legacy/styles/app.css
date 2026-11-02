@@ -1,7 +1,0 @@
-/* Only what the prototype lacks. */
-/* The prototype's screens scroll themselves; React screens scroll inside #screen, so this box fills it. */
-.app-scroll{height:100%;overflow-y:auto;overscroll-behavior:contain}
-/* The screen slide lives in the top layer: round it to the frame (prototype .phone radius) above 800px. */
-@media (min-width:801px){::view-transition-group(screen){border-radius:48px;overflow:clip}}
-/* The prototype has .stage as a direct child of body; React mounts inside #root. */
-#root{display:contents}

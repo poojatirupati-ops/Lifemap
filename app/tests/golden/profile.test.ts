@@ -12,13 +12,12 @@ import {
 } from '../../src/domain/discovery/profile.data'
 import { discoverQuestion, moneyQuestion } from '../../src/domain/discovery/questions.data'
 import {
-  discoverAnswered,
   hasEnoughForPersonality,
   optionScore,
   personality,
-  profileAnswered,
   suggestedHorizon,
 } from '../../src/domain/discovery/profile'
+import { discoverAnswered, profileAnswered } from '../../src/domain/discovery/profileQuestions'
 import { riskLabelText, riskRead } from '../../src/domain/discovery/riskRead'
 import { asOriginalRead, profileAnswers, riskContext } from './profileAdapters'
 import { original, plain, fixtures, originalNormalized, ourNormalized } from './origProfile'

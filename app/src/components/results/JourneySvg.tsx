@@ -1,6 +1,5 @@
-import { Fragment } from 'react'
+import { Fragment, type CSSProperties } from 'react'
 import type { YearRow } from '../../domain/planning/project'
-import { textWidth } from '../../lib/textWidth'
 import type { Goal } from '../../state/types'
 import { BAND_WORDS, band, yearBand } from '../../domain/planning/bands'
 import { layoutJourney } from './journey'
@@ -35,7 +34,6 @@ export default function JourneySvg({
     milestones,
     width,
     landscape,
-    textWidth,
   })
   const { wide, start, flag, sunset, points, top, bottom, placed, ringRadius, decades } = road
   const segments = points.slice(1).map((end, i) => ({
@@ -190,5 +188,41 @@ export default function JourneySvg({
         </text>
       ))}
     </svg>
+  )
+}
+
+/** On a phone, the journey's milestones as a list under the road. */
+export function MilestoneList({
+  goals,
+  percent,
+}: {
+  goals: Goal[]
+  percent: Record<number, number>
+}) {
+  return (
+    <div className="mlist">
+      {goals.map((goal) => {
+        const tone = band(percent[goal.id])
+        return (
+          <div className="ml-r" key={goal.id}>
+            <span
+              className="ml-e"
+              style={{ '--c': `var(--${tone})` } as CSSProperties}
+              aria-hidden="true"
+            >
+              {goal.emoji}
+            </span>
+            <span className="ml-m">
+              <b>{goal.name}</b>
+              <small>{`Age ${goal.age}`}</small>
+            </span>
+            <span className={`ml-p ${tone}`}>
+              {`${percent[goal.id]}%`}
+              <span className="sr">{` ${BAND_WORDS[tone]}`}</span>
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }

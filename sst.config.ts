@@ -63,7 +63,7 @@ export default $config({
     // PostHog (EU) feature flags, evaluated locally in the Api (api/src/tenant.ts): project key + personal API key with feature flag read access.
     const posthogProjectKey = new sst.Secret("PosthogProjectKey");
     const posthogPersonalApiKey = new sst.Secret("PosthogPersonalApiKey");
-    const authUrl = new sst.Secret("BetterAuthUrl"); // public https API origin; a Secret only to avoid the url<->env cycle
+    const authUrl = new sst.Secret("BetterAuthUrl"); // the app's public origin (the appUrl output) for the CMS CORS list; a Secret because the Router's CSP needs cms.url first
 
     // SES sender identity for sign-in codes (eu-west-1). A domain (codes come from noreply@<domain>) or one address; SST creates the
     // identity (and DKIM records to add for a domain) and linking grants the Api ses:SendEmail on it. Not a secret, but stage-specific: set it per deploy.
@@ -88,15 +88,103 @@ export default $config({
       logging: { retention: "1 month" as const }, // CloudWatch 30 days (G5)
       // Lambda's CA bundle incl. the RDS CAs, so sslmode=verify-full verifies the proxy/instance cert.
       environment: { NODE_EXTRA_CA_CERTS: "/var/runtime/ca-cert.pem" },
+      // Optional NestJS imports, never loaded without an HTTP platform (Nest is only the application layer).
+      nodejs: { esbuild: { external: ["@nestjs/microservices", "@nestjs/platform-express", "@nestjs/websockets", "class-transformer", "class-validator"] } },
     };
 
-    // AWS WAF in front of the Api (card S-01): CloudFront Router with SST's WebACL (us-east-1, scope CLOUDFRONT): per-IP rate rule,
+    // Daily retention purge: expired OTP/verification rows and sessions (api/src/jobs/purge.ts).
+    const purge = new sst.aws.Cron("Purge", {
+      schedule: "rate(1 day)",
+      function: { ...fn, handler: "api/src/jobs/purge.handler" },
+    });
+
+    // CMS (card C-01, ../docs/cms.md): Payload 3 on Next.js (OpenNext), same RDS in its own `cms` schema, private SSE-KMS media bucket.
+    // Versioned so an overwritten or deleted media file can be recovered for 30 days.
+    // cors: false replaces SST's default allow-all rule; CmsMediaCors below allows only the CMS admin.
+    // access "cloudfront": reads go through the ApiRouter at /media-cms (OAC, below); the bucket stays private.
+    const cmsMedia = new sst.aws.Bucket("CmsMedia", { versioning: true, cors: false, access: "cloudfront" });
+    new aws.s3.BucketServerSideEncryptionConfigurationV2("CmsMediaEncryption", {
+      bucket: cmsMedia.name,
+      rules: [{ applyServerSideEncryptionByDefault: { sseAlgorithm: "aws:kms", kmsMasterKeyId: dataKey.arn }, bucketKeyEnabled: true }],
+    });
+    new aws.s3.BucketLifecycleConfiguration("CmsMediaOldVersions", {
+      bucket: cmsMedia.name,
+      rules: [{ id: "expire-old-versions", status: "Enabled", filter: { prefix: "" }, noncurrentVersionExpiration: { noncurrentDays: 30 } }],
+    });
+    const payloadSecret = new sst.Secret("PayloadSecret");
+    const cmsCronSecret = new sst.Secret("CmsCronSecret");
+    const vimeoAccessToken = new sst.Secret("VimeoAccessToken"); // personal token with upload, edit, delete scopes (docs/cms.md)
+    // Plain env vars because Payload's config reads process.env.
+    const cms = new sst.aws.Nextjs("Cms", {
+      path: "cms",
+      vpc,
+      link: [cmsMedia], // IAM for the bucket; Payload's S3 client uses the function role
+      permissions: [useDataKey],
+      environment: {
+        DATABASE_URL: databaseUrl.properties.value,
+        PAYLOAD_SECRET: payloadSecret.value,
+        CRON_SECRET: cmsCronSecret.value,
+        VIMEO_ACCESS_TOKEN: vimeoAccessToken.value,
+        S3_BUCKET: cmsMedia.name,
+        CMS_CORS_ORIGINS: authUrl.value, // the app's public origin
+        MEDIA_URL: $interpolate`${authUrl.value}/media-cms`, // public media base on the app origin (ApiRouter route below); from the Secret, as router.url would be a cycle
+        NODE_EXTRA_CA_CERTS: "/var/runtime/ca-cert.pem",
+      },
+    });
+    // The admin uploads media straight to the bucket with presigned PUTs (Payload clientUploads), so bytes never pass through the CMS.
+    new aws.s3.BucketCorsConfigurationV2("CmsMediaCors", {
+      bucket: cmsMedia.name,
+      corsRules: [{ allowedMethods: ["PUT"], allowedOrigins: [cms.url], allowedHeaders: ["*"], maxAgeSeconds: 3600 }],
+    });
+    // Scheduled publish: Payload's jobs run from this cron (autoRun cannot run on Lambda).
+    const cmsJobs = new sst.aws.Cron("CmsJobs", {
+      schedule: "rate(1 minute)",
+      function: {
+        handler: "cms/src/cron.handler",
+        runtime: "nodejs22.x",
+        environment: { CMS_URL: cms.url, CRON_SECRET: cmsCronSecret.value },
+      },
+    });
+
+    // Cal.com (card C-CAL): the adviser booking embed. EU data residency by default; the app reads the same origin (VITE_CAL_ORIGIN).
+    const calOrigin = process.env.VITE_CAL_ORIGIN ?? "https://app.cal.eu";
+
+    // Security headers (card P4) for everything the Router serves (card P6). Vimeo plays in its iframe (no script host needed);
+    // posthog-js/no-external bundles its extensions, so PostHog needs connect-src only. 'unsafe-inline' styles: index.html and the
+    // prototype CSS carry inline style blocks/attributes. Cal.com: its embed script, its API calls and the booking iframe.
+    const csp = $interpolate`default-src 'self'; script-src 'self' ${calOrigin}; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://i.vimeocdn.com; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' ${cms.url} https://eu.i.posthog.com https://eu-assets.i.posthog.com ${calOrigin}; frame-src https://player.vimeo.com ${calOrigin}; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`;
+    const appHeaders = new aws.cloudfront.ResponseHeadersPolicy("AppHeaders", {
+      name: `lifemap-${$app.stage}-app-headers`,
+      securityHeadersConfig: {
+        contentSecurityPolicy: { contentSecurityPolicy: csp, override: true },
+        strictTransportSecurity: { accessControlMaxAgeSec: 63072000, includeSubdomains: true, preload: true, override: true },
+        frameOptions: { frameOption: "DENY", override: true },
+        contentTypeOptions: { override: true },
+        referrerPolicy: { referrerPolicy: "strict-origin-when-cross-origin", override: true },
+      },
+      customHeadersConfig: {
+        items: [
+          {
+            header: "Permissions-Policy",
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self "https://player.vimeo.com"), autoplay=(self "https://player.vimeo.com")',
+            override: true,
+          },
+          { header: "Cross-Origin-Opener-Policy", value: "same-origin", override: true },
+        ],
+      },
+    });
+
+    // One origin (card P6): the app at /, the Api at /api, AppHeaders on every response.
+    // AWS WAF in front of both (card S-01): CloudFront Router with SST's WebACL (us-east-1, scope CLOUDFRONT): per-IP rate rule,
     // AWS core, known-bad-inputs and SQLi rule sets, plus AWS Bot Control and a tighter per-IP rule on /api/auth/ added below.
     // OAC with edge signing keeps the function URL private, so WAF cannot be bypassed (the Router adds x-forwarded-host for tenancy).
     const router = new sst.aws.Router("ApiRouter", {
       protection: "oac-with-edge-signing",
       waf: true, // SST defaults: 2000 requests per 5 minutes per IP, all three managed rule sets
       transform: {
+        cdn: (args) => {
+          args.defaultCacheBehavior = $output([args.defaultCacheBehavior, appHeaders.id]).apply(([behavior, id]) => ({ ...behavior, responseHeadersPolicyId: id }));
+        },
         waf: (args) => {
           const visibility = (metricName: string) => ({ cloudwatchMetricsEnabled: true, metricName, sampledRequestsEnabled: true });
           args.rules = $output(args.rules).apply((rules) => [
@@ -141,56 +229,59 @@ export default $config({
       },
     });
 
-    // Daily retention purge: expired OTP/verification rows and sessions (api/src/jobs/purge.ts).
-    const purge = new sst.aws.Cron("Purge", {
-      schedule: "rate(1 day)",
-      function: { ...fn, handler: "api/src/jobs/purge.handler" },
+    // CMS media (images, .vtt captions) straight from the bucket on the app origin: CloudFront signs with OAC, no Lambda in the path.
+    router.routeBucket("/media-cms", cmsMedia, { rewrite: { regex: "^/media-cms/(.*)$", to: "/$1" } });
+    // Objects are SSE-KMS, so CloudFront also needs kms:Decrypt; scoped to this Router's distribution (SST's bucket policy is not).
+    // Replaces the key's default policy, so the account statement is restated.
+    const account = aws.getCallerIdentityOutput().accountId;
+    new aws.kms.KeyPolicy("DataKeyPolicy", {
+      keyId: dataKey.id,
+      policy: $jsonStringify({
+        Version: "2012-10-17",
+        Statement: [
+          { Sid: "Account", Effect: "Allow", Principal: { AWS: $interpolate`arn:aws:iam::${account}:root` }, Action: "kms:*", Resource: "*" },
+          {
+            Sid: "RouterReadsCmsMedia",
+            Effect: "Allow",
+            Principal: { Service: "cloudfront.amazonaws.com" },
+            Action: "kms:Decrypt",
+            Resource: "*",
+            Condition: { StringEquals: { "AWS:SourceArn": router.nodes.cdn.apply((cdn) => cdn.nodes.distribution.arn) } },
+          },
+        ],
+      }),
     });
 
-    // CMS (card C-01, ../docs/cms.md): Payload 3 on Next.js (OpenNext), same RDS in its own `cms` schema, private SSE-KMS media bucket.
-    // Versioned so an overwritten or deleted media file can be recovered for 30 days.
-    const cmsMedia = new sst.aws.Bucket("CmsMedia", { versioning: true });
-    new aws.s3.BucketServerSideEncryptionConfigurationV2("CmsMediaEncryption", {
-      bucket: cmsMedia.name,
-      rules: [{ applyServerSideEncryptionByDefault: { sseAlgorithm: "aws:kms", kmsMasterKeyId: dataKey.arn }, bucketKeyEnabled: true }],
-    });
-    new aws.s3.BucketLifecycleConfiguration("CmsMediaOldVersions", {
-      bucket: cmsMedia.name,
-      rules: [{ id: "expire-old-versions", status: "Enabled", filter: { prefix: "" }, noncurrentVersionExpiration: { noncurrentDays: 30 } }],
-    });
-    const payloadSecret = new sst.Secret("PayloadSecret");
-    const cmsCronSecret = new sst.Secret("CmsCronSecret");
-    // ponytail: plain env vars because Payload's config reads process.env; move to Resource links if the CMS ever imports `sst`.
-    const cms = new sst.aws.Nextjs("Cms", {
-      path: "cms",
-      vpc,
-      link: [cmsMedia], // IAM for the bucket; Payload's S3 client uses the function role
-      permissions: [useDataKey],
-      environment: {
-        DATABASE_URL: databaseUrl.properties.value,
-        PAYLOAD_SECRET: payloadSecret.value,
-        CRON_SECRET: cmsCronSecret.value,
-        S3_BUCKET: cmsMedia.name,
-        CMS_CORS_ORIGINS: authUrl.value, // the app's public origin
-        NODE_EXTRA_CA_CERTS: "/var/runtime/ca-cert.pem",
-      },
-    });
-    // Scheduled publish: Payload's jobs run from this cron (autoRun cannot run on Lambda).
-    const cmsJobs = new sst.aws.Cron("CmsJobs", {
-      schedule: "rate(1 minute)",
-      function: {
-        handler: "cms/src/cron.handler",
-        runtime: "nodejs22.x",
-        environment: { CMS_URL: cms.url, CRON_SECRET: cmsCronSecret.value },
-      },
+    new sst.aws.StaticSite("App", {
+      path: "app",
+      // Source maps are built (vite build.sourcemap 'hidden') and moved out of dist before upload, so they are never served;
+      // upload app/dist-maps privately to error tracking from CI.
+      build: { command: "npm run build && rm -rf dist-maps && mkdir dist-maps && find dist -name '*.map' -exec mv {} dist-maps/ ';'", output: "dist" },
+      environment: { VITE_CMS_URL: cms.url, VITE_POSTHOG_KEY: posthogProjectKey.value, VITE_CAL_ORIGIN: calOrigin }, // the PostHog project key is public by design
+      router: { instance: router },
     });
 
+    // The user's document-reading provider (api/src/documents/reader.ts, contract in api/README.md): base URL and API key.
+    const docReaderUrl = new sst.Secret("DocReaderUrl");
+    const docReaderApiKey = new sst.Secret("DocReaderApiKey");
+
+    // Booking events (card C-CAL; api/src/events/bus.ts). Cal.com webhooks -> Api -> PutEvents on this bus (source lifemap.bookings, the CloudEvent as detail).
+    // The archive keeps every booking event for replay (billing re-runs); billing consumes the Billing queue (not built here) and dedupes on the
+    // CloudEvent id (the idempotency key). Messages it fails 3 times land in BillingDeadLetter (14 days), which alarms below.
+    const bookings = new sst.aws.Bus("Bookings");
+    const bookingEvents = { source: ["lifemap.bookings"] };
+    new aws.cloudwatch.EventArchive("BookingsArchive", { eventSourceArn: bookings.arn, eventPattern: $jsonStringify(bookingEvents), retentionDays: 90 }); // ids only (no names or emails); retention: docs/gdpr-audit.md
+    const billingDeadLetter = new sst.aws.Queue("BillingDeadLetter", { transform: { queue: { messageRetentionSeconds: 14 * 24 * 3600 } } });
+    const billing = new sst.aws.Queue("Billing", { dlq: billingDeadLetter.arn });
+    bookings.subscribeQueue("Billing", billing, { pattern: bookingEvents });
+    // Cal.com team webhook secrets, one per tenant: JSON { "<organization id>": "<secret>" } (docs/runbook.md#cal-com-webhooks).
+    const calWebhookSecrets = new sst.Secret("CalWebhookSecrets");
     const api = new sst.aws.Function("Api", {
       ...fn,
       handler: "api/src/lambda.handler",
-      url: { router: { instance: router } }, // api.url is now the Router's (WAF-protected) URL
-      link: [databaseUrl, authSecret, email, documents, posthogProjectKey, posthogPersonalApiKey],
-      environment: { ...fn.environment, BETTER_AUTH_URL: authUrl.value, CMS_URL: cms.url }, // CMS_URL: a CORS origin (api/src/app.ts)
+      url: { router: { instance: router, path: "/api" } },
+      link: [databaseUrl, authSecret, email, documents, posthogProjectKey, posthogPersonalApiKey, docReaderUrl, docReaderApiKey, bookings, calWebhookSecrets],
+      environment: { ...fn.environment, BETTER_AUTH_URL: router.url, CMS_URL: cms.url }, // CMS_URL: a CORS origin (api/src/app.ts)
       // X-Ray for Powertools Tracer (api/src/observe.ts).
       permissions: [{ actions: ["xray:PutTraceSegments", "xray:PutTelemetryRecords"], resources: ["*"] }, useDataKey],
       transform: { function: { tracingConfig: { mode: "Active" } } },
@@ -291,6 +382,15 @@ export default $config({
         threshold: 1,
       });
 
+      // Booking events billing could not process (runbook: replay from BookingsArchive after the fix).
+      alarm("BillingDeadLetter", "Billing dead-letter messages", {
+        namespace: "AWS/SQS",
+        metricName: "ApproximateNumberOfMessagesVisible",
+        dimensions: { QueueName: billingDeadLetter.nodes.queue.name },
+        statistic: "Maximum",
+        threshold: 1,
+      });
+
       // SES account reputation (AWS reviews the account at 5% bounces / 0.1% complaints).
       const ses = { namespace: "AWS/SES", statistic: "Maximum", period: 3600 };
       alarm("SesBounceRate", "SES bounce rate", { ...ses, metricName: "Reputation.BounceRate", threshold: 0.05 });
@@ -299,43 +399,6 @@ export default $config({
       new aws.cloudwatch.Dashboard("Dashboard", { dashboardName: `lifemap-${$app.stage}`, dashboardBody: $jsonStringify({ widgets }) });
     }
 
-    // The app (card P4): static site on its own CloudFront with security headers. Vimeo plays in its iframe (no script host needed);
-    // posthog-js/no-external bundles its extensions, so PostHog needs connect-src only. 'unsafe-inline' styles: index.html and the
-    // prototype CSS carry inline style blocks/attributes.
-    const csp = $interpolate`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: ${cms.url} https://i.vimeocdn.com; media-src 'self' blob: ${cms.url}; font-src 'self' data:; connect-src 'self' ${api.url} ${cms.url} https://eu.i.posthog.com https://eu-assets.i.posthog.com; frame-src https://player.vimeo.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`;
-    const appHeaders = new aws.cloudfront.ResponseHeadersPolicy("AppHeaders", {
-      name: `lifemap-${$app.stage}-app-headers`,
-      securityHeadersConfig: {
-        contentSecurityPolicy: { contentSecurityPolicy: csp, override: true },
-        strictTransportSecurity: { accessControlMaxAgeSec: 63072000, includeSubdomains: true, preload: true, override: true },
-        frameOptions: { frameOption: "DENY", override: true },
-        contentTypeOptions: { override: true },
-        referrerPolicy: { referrerPolicy: "strict-origin-when-cross-origin", override: true },
-      },
-      customHeadersConfig: {
-        items: [
-          {
-            header: "Permissions-Policy",
-            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), fullscreen=(self "https://player.vimeo.com"), autoplay=(self "https://player.vimeo.com")',
-            override: true,
-          },
-          { header: "Cross-Origin-Opener-Policy", value: "same-origin", override: true },
-        ],
-      },
-    });
-    const app = new sst.aws.StaticSite("App", {
-      path: "app",
-      // Source maps are built (vite build.sourcemap 'hidden') and moved out of dist before upload, so they are never served;
-      // upload app/dist-maps privately to error tracking from CI.
-      build: { command: "npm run build && rm -rf dist-maps && mkdir dist-maps && find dist -name '*.map' -exec mv {} dist-maps/ ';'", output: "dist" },
-      environment: { VITE_CMS_URL: cms.url, VITE_POSTHOG_KEY: posthogProjectKey.value }, // the PostHog project key is public by design
-      transform: {
-        cdn: (args) => {
-          args.defaultCacheBehavior = $output([args.defaultCacheBehavior, appHeaders.id]).apply(([behavior, id]) => ({ ...behavior, responseHeadersPolicyId: id }));
-        },
-      },
-    });
-
-    return { url: api.url, cmsUrl: cms.url, appUrl: app.url };
+    return { appUrl: router.url, cmsUrl: cms.url };
   },
 });

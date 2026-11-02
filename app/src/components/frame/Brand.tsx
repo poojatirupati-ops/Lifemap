@@ -1,5 +1,5 @@
 import { Logo } from '../ui/icons.tsx'
-import { loadedTenant } from '../../shell/tenant.ts'
+import { useTenant } from '../../shell/tenant.ts'
 
 const lifeMap = (
   <b>
@@ -7,9 +7,9 @@ const lifeMap = (
   </b>
 )
 
-/** The tenant's logo and name (LifeMap's own for LifeMap Direct). Hook-free, so heads may call it as a function. */
+/** The tenant's logo and name (LifeMap's own for LifeMap Direct). */
 export default function Brand() {
-  const tenant = loadedTenant()
+  const tenant = useTenant()
   const own = !tenant || tenant.name === 'LifeMap'
   return (
     <div className="brand brand2">

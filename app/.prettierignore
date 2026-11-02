@@ -1,4 +1,3 @@
-src/legacy
-src/prototype
+src/styles/prototype.css
 public
 dist

@@ -77,7 +77,7 @@ Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx t
    npx sst secret set CmsCronSecret "$(openssl rand -hex 32)" --stage <stage>
    npx sst secret set PosthogProjectKey <key> --stage <stage>
    npx sst secret set PosthogPersonalApiKey <key> --stage <stage>
-   npx sst secret set BetterAuthUrl https://<api-url> --stage <stage>   # first deploy: deploy, read `url`, set, redeploy
+   npx sst secret set BetterAuthUrl https://<appUrl> --stage <stage>   # first deploy: deploy, read `appUrl`, set, redeploy
    ```
 6. After the first deploy: confirm the SNS email subscription, request SES production access and publish the DKIM records (api/README.md), and run the restore drill (docs/runbook.md).
 

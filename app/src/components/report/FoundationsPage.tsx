@@ -1,9 +1,6 @@
 // Report page 8: foundations and you. The five-level pyramid, protection, and your money personality.
 import { RISK_LABELS } from '../../domain/discovery/profile.data.ts'
-import CircleIcon from './CircleIcon.tsx'
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import Photo from './Photo.tsx'
-import TitleBlock from './TitleBlock.tsx'
+import { CircleIcon, PageFrame, Photo, TitleBlock, type PageProps } from './PageFrame.tsx'
 import { COLOURS } from './tones.ts'
 
 /** Each level's background, border and status colours by tone. */
@@ -116,15 +113,15 @@ export default function FoundationsPage(props: PageProps) {
           <div className="lmr-risk">
             Risk profile
             <div className="lmr-scale">
-              {RISK_LABELS.map((label, index) =>
-                index === activeIndex ? (
-                  <div className="lmx-on" aria-current="true" key={label}>
-                    {label}
-                  </div>
-                ) : (
-                  <div key={label}>{label}</div>
-                ),
-              )}
+              {RISK_LABELS.map((label, index) => (
+                <div
+                  key={label}
+                  className={index === activeIndex ? 'lmx-on' : undefined}
+                  aria-current={index === activeIndex ? 'true' : undefined}
+                >
+                  {label}
+                </div>
+              ))}
             </div>
           </div>
           {personality.note ? <div className="lmx-nt">{personality.note}</div> : null}

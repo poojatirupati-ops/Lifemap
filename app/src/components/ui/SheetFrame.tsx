@@ -32,7 +32,7 @@ export default function SheetFrame({
   return (
     <Root open onOpenChange={onClose}>
       <div className="sheet-bg">
-        {/* ponytail: undefined drops Radix's data-state, tabindex, id and aria-* to keep the original's markup; h2#sheet-t is not a Dialog.Title, so dev logs Radix's missing-title error. Wrap SheetTitle in <Title asChild> to silence it. */}
+        {/* undefined drops Radix's data-state, tabindex, id and aria-* to keep the original's markup */}
         <Content asChild {...focus}>
           <div
             className={clsx('sheet', chat && 'chatsheet')}

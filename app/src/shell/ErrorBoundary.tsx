@@ -13,7 +13,7 @@ function Fallback({ resetErrorBoundary }: FallbackProps) {
   )
 }
 
-/** Per-screen boundary (ScreenHost remounts it with each screen). Reports through PostHog, which only runs with consent. */
+/** Per-screen boundary (shell/Screen.tsx remounts it with each screen). Reports through PostHog, which only runs with consent. */
 export default function ErrorBoundary({ children }: { children: ReactNode }) {
   return (
     <Boundary FallbackComponent={Fallback} onError={captureException}>

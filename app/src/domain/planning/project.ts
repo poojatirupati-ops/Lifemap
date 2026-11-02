@@ -5,7 +5,6 @@ import { coveredPercent, goalFunding, ruleSaving } from './fund'
 import { payDueGoals, splitSpare, type SavingPlan, type YearContext } from './fundYear'
 import type { HouseholdFigures } from './householdFigures'
 import { yearIncome } from './income'
-import { yearRow } from './yearRow'
 import { planSettings, type ProjectionInputs } from './planSettings'
 import { startingPosition } from './startingPosition'
 import { growWallet, walletTotal } from './wallet'
@@ -42,7 +41,7 @@ export function project(inputs: ProjectionInputs, whatIf: WhatIf = NO_WHAT_IF) {
     target,
   }
   const pensionWhatIf = towardsPension ? whatIf.monthly : null
-  const rows: ReturnType<typeof yearRow>[] = []
+  const rows = []
   let ruleToday = 0
   for (let index = 0; index <= plan.end - startAge; index++) {
     const age = startAge + index
@@ -75,22 +74,26 @@ export function project(inputs: ProjectionInputs, whatIf: WhatIf = NO_WHAT_IF) {
     for (const pot of due) coverage.set(pot.goal.id, { cost: pot.cost, covered: pot.paid })
     if (retirement && !working) addRetiredYear(coverage, retirement, living, split.livingShortfall)
     if (age === plan.end) coverLegacies(coverage, legacies, prices, free)
-    const savings = free + pots.reduce((total, pot) => total + pot.pot, 0)
-    rows.push(
-      yearRow({
-        year,
-        calendarYear: plan.startYear + index,
-        income,
-        living,
-        repayments,
-        due,
-        split,
-        savings,
-        pension: balances.pension,
-        retireAge: figures.retireAge,
-        downsized,
-      }),
-    )
+    const goalGap = due.reduce((total, pot) => total + pot.cost - pot.paid, 0)
+    rows.push({
+      index,
+      age,
+      year: plan.startYear + index,
+      ...income,
+      living,
+      repayments,
+      needs: living + repayments,
+      goalsDue: due.map(({ goal, cost, paid }) => ({ ...dueGoal(goal), cost, paid })),
+      goalCost: due.reduce((total, pot) => total + pot.cost, 0),
+      goalGap,
+      ...split,
+      shortfall: split.livingShortfall + goalGap,
+      liquid: free + pots.reduce((total, pot) => total + pot.pot, 0),
+      pension: balances.pension,
+      retired: !working,
+      retiresThisYear: age === figures.retireAge,
+      downsized,
+    })
   }
 
   const percent: Record<number, number> = {}
@@ -113,6 +116,8 @@ export function project(inputs: ProjectionInputs, whatIf: WhatIf = NO_WHAT_IF) {
     },
   }
 }
+
+const dueGoal = ({ id, name, emoji, kind }: Goal) => ({ id, name, e: emoji, kind })
 
 const retiredSpending = (plan: { figures: HouseholdFigures; retireSpend: number }, goal?: Goal) =>
   goal ? goal.amount : plan.figures.monthlyCosts * 12 * plan.retireSpend

@@ -10,7 +10,7 @@ import {
   type ProfileQuestion,
 } from '../../domain/discovery/profileQuestions.ts'
 import ProfileOption from './ProfileOption.tsx'
-import { pickProfileAnswer, toggleProduct } from './profileActions.ts'
+import { pickProfileAnswer, toggleProduct } from '../../state/profile.ts'
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 

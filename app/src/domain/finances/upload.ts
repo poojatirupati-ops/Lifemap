@@ -1,4 +1,4 @@
-// Confirming "We read these values": the demo statements' figures go into the plan.
+// Confirming "We read these values": the figures the document reader found (or the sample document's) go into the plan.
 import { FINANCE_FIELDS } from './fields.data.ts'
 import { hasValue } from '../../lib/format.ts'
 import { readFigure, type FinanceBook } from './figures.ts'
@@ -7,17 +7,43 @@ import { itemDocumentOf } from './itemDocuments.data.ts'
 import { LIST_FIELDS, listOf, type ListKey } from './lists.data.ts'
 import { FINANCE_SECTIONS, SECTION_UPLOADS } from './sections.data.ts'
 
-/** An upload in progress. `edit` holds the customer's corrections; `item` is set for one list item. */
+/** What the document reader found (POST /api/documents/:id/read), confidence in %. */
+export type DocumentRead = {
+  provider: string
+  failed: boolean
+  fields: Record<string, { value: number | string; confidence: number }>
+}
+
+/** Sample documents and the example reader show the example figures, labelled as such. */
+export const isExample = (read?: DocumentRead) => !read || read.provider === 'example'
+
+/** The reader's figures in place of the sample ones, only those it found; a sample document keeps the samples. */
+function figuresRead<V extends number | string>(
+  sample: Record<string, [V, number]>,
+  read?: DocumentRead,
+): Record<string, [V, number]> {
+  if (!read) return sample
+  return Object.fromEntries(
+    Object.keys(sample).flatMap((key) => {
+      const found = read.fields[key]
+      if (!found || typeof found.value !== typeof sample[key][0]) return []
+      return [[key, [found.value as V, found.confidence]]]
+    }),
+  )
+}
+
+/** An upload in progress. `edit` holds the customer's corrections; `item` is set for one list item; `read` once a real document was read. */
 export type Upload = {
   section: string
   stage: 'scan' | 'fail' | 'confirm'
   files: string[]
   edit: Record<string, number>
   item: { list: ListKey; id: number } | null
+  read?: DocumentRead
 }
 
 /** One figure as the reader found it, with how sure it is. */
-export type ReadFigure = {
+type ReadFigure = {
   field: string
   label: string
   value: number | string
@@ -32,10 +58,12 @@ export type ReadDocument = {
   figures: ReadFigure[]
   /** Text read as it is (a lender's name), not editable. */
   texts?: [label: string, text: string][]
+  /** Example figures (a sample document or the example reader). */
+  example: boolean
 }
 
 /** The smart upload at the top of Your finances reads into every section with documents. */
-export const uploadSections = (section: string) =>
+const uploadSections = (section: string) =>
   section === 'smart' ? ['income', 'assets', 'liab', 'pension'] : [section]
 
 // the value read, or the customer's correction of it
@@ -74,19 +102,20 @@ export function confirmUpload(book: FinanceBook, upload: Upload) {
   for (const section of uploadSections(upload.section)) {
     const read = SECTION_UPLOADS[section]
     const from = `upl:${section}`
-    for (const [key, [value, confidence]] of Object.entries(read.values)) {
+    for (const [key, [value, confidence]] of Object.entries(figuresRead(read.values, upload.read))) {
       delete book.warnings[key]
       readFigure(book, key, { ...confirmed(upload, key, value), confidence, from })
     }
-    for (const [key, [value, confidence]] of Object.entries(read.hidden ?? {})) {
+    for (const [key, [value, confidence]] of Object.entries(figuresRead(read.hidden ?? {}, upload.read))) {
       readFigure(book, key, { value, confidence, corrected: false, from })
     }
-    Object.assign(book.warnings, read.staleNotes)
+    if (!upload.read) Object.assign(book.warnings, read.staleNotes) // the sample statements' dates
   }
 }
 
 /** What "We read these values" shows: one card for a list item's statement, else one per section. */
-export function readValuesToConfirm({ section, item }: Upload): ReadDocument[] {
+export function readValuesToConfirm({ section, item, read: found }: Upload): ReadDocument[] {
+  const example = isExample(found)
   if (item) {
     const { title, figures, texts = [] } = itemDocumentOf(item.list)
     const label = (field: string) => LIST_FIELDS[`${item.list}.${field}`].label
@@ -100,6 +129,7 @@ export function readValuesToConfirm({ section, item }: Upload): ReadDocument[] {
           confidence,
         })),
         texts: texts.map(([field, text]) => [label(field).replace(' (optional)', ''), text]),
+        example,
       },
     ]
   }
@@ -108,13 +138,14 @@ export function readValuesToConfirm({ section, item }: Upload): ReadDocument[] {
     const { emoji, title } = FINANCE_SECTIONS.find(({ id }) => id === sectionId)!
     return {
       title: `${emoji} ${title}`,
-      documents: read.documents.join(' · '),
-      figures: Object.entries(read.values).map(([field, [value, confidence]]) => ({
+      documents: found ? undefined : read.documents.join(' · '),
+      example,
+      figures: Object.entries(figuresRead(read.values, found)).map(([field, [value, confidence]]) => ({
         field,
         label: FINANCE_FIELDS[field].label,
         value,
         confidence,
-        stale: read.staleNotes?.[field],
+        stale: found ? undefined : read.staleNotes?.[field],
       })),
     }
   })

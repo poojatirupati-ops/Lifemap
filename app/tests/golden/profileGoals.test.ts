@@ -1,7 +1,7 @@
 // Goals and the normalisers must equal the ORIGINAL script's, run in node:vm, on every fixture.
 import { describe, expect, it } from 'vitest'
 import { OTHER_GOALS } from '../../src/domain/discovery/goals.data'
-import { clampSafetyMonths, emergencyFundToAdd, newGoal } from '../../src/domain/goals/goals'
+import { clampSafetyMonths, newGoal } from '../../src/domain/goals/goals'
 import { syncAges, syncSafety } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
 import { defaultSettings } from '../../src/domain/planning/settings'
@@ -73,10 +73,10 @@ describe('goals equal the original', { timeout: 30_000 }, () => {
         originalNormalized(started)
         original.getState().app = true
         original.autoSafety()
-        const plan = { ...ourNormalized(started), hasResults: true }
-        const added = emergencyFundToAdd(plan, plan.nextGoalId)
-        if (added) plan.goals.push(added)
+        // normalize adds the emergency fund as the original's autoSafety does before projecting
+        const plan = ourNormalized(started)
         expect(plain(toOriginal(plan).goals)).toEqual(plain(original.getState().goals))
+        expect(plan.nextGoalId).toBe(original.getState().gid)
       }
     }
   })

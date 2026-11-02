@@ -17,6 +17,9 @@ export type Files = {
   dir?: string;
 };
 
+/** Nest token for the Files store (FilesModule). */
+export const FILES = "Files";
+
 const TTL = 300; // seconds
 
 // Presigning is local (no network): the URL carries the Lambda role's signature, and S3 checks key, content type and length against it.

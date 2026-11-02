@@ -2,6 +2,7 @@
 import { JSDOM } from 'jsdom'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { shape as shapeWithout } from '../golden/helpers'
 
 // A browser for React to render into. These files stay in node (the original is read from disk with
 // node's URL), so the window's globals that node lacks are copied over.
@@ -17,26 +18,8 @@ Object.assign(globalThis, {
 })
 const DISPATCH = new Set(['data-a', 'data-p'])
 
-function cssText(style: string) {
-  const probe = document.createElement('i')
-  probe.style.cssText = style
-  return probe.style.cssText
-}
-
 /** Tags, sorted attributes and text; the original's dispatcher attributes and style spacing ignored. */
-export function shape(html: string) {
-  const walk = (node: Node): string => {
-    if (node.nodeType === 3) return node.textContent ?? ''
-    const el = node as Element
-    const attrs = [...el.attributes]
-      .filter((attr) => !DISPATCH.has(attr.name))
-      .map((attr) => `${attr.name}=${attr.name === 'style' ? cssText(attr.value) : attr.value}`)
-      .sort()
-    return `<${el.tagName} ${attrs.join(' ')}>${[...el.childNodes].map(walk).join('')}</>`
-  }
-  const body = new JSDOM(html).window.document.body
-  return [...body.childNodes].map(walk).join('').split('<')
-}
+export const shape = (html: string) => shapeWithout(html, DISPATCH)
 
 /** Our markup for an element, rendered once. */
 export function rendered(element: ReactNode) {

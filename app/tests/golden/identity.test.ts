@@ -4,7 +4,6 @@ import { runOriginal, TODAY } from './origSlice'
 import { fixtures, plain } from './origProfile'
 import {
   ADVISER_QUESTIONS,
-  ADVISERS,
   EXPERTS,
   SUSTAINABLE_QUESTION,
 } from '../../src/domain/identity/advisers.data'
@@ -13,30 +12,26 @@ import {
   PERSONALITY_TYPES,
   REASONS,
 } from '../../src/domain/identity/personality.data'
-import { makeSlots } from '../../src/domain/identity/slots'
 import { localToday } from '../../src/lib/today'
 import * as dob from '../../src/domain/identity/dob'
 import { fromOriginal, toOriginal } from '../../src/state/migrate'
 
 const original = runOriginal(
-  `TYPES, WHY, DISC_FORMAL, ADVISERS, EXPERT_FOR, EXPERT_BLURB, EXPERT_ICON, ESG_Q, ADV_QS, SLOTS,
+  `TYPES, WHY, DISC_FORMAL, EXPERT_FOR, EXPERT_BLURB, EXPERT_ICON, ESG_Q, ADV_QS,
   syncAges, dobValid, ageTodayOf, nextBirthday, dateLong, dobFilled, dobCheck`,
 )
+const HERO_PHOTOS: Record<string, string> = {
+  Achiever: '/media/graduation.jpg',
+  Balancer: '/media/savings-jar.jpg',
+  Contented: '/media/retired-reading.jpg',
+}
+
 const mapValues = <T, R>(record: Record<string, T>, map: (value: T, key: string) => R) =>
   Object.fromEntries(Object.entries(record).map(([key, value]) => [key, map(value, key)]))
 
 describe('identity data equals the original', { timeout: 30_000 }, () => {
-  it('advisers and experts', () => {
-    expect(ADVISERS).toEqual(
-      plain(original.ADVISERS).map((a: any) => ({
-        name: a.n,
-        initials: a.ini,
-        qualifications: a.q,
-        languages: a.lang,
-        location: a.loc,
-        meetingMode: a.mode,
-      })),
-    )
+  // the advisers are the tenant's own now (GET /api/advisers); experts.test.tsx renders the original's three through it
+  it('experts', () => {
     expect(EXPERTS).toEqual(
       mapValues(original.EXPERT_FOR, (title: string, key) => ({
         title,
@@ -56,6 +51,8 @@ describe('identity data equals the original', { timeout: 30_000 }, () => {
         strapline: t.strap,
         strengths: t.str,
         watchOut: t.watch,
+        // the reveal's hero photos, as the original's dhero style picks them
+        ...(HERO_PHOTOS[t.name] && { photo: HERO_PHOTOS[t.name] }),
       })),
     )
     expect(REASONS).toEqual(
@@ -63,8 +60,6 @@ describe('identity data equals the original', { timeout: 30_000 }, () => {
     )
     expect(DISCOVERY_DISCLAIMER).toBe(original.DISC_FORMAL)
   })
-
-  it('booking slots', () => expect(makeSlots(localToday(TODAY))).toEqual(plain(original.SLOTS)))
 })
 
 describe('date of birth', { timeout: 30_000 }, () => {

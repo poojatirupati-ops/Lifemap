@@ -24,6 +24,7 @@ import {
   type Settings,
   type StandardKey,
 } from '../../src/domain/planning/settings'
+import { standardFor, type AssumptionPlan } from '../../src/domain/planning/assumptionText'
 
 const original = runOriginal(
   `RULES_IE_2026, RULES_2027, LAW, SETTINGS, SV, SB, SL, SG, invNet, invBy, ruleCount, setRulesYear,
@@ -119,6 +120,16 @@ describe('settings equal the original', () => {
     expect(investmentGrowth(settings)).toBe(original.invNet(0))
     expect(investmentGrowthBasis(settings)).toBe(original.invBy())
     charges.v = keep
+  })
+  it('a plan starting in 2027 takes the 2027 rules', () => {
+    original.setRulesYear(2027)
+    const rules = rulesFor(2027)
+    const plan = { assumptions: { startYear: 2027 }, about: { partner: false }, figures: {} }
+    expect(standardFor(plan as AssumptionPlan, 'inv')).toBe(original.SV('inv'))
+    expect(standardValue('inv', defaultSettings, rules)).toBe(original.SV('inv'))
+    expect(cautiousValue('inv', defaultSettings, rules)).toBe(original.SETTINGS.s.inv.vc)
+    expect(standardSource('inv', defaultSettings, rules)).toBe(original.SB('inv'))
+    original.setRulesYear(2026)
   })
   it('partner overrides', () => {
     defaultSettings.partner = 'Acme CU'

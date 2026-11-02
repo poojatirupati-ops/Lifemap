@@ -3,7 +3,13 @@ import { useStore } from '../../state/store.ts'
 import { isChosen } from '../../domain/planning/assumptions.ts'
 import AgeChoices from './AgeChoices.tsx'
 import InflationChoice from './InflationChoice.tsx'
-import { missingChoices, requiredChoices } from './requiredChoices.ts'
+import { missingChoices, requiredChoices } from '../../domain/planning/requiredChoices.ts'
+import AssumptionField from '../me/AssumptionField.tsx'
+import { rememberOpenGroup } from '../../state/assumptions.ts'
+import { ASSUMPTIONS } from '../../domain/planning/assumptionFields.data.ts'
+
+// Everything on Your assumptions except the choices above, in the original's order.
+const REST = Object.keys(ASSUMPTIONS)
 
 /** Step 7: the choices only the customer makes, then everything LifeMap set for them. */
 export default function RequiredChoices() {
@@ -17,6 +23,7 @@ export default function RequiredChoices() {
       partnerRetireSet: plan.partnerRetireSet,
     })),
   )
+  const open = useStore(({ openAssumption }) => openAssumption === 'p4')
   const needed = requiredChoices(plan).length
   const chosen = needed - missingChoices(plan).length
   const allChosen = chosen === needed
@@ -54,7 +61,13 @@ export default function RequiredChoices() {
           }
         />
       </div>
-      <details className="card" id="p4-rest" data-g="p4">
+      <details
+        className="card"
+        id="p4-rest"
+        data-g="p4"
+        open={open}
+        onToggle={(event) => rememberOpenGroup('p4', event.currentTarget.open)}
+      >
         <summary style={{ cursor: 'pointer', fontWeight: 800, minHeight: 44 }}>
           What we've set for you (change any)
         </summary>
@@ -64,8 +77,11 @@ export default function RequiredChoices() {
           <b>Assumed: add yours</b>. Change any one and it reads <b>Your choice</b>.
           {changed > 0 ? ` You have changed ${changed}.` : null}
         </p>
-        {/* TODO(R-26): every other Your assumptions field goes here once R-26 builds them */}
-        <div style={{ marginTop: 10 }}></div>
+        <div style={{ marginTop: 10 }}>
+          {REST.map((key) => (
+            <AssumptionField key={key} name={key} />
+          ))}
+        </div>
       </details>
     </div>
   )

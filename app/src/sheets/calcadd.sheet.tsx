@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { missingText } from '../domain/calc/values.ts'
-import { makePlan } from '../components/me/meActions.ts'
+import { makePlan } from '../state/plan.ts'
 import { useStore } from '../state/store.ts'
 import { useShallow } from 'zustand/react/shallow'
 import { calcHandoff } from '../domain/goals/handoff.ts'

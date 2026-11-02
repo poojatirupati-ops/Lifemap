@@ -4,9 +4,17 @@ import { checkDob } from '../../domain/identity/dob.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { localToday } from '../../lib/today.ts'
 import { useStore } from '../../state/store.ts'
-import type { Dob } from '../../state/types.ts'
-import { dobKey, setDobPart, type Who } from './aboutActions.ts'
-import SourceTag from './SourceTag.tsx'
+import type { Dob, Provenance } from '../../state/types.ts'
+import { dobKey, setDobPart, type Who } from '../../state/about.ts'
+import Emo from '../ui/Emo.tsx'
+
+/** Where the partner's age came from. */
+const TAGS: Record<Provenance | 'none', [className: string, text: string]> = {
+  doc: ['tag doc', '✅ From document'],
+  typed: ['tag typed', '✏️ Your figure'],
+  pre: ['tag pre', '✏️ Your figure · from your answers'],
+  none: ['tag none', '❓ Missing'],
+}
 
 const PARTS: {
   part: keyof Dob
@@ -34,6 +42,7 @@ export default function DobField({ who }: { who: Who }) {
     })),
   )
   const check = checkDob(dob, who, { today, name: partnerName, startYear })
+  const tag = TAGS[ageSource ?? 'none']
 
   const onInput = (part: keyof Dob) => (event: FormEvent<HTMLInputElement>) => {
     const input = event.currentTarget
@@ -48,7 +57,13 @@ export default function DobField({ who }: { who: Who }) {
     <div className="field">
       <span className="flabel" id={`lab-${id}`}>
         {you ? 'Your date of birth' : 'Their date of birth'}{' '}
-        <span id={`tag-${id}`}>{you ? null : <SourceTag source={ageSource} />}</span>
+        <span id={`tag-${id}`}>
+          {you ? null : (
+            <span className={tag[0]}>
+              <Emo>{tag[1]}</Emo>
+            </span>
+          )}
+        </span>
       </span>
       <div
         className="dobrow"

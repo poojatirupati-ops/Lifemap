@@ -5,7 +5,10 @@ import { expect, test, type Page } from '@playwright/test'
 const APP = process.env.APP ?? 'http://localhost:5173/'
 const CMS = process.env.CMS ?? 'http://localhost:3000/'
 const LOG = process.env.API_LOG ?? '/tmp/lifemap-api.log'
-const email = `journey+${Date.now()}@example.com`
+// Its own domain: the dev server logs the code as `[otp] x***@<domain>: 123456`, so tests running
+// alongside cannot pick up each other's codes.
+const domain = `journey-${Date.now()}.example.com`
+const email = `journey@${domain}`
 
 /** Sends a sign-in code and types the one the API dev server logged (`[otp] <masked>: 123456`). */
 async function signIn(page: Page) {
@@ -21,7 +24,7 @@ async function signIn(page: Page) {
       readFileSync(LOG)
         .subarray(from)
         .toString()
-        .match(/\[otp\] .*: (\d{6})/)?.[1] ?? ''
+        .match(new RegExp(`\\[otp\\] \\S*@${domain.replaceAll('.', '\\.')}: (\\d{6})`))?.[1] ?? ''
     expect(code).not.toBe('')
   }).toPass()
   await page.getByLabel('Digit 1').pressSequentially(code)
@@ -193,7 +196,7 @@ test('whole journey', async ({ page }) => {
 
   await test.step('results with a what-if change', async () => {
     await see(page, 'My Plan')
-    await expect(page.getByText('1 of 2 goals on track')).toBeVisible()
+    await expect(page.getByText('1 of 3 goals on track', { exact: true }).first()).toBeVisible()
     const { versions } = await api(page, 'plan/versions')
     await tap(page, 'Retire comfortably')
     await page.getByRole('textbox', { name: 'Extra each month' }).fill('500')
@@ -253,13 +256,11 @@ test('whole journey', async ({ page }) => {
     await page.getByRole('checkbox', { name: /Your plan report/ }).check()
     await page.getByRole('checkbox', { name: /Your documents/ }).uncheck()
     await page.getByRole('checkbox', { name: /^I agree to share the items/ }).check()
-    await tap(page, 'Pick a time')
-    await page.getByRole('group', { name: 'Time' }).getByRole('button').first().click()
-    await tap(page, 'Confirm booking')
-    await expect(page.getByRole('heading', { name: "You're booked ✓" })).toBeVisible(later) // POST /api/bookings
+    await tap(page, 'Pick a time') // POST /api/bookings: pending until Cal.com's webhook confirms it
+    await see(page, 'Pick a time') // the sample adviser's Cal.com calendar (api/src/dev.ts)
     const { bookings } = await api(page, 'bookings')
     expect(bookings).toHaveLength(1)
-    expect(bookings[0]).toMatchObject({ status: 'booked', share: { report: true, docs: false } })
+    expect(bookings[0]).toMatchObject({ status: 'pending', share: { report: true, docs: false } })
   })
 
   await test.step('Me: consents, export, sign out', async () => {
@@ -279,7 +280,7 @@ test('whole journey', async ({ page }) => {
     expect(exported.account.email).toBe(email)
     expect(exported.documents).toHaveLength(1)
     expect(exported.bookings).toHaveLength(1)
-    expect(exported.plan.data.goals).toHaveLength(2)
+    expect(exported.plan.data.goals).toHaveLength(3) // retirement, home and the automatic Emergency fund
 
     await tab(page, 'Me')
     await page.getByRole('button', { name: /^Sign out/ }).click()

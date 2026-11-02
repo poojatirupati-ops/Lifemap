@@ -1,0 +1,19 @@
+---
+status: review
+---
+# C-CAL: Adviser bookings through Cal.com
+
+Decided with the user (2026-11-02):
+- Advisers are real tenant members with a new Better Auth organization role `adviser`. Each adds their Cal.com link (and the card fields: qualifications, languages, location, meeting mode) to their own profile. Use Better Auth `user.additionalFields` (`calLink`, `adviserProfile`), set through `authClient.updateUser`. No custom tables.
+- The Experts tab lists the tenant's advisers from a new `GET /api/advisers` (members with role `adviser` and a `calLink`). This replaces the seeded `ADVISERS` in advisers.data.ts.
+- Step c3 (SlotPicker) becomes the Cal.com inline embed (`@calcom/embed-react`) for the picked adviser's `calLink`, themed with the app's colours, prefilled with the user's name and email. This screen no longer matches the prototype (approved). Delete makeSlots/slots.ts and the c3 golden cases that compare against the original's slot strip.
+- Event driven (user, 2026-11-02; billing reads these events):
+  - Before the embed opens, the app POSTs /api/bookings as `pending` with the share picks (consent recorded as today). The embed passes our booking id to Cal.com as `metadata[bookingId]`.
+  - Cal.com webhooks are the source of truth, never the browser event: one team webhook per tenant (advisers sit in a Cal.com team), for BOOKING_CREATED, BOOKING_RESCHEDULED, BOOKING_CANCELLED, MEETING_ENDED and the no-show triggers. `POST /api/webhooks/cal` checks `x-cal-signature-256` (HMAC SHA-256, secret per tenant in SST secrets), maps it to our booking by `metadata.bookingId`, then in one transaction updates the booking (status, `cal_uid`, start time) and inserts into a new `booking_event` table (unique on cal uid + trigger, so a retry never adds a second row). After the commit it calls PutEvents, also when the row already existed, so a retry after a failed publish still publishes, on an EventBridge bus (`sst.aws.Bus`, source `lifemap.bookings`, detail-type = trigger, detail = tenant, booking, adviser, user, times, idempotency key). If PutEvents fails, return 500 so Cal.com retries.
+  - Cloud agnostic (user, 2026-11-02): publish through an adapter, the same shape as api/src/documents/reader.ts. `api/src/events/bus.ts` exports `interface EventBus { publish(events: CloudEvent[]): Promise<void> }` and picks the adapter from `EVENT_BUS` (`eventbridge` in production, `memory` for dev and tests). Events use the CloudEvents format through the `cloudevents` npm SDK (id = idempotency key, source `lifemap/bookings`, type `lifemap.booking.<trigger>`), so the payload looks the same on any broker. Only `adapters/eventbridge.ts` imports the AWS SDK. Another broker (Google Pub/Sub, Azure Event Grid, Kafka, NATS) is one more adapter file plus its infra.
+  - Infra (AWS today, in sst.config.ts only): the bus, an event archive (replay for billing re-runs), a rule to a `billing` SQS queue with a dead-letter queue and an alarm on it. Billing consumes that queue; it is not built here. Consumers dedupe on the idempotency key.
+  - The app learns the booking is confirmed by refetching /api/bookings after the embed's `bookingSuccessfulV2` (UI only, not trusted).
+  - Drizzle migration: `booking.status` gains `pending`, `booking.cal_uid`, `booking.starts_at`; new `booking_event`. Drop our SES booking confirmation (Cal.com mails the invite).
+- Cancel opens Cal.com's own cancel page (`<origin>/booking/<uid>?cancel=true`); the BOOKING_CANCELLED webhook marks it cancelled and records the consent withdrawal. Remove POST /bookings/:id/cancel.
+- Cal.com EU: origin and embed script from env (`VITE_CAL_ORIGIN`, default `https://app.cal.eu`). Add Cal.com to the CSP (frame-src, script-src, connect-src) in sst.config.ts and to the sub-processors table in docs/gdpr-audit.md.
+- Libraries only, no TODOs, ponytail + vercel-react-best-practices. One check at the end.

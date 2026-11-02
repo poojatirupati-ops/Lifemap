@@ -1,4 +1,6 @@
 // The sections of Your finances, and what the demo "upload" reads from each section's documents.
+import { SECTION_FIELDS } from './fields.data.ts'
+
 export type FinanceSection = {
   id: string
   title: string
@@ -7,7 +9,7 @@ export type FinanceSection = {
   fields: string[]
 }
 
-export type SectionUpload = {
+type SectionUpload = {
   values: Record<string, [value: string | number, confidence: number]>
   // read but not shown as a field of the section
   hidden?: Record<string, [value: number, confidence: number]>
@@ -21,7 +23,7 @@ export const FINANCE_SECTIONS: FinanceSection[] = [
     title: 'About you',
     emoji: '🙋',
     documents: [],
-    fields: ['name', 'age', 'retireAge', 'pAge'],
+    fields: Object.keys(SECTION_FIELDS.about),
   },
   {
     id: 'income',
@@ -33,7 +35,7 @@ export const FINANCE_SECTIONS: FinanceSection[] = [
       ['🏦', 'Current-account statements'],
       ['📑', 'Form 11 / Notice of Assessment'],
     ],
-    fields: ['work', 'income', 'pIncome', 'otherM', 'costsM', 'oneOffY'],
+    fields: Object.keys(SECTION_FIELDS.income),
   },
   {
     id: 'assets',
@@ -45,20 +47,7 @@ export const FINANCE_SECTIONS: FinanceSection[] = [
       ['🪙', 'Share scheme or crypto statement'],
       ['🏡', 'Property valuation or LPT record'],
     ],
-    fields: [
-      'home',
-      'homeValue',
-      'homeUse',
-      'downAge',
-      'downValue',
-      'cash',
-      'savings',
-      'invest',
-      'otherAssets',
-      'altInv',
-      'propValue',
-      'rentM',
-    ],
+    fields: Object.keys(SECTION_FIELDS.assets),
   },
   {
     id: 'liab',
@@ -70,27 +59,14 @@ export const FINANCE_SECTIONS: FinanceSection[] = [
       ['💳', 'Credit-card statement'],
       ['🗂️', 'Central Credit Register report'],
     ],
-    fields: [
-      'mortYN',
-      'mortBal',
-      'mortPayM',
-      'mortYears',
-      'mortRate',
-      'cardBal',
-      'cardPayM',
-      'cardRate',
-      'loanBal',
-      'loanPayM',
-      'loanRate',
-      'mort2',
-    ],
+    fields: Object.keys(SECTION_FIELDS.liab),
   },
   {
     id: 'prot',
     title: 'Protection',
     emoji: '🛡️',
     documents: [],
-    fields: ['life', 'ip', 'ci', 'workCover', 'health'],
+    fields: Object.keys(SECTION_FIELDS.prot),
   },
   {
     id: 'pension',
@@ -101,18 +77,7 @@ export const FINANCE_SECTIONS: FinanceSection[] = [
       ['🏢', 'Employer scheme details'],
       ['🏛️', 'State Pension record (MyWelfare)'],
     ],
-    fields: [
-      'pension',
-      'pensionM',
-      'pensionOwnM',
-      'ae',
-      'sp',
-      'pSp',
-      'polLump',
-      'polLumpAge',
-      'polInc',
-      'polIncAge',
-    ],
+    fields: Object.keys(SECTION_FIELDS.pension),
   },
 ]
 

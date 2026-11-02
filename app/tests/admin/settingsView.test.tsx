@@ -4,9 +4,11 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { beforeEach, expect, test } from 'vitest'
 import { runOriginal } from '../golden/origSlice.ts'
-import { Body } from '../../src/screens/AdminSettings.screen.tsx'
-import { useSettings } from '../../src/state/settings.ts'
+import Body from '../../src/components/admin/SettingsBody.tsx'
+import { queryClient } from '../../src/auth/planSync.ts'
+import { TENANT_KEY } from '../../src/shell/tenant.ts'
 import type { StandardKey } from '../../src/domain/planning/settings.ts'
+import { shape } from '../golden/helpers'
 
 const original = runOriginal('settingsHTML, SETTINGS, applyAssume, fresh')
 const page = new JSDOM('<!doctype html><body></body>')
@@ -19,31 +21,10 @@ Object.assign(globalThis, {
 // the original's dispatcher hooks, dropped on purpose; a picked option is a property in React
 const IGNORED = new Set(['data-a', 'data-p', 'data-set', 'data-setname', 'selected'])
 
-function cssText(style: string) {
-  const probe = document.createElement('i')
-  probe.style.cssText = style
-  return probe.style.cssText
-}
-
-/** Tags, sorted attributes and text; styles as the browser writes them. */
-function shape(html: string) {
-  const walk = (node: Node): string => {
-    if (node.nodeType === 3) return node.textContent ?? ''
-    const el = node as Element
-    const attrs = [...el.attributes]
-      .filter((attr) => !IGNORED.has(attr.name))
-      .map((attr) => `${attr.name}=${attr.name === 'style' ? cssText(attr.value) : attr.value}`)
-      .sort()
-    return `<${el.tagName} ${attrs.join(' ')}>${[...el.childNodes].map(walk).join('')}</>`
-  }
-  const body = new JSDOM(html).window.document.body
-  return [...body.childNodes].map(walk).join('').split('<')
-}
-
 function originalView() {
   original.setState(original.fresh())
   original.applyAssume()
-  return shape(original.settingsHTML())
+  return shape(original.settingsHTML(), IGNORED)
 }
 
 function ourView() {
@@ -52,11 +33,23 @@ function ourView() {
   act(() => root.render(<Body />))
   const html = container.innerHTML
   act(() => root.unmount())
-  return shape(html)
+  return shape(html, IGNORED)
 }
 
+/** The signed-in tenant: its name is the partner's, its rates the partner's figures. */
+const tenant = (name: string, rates: object) =>
+  queryClient.setQueryData(TENANT_KEY, {
+    id: 'org-a',
+    slug: 'cu-a',
+    name,
+    logo: null,
+    colors: {},
+    features: {},
+    rates,
+  })
+
 beforeEach(() => {
-  useSettings.getState().backToStandards()
+  tenant('', {})
   original.SETTINGS.partner = ''
   for (const standard of Object.values<any>(original.SETTINGS.s)) delete standard.pv
 })
@@ -76,10 +69,7 @@ test('with a partner and partner figures of every kind', () => {
     cashYears: 1,
   }
   original.SETTINGS.partner = 'Acme CU'
-  useSettings.getState().setPartner(' Acme CU ')
-  for (const [key, figure] of Object.entries(figures)) {
-    original.SETTINGS.s[key].pv = figure
-    useSettings.getState().setPartnerFigure(key as StandardKey, figure as never)
-  }
+  for (const [key, figure] of Object.entries(figures)) original.SETTINGS.s[key].pv = figure
+  tenant('Acme CU', figures)
   expect(ourView()).toEqual(originalView())
 })

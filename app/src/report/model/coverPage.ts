@@ -1,7 +1,7 @@
 // Report page 1 and what every page carries: the header, the road and the cover.
 import { format } from 'date-fns/format'
 import type { ReportContext } from './context.ts'
-import { isPassed } from './context.ts'
+import { isPassed } from '../../domain/goals/goalTiming.ts'
 import { band } from '../../domain/planning/bands.ts'
 import type { GoalSummary } from './goals.ts'
 import { bandTone } from './text.ts'
@@ -31,7 +31,7 @@ function milestones(context: ReportContext) {
   })
   const marks = plan.goals
     .filter((goal) => goal.kind !== 'retire' && goal.kind !== 'legacy')
-    .filter((goal) => !isPassed(goal, plan.about.age) && goal.age <= endAge)
+    .filter((goal) => !isPassed(plan, goal) && goal.age <= endAge)
     .map((goal) => mark(goal.age, goal.name, bandTone(band(projection.percent[goal.id]))))
   if (retirement && !retired && retireAge > startAge && retireAge <= endAge)
     marks.push(mark(retireAge, 'You retire', 'gold'))

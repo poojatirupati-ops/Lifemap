@@ -58,10 +58,15 @@ export interface Video {
   poster: string | null
 }
 
+/** The app's own media files are stored as "media/x.mp4": served from the site root, so deep pages find them too. */
+const fromRoot = (path: string | null) => (path?.startsWith('media/') ? `/${path}` : path)
+
 const toVideo = (doc: Doc): Video => ({
   ...doc,
   id: doc.appId,
-  captions: doc.captions?.url ? CMS + doc.captions.url : null,
+  src: fromRoot(doc.src),
+  poster: fromRoot(doc.poster),
+  captions: doc.captions?.url ? new URL(doc.captions.url, CMS).href : null,
 })
 const toVideos = (list: Doc[]) => list.map(toVideo)
 
@@ -144,6 +149,8 @@ export interface Reading {
   kind: string
   title: string
   emoji: string
+  /** The article's paragraphs; null when it has no text yet. */
+  body: ReactNode[] | null
 }
 
 export interface Journey {
@@ -166,7 +173,11 @@ const toJourneys = (list: Doc[]) =>
       ...story,
       video: story.video?.src || story.video?.vimeoId ? toVideo(story.video) : null,
     })),
-    reading: doc.reading.map((item: Doc) => ({ ...item, kind: READING_KIND[item.kind] })),
+    reading: doc.reading.map((item: Doc): Reading => ({
+      ...item,
+      kind: READING_KIND[item.kind],
+      body: item.body ? richText(item.body) : null,
+    })),
     live: doc.live,
   }))
 
@@ -180,11 +191,10 @@ export interface AskAnswer {
 }
 
 /**
- * Lexical rich text as React: paragraphs of text, bold where marked.
- * ponytail: paragraphs and bold only (all the answers use); @payloadcms/richtext-lexical's RichText
- * needs payload and Next as peers, so add node types here if editors start using lists or links.
+ * Lexical rich text as React, one entry per paragraph: text, bold where marked (all the copy uses).
+ * @payloadcms/richtext-lexical's RichText is not used: it needs payload and Next as peers.
  */
-const richText = (value: Doc): ReactNode =>
+const richText = (value: Doc): ReactNode[] =>
   value.root.children.map((paragraph: Doc) =>
     paragraph.children.map((text: Doc, i: number) =>
       text.format & 1 ? <b key={i}>{text.text}</b> : text.text,

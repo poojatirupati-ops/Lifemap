@@ -1,12 +1,12 @@
 // Each goal as the report tells it: covered percent, band and one sentence (pages 2 and 5).
 import { fundingOrder } from '../../domain/planning/fund.ts'
 import { euro } from '../../lib/format.ts'
-import { hasShortfall, type ReportContext } from './context.ts'
+import type { ReportContext } from './context.ts'
 import { band } from '../../domain/planning/bands.ts'
 import { extraToFullyFund } from '../../domain/planning/goalLine.ts'
 import { whatIfFrom } from '../../domain/planning/wi.ts'
 import type { Scenarios } from './scenarios.ts'
-import { yearSplit } from '../../components/results/chart/cashflow.ts'
+import { hasShortfall, yearSplit } from '../../components/results/chart/cashflow.ts'
 
 export type GoalSummary = ReturnType<typeof goalSummaries>[number]
 export type YearsKind = 'gap' | 'savings' | 'income'

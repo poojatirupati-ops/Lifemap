@@ -25,9 +25,10 @@ export type Standard = StandardBase &
       }
   )
 
-export const CENTRAL_BANK_RATES =
+const CENTRAL_BANK_RATES =
   'https://www.centralbank.ie/statistics/data-and-analysis/credit-and-banking-statistics/retail-interest-rates'
 export const DEFAULT_FUND_CHARGES = 0.01 // fund charges used if no charges figure is set (the Pensions Authority assumption)
+// the cash rate links the Central Bank address without www, as the original does
 export const STANDARDS = {
   infl: {
     name: 'Inflation: prices rise (a year)',
@@ -58,7 +59,6 @@ export const STANDARDS = {
     group: 'Prices & growth',
     value: 0.01,
     by: 'Irish deposit rates after 33% DIRT',
-    // the original links the address without www here
     source:
       'https://centralbank.ie/statistics/data-and-analysis/credit-and-banking-statistics/retail-interest-rates',
     asOf: 'Jun 2026',

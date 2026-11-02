@@ -1,20 +1,24 @@
-import { useShallow } from 'zustand/react/shallow'
-import type { CheckPlan } from '../components/finance/checkList.ts'
-import { useStore } from '../state/store.ts'
+import { useMemo } from 'react'
+import { withLooks, type CheckPlan } from '../components/finance/checkList.ts'
+import { usePlanFields } from './usePlanFields.ts'
 
 /** What the finance check list reads from the plan. */
 export const useCheckPlan = (): CheckPlan =>
-  useStore(
-    useShallow(({ plan }) => ({
-      figures: plan.figures,
-      about: plan.about,
-      partner: plan.partner,
-      lists: plan.lists,
-      sources: plan.sources,
-      assumptions: plan.assumptions,
-      warnings: plan.warnings,
-      acknowledged: plan.acknowledged,
-      savedSections: plan.savedSections,
-      retireAge: plan.retireAge,
-    })),
+  usePlanFields(
+    'figures',
+    'about',
+    'partner',
+    'lists',
+    'sources',
+    'assumptions',
+    'warnings',
+    'acknowledged',
+    'savedSections',
+    'retireAge',
   )
+
+/** The same, with repayments too low to clear the debt flagged for a look (Your finances, Check your details). */
+export function useFinancePlan(): CheckPlan {
+  const plan = useCheckPlan()
+  return useMemo(() => withLooks(plan), [plan])
+}

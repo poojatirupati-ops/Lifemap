@@ -1,27 +1,22 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, expect, test, vi } from 'vitest'
+import { act, fireEvent, screen, waitFor } from '@testing-library/react'
+import { beforeEach, expect, test } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
-import * as Calculator from '../../src/screens/Calculator.screen.tsx'
-import * as Upload from '../../src/screens/ExploreUpload.screen.tsx'
+import { exploreBack } from '../../src/state/explore.ts'
+import { path, renderAt, settle } from '../renderAt.tsx'
 import sample from '../../src/state/sample-plan.json'
 import fresh from '../fixtures/fresh.json'
 
 const plan = () => useStore.getState().plan
 
 beforeEach(() => {
-  vi.useFakeTimers()
+  // reduced motion: the sample statement reads in 200ms
   globalThis.matchMedia ??= (() => ({ matches: true })) as never
 })
 
-test('a result shows live, and a typed figure above the limit is capped with a hint', () => {
-  useStore.getState().load({
-    ...(sample as never),
-    inflation: 0.025,
-    tab: 'explore',
-    explorePages: [{ page: 'CALC', param: 'retirement' }],
-  })
-  const { container } = render(<Calculator.Body param="retirement" />)
+test('a result shows live, and a typed figure above the limit is capped with a hint', async () => {
+  useStore.getState().load({ ...(sample as never), inflation: 0.025 })
+  const { container } = await renderAt('/explore/calculator/retirement')
   expect(container.querySelector('#cout .eyebrow')!.textContent).toBe(
     "Illustrative gap (today's money)",
   )
@@ -32,11 +27,9 @@ test('a result shows live, and a typed figure above the limit is capped with a h
   expect(container.querySelector<HTMLInputElement>('#c-pot')!.value).toBe('15000000')
 })
 
-test('without a mortgage rate the result waits, and the suggested rate fills it', () => {
-  useStore
-    .getState()
-    .load({ ...(fresh as never), explorePages: [{ page: 'CALC', param: 'repayment' }] })
-  const { container } = render(<Calculator.Body param="repayment" />)
+test('without a mortgage rate the result waits, and the suggested rate fills it', async () => {
+  useStore.getState().load(fresh as never)
+  const { container } = await renderAt('/explore/calculator/repayment')
   expect(container.querySelector('#cgate b')!.textContent).toBe(
     'Choose your mortgage rate to see this',
   )
@@ -45,35 +38,31 @@ test('without a mortgage rate the result waits, and the suggested rate fills it'
   expect(useStore.getState().calcTouched.repayment).toEqual({ rate: true })
 })
 
-test('a statement is read, confirmed into Your finances and fills in its tool', () => {
+test('a statement is read, confirmed into Your finances and fills in its tool', async () => {
   useStore.getState().load({
     ...(fresh as never),
     account: {
       ...(fresh as never as { acct: object }).acct,
       emailVerified: true,
     },
-    inShell: true,
-    tab: 'explore',
-    explorePages: [{ page: 'XCAT', param: 'home' }],
   })
+  await renderAt('/explore/category/home')
   act(() => useStore.getState().startStatement('home'))
-  render(
-    <>
-      <Upload.Body />
-      <Upload.Foot />
-    </>,
-  )
-  act(() => void vi.runAllTimers())
-  fireEvent.input(screen.getByLabelText('Outstanding balance'), { target: { value: '199000' } })
+  await settle()
+  expect(path()).toBe('/explore/statement')
+  fireEvent.input(await screen.findByLabelText('Outstanding balance'), {
+    target: { value: '199000' },
+  })
   fireEvent.click(screen.getByText('Looks right, fill in my tools'))
+  await settle()
   expect([plan().figures.mortBal, plan().sources.mortBal, plan().fixed.mortBal]).toEqual([
     199000,
     'doc',
     true,
   ])
-  expect(useStore.getState().explorePages).toEqual([
-    { page: 'XCAT', param: 'home' },
-    { page: 'CALC', param: 'repayment' },
-  ])
+  // the tool it filled, with its group under it in the history (Back)
+  expect(path()).toBe('/explore/calculator/repayment')
+  act(() => exploreBack())
+  await waitFor(() => expect(path()).toBe('/explore/category/home'))
   expect(useStore.getState().calcStatementKeys.repayment).toEqual(['loan', 'rate', 'term'])
 })

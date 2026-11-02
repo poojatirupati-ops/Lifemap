@@ -2,7 +2,7 @@ import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
 import { useCheckPlan } from '../../hooks/useCheckPlan.ts'
 import { useStore } from '../../state/store.ts'
 import { checkItems, needsAttention } from '../finance/checkList.ts'
-import { fixSection } from '../finance/financeActions.ts'
+import { fixSection } from '../../state/finances.ts'
 
 /** Figures still missing or to look at, counted as €0 for now. */
 export default function DetailsBanner() {

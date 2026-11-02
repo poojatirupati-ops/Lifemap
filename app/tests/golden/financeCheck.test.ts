@@ -10,7 +10,7 @@ import {
   withRepaymentLooks,
   workedOutNote,
 } from '../../src/components/finance/checkList'
-import { missingChoices } from '../../src/components/finance/requiredChoices'
+import { missingChoices } from '../../src/domain/planning/requiredChoices'
 import {
   hasMinimumFinances,
   sectionStatus,

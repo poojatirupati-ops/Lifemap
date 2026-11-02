@@ -1,18 +1,17 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { contentClient } from '../../src/content/cms.tsx'
 import { seedContent } from '../content/seed.ts'
 import { fresh } from '../../src/state/fresh.ts'
 import { useStore } from '../../src/state/store.ts'
-import * as Videos from '../../src/screens/Videos.screen.tsx'
-import * as VideoPlayer from '../../src/screens/VideoPlayer.screen.tsx'
+import { renderAt } from '../renderAt.tsx'
 import { goalForVideo } from '../../src/domain/planning/goalForVideo.ts'
 import type { Goal } from '../../src/state/types.ts'
 
 beforeEach(() => {
   seedContent()
-  useStore.getState().load({ ...fresh(), tab: 'explore', explorePages: [{ page: 'VIDS' }] })
+  useStore.getState().load(fresh())
 })
 
 test('VID-00: videos are read from the CMS, keyed by the app ids', async () => {
@@ -26,7 +25,7 @@ test('VID-00: videos are read from the CMS, keyed by the app ids', async () => {
     }),
   )
   vi.stubGlobal('fetch', fetch)
-  const { container } = render(<Videos.Body />)
+  const { container } = await renderAt('/explore/videos')
   await waitFor(() =>
     expect(container.querySelector('.vfeat b')!.textContent).toBe('Edited in the CMS'),
   )
@@ -37,8 +36,8 @@ test('VID-00: videos are read from the CMS, keyed by the app ids', async () => {
   vi.unstubAllGlobals()
 })
 
-test('VID-00: a topic chip filters the featured video and the grid', () => {
-  const { container } = render(<Videos.Body />)
+test('VID-00: a topic chip filters the featured video and the grid', async () => {
+  const { container } = await renderAt('/explore/videos')
   expect(container.querySelectorAll('.vlist .vcard')).toHaveLength(8)
   const chip = container.querySelector<HTMLElement>('[data-p="protection"]')!
   fireEvent.click(chip)
@@ -48,8 +47,8 @@ test('VID-00: a topic chip filters the featured video and the grid', () => {
   expect(container.querySelectorAll('.lv3')).toHaveLength(3)
 })
 
-test('VID-01: a video not filmed yet plays its opening caption', () => {
-  const { container } = render(<VideoPlayer.Body param="v3" />)
+test('VID-01: a video not filmed yet plays its opening caption', async () => {
+  const { container } = await renderAt('/explore/videos/v3')
   expect(container.querySelector('.cc')).toBeNull()
   fireEvent.click(screen.getByLabelText('Play'))
   expect(container.querySelector('.player.vp2.on .cc')!.textContent).toMatch(/three to six months/)
@@ -57,8 +56,8 @@ test('VID-01: a video not filmed yet plays its opening caption', () => {
   expect(container.querySelectorAll('.hstrip .vcard')).toHaveLength(3)
 })
 
-test('VID-01: a filmed video that cannot load shows Try again', () => {
-  const { container } = render(<VideoPlayer.Body param="v9" />)
+test('VID-01: a filmed video that cannot load shows Try again', async () => {
+  const { container } = await renderAt('/explore/videos/v9')
   const video = container.querySelector('video')!
   expect(container.querySelector('track')).not.toBeNull()
   fireEvent.error(video)

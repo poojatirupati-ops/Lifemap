@@ -1,16 +1,15 @@
 // Report page 4: your roadmap, decade by decade.
 import { euro } from '../../lib/format.ts'
-import type { YearRow } from '../../domain/planning/project.ts'
-import { hasShortfall, type ReportContext } from './context.ts'
+import type { ReportContext } from './context.ts'
+import { hasShortfall } from '../../components/results/chart/cashflow.ts'
 import { band, isShortYear } from '../../domain/planning/bands.ts'
-import { byDecade } from '../../domain/planning/chapters.ts'
+import { byDecade, weather, type Weather } from '../../domain/planning/chapters.ts'
 import { bandTone } from './text.ts'
 
-const WEATHER = {
-  storm: { icon: 'storm', tone: 'coral', chip: 'A gap to plan for' },
-  partly: { icon: 'partly', tone: 'gold', chip: 'Watch this' },
-  sun: { icon: 'sun', tone: 'good', chip: 'Comfortable' },
-}
+const STORM = { icon: 'storm', tone: 'coral', chip: 'A gap to plan for' }
+const PARTLY = { icon: 'partly', tone: 'gold', chip: 'Watch this' }
+const SUN = { icon: 'sun', tone: 'good', chip: 'Comfortable' }
+const WEATHER: Record<Weather, typeof SUN> = { bad: STORM, warn: PARTLY, some: PARTLY, ok: SUN }
 
 export function roadmapPage(context: ReportContext) {
   const { plan, projection, rows, endAge, retirement, retireAge, gap, statePensionAge } = context
@@ -35,21 +34,20 @@ export function roadmapPage(context: ReportContext) {
       : 'Building your savings'
   }
 
-  const sentence = (group: (typeof groups)[number], short: YearRow[], dips: YearRow[]) => {
+  const sentence = (group: (typeof groups)[number], decade: ReturnType<typeof weather>) => {
     const years = group.rows.length
-    if (short.length && (years === 1 || (group.to === endAge && short.length === 1)))
-      return `Short by about ${euro(short[0].shortfall)} in the last year. In all, ${gap.rows.length} years have a gap.`
-    if (short.length) {
-      const average = short.reduce((sum, row) => sum + row.shortfall, 0) / short.length
+    const short = decade.shortYears
+    if (short && (years === 1 || (group.to === endAge && short === 1)))
+      return `Short by about ${euro(decade.averageShort)} in the last year. In all, ${gap.rows.length} years have a gap.`
+    if (short) {
       const when =
-        short.length === years
+        short === years
           ? ', in every year of this decade.'
-          : ` in ${short.length} of these ${years} years.`
-      return `Short by about ${euro(average)} a year${when}`
+          : ` in ${short} of these ${years} years.`
+      return `Short by about ${euro(decade.averageShort)} a year${when}`
     }
-    if (group.rows.every((row) => row.retired))
-      return 'Living on your pensions and savings, and they hold up.'
-    if (dips.length) return 'Some years dip into savings. That’s what they’re for.'
+    if (decade.retired) return 'Living on your pensions and savings, and they hold up.'
+    if (decade.kind !== 'ok') return 'Some years dip into savings. That’s what they’re for.'
     const last = group.rows[years - 1]
     return `Income comfortably covers life. Savings reach about ${euro(Math.round(last.liquid / 1000) * 1000)} by ${last.age}.`
   }
@@ -77,17 +75,16 @@ export function roadmapPage(context: ReportContext) {
     bigTone: runOut == null ? 'good' : 'coral',
     title: headline,
     decades: groups.map((group, index) => {
-      const short = group.rows.filter(isShortYear)
-      const dips = group.rows.filter((row) => row.drawnFromSavings > 1 && !isShortYear(row))
-      const weather = WEATHER[short.length ? 'storm' : dips.length ? 'partly' : 'sun']
+      const decade = weather(group.rows)
+      const look = WEATHER[decade.kind]
       return {
         label: `${group.decade}s`,
         range: `age ${group.from}–${group.to}`,
-        icon: weather.icon,
-        tone: weather.tone,
+        icon: look.icon,
+        tone: look.tone,
         title: title(group, index),
-        chip: weather.chip,
-        text: sentence(group, short, dips),
+        chip: look.chip,
+        text: sentence(group, decade),
         goalChips: goalChips(group.from, group.to),
         spark: {
           values: group.rows.map((row) => Math.round(row.liquid)),

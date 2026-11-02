@@ -1,15 +1,8 @@
-import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
 import { useCheckPlan } from '../../hooks/useCheckPlan.ts'
 import { useStore } from '../../state/store.ts'
-import { checkItems, needsAttention, type CheckPlan } from '../finance/checkList.ts'
-import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
-import { fieldSource, skippedSections, visibleFields } from '../finance/status.ts'
-
-/** Required figures nobody has entered yet. */
-const blankFigureCount = (plan: CheckPlan) =>
-  FINANCE_SECTIONS.flatMap((section) => visibleFields(section, plan)).filter(
-    (key) => !FINANCE_FIELDS[key].optional && !fieldSource(key, plan),
-  ).length
+import { checkItems, needsAttention } from '../finance/checkList.ts'
+import { skippedSections } from '../finance/status.ts'
+import { isRough } from '../home/useHome.ts'
 
 const listed = (names: string[]) =>
   names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]
@@ -30,7 +23,7 @@ export default function RoughNote() {
   const plan = useCheckPlan()
   const openMe = useStore((store) => store.openMe)
   const skipped = skippedSections(plan)
-  if (!skipped.length && blankFigureCount(plan) <= 2) return null
+  if (!isRough(plan)) return null
   // one banner, not two: the missing-details banner already says the picture is rough
   if (checkItems(plan).some(needsAttention)) return null
 

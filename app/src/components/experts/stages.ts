@@ -1,8 +1,7 @@
 // The Experts tab's steps: their ids and notes for the reviewer panel, and their heads.
 import { EXPERTS } from '../../domain/identity/advisers.data.ts'
-import { project } from '../../domain/planning/project.ts'
 import type { Plan } from '../../state/types.ts'
-import { adviserOf, firstName, specialistFor, type Stage } from '../../domain/identity/booking.ts'
+import { firstName, specialistOf, type Stage } from '../../domain/identity/booking.ts'
 
 export const STAGES: Record<Stage, { id: string; note: string }> = {
   c0: {
@@ -14,7 +13,10 @@ export const STAGES: Record<Stage, { id: string; note: string }> = {
     id: 'C2',
     note: 'Share your plan: explicit consent per item, all unticked. Referral / conflicts disclosed.',
   },
-  c3: { id: 'C3', note: 'Pick a time: video or in person; request another slot.' },
+  c3: {
+    id: 'C3',
+    note: "Pick a time: the adviser's Cal.com calendar, prefilled with your name and email. Confirmed by Cal.com's webhook.",
+  },
   c4: { id: 'C4', note: 'Booked: email + SMS + calendar file; what happens next.' },
   booked: {
     id: 'EXP-01',
@@ -27,13 +29,17 @@ export const STAGES: Record<Stage, { id: string; note: string }> = {
 }
 
 /** The step's title, subtitle and the step Back returns to. */
-export function headOf(plan: Plan, stage: Stage): { title: string; sub?: string; back?: Stage } {
-  const adviser = firstName(adviserOf(plan).name)
+export function headOf(
+  plan: Plan,
+  stage: Stage,
+  adviserName = '',
+): { title: string; sub?: string; back?: Stage } {
+  const adviser = firstName(adviserName)
   switch (stage) {
     case 'c0':
       return { title: 'Help your adviser know you', back: 'home' }
     case 'c1': {
-      const { kind } = specialistFor(plan, plan.hasResults ? project(plan).percent : {})
+      const { kind } = specialistOf(plan)
       const fits = plan.hasResults ? 'your plan' : "what you've told us"
       return {
         title: 'Your match',

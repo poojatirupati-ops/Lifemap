@@ -1,5 +1,13 @@
 // The content the app shows. Everything has drafts, versions and scheduled publish; the public reads published only.
 import { APIError, type Access, type CollectionConfig, type Field } from 'payload'
+import {
+  clock,
+  collectVimeoUploads,
+  deleteFromVimeo,
+  deleteReplacedVimeo,
+  queueVimeoPoll,
+  vimeoUploadEndpoint,
+} from '../vimeo'
 
 const publishedOrStaff: Access = ({ req }) => Boolean(req.user) || { _status: { equals: 'published' } }
 
@@ -31,21 +39,36 @@ export const Tenants: CollectionConfig = {
   fields: [text('name', { required: true }), text('slug', { required: true, unique: true, index: true })],
 }
 
-/** "1:14" from seconds. */
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`
-
 const Videos = content({
   slug: 'videos',
-  admin: { useAsTitle: 'title', defaultColumns: ['title', 'kind', 'presenter', '_status'] },
+  endpoints: [vimeoUploadEndpoint],
+  admin: { useAsTitle: 'title', defaultColumns: ['title', 'kind', 'presenter', 'vimeoStatus', '_status'] },
   fields: [
     appId,
+    {
+      name: 'vimeoUpload',
+      type: 'ui',
+      admin: { components: { Field: '/components/VimeoUpload#VimeoUpload' } },
+    },
+    {
+      name: 'vimeoStatus',
+      label: 'Vimeo status',
+      type: 'select',
+      options: [
+        { label: 'Uploading', value: 'uploading' },
+        { label: 'Transcoding', value: 'transcoding' },
+        { label: 'Ready', value: 'ready' },
+        { label: 'Failed', value: 'failed' },
+      ],
+      admin: { readOnly: true, position: 'sidebar' },
+    },
     text('title', { required: true }),
     kind('kind', 'Topic'),
     text('presenter', { required: true }),
     text('role'),
     text('tool', { admin: { description: 'The calculator id the video leads to (e.g. borrow).' } }),
     text('art', { admin: { description: 'The --art-* picture used before a thumbnail exists.' } }),
-    text('vimeoUrl', { label: 'Vimeo URL', admin: { description: 'e.g. https://vimeo.com/123456789. The id, thumbnail and running time are read from Vimeo on save.' } }),
+    text('vimeoUrl', { label: 'Vimeo URL', admin: { description: 'For a video already on Vimeo, e.g. https://vimeo.com/123456789 (leave empty when uploading a file above; a pasted URL is never deleted from Vimeo). The id, thumbnail and running time are read from Vimeo on save.' } }),
     text('vimeoId', { admin: { readOnly: true } }),
     text('thumbnailUrl', { admin: { readOnly: true } }),
     text('duration', { admin: { description: 'Running time, "1:14". Filled from Vimeo when empty.' } }),
@@ -53,7 +76,7 @@ const Videos = content({
     text('caption', { required: true, admin: { description: 'The one-line teaser on the card.' } }),
     { name: 'captions', type: 'upload', relationTo: 'media', admin: { description: '.vtt captions file' } },
     { name: 'transcript', type: 'textarea' },
-    // ponytail: the app's current files, until the filmed videos are on Vimeo; drop once every video has a vimeoUrl.
+    // The app's current files, for videos not yet on Vimeo.
     text('src', { admin: { description: 'App media path (until uploaded to Vimeo).' } }),
     text('poster', { admin: { description: 'App media path (until uploaded to Vimeo).' } }),
   ],
@@ -67,11 +90,15 @@ const Videos = content({
         return {
           ...data,
           vimeoId: String(video.video_id),
+          vimeoStatus: null, // marks it as not uploaded here, so it is never deleted on Vimeo
           thumbnailUrl: video.thumbnail_url,
           duration: data.duration || clock(video.duration),
         }
       },
     ],
+    afterChange: [queueVimeoPoll, deleteReplacedVimeo],
+    beforeDelete: [collectVimeoUploads],
+    afterDelete: [deleteFromVimeo],
   },
 })
 

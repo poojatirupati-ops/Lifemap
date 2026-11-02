@@ -68,7 +68,7 @@ export function savingCap(
 }
 
 /** Value after some years of 1 a year saved at the start of each year, rising with pay. */
-export function savedGrowth(years: number, rate: number, payRise: number) {
+function savedGrowth(years: number, rate: number, payRise: number) {
   let total = 0
   for (let year = 0; year < years; year++)
     total += (1 + payRise) ** year * (1 + rate) ** (years - year)

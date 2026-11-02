@@ -69,9 +69,16 @@ export const toOriginal = (state: object): Record<string, any> =>
     state,
   ) as Record<string, any>
 
+/** Screen state that older plans and snapshots carry; the URL holds it now, so it is dropped on load. */
+export const OLD_SCREEN_STATE = new Set(
+  'screen tab mePage expertsPage explorePages inShell adminView planSegment returnTo afterGate assumptionsBack'.split(
+    ' ',
+  ),
+)
+
 const record = z.record(z.string(), z.unknown())
 
-// ponytail: checks the fields every screen reads; the rest come from fresh() when missing
+// checks the fields every screen reads; the rest come from fresh() when missing
 const planSchema = z.looseObject({
   answers: z.record(z.string(), z.number()),
   about: z.looseObject({ age: z.number().nullable(), partner: z.boolean().nullable() }),
@@ -97,7 +104,8 @@ const planSchema = z.looseObject({
 export const savedPlan = z.preprocess((saved) => {
   const ui = freshUi()
   const plan = Object.entries(fromOriginal<object>(saved as object)).filter(
-    ([key]) => !(key in ui) && key !== 'save', // the save sheet went with login-first (O-01)
+    // the save sheet went with login-first (O-01)
+    ([key]) => !(key in ui) && !OLD_SCREEN_STATE.has(key) && key !== 'save',
   )
   const merged = { ...fresh(), ...Object.fromEntries(plan) }
   const { mobile: _m, mobileVerified: _mv, ...account } = merged.account as Node

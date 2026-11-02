@@ -2,8 +2,9 @@ import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import { pageKey, useMortgagePage } from '../../state/mortgage.ts'
 import type { StoryVideo } from '../../content/cms.tsx'
-import { VIDEO_PHOTOS, photoAt } from './mortgages.data.ts'
 
+/** Pictures for cards without a poster, taken in turn. */
+const PHOTOS = ['home-keys', 'house-for-sale', 'money-plant', 'invest-charts', 'couple-planning']
 const SHADE = 'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45))'
 
 /** The situation's story videos as a scrollable row; picking one plays it below. */
@@ -11,7 +12,7 @@ export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
   const situation = useMortgagePage((p) => p.situation)
   const current = useMortgagePage((p) => p.video)
   const watched = useMortgagePage((p) => p.watched)
-  const playVideo = useMortgagePage((p) => p.playVideo)
+  const { playVideo } = useMortgagePage.getState()
   const watchedCount = videos.filter((_, i) => watched[pageKey(situation, i)]).length
 
   return (
@@ -29,7 +30,7 @@ export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
           const playing = i === current
           const art = {
             '--c': story.color,
-            backgroundImage: `${SHADE},url(${poster ?? photoAt(VIDEO_PHOTOS, i)})`,
+            backgroundImage: `${SHADE},url(${poster ?? `/media/${PHOTOS[i % PHOTOS.length]}.jpg`})`,
           } as CSSProperties
           return (
             <button

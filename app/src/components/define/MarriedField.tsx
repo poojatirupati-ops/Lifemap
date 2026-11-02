@@ -1,5 +1,5 @@
 import { useStore } from '../../state/store.ts'
-import { toggleMarried } from './aboutActions.ts'
+import { toggleMarried } from '../../state/about.ts'
 
 /** Optional: married or in a civil partnership means joint assessment for income tax. */
 export default function MarriedField() {

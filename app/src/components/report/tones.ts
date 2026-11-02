@@ -23,7 +23,7 @@ export const COLOURS = {
   grey: '#8a97a6',
 }
 
-export type Tone = 'good' | 'teal' | 'gold' | 'coral' | 'blue' | 'navy' | 'grey'
+type Tone = 'good' | 'teal' | 'gold' | 'coral' | 'blue' | 'navy' | 'grey'
 
 const TONES: Record<Tone, { fill: string; text: string; tint: string }> = {
   good: { fill: COLOURS.tealMid, text: COLOURS.teal, tint: COLOURS.tealTint },
@@ -42,17 +42,3 @@ const colours = (tone: string | undefined) =>
 export const fillOf = (tone?: string) => colours(tone).fill
 export const textOf = (tone?: string) => colours(tone).text
 export const tintOf = (tone?: string) => colours(tone).tint
-
-/** €1,234 or -€1,234, whole euros. */
-export const euros = (amount: number) =>
-  `${amount < 0 ? '-' : ''}€${Math.round(Math.abs(amount)).toLocaleString('en-US')}`
-
-/** A goal's band ('good', 'gold' or 'alert') as a tone. */
-export const bandTone = (band: string) => (band === 'alert' ? 'coral' : band)
-
-/** Sun, a cloud or a storm, by tone. */
-export const weatherIcon = (tone: string) =>
-  tone === 'good' ? 'sun' : tone === 'gold' ? 'partly' : 'storm'
-
-/** A percent kept between 0 and 100, for a bar's width. */
-export const clampPercent = (percent: number) => Math.max(0, Math.min(100, percent))

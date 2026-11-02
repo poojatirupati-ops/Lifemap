@@ -57,7 +57,7 @@ jobs:
       - name: Smoke test
         id: smoke
         run: |
-          url="$(jq -r .url .sst/outputs.json)"
+          url="$(jq -r .appUrl .sst/outputs.json)"
           echo "url=$url" >> "$GITHUB_OUTPUT"
-          curl -fsS --retry 5 --retry-all-errors "$url/health"
+          curl -fsS --retry 5 --retry-all-errors "$url/api/health"
           curl -fsS -o /dev/null --retry 5 --retry-all-errors "$(jq -r .cmsUrl .sst/outputs.json)/admin"

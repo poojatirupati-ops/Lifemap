@@ -2,7 +2,7 @@ import { useStore } from '../../state/store.ts'
 import type { MoneyProfileStep } from '../../domain/discovery/questions.data.ts'
 import GIcon from '../ui/GIcon.tsx'
 import { answerOf, profileQuestion } from '../../domain/discovery/profileQuestions.ts'
-import { openProfileSection } from './meActions.ts'
+import { openProfileSection } from '../../state/profile.ts'
 
 const STATUS_WORD = { done: 'Done', part: 'In progress', none: 'Not started' }
 

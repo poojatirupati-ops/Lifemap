@@ -6,7 +6,7 @@ import { useDocumentUpload } from '../../documents/documents.ts'
 /** What the reader can take for this section: choose files or use a sample document. */
 export default function UploadPick({ section }: { section: FinanceSection }) {
   const { startUpload, chooseSectionMode } = useStore.getState()
-  const { on, pending, upload } = useDocumentUpload()
+  const { on, pending, upload } = useDocumentUpload(section.id)
   return (
     <div className="card">
       <b>What we can read</b>
@@ -23,7 +23,7 @@ export default function UploadPick({ section }: { section: FinanceSection }) {
       <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
         {on ? (
           <label className="btn ghost" style={{ cursor: 'pointer' }} aria-disabled={pending}>
-            <Emo>{pending ? '📄 Uploading…' : '📄 Choose files'}</Emo>
+            <Emo>{pending ? '📄 Reading…' : '📄 Choose files'}</Emo>
             <input
               type="file"
               multiple
@@ -32,7 +32,9 @@ export default function UploadPick({ section }: { section: FinanceSection }) {
               accept=".pdf,.jpg,.jpeg,.png,.heic"
               disabled={pending}
               onChange={(event) =>
-                upload(event.currentTarget, (files) => startUpload(section.id, files))
+                upload(event.currentTarget, (files, read) =>
+                  startUpload(section.id, files, null, read),
+                )
               }
             />
           </label>

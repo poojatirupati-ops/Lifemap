@@ -1,15 +1,13 @@
 import clsx from 'clsx'
 import { useMortgagePage } from '../../state/mortgage.ts'
 import type { Reading } from '../../content/cms.tsx'
-import { READING_PHOTOS, photoAt } from './mortgages.data.ts'
 
-// TODO(R-29): the original shows this placeholder until docs/content/mortgage/ has the body text.
-const PLACEHOLDER = 'TODO: content to come from docs/content/mortgage/ (not added yet).'
+const PHOTOS = ['home-keys', 'savings-jar', 'invest-charts']
 
-/** Articles, FAQs and links; opening one shows it below the cards. */
+/** Articles, FAQs and links; opening one shows its text below the cards (none while it has no text). */
 export default function ReadingCards({ reading }: { reading: Reading[] }) {
   const openReading = useMortgagePage((p) => p.openReading)
-  const toggleReading = useMortgagePage((p) => p.toggleReading)
+  const { toggleReading } = useMortgagePage.getState()
   const open = openReading === null ? undefined : reading[openReading]
 
   return (
@@ -31,7 +29,7 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
             >
               <span
                 className="rd-ic rd-ph"
-                style={{ backgroundImage: `url(${photoAt(READING_PHOTOS, i)})` }}
+                style={{ backgroundImage: `url(/media/${PHOTOS[i % PHOTOS.length]}.jpg)` }}
                 aria-hidden="true"
               >
                 <i>{item.emoji}</i>
@@ -47,10 +45,12 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
           )
         })}
       </div>
-      {open ? (
+      {open?.body ? (
         <div className="rd-panel" role="region" aria-label={open.kind}>
           <b>{open.title}</b>
-          <p>{PLACEHOLDER}</p>
+          {open.body.map((paragraph, i) => (
+            <p key={i}>{paragraph}</p>
+          ))}
         </div>
       ) : null}
     </>

@@ -13,6 +13,8 @@ export interface CalcInput {
   max: number
   step: number
   unit: Unit
+  /** What it is called in "Add your … to see this", when the label won't do. */
+  missingName?: string
 }
 
 /** The figures a calculator runs on. What-if inputs may be missing (they count as 0). */

@@ -12,7 +12,7 @@ const GOALS = [
 /** Goal i's animation starts 3s after the previous goal's. */
 const goalStyle = (i: number) => ({ '--d': `${i * 3}s` }) as CSSProperties
 
-/** The cover's photo wheel; useOrbit (in ScreenHost) turns it. */
+/** The cover's photo wheel; useOrbit (in shell/Screen.tsx) turns it. */
 export default function OrbitWheel() {
   return (
     <div className="orbit-wrap ro live" aria-hidden="true">

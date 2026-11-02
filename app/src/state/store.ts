@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { immer } from 'zustand/middleware/immer'
 import { fresh, freshUi } from './fresh.ts'
-import { fromOriginal, toOriginal } from './migrate.ts'
+import { OLD_SCREEN_STATE, fromOriginal } from './migrate.ts'
 import { normalize } from '../domain/plan/normalize.ts'
 import type { Plan, Snapshot, Ui } from './types.ts'
+import { goTo } from '../shell/router.ts'
 import { createDiscoverySlice, type DiscoveryActions } from './discovery.ts'
 import { createGoalsSlice, type GoalsActions } from './goals.ts'
 import { createHomeSlice, type HomeActions } from './home.ts'
@@ -36,10 +37,10 @@ export interface Store
   /** Change the plan and the screen state with mutation-style recipes; derived fields are refreshed afterwards. */
   update: (recipe: (plan: Plan, ui: Ui) => void) => void
 
-  go: (screen: string) => void
   openSheet: (sheet: string) => void
   closeSheet: () => void
 
+  /** A tab bar tab: 'home', 'explore', 'plan', 'me' or 'exp'. */
   switchTab: (tab: string) => void
   openAsk: () => void
   leavePlanBuilder: () => void
@@ -55,7 +56,7 @@ export const useStore = create<Store>()(
       })
 
     return {
-      ...createDiscoverySlice(set, get),
+      ...createDiscoverySlice(get),
       ...createGoalsSlice(set, get),
       ...createPlanSlice(set, get),
       ...createFinancesSlice(get),
@@ -63,7 +64,7 @@ export const useStore = create<Store>()(
       ...createUploadsSlice(set, get),
       ...createCalcSlice(set, get),
       ...createHomeSlice(set, get),
-      ...createBookingSlice(set, get),
+      ...createBookingSlice(get),
       ...freshUi(),
       plan: fresh(),
 
@@ -71,45 +72,37 @@ export const useStore = create<Store>()(
         const ui = freshUi()
         const plan: Record<string, unknown> = {}
         for (const [key, value] of Object.entries(fromOriginal<Snapshot>(saved)))
-          Object.assign(key in ui ? ui : plan, { [key]: value })
+          if (!OLD_SCREEN_STATE.has(key)) Object.assign(key in ui ? ui : plan, { [key]: value })
         set({ ...ui, plan: plan as unknown as Plan })
         update(() => {})
       },
       update,
 
-      go: (screen) => set({ screen, sheet: null }),
       openSheet: (sheet) => set({ sheet }),
       closeSheet: () => set({ sheet: null }),
 
       switchTab: (tab) => {
         update((plan, ui) => {
-          if (tab === 'explore' || ui.tab === 'explore') {
-            ui.explorePages = []
-            ui.playing = false
-          }
-          ui.tab = tab
+          ui.playing = false
           if (plan.hasResults || !ui.planBuilder) {
             ui.financeSection = null
             ui.upload = null
           }
-          if (tab === 'me') ui.mePage = 'home'
-          if (tab === 'exp' && !['c1', 'c2', 'c3'].includes(ui.expertsPage)) ui.expertsPage = 'home'
-          if (tab === 'plan') {
-            ui.planSegment = 'main'
-            ui.planScrollTo = 'timeline'
-          }
+          if (tab === 'plan') ui.planScrollTo = 'timeline'
         })
         get().closeSheet()
+        const booking = get().resumeBooking
+        goTo(tab === 'exp' ? `/experts${booking ? `/${booking}` : ''}` : `/${tab}`)
       },
       openAsk: () => get().openSheet('ask'),
-      leavePlanBuilder: () => set({ planBuilder: false }),
-      showMoneyLooks: () => set({ tab: 'me', mePage: 'money', sheet: null }),
+      leavePlanBuilder: () => {
+        set({ planBuilder: false })
+        goTo('/plan')
+      },
+      showMoneyLooks: () => {
+        get().closeSheet()
+        goTo('/me/money')
+      },
     }
   }),
 )
-
-/** The plan and screen state under the original's field names, for view-equal and golden comparisons. */
-export function toSnapshot(store: Store) {
-  const ui = Object.fromEntries(Object.keys(freshUi()).map((key) => [key, store[key as keyof Ui]]))
-  return toOriginal({ ...ui, ...store.plan })
-}

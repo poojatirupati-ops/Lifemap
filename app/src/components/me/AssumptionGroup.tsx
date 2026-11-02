@@ -9,7 +9,7 @@ import {
 } from '../../domain/planning/assumptionFields.data.ts'
 import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
 import GrowthSetToggle from './GrowthSetToggle.tsx'
-import { rememberOpenGroup } from './assumptionActions.ts'
+import { rememberOpenGroup } from '../../state/assumptions.ts'
 
 const BUDGET = ['budgetNeeds', 'budgetWants', 'budgetSave']
 

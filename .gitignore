@@ -12,3 +12,4 @@ test-results/
 playwright-report/
 api/.dev-db/
 api/.dev-files/
+.tanstack

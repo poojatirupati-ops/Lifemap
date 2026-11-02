@@ -3,7 +3,7 @@ import { uscAndPrsi, type Person } from './levies'
 import { sum } from '../../lib/format'
 import type { Rules } from './rates'
 
-export interface TaxOptions {
+interface TaxOptions {
   married?: boolean
   singleParent?: boolean
   renting?: boolean
@@ -11,7 +11,8 @@ export interface TaxOptions {
   prsiRate: number
 }
 
-const person = (income: Partial<Person>): Person => ({
+/** One person's income, with nothing given counting as 0 (aged 40, employed). */
+export const person = (income: Partial<Person>): Person => ({
   pay: 0,
   selfEmployed: false,
   statePension: 0,

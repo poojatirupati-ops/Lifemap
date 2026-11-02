@@ -7,6 +7,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 test('a tenant paints its colours over the CSS tokens and hides a flag that is off', async () => {
   const tenant = {
+    id: 'org-cu',
     slug: 'cu',
     name: 'Credit Union',
     logo: null,

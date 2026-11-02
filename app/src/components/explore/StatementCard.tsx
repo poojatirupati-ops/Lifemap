@@ -15,7 +15,7 @@ export default function StatementCard({
   const uploaded = useStore((store) => store.plan.statements[category])
   const verified = useStore((store) => store.plan.account.emailVerified)
   const { startStatement, removeUploadedStatement } = useStore.getState()
-  const { on, pending, upload } = useDocumentUpload()
+  const { on, pending, upload } = useDocumentUpload(category)
 
   return (
     <div className="card pst">
@@ -23,14 +23,15 @@ export default function StatementCard({
         <Emo>{`📄 Have ${withArticle(statement.what)} statement? Upload it and we'll fill in these tools for you.`}</Emo>
       </b>
       <p className="small" style={{ margin: '6px 0 10px' }}>
-        We can read: {statement.reads.join(' · ')}.
+        We can read: {statement.reads}.
       </p>
       {uploaded ? (
         <div className="mini" style={{ alignItems: 'center' }}>
           <span>
             <Emo>✅ Uploaded: </Emo>
             <b>
-              {uploaded.name} · {uploaded.date}
+              {uploaded.name}
+              {uploaded.date ? ` · ${uploaded.date}` : null}
             </b>
           </span>
           <span className="row" style={{ gap: 12 }}>
@@ -60,7 +61,7 @@ export default function StatementCard({
               style={{ width: '100%', cursor: 'pointer' }}
               aria-disabled={pending}
             >
-              {pending ? 'Uploading…' : 'Upload a statement'}
+              {pending ? 'Reading…' : 'Upload a statement'}
               <input
                 type="file"
                 className="sr"
@@ -70,7 +71,9 @@ export default function StatementCard({
                 onChange={(event) => {
                   // Documents need a secured account first: startStatement shows the gate, then reads the sample.
                   if (useStore.getState().plan.account.emailVerified)
-                    upload(event.currentTarget, (files) => startStatement(category, files))
+                    upload(event.currentTarget, (files, read) =>
+                      startStatement(category, files, read),
+                    )
                   else startStatement(category)
                 }}
               />
@@ -89,8 +92,7 @@ export default function StatementCard({
       )}
       {verified ? null : (
         <p className="small" style={{ margin: '8px 0 0' }}>
-          🔐 First we'll secure your account (email code), so your documents stay
-          private.
+          🔐 First we'll secure your account (email code), so your documents stay private.
         </p>
       )}
     </div>

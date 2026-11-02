@@ -1,6 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
-import { personality, profileAnswers, profilePercent } from '../../domain/discovery/profile.ts'
+import { personality, profileAnswers } from '../../domain/discovery/profile.ts'
+import { profilePercent } from '../../domain/discovery/profileQuestions.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { localToday } from '../../lib/today.ts'
 import Avatar from './Avatar.tsx'

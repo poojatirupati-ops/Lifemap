@@ -1,21 +1,21 @@
 // @vitest-environment jsdom
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, screen } from '@testing-library/react'
 import { beforeEach, expect, test } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
-import * as Timeline from '../../src/screens/Timeline.screen.tsx'
+import { renderAt } from '../renderAt.tsx'
 import goalsSet from '../fixtures/goals-set.json'
 import type { Snapshot } from '../../src/state/types.ts'
 
 const plan = () => useStore.getState().plan
 const ageOf = (name: string) => plan().goals.find((goal) => goal.name === name)!.age
 
-beforeEach(() => {
-  useStore.getState().load({ ...(goalsSet as unknown as Snapshot), screen: 'F2' })
+beforeEach(async () => {
+  useStore.getState().load(goalsSet as unknown as Snapshot)
   window.matchMedia = () => ({ matches: false }) as MediaQueryList
   Element.prototype.scrollIntoView = () => {}
   // jsdom has no layout: give the track a width so a drag maps to years
   Element.prototype.getBoundingClientRect = () => ({ width: 520 }) as DOMRect
-  render(<Timeline.Body />)
+  await renderAt('/build/timeline')
 })
 
 test('dragging a chip snaps to whole years and shows the year bubble while it moves', () => {

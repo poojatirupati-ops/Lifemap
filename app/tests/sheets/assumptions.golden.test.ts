@@ -4,6 +4,7 @@ import { runOriginal } from '../golden/origSlice'
 import { fromOriginal } from '../../src/state/migrate'
 import { fixtures } from '../golden/origProfile'
 import { planAssumptions } from '../../src/domain/planning/assumptions/rows'
+import { prepared as preparedBy } from '../golden/helpers'
 
 // slow when the machine is busy: the original runs in node:vm
 vi.setConfig({ testTimeout: 30000 })
@@ -16,13 +17,7 @@ const withoutExitTax = (row: string[]) =>
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, assumeRows, planReady')
 
-function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return fromOriginal<any>(structuredClone(original.getState()))
-}
+const prepared = (state: any) => fromOriginal<any>(preparedBy(original, state))
 
 describe('planAssumptions', () => {
   for (const [name, state] of fixtures)

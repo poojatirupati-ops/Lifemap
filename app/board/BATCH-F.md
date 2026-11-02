@@ -6,3 +6,4 @@
 - The pixel look must stay the original's. Keep `npm run size` from growing; delete what you replace.
 - No commits, no deploys. Set your card(s) to review and reply with files changed, results, and requests for other owners.
 - Verification budget (user): run the checks for what you changed once at the end. No repeated full-suite runs, no re-running to get green twice, no Lighthouse/screen reruns. If something still fails, report it instead of looping.
+- NO TODOs (user, hard rule): never write TODO, FIXME or 'ponytail:' deferral comments in code. Finish the thing. If you cannot finish it, do NOT delete the code or feature: stop that item and report it in your reply as a question for the user to decide. Remove any TODO you touch.

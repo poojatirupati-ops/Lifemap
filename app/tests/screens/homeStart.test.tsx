@@ -6,18 +6,17 @@ import { toolsForYou } from '../../src/domain/explore/picks.ts'
 import { profilePills, profileRead } from '../../src/domain/discovery/profileCard.ts'
 import { dateLine, greeting } from '../../src/lib/greeting.ts'
 import { useStore } from '../../src/state/store.ts'
+import { useShell } from '../../src/state/shell.ts'
 import type { Snapshot } from '../../src/state/types.ts'
-import * as HomeStart from '../../src/screens/HomeStart.screen.tsx'
-import * as PlanEmpty from '../../src/screens/PlanEmpty.screen.tsx'
+import HomeStart from '../../src/components/home/HomeStart.tsx'
+import PlanEmpty from '../../src/components/plan/PlanEmpty.tsx'
+import { path, settle } from '../renderAt.tsx'
 
 const fixture: Snapshot = structuredClone(discovered)
 
 beforeEach(() => {
   useStore.getState().load(structuredClone(fixture))
-  useStore.getState().update((plan, ui) => {
-    ui.inShell = true
-    ui.tab = 'home'
-  })
+  useShell.setState({ authed: true })
 })
 
 test('tools for the goals come first, then the everyday ones, six at most', () => {
@@ -44,33 +43,31 @@ test('profile pills light the meter by comfort and cushion', () => {
   expect(profilePills({ comfort: null, cushion: null }).map((pill) => pill.level)).toEqual([0, 0])
 })
 
-test('Home before a plan: personality pill, calculator opens in Explore', () => {
-  render(<HomeStart.Body />)
+test('Home before a plan: personality pill, calculator opens in Explore', async () => {
+  render(<HomeStart />)
   expect(screen.getByText('Welcome to Life Map')).toBeTruthy()
   expect(screen.getByText('Achiever', { selector: '.h0pill b' })).toBeTruthy()
   expect(screen.getAllByText(/^◆/, { selector: '.tg' })).toHaveLength(3)
 
   fireEvent.click(screen.getByText('Goal planner').closest('button')!)
-  expect(useStore.getState()).toMatchObject({
-    tab: 'explore',
-    explorePages: [{ page: 'CALC', param: 'goalplanner' }],
-  })
+  await settle()
+  expect(path()).toBe('/explore/calculator/goalplanner')
 })
 
 test('the plan card shows where the builder is', () => {
-  useStore.getState().update((plan, ui) => void (ui.planBuilder = true))
-  useStore.getState().go('F1')
-  render(<HomeStart.Body />)
+  useStore.setState({ planBuilder: true, builderAt: '/build/goals' })
+  render(<HomeStart />)
   expect(screen.getByText('Carry on with your plan')).toBeTruthy()
   expect(screen.getByText(/Step 2 of 8 · your goals/)).toBeTruthy()
 })
 
-test('Empty plan lists the 8 steps and Start my plan opens step 1', () => {
-  render(<PlanEmpty.Body />)
+test('Empty plan lists the 8 steps and Start my plan opens step 1', async () => {
+  render(<PlanEmpty />)
   expect(screen.getByText('If needed').closest('b')?.textContent).toBe(
     '5. Secure your account If needed',
   )
 
   fireEvent.click(screen.getByText('Start my plan'))
-  expect(useStore.getState()).toMatchObject({ screen: 'B1', tab: 'plan', planBuilder: true })
+  await settle()
+  expect([path(), useStore.getState().planBuilder]).toEqual(['/build/about', true])
 })

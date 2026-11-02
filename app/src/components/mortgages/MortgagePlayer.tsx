@@ -1,12 +1,18 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { toolById } from '../explore/tools.data.ts'
 import { openCalculator } from '../../state/explore.ts'
-import { useMortgagePlayer } from '../../hooks/useMortgagePlayer.ts'
 import { useMortgagePage } from '../../state/mortgage.ts'
 import FilmedPlayer from '../video/FilmedPlayer.tsx'
 import type { StoryVideo } from '../../content/cms.tsx'
 
-/** The picked story video: the filmed one when there is one, else a "coming soon" card. */
+/** Past this share of the video, "Up next" shows. */
+const NEXT_AT = 0.65
+
+/**
+ * The picked story video: the filmed one when there is one, else a "coming soon" card. Playback
+ * moves the chapter highlight, shows captions under the player, reveals "Up next" near the end
+ * and reports the video watched when it ends.
+ */
 export default function MortgagePlayer({
   story,
   number,
@@ -17,10 +23,10 @@ export default function MortgagePlayer({
   count: number
 }) {
   const markWatched = useMortgagePage((page) => page.markWatched)
-  const { videoEvents, chapter, caption, nextShown } = useMortgagePlayer(
-    story.chapters.length,
-    markWatched,
-  )
+  const [chapter, setChapter] = useState(0)
+  const [caption, setCaption] = useState('')
+  const [nextShown, setNextShown] = useState(false)
+  const chapters = story.chapters.length
   const filmed = story.video
   const stageStyle = { '--c': story.color } as CSSProperties
 
@@ -28,7 +34,19 @@ export default function MortgagePlayer({
     <>
       {filmed ? (
         <div className="mp-st real" style={stageStyle}>
-          <FilmedPlayer className="mpplayer" video={filmed} {...videoEvents} />
+          <FilmedPlayer
+            className="mpplayer"
+            video={filmed}
+            onCaption={setCaption}
+            onProgress={(played) => {
+              setChapter(Math.min(chapters - 1, Math.floor(played * chapters)))
+              if (played > NEXT_AT) setNextShown(true)
+            }}
+            onEnded={() => {
+              setNextShown(true)
+              markWatched()
+            }}
+          />
         </div>
       ) : (
         <div className="mp-st" style={stageStyle}>
@@ -52,7 +70,7 @@ export default function MortgagePlayer({
           </span>
         ))}
       </div>
-      <div className="mp-next" id="mp-next" hidden={!!filmed?.src && !filmed.vimeoId && !nextShown}>
+      <div className="mp-next" id="mp-next" hidden={!!filmed && !nextShown}>
         <span>Up next: try it with your numbers</span>
         <button
           className="btn sm"

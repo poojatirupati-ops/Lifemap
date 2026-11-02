@@ -1,5 +1,5 @@
 /* Self-hosted fonts (GDPR G-17: no Google Fonts). The variable Inter files are registered as 'Inter' at 400-700 like the original (heavier weights clamp to 700),
-   the name the CSS uses. ponytail: latin + latin-ext only; add the other subsets if the UI needs them. */
+   the name the CSS uses. Latin and latin-ext subsets only: all the UI's text is in them. */
 @import '@fontsource/jetbrains-mono/500.css';
 @import '@fontsource/jetbrains-mono/600.css';
 @font-face {

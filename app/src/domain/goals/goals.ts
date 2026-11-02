@@ -4,6 +4,7 @@ import { assumption } from '../planning/assumptions.ts'
 import { essentialMonthly, householdFigures, type Household } from '../planning/householdFigures.ts'
 import { rulesFor } from '../planning/rates.ts'
 import { clamp } from '../../lib/clamp.ts'
+import { retirementRange } from './retirement.ts'
 import type { Goal, Plan } from '../../state/types.ts'
 
 /** What a new goal reads besides the household: which figures are in. */
@@ -58,17 +59,10 @@ export const retirementGoal = (goals: Goal[]) => goals.find((g) => g.kind === 'r
 /** The plan-wide emergency fund months, as set in the goal or the calculator. */
 export const clampSafetyMonths = (months: number) => clamp(Math.round(months), 1, 12)
 
-type AgeInputs = Pick<Plan, 'about' | 'assumptions' | 'figures'>
-
-/** Retirement can be set up to the year before the plan ends. */
-const latestRetirement = (plan: AgeInputs) =>
-  Math.max((plan.about.age ?? 0) + 1, assumption(plan, 'planEnd') - 1)
-
-/** A goal can sit from next year to the end of the plan. */
-export function ageLimits(plan: AgeInputs, goal: Goal) {
-  const earliest = (plan.about.age ?? 0) + 1
-  const latest = goal.kind === 'retire' ? latestRetirement(plan) : assumption(plan, 'planEnd')
-  return { earliest, latest }
+/** A goal can sit from next year to the end of the plan; retirement to the year before. */
+export function ageLimits(plan: Pick<Plan, 'about' | 'assumptions' | 'figures'>, goal: Goal) {
+  const { min, max } = retirementRange(plan)
+  return { earliest: min, latest: goal.kind === 'retire' ? max : assumption(plan, 'planEnd') }
 }
 
 type EmergencyInputs = GoalInputs &
@@ -77,7 +71,6 @@ type EmergencyInputs = GoalInputs &
 /**
  * Emergency fund first (v3.0): with cash and living costs given and cash below the target months,
  * an emergency fund goal is added; once removed, never again. Returns the goal to add, if any.
- * TODO(R-11): project applies it (the original's autoSafety); TODO(R-13): wantEmergencyFund in the app.
  */
 export function emergencyFundToAdd(plan: EmergencyInputs, id: number): Goal | null {
   if (!plan.hasResults || plan.safetyOff || !plan.sources) return null

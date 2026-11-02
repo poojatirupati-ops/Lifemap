@@ -2,7 +2,7 @@ import type { ReadDocument } from '../../domain/finances/upload.ts'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
 
-/** Until a real reader exists the figures shown are the sample ones, whatever was uploaded. */
+/** Shown when the figures are the sample ones (a sample document, or the example reader in dev). */
 export const EXAMPLE_FIGURES = 'Example figures'
 
 function sureTag(confidence: number) {
@@ -20,6 +20,7 @@ export default function UploadReview({
   documents,
   figures,
   texts = [],
+  example,
   edit,
 }: ReadDocument & { edit: Record<string, number> }) {
   const { correctReadValue } = useStore.getState()
@@ -28,7 +29,7 @@ export default function UploadReview({
       <b>
         <Emo>{title}</Emo>
       </b>{' '}
-      <span className="tag est">{EXAMPLE_FIGURES}</span>
+      {example ? <span className="tag est">{EXAMPLE_FIGURES}</span> : null}
       {documents ? <div className="small">{documents}</div> : null}
       {figures.map(({ field, label, value, confidence, stale }) => (
         <div key={field} className="mini" style={{ alignItems: 'center' }}>

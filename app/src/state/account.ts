@@ -4,7 +4,8 @@ import type { Plan } from './types.ts'
 import { fillKnownFinances } from './finances.ts'
 import { authClient, sendCode } from '../auth/client.ts'
 import { postConsents } from '../auth/consents.ts'
-import { enterApp, land } from '../auth/session.ts'
+import { enterApp, keepRedirect, land } from '../auth/session.ts'
+import { goTo } from '../shell/router.ts'
 
 export function setAccount(patch: Partial<Plan['account']>) {
   useStore.getState().update((plan) => {
@@ -42,7 +43,7 @@ export async function saveDetails({ name, terms, marketing, analytics }: Details
   if (!(await postConsents({ terms, marketing, analytics }))) return
   await authClient.updateUser({ name })
   setAccount({ name, termsAccepted: terms, marketingConsent: marketing })
-  useStore.getState().go('P1K')
+  void goTo(`/account/passkey${keepRedirect()}`)
 }
 
 /** After the passkey offer: on into onboarding (or Home when it is done). */
@@ -54,12 +55,37 @@ export function finishAccount(passkey: boolean) {
   land()
 }
 
+/** Registers Face ID / Touch ID / Windows Hello (or another passkey) for the signed-in user; false when it was not added. */
 export async function addPasskey() {
   const { error } = await authClient.passkey.addPasskey()
-  if (error) {
-    toast("Couldn't add a passkey. You can still use email codes.")
-    return
-  }
-  toast('Face ID added')
-  finishAccount(true)
+  if (error) toast("Couldn't add a passkey. You can still use email codes.")
+  else toast('Face ID added')
+  return !error
+}
+
+/** Removes one of the user's passkeys (Me, Privacy & preferences). */
+export async function removePasskey(id: string) {
+  const { error } = await authClient.passkey.deletePasskey({ id })
+  toast(error ? "Couldn't remove the passkey. Try again." : 'Passkey removed')
+}
+
+/** Reminders are optional: switching them off is recorded as easily as switching them on. */
+export function setReminders(on: boolean) {
+  setAccount({ marketingConsent: on })
+  void postConsents({ terms: true, marketing: on })
+}
+
+/** A square, centre-cropped JPEG of the chosen picture becomes the profile photo. */
+export async function changePhoto(file: File | undefined) {
+  if (!file) return
+  if (!file.type.startsWith('image/')) return toast('Please choose an image')
+  const image = await createImageBitmap(file)
+  const side = Math.min(image.width, image.height)
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 240
+  const [left, top] = [(image.width - side) / 2, (image.height - side) / 2]
+  canvas.getContext('2d')!.drawImage(image, left, top, side, side, 0, 0, 240, 240)
+  image.close()
+  setAccount({ photo: canvas.toDataURL('image/jpeg', 0.85) })
+  toast('Photo updated')
 }

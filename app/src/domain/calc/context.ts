@@ -7,7 +7,7 @@ import type { Plan, Ui } from '../../state/types.ts'
 import type { CalcContext, PensionStatement } from './types.ts'
 
 /** The plan fields a tool reads, selected one by one so a tool re-renders only when these change. */
-export const SHARED_KEYS = [
+const SHARED_KEYS = [
   // the projection and household figures (knownFigures' planSettings and take-home pay)
   'about',
   'partner',
@@ -53,10 +53,6 @@ export type ToolPlan = Pick<Plan, (typeof SHARED_KEYS)[number]> &
 const NONE: Record<string, never> = Object.freeze({})
 const NO_KEYS: string[] = []
 
-/** The inputs the customer moved in a tool. */
-export const movedInputs = (ui: Pick<Ui, 'calcTouched'>, toolId: string): Record<string, boolean> =>
-  ui.calcTouched[toolId] ?? NONE
-
 export const toolPlan = (plan: Plan, ui: Ui, toolId: string): ToolPlan => ({
   ...(Object.fromEntries(SHARED_KEYS.map((key) => [key, plan[key]])) as Pick<
     Plan,
@@ -64,7 +60,7 @@ export const toolPlan = (plan: Plan, ui: Ui, toolId: string): ToolPlan => ({
   >),
   editingInflation: ui.editingInflation,
   todaysMoney: ui.todaysMoney,
-  moved: movedInputs(ui, toolId),
+  moved: ui.calcTouched[toolId] ?? NONE,
   stored: ui.calcValues[toolId] ?? NONE,
   statementFigures: ui.calcStatementFigures[toolId] ?? NONE,
   statementKeys: ui.calcStatementKeys[toolId] ?? NO_KEYS,
@@ -79,9 +75,6 @@ export const assumptionValue = (
   ['planEnd', 'startYear'].includes(key)
     ? assumption(plan, key, today)
     : (valueInUse(plan, key) ?? 0)
-
-export const pensionStatementOf = ({ statements }: Pick<Plan, 'statements'>) =>
-  (statements.retire?.figures as PensionStatement | undefined) ?? null
 
 export function calcContext(plan: ToolPlan, toolId: string, today = localToday()): CalcContext {
   const value = (key: string) => assumptionValue(plan, key, today)
@@ -101,7 +94,7 @@ export function calcContext(plan: ToolPlan, toolId: string, today = localToday()
           }
         : null,
     untouched: (keys) => !keys.some((key) => plan.moved[key]),
-    pensionStatement: pensionStatementOf(plan),
+    pensionStatement: (plan.statements.retire?.figures as PensionStatement | undefined) ?? null,
     adjustForInflation: !!plan.todaysMoney?.[toolId],
     safetyMonths: Number(value('safetyMonths')),
   }

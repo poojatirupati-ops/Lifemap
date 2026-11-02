@@ -2,7 +2,11 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { Hono } from "hono";
 import { expect, test, vi } from "vitest";
+import { tmpdir } from "node:os";
 import { buildApp } from "../app";
+import { createNest } from "../app.module";
+import { logOtp } from "../auth";
+import { devFiles } from "../files";
 import type { Db } from "../db";
 import { schema } from "../db";
 import { pgliteDb } from "../db/devSetup";
@@ -17,7 +21,7 @@ test("plan API: auth, round trip, stale 409, invalid 400, per-user isolation", a
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
   const db = await pgliteDb();
   const codes: Record<string, string> = {};
-  const app = buildApp(db, (e, otp) => void (codes[e] = otp));
+  const app = await buildApp(db, (e, otp) => void (codes[e] = otp));
 
   const json = (path: string, init: Omit<RequestInit, "body"> & { body?: unknown }) =>
     app.request(path, {
@@ -78,7 +82,7 @@ test("plan API: auth, round trip, stale 409, invalid 400, per-user isolation", a
   const spy = vi.spyOn(console, "error").mockImplementation(() => {});
   const broken = new Hono<Env>();
   broken.use("*", async (c, next) => (c.set("userId", "u"), c.set("orgId", "o"), next()));
-  broken.route("/", planRoutes(drizzle(new PGlite(), { schema }) as unknown as Db)); // no tables
+  broken.route("/", planRoutes(await createNest(drizzle(new PGlite(), { schema }) as unknown as Db, logOtp, devFiles(tmpdir())))); // no tables
   const bad = await broken.request("/plan", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: 0, plan: { ...planA, whyNote: "SECRET-NOTE" } }) });
   expect(bad.status).toBe(500);
   expect(JSON.stringify(spy.mock.calls)).not.toMatch(/SECRET-NOTE|a@example|1985-06-01/);
@@ -94,7 +98,7 @@ test("plan API: auth, round trip, stale 409, invalid 400, per-user isolation", a
 
 test("plan versions: snapshot on save, list, restore keeps the replaced plan; other users and tenants get 404", async () => {
   const { db, req, login } = await testApp();
-  await db.insert(organization).values({ id: "org-a", name: "CU A", slug: "cu-a", metadata: JSON.stringify({ host: "app.cu-a.example" }) });
+  await db.insert(organization).values({ id: "org-a", name: "CU A", slug: "cu-a" });
   expect((await req("/api/plan/versions")).status).toBe(401);
   const a = await login("a@example.com");
   const put = (version: number, whyNote: string, snapshot?: string) => req("/api/plan", { method: "PUT", body: { version, plan: { whyNote }, snapshot } }, a);
@@ -116,7 +120,7 @@ test("plan versions: snapshot on save, list, restore keeps the replaced plan; ot
 
   // another user, and the same person in another tenant, see nothing and cannot restore it
   const b = await login("b@example.com");
-  const aOnA = await login("a@example.com", { "x-forwarded-host": "app.cu-a.example" });
+  const aOnA = await login("a@example.com", "org-a");
   for (const other of [b, aOnA]) {
     expect(await list(other)).toEqual([]);
     expect((await restore(other, first, 0)).status).toBe(404);

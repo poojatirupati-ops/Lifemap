@@ -1,7 +1,12 @@
-// Report page 3: your money today.
+// Report page 3: your money today, and how complete the picture is.
 import { euro } from '../../lib/format.ts'
-import { hasFigure, type ReportContext } from './context.ts'
-import { completeness } from './completeness.ts'
+import { hasFigure } from '../../domain/planning/foundationCheck.ts'
+import type { ReportContext } from './context.ts'
+import {
+  checkItems,
+  needsAttention,
+  withRepaymentLooks,
+} from '../../components/finance/checkList.ts'
 
 type Row = {
   key: string
@@ -18,6 +23,43 @@ const MARGIN = {
   },
   comfortable: { title: 'A comfortable monthly margin', note: 'That gives you room to save more.' },
   tight: { title: 'A tight monthly margin', note: 'There is little room to save more.' },
+}
+
+const LOANS = [4, 'Medium', 'Loans and cards', 'Debt can cancel out saving'] as const
+const PROTECTION = [7, 'Medium', 'Protection', 'Cover that protects your plan'] as const
+
+// what to add next, by the figure that is missing: [rank (most useful first), priority, title, why]
+const NEXT_TO_ADD: Record<string, readonly [number, 'High' | 'Medium', string, string]> = {
+  income: [0, 'High', 'Your income', 'Everything in the plan starts here'],
+  costsM: [0, 'High', 'Monthly living costs', 'Shows how much you can save'],
+  pension: [1, 'High', 'Pension value', 'The biggest tool for retiring early'],
+  cash: [2, 'High', 'Cash savings', 'A head start for your pot'],
+  sp: [3, 'High', 'State Pension record', ''],
+  mortBal: [3.5, 'High', 'Mortgage', 'Your biggest monthly cost'],
+  cardBal: LOANS,
+  loanBal: LOANS,
+  invest: [5, 'Medium', 'Investments', 'Part of your net worth'],
+  pensionM: [6, 'Medium', 'Monthly pension payments', 'What you add each month'],
+  life: PROTECTION,
+  ip: PROTECTION,
+}
+
+/** How complete the customer's picture is, and the figures most worth adding next. */
+function completeness({ plan, statePensionYear, statePensionAge }: ReportContext) {
+  const items = checkItems({ ...plan, warnings: withRepaymentLooks(plan) })
+  const missing = items.filter(needsAttention)
+  const seen = new Set<string>()
+  const nextToAdd = missing
+    .flatMap(({ key }) => (NEXT_TO_ADD[key] ? [{ key, entry: NEXT_TO_ADD[key] }] : []))
+    .filter(({ entry }) => !seen.has(entry[2]) && seen.add(entry[2]))
+    .sort((a, b) => a.entry[0] - b.entry[0])
+    .slice(0, 4)
+    .map(({ key, entry: [, priority, title, why] }) => ({
+      title,
+      sub: key === 'sp' ? `Up to ${euro(statePensionYear)} a year from ${statePensionAge}` : why,
+      priority,
+    }))
+  return { have: items.length - missing.length, total: items.length, items: nextToAdd }
 }
 
 export function moneyPage(context: ReportContext) {

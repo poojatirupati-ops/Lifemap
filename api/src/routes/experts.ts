@@ -1,77 +1,55 @@
-import { randomUUID } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import type { INestApplicationContext } from "@nestjs/common";
+import { createInsertSchema } from "drizzle-zod";
 import { Hono } from "hono";
 import { validator } from "hono-openapi";
 import { z } from "zod";
-import type { Db } from "../db";
-import { sendMail } from "../auth";
-import { booking, consentEvent, user } from "../db/schema";
-import type { Env } from "../guard";
-import { doc, errors } from "../openapi";
-import { requireFeature, tenantById } from "../tenant";
+import { AdvisersService } from "../bookings/advisers.service";
+import { BookingsService } from "../bookings/bookings.service";
+import { CalService, calWebhook } from "../bookings/cal.service";
+import { booking } from "../db/schema";
+import { type Env, requireFeature } from "../guard";
+import { doc, docPublic, errors } from "../openapi";
 
 const text = (max: number) => z.string().trim().min(1).max(max);
-const newBooking = z.object({
-  adviserId: text(64), // from the app's seeded adviser list; no adviser accounts yet
-  slot: text(64),
-  mode: text(32),
+const newBooking = createInsertSchema(booking, {
+  adviserId: text(64), // one of the tenant's advisers (GET /api/advisers)
   share: z.strictObject({ report: z.boolean(), finances: z.boolean(), docs: z.boolean(), moneyProfile: z.boolean() }),
+}).pick({ adviserId: true, share: true }).extend({
   shareVersion: text(64), // wording version of the share consent shown
 });
-const fields = { id: booking.id, adviserId: booking.adviserId, slot: booking.slot, mode: booking.mode, share: booking.share, status: booking.status, createdAt: booking.createdAt, cancelledAt: booking.cancelledAt };
 
-/**
- * Adviser bookings, the caller's in the session's tenant. Creating one records the share consent (consent_event kind adviser_share, detail = exactly what is shared);
- * cancelling records its withdrawal. POST is gated by the tenant's adviserBooking flag; list and cancel always work.
- */
-export const expertRoutes = (db: Db) => {
+/** Advisers and their bookings (Cal.com). POST /bookings is gated by the tenant's adviserBooking flag; the rest always works. */
+export const expertRoutes = (nest: INestApplicationContext) => {
   const r = new Hono<Env>();
-  const mine = (userId: string, orgId: string) => and(eq(booking.userId, userId), eq(booking.organizationId, orgId));
+  const bookings = nest.get(BookingsService);
+  const advisers = nest.get(AdvisersService);
+  const cal = nest.get(CalService);
+
+  r.get("/advisers", doc({ tags: ["bookings"], summary: "The tenant's advisers", description: "Members with role `adviser` who have set a Cal.com link (user.calLink).", responses: { 200: { description: "`{ advisers }`" } } }), async (c) =>
+    c.json({ advisers: await advisers.list(c.var.orgId) }));
 
   r.post("/bookings", doc({
-    tags: ["bookings"], flag: "adviserBooking", summary: "Book an adviser and record the share consent",
-    description: "Also writes a consent_event (kind adviser_share, detail = booking, adviser and exactly what is shared).",
+    tags: ["bookings"], flag: "adviserBooking", summary: "Start a booking (pending) and record the share consent",
+    description: "Also writes a consent_event (kind adviser_share, detail = booking, adviser and exactly what is shared). The app then opens the adviser's Cal.com embed with this booking's id as metadata; Cal.com's webhook confirms it.",
     responses: { 201: { description: "`{ booking }`" }, 400: errors[400] },
-  }), requireFeature(db, "adviserBooking"), validator("json", newBooking, (res, c) => (res.success ? undefined : c.json({ error: "invalid booking" }, 400))), async (c) => {
-    const { userId, orgId: organizationId } = c.var;
-    const { shareVersion, ...b } = c.req.valid("json");
-    const id = randomUUID();
-    const row = await db.transaction(async (tx) => {
-      const [created] = await tx.insert(booking).values({ id, userId, organizationId, ...b }).returning(fields);
-      await tx.insert(consentEvent).values({
-        userId, organizationId, kind: "adviser_share", granted: Object.values(b.share).some(Boolean), version: shareVersion,
-        detail: { bookingId: id, adviserId: b.adviserId, items: b.share },
-      });
-      return created;
-    });
-    // Confirmation email; the booking stands even if it fails (logged without the address).
-    const [[me], tenant] = await Promise.all([db.select({ email: user.email }).from(user).where(eq(user.id, userId)), tenantById(db, organizationId)]);
-    await sendMail(me.email, `Your ${tenant.name} adviser booking`, `Your adviser booking with ${tenant.name} is confirmed: ${row.slot} (${row.mode}).\n\nYou can cancel it in the app.`, tenant.name)
-      .catch((e) => console.error("booking email failed", e instanceof Error ? e.name : e));
-    return c.json({ booking: row }, 201);
+  }), requireFeature("adviserBooking"), validator("json", newBooking, (res, c) => (res.success ? undefined : c.json({ error: "invalid booking" }, 400))), async (c) => {
+    const row = await bookings.create(c.var.userId, c.var.orgId, c.req.valid("json"));
+    return row ? c.json({ booking: row }, 201) : c.json({ error: "unknown adviser" }, 400);
   });
 
   r.get("/bookings", doc({ tags: ["bookings"], summary: "The caller's bookings", responses: { 200: { description: "`{ bookings }`, newest first" } } }), async (c) =>
-    c.json({ bookings: await db.select(fields).from(booking).where(mine(c.var.userId, c.var.orgId)).orderBy(desc(booking.createdAt)) }));
+    c.json({ bookings: await bookings.list(c.var.userId, c.var.orgId) }));
 
-  // Idempotent: cancelling a cancelled booking returns it unchanged.
-  r.post("/bookings/:id/cancel", doc({ tags: ["bookings"], summary: "Cancel a booking (records the share withdrawal; idempotent)", responses: { 200: { description: "`{ booking }`" }, 404: errors[404] } }), async (c) => {
-    const { userId, orgId: organizationId } = c.var;
-    const ofMine = and(mine(userId, organizationId), eq(booking.id, c.req.param("id")));
-    const row = await db.transaction(async (tx) => {
-      const [cancelled] = await tx.update(booking).set({ status: "cancelled", cancelledAt: new Date() })
-        .where(and(ofMine, eq(booking.status, "booked"))).returning(fields);
-      if (!cancelled) return (await tx.select(fields).from(booking).where(ofMine))[0];
-      // the wording version this booking's share was granted under
-      const [granted] = await tx.select({ version: consentEvent.version }).from(consentEvent)
-        .where(and(eq(consentEvent.userId, userId), eq(consentEvent.organizationId, organizationId), eq(consentEvent.kind, "adviser_share"), sql`${consentEvent.detail}->>'bookingId' = ${cancelled.id}`));
-      await tx.insert(consentEvent).values({
-        userId, organizationId, kind: "adviser_share", granted: false, version: granted?.version ?? "unknown",
-        detail: { bookingId: cancelled.id, adviserId: cancelled.adviserId, items: cancelled.share },
-      });
-      return cancelled;
-    });
-    return row ? c.json({ booking: row }) : c.json({ error: "not found" }, 404);
+  r.post("/webhooks/cal/:tenant", docPublic({
+    tags: ["bookings"], summary: "Cal.com team webhook for one tenant",
+    description: "Signed with the tenant's secret (x-cal-signature-256, HMAC SHA-256 of the raw body). Updates the booking, records the delivery and publishes a CloudEvent; 500 when publishing fails, so Cal.com retries. Setup: docs/runbook.md.",
+    responses: { 200: { description: "`{ ok }`: false when the trigger or booking is not one we track" }, 400: errors[400], 401: { description: "Bad signature" } },
+  }), async (c) => {
+    const tenant = c.req.param("tenant");
+    if (!cal.verify(tenant, await c.req.text(), c.req.header("x-cal-signature-256"))) return c.json({ error: "invalid signature" }, 401);
+    const hook = calWebhook.safeParse(await c.req.json().catch(() => null));
+    if (!hook.success) return c.json({ error: "invalid webhook" }, 400);
+    return c.json({ ok: await cal.handle(tenant, hook.data) });
   });
 
   return r;

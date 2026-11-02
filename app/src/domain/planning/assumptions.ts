@@ -1,6 +1,13 @@
-// "Your assumptions": the customer's choice for an item, else the standard or a planning fallback.
+// "Your assumptions": the customer's choice for an item, else the standard (or the Cautious set's) or a planning fallback.
 import { rulesFor } from './rates'
-import { standardValue, type StandardKey } from './settings'
+import { STANDARDS } from './settings.data'
+import {
+  cautiousValue,
+  settingsInUse,
+  GROWTH_KEYS,
+  standardValue,
+  type StandardKey,
+} from './settings'
 
 type Amount = number | string | null
 
@@ -8,23 +15,23 @@ export interface AssumptionInputs {
   assumptions: Record<string, Amount | undefined>
   about: { partner: boolean | null }
   figures: { work?: string; income?: Amount; pIncome?: Amount; sp?: string; pSp?: string }
+  assumptionSet?: string
 }
 
 // from October most of this year has passed, so plans start next year
 const START_2027_FROM = new Date('2026-09-30T23:59:59')
 
-// items that follow a standard, with a market rate for when no standard is published
-const FROM_STANDARD: Record<string, [StandardKey, number?]> = {
-  wage: ['wage'],
-  cash: ['cash'],
-  inv: ['inv'],
-  pen: ['pen'],
-  penRet: ['penRet'],
+// a planning figure for when no standard is published, or the item has no standard of its own
+const PLANNING_FIGURES: Record<string, [StandardKey | null, number]> = {
   mortRate: ['mortRate', 0.0375],
   cardRate: ['cardRate', 0.2],
   loanRate: ['loanRate', 0.08],
   penChg: ['fundChg', 0.01],
+  drawFixed: [null, 20000],
 }
+
+export const isGrowthKey = (key: string): key is (typeof GROWTH_KEYS)[number] =>
+  (GROWTH_KEYS as readonly string[]).includes(key)
 
 export function chosenAssumption(asm: AssumptionInputs['assumptions'], key: string) {
   const value = asm[key]
@@ -61,10 +68,18 @@ function fallback(key: string, inputs: AssumptionInputs, today: Date) {
     case 'pSpWeek':
       return weeklyStatePension(inputs, today, (figures.pSp || 'Not sure') === 'Own partial')
   }
-  if (!(key in FROM_STANDARD)) throw new Error(`assumption ${key} is not supported yet`)
-  const [standard, marketRate] = FROM_STANDARD[key]
-  return standardValue(standard) ?? marketRate
+  const rules = rulesFor(assumption(inputs, 'startYear', today))
+  if (inputs.assumptionSet === 'cautious' && isGrowthKey(key))
+    return cautiousValue(key, settingsInUse(), rules)
+  const [standard, planningFigure] = PLANNING_FIGURES[key] ?? [key in STANDARDS ? key : null]
+  if (!standard && planningFigure == null) throw new Error(`assumption ${key} is not supported yet`)
+  const value = standard && standardValue(standard as StandardKey, settingsInUse(), rules)
+  return value ?? planningFigure
 }
 
+/** The figure in use, as stored: a number, or a choice such as 'spread'. */
+export const assumedValue = (inputs: AssumptionInputs, key: string, today = new Date()) =>
+  (chosenAssumption(inputs.assumptions, key) ?? fallback(key, inputs, today)) as number | string
+
 export const assumption = (inputs: AssumptionInputs, key: string, today = new Date()): number =>
-  Number(chosenAssumption(inputs.assumptions, key) ?? fallback(key, inputs, today))
+  Number(assumedValue(inputs, key, today))

@@ -4,7 +4,8 @@ import { authClient } from './client.ts'
 import { enterApp } from './session.ts'
 import { useStore } from '../state/store.ts'
 import { fresh } from '../state/fresh.ts'
-import { startFrom } from '../state/shell.ts'
+import { startFrom, useShell } from '../state/shell.ts'
+import { router } from '../shell/router.ts'
 
 vi.mock('./client.ts', () => ({
   authClient: {
@@ -31,24 +32,24 @@ const user = { name: '', email: 'a@b.ie' }
 
 afterEach(() => {
   vi.unstubAllGlobals()
-  history.replaceState(null, '', '/')
   startFrom(fresh())
 })
 
 test('invite link: kept through sign-in, accepted, made active, then a new account gives its details', async () => {
-  history.replaceState(null, '', '/?invitation=inv-1')
+  useShell.setState({ authed: true })
+  await router.navigate({ href: '/?invitation=inv-1' })
   stubApi(null)
   await enterApp(user)
   expect(authClient.organization.acceptInvitation).toHaveBeenCalledWith({ invitationId: 'inv-1' })
   expect(authClient.organization.setActive).toHaveBeenCalledWith({ organizationId: 'org-a' })
   expect(location.search).toBe('')
-  expect(useStore.getState().screen).toBe('P1D')
+  expect(router.state.location.pathname).toBe('/account/details')
 })
 
 test('returning user with an unfinished onboarding resumes at the next open question', async () => {
   const saved = { ...fresh(), answers: { 2: 0, 4: 1 }, why: ['track'] }
   stubApi('2026-10', saved)
   await enterApp(user)
-  expect(useStore.getState().screen).toBe('D4')
+  expect(router.state.location.pathname).toBe('/discover/3')
   expect(useStore.getState().plan.discoverStep).toBe(2)
 })

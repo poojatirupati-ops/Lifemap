@@ -1,8 +1,6 @@
 // Report page 6: cashflow. Savings by age, and how each year is paid.
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import PaidChart from './PaidChart.tsx'
-import SavingsChart from './SavingsChart.tsx'
-import TitleBlock from './TitleBlock.tsx'
+import { PageFrame, TitleBlock, type PageProps } from './PageFrame.tsx'
+import { PaidChart, SavingsChart } from './chart.tsx'
 import { COLOURS } from './tones.ts'
 
 const LEGEND = [

@@ -1,35 +1,19 @@
 // The original script's reportData() and renderer in node:vm, and plans to feed both.
 import { runOriginal, TODAY } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
+import { prepared as preparedBy, chooser } from '../golden/helpers'
 
 export const original = runOriginal('applyAssume, syncLists, autoSafety, reportData, LifeMapReport')
 export const today = new Date(TODAY + 'T12:00:00')
 
 // the original's state after what it runs before the report
-export function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return structuredClone(original.getState())
-}
-
-function random(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
+export const prepared = (state: any) => preparedBy(original, state)
 
 const base = fixtures.find(([name]) => name === 'finances-complete.json')![1]
 
 /** A plan ready for the report, varied where the report branches. */
 export function randomPlan(seed: number) {
-  const next = random(seed)
-  const pick = <T>(...options: T[]) => options[Math.floor(next() * options.length)]
-  const between = (low: number, high: number) => Math.round(low + next() * (high - low))
+  const { pick, between } = chooser(seed)
   const s = structuredClone(base)
   s.infl = pick(0.01, 0.02, 0.035)
   s.retireAge = between(50, 68)

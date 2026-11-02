@@ -13,7 +13,10 @@ const html = readFileSync(
 const marker = html.indexOf("<script>\n'use strict';")
 const domBoot = html.indexOf('S = fresh(); try { applyAssume(); }')
 if (marker < 0 || domBoot < 0) throw new Error('original script markers not found')
-const script = html.slice(marker + '<script>\n'.length, domBoot)
+// The original sits next to its media folder; the app serves media from the site root (deep links).
+const script = html
+  .slice(marker + '<script>\n'.length, domBoot)
+  .replace(/(["'(])media\//g, '$1/media/')
 
 // Absorbs any DOM call the original's top-level code makes.
 const fakeDom = (): any =>

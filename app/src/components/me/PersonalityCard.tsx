@@ -1,5 +1,5 @@
 import { useStore } from '../../state/store.ts'
-import { PROFILE_QUESTIONS, profilePercent } from '../../domain/discovery/profile.ts'
+import { PROFILE_QUESTIONS, profilePercent } from '../../domain/discovery/profileQuestions.ts'
 import { riskLabelText } from '../../domain/discovery/riskRead.ts'
 import { useProfileRead } from './useProfileRead.ts'
 

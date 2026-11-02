@@ -1,30 +1,65 @@
+import type { ReactNode } from 'react'
 import type { CheckItem } from './checkList.ts'
+import type { FinanceSection } from '../../domain/finances/sections.data.ts'
 import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
-import { fixSection, leaveForAdviser } from './financeActions.ts'
+import { fixSection, leaveForAdviser, leaveSectionForAdviser } from '../../state/finances.ts'
+import Emo from '../ui/Emo.tsx'
 
-interface Props {
+type Figure = {
   item: CheckItem
-  /** The item's section in FINANCE_SECTIONS, for Fix now. */
-  index: number
   /** Missing: what it counts as; needs a look: "Needs a look: " and why. */
   status: string
   workedOut: string
-  leftForAdviser: boolean
 }
 
-/** One figure that is missing or worth a second look. */
-export default function CheckRow({ item, index, status, workedOut, leftForAdviser }: Props) {
+type Props = {
+  /** The section's index in FINANCE_SECTIONS, for Fix now / Add now. */
+  index: number
+  leftForAdviser: boolean
+} & (Figure | { section: FinanceSection })
+
+type Row = {
+  icon: string
+  title: ReactNode
+  place: string
+  status: string
+  fix: string
+  leave: { a: string; p: string; onClick: () => void }
+}
+
+const figureRow = ({ item, status, workedOut }: Figure): Row => ({
+  icon: item.state === 'look' ? '⚠️' : '❓',
+  title: FINANCE_FIELDS[item.key].label,
+  place: item.section.title,
+  status: workedOut ? `${status}. ${workedOut}` : status,
+  fix: 'Fix now',
+  leave: { a: 'ack', p: item.key, onClick: () => leaveForAdviser(item.key) },
+})
+
+const sectionRow = (section: FinanceSection): Row => ({
+  icon: '❓',
+  title: <Emo>{`${section.emoji} ${section.title}`}</Emo>,
+  place: 'skipped',
+  status: section.id === 'prot' ? 'Not added yet' : 'Not added yet, so it counts as €0 for now',
+  fix: 'Add now',
+  leave: { a: 'acksec', p: section.id, onClick: () => leaveSectionForAdviser(section) },
+})
+
+/** A row of Check your details: one figure missing or worth a look, or a whole skipped section. */
+export default function CheckRow(props: Props) {
+  const { index, leftForAdviser } = props
+  const { icon, title, place, status, fix, leave } =
+    'item' in props ? figureRow(props) : sectionRow(props.section)
+
   return (
     <div className="ck">
       <span className="i" aria-hidden="true">
-        {item.state === 'look' ? '⚠️' : '❓'}
+        {icon}
       </span>
       <div style={{ flex: 1 }}>
-        <b>{FINANCE_FIELDS[item.key].label}</b>{' '}
-        <span className="small">· {item.section.title}</span>
+        <b>{title}</b> <span className="small">· {place}</span>
         <div className="small">
           {status}
-          {workedOut ? `. ${workedOut}` : null}
           {leftForAdviser ? (
             <>
               {' · '}
@@ -34,15 +69,10 @@ export default function CheckRow({ item, index, status, workedOut, leftForAdvise
         </div>
         <div className="a">
           <button className="link" data-a="fix" data-p={index} onClick={() => fixSection(index)}>
-            Fix now
+            {fix}
           </button>
           {leftForAdviser ? null : (
-            <button
-              className="link"
-              data-a="ack"
-              data-p={item.key}
-              onClick={() => leaveForAdviser(item.key)}
-            >
+            <button className="link" data-a={leave.a} data-p={leave.p} onClick={leave.onClick}>
               Leave for my adviser
             </button>
           )}

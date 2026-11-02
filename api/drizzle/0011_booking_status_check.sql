@@ -1,0 +1,1 @@
+ALTER TABLE "booking" ADD CONSTRAINT "booking_status_check" CHECK (status in ('pending', 'booked', 'cancelled', 'ended', 'no_show'));

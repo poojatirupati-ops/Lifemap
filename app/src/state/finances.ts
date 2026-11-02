@@ -3,14 +3,21 @@ import { isFromStatement, removeStatementFigures, typeFigure } from '../domain/f
 import { prepareSectionLists } from '../domain/finances/items.ts'
 import { answerMortgage, chooseHome } from '../domain/finances/mortgage.ts'
 import { prefillFinances } from '../domain/finances/prefill.ts'
-import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
+import { FINANCE_SECTIONS, type FinanceSection } from '../domain/finances/sections.data.ts'
+import { removeStatement } from '../domain/calc/statements.ts'
+import { assumption } from '../domain/planning/assumptions.ts'
+import { rulesFor } from '../domain/planning/rates.ts'
+import { missingChoices } from '../domain/planning/requiredChoices.ts'
+import { requiredFields } from '../components/finance/status.ts'
+import { prefersReducedMotion } from '../hooks/reducedMotion.ts'
+import { addVersion } from './versions.ts'
 import { normalize } from '../domain/plan/normalize.ts'
-// TODO(R-18): R-18's step-7 choice (chooseRetireAge) moves to domain/planning
-// and a planning slice; then import them from there.
-import { chooseRetireAge } from '../components/finance/choiceActions.ts'
+import { chooseRetireAge } from './choices.ts'
 import { retirementRange } from '../domain/goals/retirement.ts'
 import { toast } from './shell.ts'
-import type { Store } from './store.ts'
+import { currentArea, goTo } from '../shell/router.ts'
+import { useStore, type Store } from './store.ts'
+import { redirect } from '@tanstack/react-router'
 import type { Plan, Ui } from './types.ts'
 
 export const STATEMENT_REMOVED = 'Statement removed. Your own figures are used again'
@@ -46,50 +53,50 @@ export const updateFinances = (get: () => Store) => (recipe: (plan: Plan, ui: Ui
     prepareSectionLists(plan, section.id)
   })
 
-/** Leaves for a flow screen, or in the app closes the sheet over the page just changed. */
-export function show(get: () => Store, screen: string) {
-  if (get().plan.hasResults) get().closeSheet()
-  else get().go(screen)
+/** Where Your finances lives: in the plan builder, or in the app under Experts (when opened there) or Me. */
+export function financesPath(get: () => Store) {
+  if (!get().plan.hasResults) return '/build/finances'
+  return currentArea() === 'experts' ? '/experts/finances' : '/me/finances'
 }
 
-/** What a section of Your finances (P3) does. */
-export interface FinancesActions {
-  openSection: (index: number) => void
-  /** Back to Check your details when the section was opened from there, else Your finances. */
-  leaveSection: () => void
-  saveSection: () => void
-  chooseSectionMode: (mode: 'upload' | 'type') => void
-  removeSectionStatement: () => void
-  /** A typed figure; age and retirement age also move the plan when they make sense. */
-  typeField: (key: string, value: number | string | null) => void
-  chooseField: (key: string, choice: string) => void
-  toggleCredit: (key: string) => void
+/**
+ * What a page of Your finances shows, set by its route (routes/_auth/build/finances and its twins under Me and
+ * Experts): the hub, a section ('1' to '6'), or the documents being read. A page that cannot show sends to the hub.
+ */
+export function financesPage(hub: string, page: { section?: string; upload?: boolean } = {}) {
+  const store = useStore.getState()
+  if (page.upload) {
+    if (!store.upload) throw redirect({ href: hub })
+    return
+  }
+  const index = page.section == null ? null : Number(page.section) - 1
+  if (index != null && !FINANCE_SECTIONS[index]) throw redirect({ href: hub })
+  updateFinances(useStore.getState)((_, ui) => {
+    ui.financeSection = index
+    ui.upload = null
+  })
 }
 
-export function createFinancesSlice(get: () => Store): FinancesActions {
+/** Closes any sheet and opens a page of Your finances: '' (the hub), a section ('/2') or '/upload'. */
+export function show(get: () => Store, page: string) {
+  get().closeSheet()
+  return goTo(financesPath(get) + page)
+}
+
+export function createFinancesSlice(get: () => Store) {
   const update = updateFinances(get)
 
   return {
-    openSection: (index) => {
-      update((plan, ui) => {
-        ui.financeSection = index
-        ui.upload = null
-        if (plan.hasResults && ui.tab !== 'exp') {
-          ui.tab = 'me'
-          ui.mePage = 'fin'
-        }
-      })
-      show(get, 'P3')
-    },
+    // the section's route (routes/_auth/build/finances/$section.tsx and its twins) sets financeSection
+    openSection: (index: number) => show(get, `/${index + 1}`),
 
+    /** Back to Check your details when the section was opened from there, else Your finances. */
     leaveSection: () => {
       const fromCheck = get().cameFrom === 'check'
-      update((plan, ui) => {
-        ui.financeSection = null
-        if (fromCheck) ui.cameFrom = null
-        else if (plan.hasResults && ui.tab === 'me') ui.mePage = 'money'
-      })
-      if (!get().plan.hasResults) get().go(fromCheck ? 'P4' : 'P2')
+      if (fromCheck) update((_, ui) => void (ui.cameFrom = null))
+      const path = financesPath(get)
+      if (fromCheck) goTo('/build/check')
+      else goTo(path === '/me/finances' ? '/me/money' : path)
     },
 
     saveSection: () => {
@@ -102,20 +109,28 @@ export function createFinancesSlice(get: () => Store): FinancesActions {
       get().leaveSection()
     },
 
-    chooseSectionMode: (mode) =>
+    chooseSectionMode: (mode: 'upload' | 'type') =>
       update((plan, ui) => {
         plan.entryMode[currentSection(ui)!.id] = mode
       }),
 
+    // an Explore statement none of whose figures are left goes too (the original's pstRemove)
+
     removeSectionStatement: () => {
       const section = currentSection(get())!
       const keys = [...section.fields, ...(HIDDEN_STATEMENT_FIGURES[section.id] ?? [])]
-      update((plan) => removeStatementFigures(plan, keys))
-      // TODO(R-28): also remove a pension statement uploaded from Explore (the original's pstRemove)
+      const rules = rulesFor(assumption(get().plan, 'startYear'))
+      update((plan, ui) => {
+        removeStatementFigures(plan, keys)
+        const used = new Set(Object.values(plan.documentOf))
+        for (const cat of Object.keys(plan.statements))
+          if (!used.has(`pst:${cat}`)) removeStatement(plan, ui, cat, rules)
+      })
       toast(STATEMENT_REMOVED)
     },
 
-    typeField: (key, value) => {
+    /** A typed figure; age and retirement age also move the plan when they make sense. */
+    typeField: (key: string, value: number | string | null) => {
       // a statement figure stays in use; the typed one is kept for later
       const used = !isFromStatement(get().plan, key)
       update((plan) => {
@@ -128,7 +143,7 @@ export function createFinancesSlice(get: () => Store): FinancesActions {
       if (used && key === 'retireAge' && age >= min && age <= max) chooseRetireAge(age)
     },
 
-    chooseField: (key, choice) => {
+    chooseField: (key: string, choice: string) => {
       update((plan) => {
         if (key === 'mortYN') answerMortgage(plan, choice as 'Yes' | 'No')
         else if (key === 'home') chooseHome(plan, choice)
@@ -139,7 +154,7 @@ export function createFinancesSlice(get: () => Store): FinancesActions {
       }
     },
 
-    toggleCredit: (key) =>
+    toggleCredit: (key: string) =>
       update(
         (plan) =>
           void (plan.about.taxCredits = {
@@ -163,3 +178,50 @@ export function fillKnownFinances(plan: Plan) {
     plan.sources[field] ||= 'pre'
   }
 }
+
+// What Your finances (P2), Check your details (P4) and Building your plan (U1) do.
+
+/** From Check your details: the section's Back returns to the check. */
+export function fixSection(index: number) {
+  useStore.getState().update((plan, ui) => {
+    if (!plan.hasResults) ui.cameFrom = 'check'
+  })
+  useStore.getState().openSection(index)
+}
+
+export const leaveForAdviser = (key: string) =>
+  useStore.getState().update((plan) => void (plan.acknowledged[key] = true))
+
+export const leaveSectionForAdviser = (section: FinanceSection) =>
+  useStore.getState().update((plan) => {
+    for (const key of requiredFields(section, plan)) plan.acknowledged[key] = true
+  })
+
+/** Back to the Me tab's hub (or the Experts tab's home, for Your finances opened there). */
+export const backToMe = () => goTo(currentArea() === 'experts' ? '/experts' : '/me')
+
+/** Shows Building your plan, then opens the results in My Plan. */
+export const seeResults = () => showResults(true)
+export const skipResults = () => showResults(false)
+
+function showResults(checked: boolean) {
+  if (missingChoices(useStore.getState().plan).length) return
+  useStore.getState().update((plan) => void (plan.checked = checked))
+  goTo('/build/results')
+  setTimeout(
+    () => {
+      useStore.getState().update((plan, ui) => {
+        plan.hasResults = true
+        ui.planBuilder = false
+        ui.planScrollTo = 'results'
+        if (!plan.versions.some(({ note }) => /results/.test(note)))
+          addVersion(plan, 'First results')
+      })
+      goTo('/plan', true) // the loader is not a page to come back to
+    },
+    prefersReducedMotion() ? 300 : 1400,
+  )
+}
+
+/** What a section of Your finances (P3) does. */
+export type FinancesActions = ReturnType<typeof createFinancesSlice>

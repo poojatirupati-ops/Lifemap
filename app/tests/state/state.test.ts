@@ -15,6 +15,17 @@ test('fresh() and freshUi() deep-equal the original', () => {
     ask: _ask,
     toast: _toast,
     save: _save,
+    // screen state the URL holds now (routes)
+    shell: _shell,
+    tab: _tab,
+    planSeg: _planSeg,
+    me: _me,
+    exp: _exp,
+    xs: _xs,
+    rt: _rt,
+    admin: _admin,
+    after: _after,
+    asmBack: _asmBack,
     ...proto
   } = origSlice().fresh()
   // Login-first (O-01) dropped the save sheet and the unverified mobile.
@@ -26,7 +37,8 @@ test('fresh() and freshUi() deep-equal the original', () => {
       key === 'saveNote' ? ['savingCapped', value !== ''] : [key, value],
     ),
   )
-  const { screen: _s, sheet: _h, ...ui } = freshUi()
+  // where the plan builder and a booking were left, for My Plan and the Experts tab to resume
+  const { sheet: _h, builderAt: _b, resumeBooking: _r, ...ui } = freshUi()
   const plan = toOriginal(fresh())
   expect(toOriginal({ ...fresh(), ...ui })).toEqual(original)
   // the plan keeps the original's key order

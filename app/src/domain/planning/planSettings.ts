@@ -1,17 +1,10 @@
 // What the projection reads that stays the same from year to year: rules, figures and assumptions.
 import type { Plan } from '../../state/types'
-import { assumption, chosenAssumption } from './assumptions'
+import { assumedValue, assumption } from './assumptions'
 import { householdFigures, type Household } from './householdFigures'
 import { standardFundThreshold } from './pensions'
 import { rulesFor } from './rates'
-import {
-  GROWTH_KEYS,
-  defaultSettings,
-  growthRate,
-  investmentGrowth,
-  standardValue,
-  type StandardKey,
-} from './settings'
+import { standardValue } from './settings'
 
 export type ProjectionInputs = Household &
   Pick<Plan, 'goals' | 'rank' | 'answers' | 'monthlySaving' | 'inflation' | 'assumptionSet'> & {
@@ -19,45 +12,13 @@ export type ProjectionInputs = Household &
     pensionExtra?: number
   }
 
-const STANDARD_KEYS: StandardKey[] = [
-  'accessAge',
-  'lumpSum',
-  'drawRule',
-  'spGrow',
-  'bands',
-  'investShare',
-  'cgtGain',
-  'retireSpend',
-  'cashYears',
-  'saveShare',
-  'noAnswer',
-]
-
-// TODO(R-11): assumption() knows neither the Cautious set nor these standards yet, so they are
-// filled in as if chosen; the customer's own choice still wins.
-function withStandards(inputs: ProjectionInputs): ProjectionInputs {
-  const cautious = inputs.assumptionSet === 'cautious'
-  const rules = rulesFor(assumption(inputs, 'startYear'))
-  const filled: Household['assumptions'] = {
-    ...Object.fromEntries(STANDARD_KEYS.map((key) => [key, standardValue(key) as number | string])),
-    drawFixed: 20000,
-    ...(cautious &&
-      Object.fromEntries(GROWTH_KEYS.map((key) => [key, growthRate(key, 'cautious')]))),
-    inv: investmentGrowth(defaultSettings, cautious ? 0.01 : 0, rules),
-  }
-  for (const key of Object.keys(inputs.assumptions))
-    if (chosenAssumption(inputs.assumptions, key) != null) filled[key] = inputs.assumptions[key]
-  return { ...inputs, assumptions: filled }
-}
-
 /** Everything the projection reads that stays the same from year to year. */
-export function planSettings(plan: ProjectionInputs) {
-  const inputs = withStandards(plan)
+export function planSettings(inputs: ProjectionInputs) {
   const value = (key: string) => assumption(inputs, key)
-  const choice = (key: string) => String(inputs.assumptions[key])
+  const choice = (key: string) => String(assumedValue(inputs, key))
   const startYear = value('startYear')
   const rules = rulesFor(startYear)
-  const inflation = plan.inflation ?? (standardValue('infl') as number)
+  const inflation = inputs.inflation ?? (standardValue('infl') as number)
   return {
     inputs,
     rules,
@@ -83,7 +44,7 @@ export function planSettings(plan: ProjectionInputs) {
     saving: { share: value('saveShare'), noAnswer: value('noAnswer') },
     bufferMonths: value('safetyMonths'),
     cashYears: value('cashYears'),
-    extraPension: Number(plan.pensionExtra || 0),
+    extraPension: Number(inputs.pensionExtra || 0),
     statePension: rules.sp.week * rules.sp.weeks,
     sftAt: (year: number) => standardFundThreshold(rules, year, inflation),
   }

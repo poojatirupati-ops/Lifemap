@@ -15,6 +15,10 @@ export async function downloads() {
   }
 }
 
+/** Inside a shared Claude page, where a file can only be saved through its downloads capability. */
+export const hasDownloadsCapability = () =>
+  typeof (window as ClaudeWindow).claude?.use === 'function'
+
 /** A plain browser download. */
 function download(filename: string, blob: Blob) {
   const link = document.createElement('a')

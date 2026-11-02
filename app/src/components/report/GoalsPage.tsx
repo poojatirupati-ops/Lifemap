@@ -1,8 +1,135 @@
-// Report page 5 (as many pages as the goals need): your goals in detail.
-import GoalCard from './GoalCard.tsx'
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import TitleBlock from './TitleBlock.tsx'
-import type { PlacedGoal } from './goalPages.ts'
+// Report page 5 (as many pages as the goals need): your goals in detail. Each goal card shows how
+// covered it is, what it needs against what goes in, and for retirement each year as funded, from
+// savings or a gap.
+import type { ReportData } from '../../report/model/reportData.ts'
+import { clamp } from '../../lib/clamp.ts'
+import { goalIconName } from './Icon.tsx'
+import { BandChip, CircleIcon, PageFrame, Photo, TitleBlock, type PageProps } from './PageFrame.tsx'
+import { COLOURS, fillOf, textOf } from './tones.ts'
+
+export type ReportGoal = ReportData['goalsDetail']['goals'][number]
+export interface PlacedGoal {
+  goal: ReportGoal
+  weight: number
+}
+
+interface GoalBarProps {
+  label: string
+  value: string
+  percent: number
+  colour: string
+}
+
+/** "Retirement costs  about €1.2m" over a filled track. */
+function GoalBar({ label, value, percent, colour }: GoalBarProps) {
+  return (
+    <div className="lmr-bar">
+      <div className="lmx-t">
+        <span>{label}</span>
+        <b>{value}</b>
+      </div>
+      <div className="lmr-track">
+        <div
+          className="lmr-fill"
+          style={{ width: `${clamp(percent, 0, 100)}%`, background: colour }}
+        ></div>
+      </div>
+    </div>
+  )
+}
+
+const CELL_COLOURS: Record<string, string> = {
+  pension: COLOURS.tealMid,
+  savings: COLOURS.gold,
+  gap: COLOURS.coral,
+}
+
+function GoalCard({ goal, weight }: { goal: ReportGoal; weight: number }) {
+  const tone = goal.band
+  const rail = fillOf(tone)
+  const covered = tone === 'good' ? COLOURS.teal : rail
+  const { bars } = goal
+  return (
+    <div className="lmr-gcard" style={{ flex: `${weight} 1 0` }}>
+      <div className="lmx-rl" style={{ background: rail }}></div>
+      <div className="lmx-l">
+        <CircleIcon name={goalIconName(goal)} tone={tone} size={46} iconSize={24} />
+        <div className="lmx-pc" style={{ color: textOf(tone) }}>
+          {clamp(goal.pct, 0, 100)}%
+        </div>
+        <BandChip tone={tone} text={goal.bandText} />
+      </div>
+      <div className="lmx-rr2">
+        <div className="lmx-top">
+          <div>
+            <div className="lmx-gn lmr-clamp2">{goal.name}</div>
+            <div className="lmx-gm">{goal.meta}</div>
+            <div className="lmx-gs">{goal.sentence}</div>
+          </div>
+          {'photo' in goal ? (
+            <div className="lmx-ph">
+              <Photo name={goal.photo} />
+            </div>
+          ) : null}
+        </div>
+        {bars.type === 'retire' && 'costValue' in bars ? (
+          <>
+            <GoalBar
+              label="Retirement costs"
+              value={bars.costValue}
+              percent={100}
+              colour={COLOURS.navy}
+            />
+            <GoalBar
+              label="Your plan covers"
+              value={bars.coverValue}
+              percent={bars.coverPct}
+              colour={covered}
+            />
+            <div className="lmr-note">{bars.note}</div>
+          </>
+        ) : null}
+        {bars.type === 'saving' && 'needValue' in bars ? (
+          <>
+            <GoalBar
+              label="Needs a month"
+              value={bars.needValue}
+              percent={100}
+              colour={COLOURS.navy}
+            />
+            <GoalBar
+              label="You’re putting in"
+              value={bars.putValue}
+              percent={bars.putPct}
+              colour={covered}
+            />
+          </>
+        ) : null}
+        {'years' in goal && goal.years.cells.length ? (
+          <div className="lmr-yrs">
+            <div className="lmx-t">
+              <span>Your retirement years</span>
+              <span>{goal.years.summary}</span>
+            </div>
+            <div
+              className="lmr-cells"
+              role="img"
+              aria-label={`Your retirement years: ${goal.years.summary}`}
+            >
+              {goal.years.cells.map((cell) => (
+                <i key={cell.age} style={{ background: CELL_COLOURS[cell.state] ?? '#e3e8ed' }}></i>
+              ))}
+            </div>
+            <div className="lmx-lb">
+              <span style={{ color: COLOURS.goldText }}>{goal.years.leftLabel}</span>
+              <span style={{ color: COLOURS.coralText }}>{goal.years.rightLabel}</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
 
 export interface GoalsPageProps extends PageProps {
   goals: PlacedGoal[]

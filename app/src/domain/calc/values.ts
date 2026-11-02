@@ -4,9 +4,13 @@ import { chosenAssumption } from '../planning/assumptions.ts'
 import { standardValue } from '../planning/settings.ts'
 import type { Plan } from '../../state/types.ts'
 import { clamp } from '../../lib/clamp.ts'
-import { ASSUMPTION_NAMES, fieldOf, kindOf } from './assumptions.data.ts'
-import { TOOL_ASSUMPTIONS, type Binding } from './bindings.data.ts'
-import { MISSING_NAMES } from './missingNames.data.ts'
+import {
+  ASSUMPTION_NAMES,
+  fieldOf,
+  kindOf,
+  TOOL_ASSUMPTIONS,
+  type Binding,
+} from './bindings.data.ts'
 import { allInputs, bindingOf } from './calculators.ts'
 import { assumptionValue, type ToolPlan } from './context.ts'
 import { prefill } from './prefill.ts'
@@ -91,15 +95,12 @@ export const assumptionsToChoose = (asm: Plan['assumptions'], toolId: string) =>
       chosenAssumption(asm, key) == null && !fieldOf(key).optional && kindOf(key) !== 'standard',
   )
 
-const figureName = (toolId: string, input: CalcInput) =>
-  MISSING_NAMES[toolId]?.[input.key] ?? input.label.replace(/\s*\(.*\)$/, '').toLowerCase()
-
 function missingName(toolId: string, input: CalcInput) {
   const binding = bindingOf(toolId, input.key)
-  if (!binding) return `add:${figureName(toolId, input)}`
+  if (!binding)
+    return `add:${input.missingName ?? input.label.replace(/\s*\(.*\)$/, '').toLowerCase()}`
   if ('assumption' in binding) return ASSUMPTION_NAMES[binding.assumption]
-  const ownName = MISSING_NAMES[toolId]?.[input.key]
-  return ownName && isRangeOrMarket(binding) ? ownName : binding.name
+  return input.missingName && isRangeOrMarket(binding) ? input.missingName : binding.name
 }
 
 /** What is still missing before a result shows: 'add:<figure name>' for a personal figure, else the assumption's name. */

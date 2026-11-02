@@ -1,14 +1,19 @@
-// The Experts tab renders the same DOM as the ORIGINAL's V.EXP() at every booking step, and the
-// booking journey (match, share with consent, pick a time, confirm) books the meeting.
-import { act } from 'react'
-import { createRoot } from 'react-dom/client'
+// The Experts tab renders the same DOM as the ORIGINAL's V.EXP() at every booking step but c3, which is
+// Cal.com's calendar now (the booking journey itself is in booking.test.tsx). The original's three advisers
+// stand in for the tenant's (GET /api/advisers).
 import { describe, expect, it, vi } from 'vitest'
 import { rendered, shape } from '../sheets/dom'
 import { runOriginal, TODAY } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
-import * as Experts from '../../src/screens/Experts.screen'
+import { Body } from '../../src/components/experts/ExpertsPage.tsx'
+import ExpertsFoot from '../../src/components/experts/ExpertsFoot.tsx'
+import { headOf, STAGES } from '../../src/components/experts/stages.ts'
+import HdrBar from '../../src/components/frame/HdrBar.tsx'
+import TitleBlock from '../../src/components/frame/TitleBlock.tsx'
+import { queryClient } from '../../src/auth/planSync.ts'
+import { ADVISERS, type Adviser } from '../../src/bookings/bookings.ts'
+import { stageOf } from '../../src/domain/identity/booking.ts'
 import { useStore } from '../../src/state/store'
-import { toOriginal } from '../../src/state/migrate'
 import { seedContent } from '../content/seed'
 
 seedContent()
@@ -17,7 +22,14 @@ seedContent()
 vi.setConfig({ testTimeout: 30000 })
 
 Object.assign(globalThis, { __TODAY: TODAY })
-const original = runOriginal('applyAssume, syncLists, autoSafety, V, ACT')
+const original = runOriginal('applyAssume, syncLists, autoSafety, V, ACT, ADVISERS')
+const advisers: Adviser[] = original.ADVISERS.map((a: any) => ({
+  id: a.ini,
+  name: a.n,
+  calLink: `${a.ini}/45min`,
+  profile: { qualifications: a.q, languages: a.lang, location: a.loc, meetingMode: a.mode },
+}))
+queryClient.setQueryData(ADVISERS, advisers)
 const fixture = (name: string) => structuredClone(fixtures.find(([file]) => file === name)![1])
 
 function theirs(state: any) {
@@ -28,22 +40,34 @@ function theirs(state: any) {
   const view = original.V.EXP()
   // Deliberate copy change: there is no SMS, so the app only promises email.
   const noSms = (html: string) => html.replaceAll('email and SMS', 'email')
+  // Deliberate copy change: the advisers are the tenant's real ones, not samples.
+  const realAdvisers = (html: string) =>
+    html.replaceAll('Your match · sample adviser', 'Your match')
   return {
     id: view.id,
     head: shape(view.head),
-    body: shape(noSms(view.html)),
+    body: shape(realAdvisers(noSms(view.html))),
     foot: shape(view.foot ?? ''),
   }
 }
 
 function ours(state: any) {
   useStore.getState().load(structuredClone(state))
-  const store = useStore.getState()
+  const { plan } = useStore.getState()
+  // the original's S.exp is the URL now (/experts or /experts/c0 to c4)
+  const stage = stageOf(state.exp ?? 'home', plan.booking.done)
+  const { title, sub, back } = headOf(plan, stage, advisers[plan.booking.adviser].name)
+  const head = (
+    <>
+      <HdrBar back={back && (() => {})} bell />
+      <TitleBlock title={title} sub={sub} titleStyle={{ marginTop: 10 }} />
+    </>
+  )
   return {
-    id: Experts.id(store.plan, store),
-    head: shape(rendered(<>{Experts.Head()}</>)),
-    body: shape(rendered(<Experts.Body />)),
-    foot: shape(rendered(<Experts.Foot />)),
+    id: STAGES[stage].id,
+    head: shape(rendered(head)),
+    body: shape(rendered(<Body stage={stage} />)),
+    foot: shape(stage === 'booked' ? '' : rendered(<ExpertsFoot stage={stage} />)),
   }
 }
 
@@ -64,12 +88,6 @@ const STEPS: [string, (state: any) => void][] = [
         (s.exp = 'c2'),
       ),
   ],
-  ['c3', (s) => (s.exp = 'c3')],
-  [
-    'c3, a day and slot',
-    (s) =>
-      Object.assign(s.book, { day: 'Thu 29 Oct', slot: SLOT, mode: 'In person' }, (s.exp = 'c3')),
-  ],
   ['c4', (s) => Object.assign(s.book, { slot: SLOT, done: true }, (s.exp = 'c4'))],
   ['booked', (s) => Object.assign(s.book, { slot: SLOT, done: true })],
 ]
@@ -87,64 +105,4 @@ describe('Experts equals the original', () => {
         // the booked tab has no foot; ours renders nothing inside it
         expect(foot.join('')).toEqual(expected.foot.join(''))
       })
-})
-
-describe('booking journey', () => {
-  it('match, share with consent, pick a time and confirm', async () => {
-    const fetch = vi.fn(async () => new Response('{"booking":{"id":"b1"}}', { status: 201 }))
-    vi.stubGlobal('fetch', fetch)
-    const state = fixture('sample-exp.json')
-    useStore.getState().load(structuredClone(state))
-    const container = document.createElement('div')
-    document.body.appendChild(container)
-    const root = createRoot(container)
-    const click = (text: string) => {
-      const button = [...container.querySelectorAll('button')].find((b) =>
-        b.textContent?.includes(text),
-      )
-      if (!button) throw new Error(`no button "${text}"`)
-      act(() => button.click())
-    }
-    const tick = (selector: string) =>
-      act(() => (container.querySelector(selector) as HTMLInputElement).click())
-    const page = () => (
-      <>
-        <Experts.Body />
-        <Experts.Foot />
-      </>
-    )
-    act(() => root.render(page()))
-
-    click('Book my adviser meeting')
-    // the profile is not finished, so the optional profile step comes first
-    expect(useStore.getState().expertsPage).toBe('c0')
-    click('Skip for now')
-    click('See another match')
-    click('Choose')
-    expect((container.querySelector('#sharego') as HTMLButtonElement).disabled).toBe(true)
-    tick('[data-share="report"]')
-    tick('[data-agree]')
-    expect((container.querySelector('#sharego') as HTMLButtonElement).disabled).toBe(false)
-    click('Pick a time')
-    click('In person')
-    click('10:00')
-    click('Confirm booking')
-    await vi.waitFor(() => expect(useStore.getState().expertsPage).toBe('c4'))
-    expect(fetch).toHaveBeenCalledWith('/api/bookings', expect.objectContaining({ method: 'POST' }))
-    vi.unstubAllGlobals()
-
-    const { plan, expertsPage } = useStore.getState()
-    expect(expertsPage).toBe('c4')
-    expect(toOriginal(plan).book).toMatchObject({
-      adv: 1,
-      share: { report: true, fin: false, docs: false, um: false },
-      agree: true,
-      mode: 'In person',
-      slot: 'Wed 28 Oct · 10:00',
-      done: true,
-    })
-    expect(plan.versions.at(-1)?.note).toBe('Adviser meeting booked')
-    act(() => root.unmount())
-    container.remove()
-  })
 })

@@ -1,12 +1,24 @@
 // Report page 1: the photo, who it is for, the road ahead and three headline tiles.
-import CircleIcon from './CircleIcon.tsx'
-import Logo from './Logo.tsx'
-import type { PageProps } from './PageFrame.tsx'
-import Photo from './Photo.tsx'
+import { CircleIcon, Logo, Photo, type PageProps } from './PageFrame.tsx'
 import Road from './Road.tsx'
 import { COLOURS } from './tones.ts'
 
-const ROAD = { height: 282, startX: 111, endX: 747, middleY: 148, stem: 50, endLabelX: 744 }
+const ROAD = {
+  width: 794,
+  height: 282,
+  startX: 111,
+  endX: 747,
+  middleY: 148,
+  swing: 1,
+  stem: 50,
+  endLabelX: 744,
+  glow: 'rgba(255,255,255,.28)',
+  stemColor: 'rgba(255,255,255,.55)',
+  labelColor: '#fff',
+  subColor: '#cdd8e8',
+  endColor: '#cdd8e8',
+  labels: true,
+}
 
 export default function CoverPage({ data, total }: PageProps) {
   const { cover } = data

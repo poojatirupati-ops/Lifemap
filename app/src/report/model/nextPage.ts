@@ -1,6 +1,7 @@
 // Report page 9: what happens next, with what to bring and what to ask.
 import { euro } from '../../lib/format.ts'
-import { hasFigure, type ReportContext } from './context.ts'
+import { hasFigure } from '../../domain/planning/foundationCheck.ts'
+import type { ReportContext } from './context.ts'
 import { moneyProfile } from './profile.ts'
 
 const ASSET_NAMES: Record<string, string> = {
@@ -17,14 +18,13 @@ const GENERAL_QUESTIONS = [
 ]
 
 /** "a, b and c" */
-const listed = (items: string[]) =>
-  items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items.join('')
+const listed = new Intl.ListFormat('en-GB')
 
 function beforeYouMeet(context: ReportContext) {
   const { plan } = context
   const missing = Object.keys(ASSET_NAMES).filter((key) => !hasFigure(plan, key))
   const checks = [
-    missing.length && `Add your ${listed(missing.map((key) => ASSET_NAMES[key]))}`,
+    missing.length && `Add your ${listed.format(missing.map((key) => ASSET_NAMES[key]))}`,
     !context.fullStatePension && 'Check your State Pension record on MyWelfare.ie',
     moneyProfile(plan).riskIndex == null && 'Finish “Understand me” for your risk profile',
     !(plan.sources.life && plan.sources.ip) && 'Add your protection answers',

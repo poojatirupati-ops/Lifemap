@@ -8,17 +8,18 @@ import { csrf } from "hono/csrf";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import { timeout } from "hono/timeout";
-import { type SendOtp, createAuth, logOtp, mountAuth, sesOtp } from "./auth";
+import { createNest } from "./app.module";
+import { AUTH, type Auth, type SendOtp, logOtp, mountAuth, sesOtp } from "./auth";
 import { type Db, connect } from "./db";
 import { type Files, devFiles, s3Files } from "./files";
-import { type Env, guard } from "./guard";
+import { type Env, guard, platformAdmin } from "./guard";
 import { documentRoutes } from "./routes/documents";
 import { expertRoutes } from "./routes/experts";
 import { meRoutes } from "./routes/me";
 import { planRoutes } from "./routes/plan";
+import { tenantRoutes } from "./routes/tenant";
 import { docPublic, mountDocs } from "./openapi";
 import { count, logger, problem, tracer } from "./observe";
-import { platformAdmin, tenantForHost, tenantRoutes } from "./tenant";
 
 const prod = process.env.NODE_ENV === "production";
 const required = (name: string) => {
@@ -41,14 +42,15 @@ const files: Files = prod
   ? s3Files(tracer.captureAWSv3Client(new S3Client({ region: "eu-west-1" })), required("DOCUMENTS_BUCKET"))
   : devFiles(new URL("../.dev-files", import.meta.url).pathname);
 
-export const buildApp = (db: Db, send: SendOtp, store: Files = files) => {
+/** The Hono app over a Nest application context (created once per call: once per Lambda cold start). Handlers validate, then call Nest services. */
+export const buildApp = async (db: Db, send: SendOtp, store: Files = files) => {
+  const nest = await createNest(db, send, store);
+  const auth = nest.get<Auth>(AUTH);
   const app = new Hono<Env>();
-  const auth = createAuth(db, send, store);
 
-  // Cross-origin callers: the app, the CMS, auth's trusted origins, and any tenant's own https host.
+  // Cross-origin callers: the app, the CMS and auth's trusted origins. Tenants have no domains of their own.
   const known = new Set([process.env.BETTER_AUTH_URL, process.env.CMS_URL, ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "").split(",")].filter((u): u is string => !!u && URL.canParse(u)).map((u) => new URL(u).origin));
-  const trusted = async (origin: string) =>
-    known.has(origin) || (origin.startsWith("https://") && URL.canParse(origin) && !!(await tenantForHost(db, new URL(origin).hostname)));
+  const trusted = (origin: string) => known.has(origin);
 
   // Business metrics, counted on success.
   const counted: Record<string, string> = { "PUT /api/plan": "planSaves", "POST /api/documents": "uploads", "POST /api/bookings": "bookings" };
@@ -58,7 +60,7 @@ export const buildApp = (db: Db, send: SendOtp, store: Files = files) => {
     "*",
     requestId(),
     secureHeaders(),
-    cors({ origin: async (o) => ((await trusted(o)) ? o : null), credentials: true }),
+    cors({ origin: (o) => (trusted(o) ? o : null), credentials: true }),
     async (c, next) => {
       const start = Date.now();
       await next();
@@ -77,26 +79,27 @@ export const buildApp = (db: Db, send: SendOtp, store: Files = files) => {
   app.use(
     "*",
     except("/api/dev-files/*", bodyLimit({ maxSize: 1024 * 1024 })), // dev-files has its own 10 MB limit
-    // Better Auth checks origins on its own routes.
-    except("/api/auth/*", csrf({ origin: (o, c) => o === new URL(c.req.url).origin || trusted(o) })),
+    // Better Auth checks origins on its own routes; webhooks are server to server and signed.
+    except(["/api/auth/*", "/api/webhooks/*"], csrf({ origin: (o, c) => o === new URL(c.req.url).origin || trusted(o) })),
   );
 
   // The docs list tenant and admin routes: in production only platform admins get them (the guard has already required a session).
-  if (prod) app.use("/api/docs", platformAdmin(db)).use("/api/openapi.json", platformAdmin(db));
+  if (prod) app.use("/api/docs", platformAdmin(nest)).use("/api/openapi.json", platformAdmin(nest));
 
-  app.get("/health", docPublic({ tags: ["health"], summary: "Liveness", responses: { 200: { description: "`{ ok: true }`" } } }), (c) => c.json({ ok: true }));
+  // /api/health is the same check reachable through the single CloudFront router (which sends only /api/* to this function)
+  for (const path of ["/health", "/api/health"]) app.get(path, docPublic({ tags: ["health"], summary: "Liveness", responses: { 200: { description: "`{ ok: true }`" } } }), (c) => c.json({ ok: true }));
 
   // mountAuth takes a plain Hono; mount it as a sub-app so the guard above still runs first.
   const authRoutes = new Hono();
   mountAuth(authRoutes, auth);
   app.route("/", authRoutes);
-  app.route("/api", planRoutes(db));
-  app.route("/api", meRoutes(db, auth, store));
-  app.route("/api", documentRoutes(db, store));
-  app.route("/api", expertRoutes(db));
-  app.route("/api", tenantRoutes(db));
+  app.route("/api", planRoutes(nest));
+  app.route("/api", meRoutes(nest));
+  app.route("/api", documentRoutes(nest));
+  app.route("/api", expertRoutes(nest));
+  app.route("/api", tenantRoutes(nest));
   mountDocs(app, auth);
   return app;
 };
 
-export const app = buildApp(await connect(), sendOtp);
+export const app = await buildApp(await connect(), sendOtp);

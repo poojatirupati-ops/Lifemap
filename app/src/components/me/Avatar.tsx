@@ -1,6 +1,6 @@
 import { useStore } from '../../state/store.ts'
 import type { CSSProperties } from 'react'
-import { changePhoto } from './meActions.ts'
+import { changePhoto } from '../../state/account.ts'
 import { DEFAULT_PHOTO } from '../frame/HdrBar.tsx'
 
 /** The profile photo with its camera button; `ring` is the profile's percent done, drawn around it. */

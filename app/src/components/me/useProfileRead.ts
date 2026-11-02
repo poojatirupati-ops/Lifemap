@@ -1,6 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
-import { personality, profileAnswered, PROFILE_QUESTIONS } from '../../domain/discovery/profile.ts'
+import { personality } from '../../domain/discovery/profile.ts'
+import { profileAnswered, PROFILE_QUESTIONS } from '../../domain/discovery/profileQuestions.ts'
 import { riskReadFor } from '../../domain/discovery/planRiskRead.ts'
 import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
 

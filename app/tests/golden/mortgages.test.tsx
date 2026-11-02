@@ -4,11 +4,21 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, test } from 'vitest'
 import { runOriginal } from './origSlice'
-import * as Mortgages from '../../src/screens/Mortgages.screen.tsx'
+import * as Mortgages from '../../src/components/mortgages/MortgagesPage.tsx'
 import { useMortgagePage } from '../../src/state/mortgage.ts'
 import { seedContent } from '../content/seed.ts'
+import { PATHS, contentClient } from '../../src/content/cms.tsx'
+import { shape } from './helpers'
 
 seedContent()
+// Every article gets a body here; the original shows a placeholder where the app shows the body.
+const BODY = 'What lenders look at, step by step.'
+const PLACEHOLDER = 'TODO: content to come from docs/content/mortgage/ (not added yet).'
+for (const journey of contentClient.getQueryData<{ reading: object[] }[]>([PATHS.journeys])!)
+  for (const item of journey.reading)
+    Object.assign(item, {
+      body: { root: { children: [{ children: [{ text: BODY, format: 0 }] }] } },
+    })
 
 const original = runOriginal('V, fresh')
 // a DOM for React to render into; this file runs in node because the original is read from disk
@@ -18,27 +28,6 @@ Object.assign(globalThis, {
   document: page.window.document,
   IS_REACT_ACT_ENVIRONMENT: true,
 })
-
-/** A style attribute as the browser writes it back. */
-function cssText(style: string) {
-  const probe = document.createElement('i')
-  probe.style.cssText = style
-  return probe.style.cssText
-}
-
-/** Tags, sorted attributes and text; styles as the browser writes them. */
-function shape(html: string) {
-  const walk = (node: Node): string => {
-    if (node.nodeType === 3) return node.textContent ?? ''
-    const el = node as Element
-    const attrs = [...el.attributes]
-      .map((attr) => `${attr.name}=${attr.name === 'style' ? cssText(attr.value) : attr.value}`)
-      .sort()
-    return `<${el.tagName} ${attrs.join(' ')}>${[...el.childNodes].map(walk).join('')}</>`
-  }
-  const body = new JSDOM(html).window.document.body
-  return [...body.childNodes].map(walk).join('').split('<')
-}
 
 type Page = {
   situation: number
@@ -58,7 +47,7 @@ function originalPage({ situation, video, watched = {}, seats = {}, openReading 
     mprd: openReading,
   })
   original.setState(state)
-  return shape(original.V.MORT().html)
+  return shape(original.V.MORT().html.replace(PLACEHOLDER, BODY))
 }
 
 function ourPage({ situation, video, watched = {}, seats = {}, openReading }: Page) {
@@ -69,7 +58,7 @@ function ourPage({ situation, video, watched = {}, seats = {}, openReading }: Pa
   // captions now come from the CMS, cross-origin; the rest is the original's markup
   const html = container.innerHTML
     .replace(' crossorigin="anonymous"', '')
-    .replace('http://localhost:3000/api/media/file/', 'media/')
+    .replace('http://localhost:3000/api/media/file/', '/media/')
   act(() => root.unmount())
   return shape(html)
 }

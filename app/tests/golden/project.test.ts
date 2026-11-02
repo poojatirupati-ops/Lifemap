@@ -7,17 +7,12 @@ import { livingShort, project } from '../../src/domain/planning/project'
 import { planSettings } from '../../src/domain/planning/planSettings'
 import { extraNeededFor, whatIfFrom } from '../../src/domain/planning/wi'
 import { fromOriginal } from '../../src/state/migrate'
+import { chooser, prepared as preparedBy } from './helpers'
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, project, extraFor')
 
 // the original's state after what it runs before project()
-function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return structuredClone(original.getState())
-}
+const prepared = (state: any) => preparedBy(original, state)
 
 const ROW_NAMES: Record<string, string> = {
   index: 't',
@@ -109,22 +104,10 @@ function compare(state: any) {
   expect(difference(ours, theirs)).toBeNull()
 }
 
-// a small seeded generator, so a failure can be replayed
-function random(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 const base = fixtures.find(([name]) => name === 'finances-complete.json')![1]
 
 function randomPlan(seed: number) {
-  const next = random(seed)
-  const pick = <T>(...options: T[]) => options[Math.floor(next() * options.length)]
-  const between = (low: number, high: number) => Math.round(low + next() * (high - low))
+  const { pick, between } = chooser(seed)
   const s = structuredClone(base)
   s.assume = pick('standard', 'cautious')
   s.infl = pick(0.01, 0.02, 0.035)

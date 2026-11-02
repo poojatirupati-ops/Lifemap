@@ -22,8 +22,6 @@ interface Shell {
   authed: boolean
   /** Bumped to make the next render count as a new screen (enter animation, focus). */
   renderCount: number
-  /** The plan report is shown over the app (#report). */
-  reportOpen: boolean
 }
 
 export const useShell = create<Shell>(() => ({
@@ -33,12 +31,7 @@ export const useShell = create<Shell>(() => ({
   desk: startsOnDesktop(),
   authed: false,
   renderCount: 0,
-  reportOpen: false,
 }))
-
-export const showReport = () => useShell.setState({ reportOpen: true })
-
-export const closeReport = () => useShell.setState({ reportOpen: false })
 
 export const rerender = () =>
   useShell.setState(({ renderCount }) => ({ renderCount: renderCount + 1 }))

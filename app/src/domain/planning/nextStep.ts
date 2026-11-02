@@ -14,7 +14,7 @@ export type NextStep = {
   target?: number
 }
 
-export type NextStepInputs = {
+type NextStepInputs = {
   /** money details that need a look and are not acknowledged */
   looks: number
   foundation: NextFoundation | null
@@ -27,64 +27,46 @@ export type NextStepInputs = {
   whatIfSaved: boolean
 }
 
+const step = (
+  emoji: string,
+  title: string,
+  detail: string,
+  button: string,
+  action: NextAction,
+  target?: number,
+): NextStep => ({ emoji, title, detail, button, action, target })
+
 export function nextStep(inputs: NextStepInputs): NextStep {
   const { looks, foundation, book, weakest } = inputs
-  if (looks)
-    return {
-      emoji: '⚠️',
-      title: looks === 1 ? 'One detail needs a look' : `${looks} details need a look`,
-      detail: 'So your plan stays accurate. It takes a minute.',
-      button: 'Check it',
-      action: 'looks',
-    }
-  if (foundation && foundation.level.level <= 4)
-    return {
-      emoji: foundation.level.emoji,
-      title: foundation.title,
-      detail: foundation.detail,
-      button: 'See why',
-      action: 'foundation',
-      target: foundation.level.level - 1,
-    }
   const profileDone = inputs.profileAnswers >= 13
-  if (book.done && (!profileDone || !inputs.profileRechecked))
-    return {
-      emoji: '🧭',
-      title: 'Check your profile before your adviser meeting',
-      detail: `${book.slot}. About 2 minutes.`,
-      button: 'Check my profile',
-      action: 'profile',
-    }
-  if (weakest && weakest.percent < 95 && !inputs.whatIfSaved)
-    return {
-      emoji: '🔮',
-      title: `Try a what-if for ${weakest.name.toLowerCase()}`,
-      detail: `${weakest.name} is ${weakest.percent}% covered. See what a small change would do.`,
-      button: 'Try it',
-      action: 'whatIf',
-      target: weakest.id,
-    }
-  if (!profileDone)
-    return {
-      emoji: '🧭',
-      title: 'Finish your profile',
-      detail: '6 quick questions on risk, capacity and how you invest.',
-      button: 'Start',
-      action: 'profile',
-    }
-  if (!book.done)
-    return {
-      emoji: '📅',
-      title: 'Talk it through with an adviser',
-      detail: 'Free, no obligation.',
-      button: 'Book a meeting',
-      action: 'book',
-    }
-  return {
-    emoji: '✅',
-    title: "You're all set",
-    detail: `Your meeting: ${book.slot}.`,
-    button: 'See my meeting',
-    action: 'meeting',
+  if (looks) {
+    const title = looks === 1 ? 'One detail needs a look' : `${looks} details need a look`
+    return step('⚠️', title, 'So your plan stays accurate. It takes a minute.', 'Check it', 'looks')
   }
+  if (foundation && foundation.level.level <= 4) {
+    const { level, title, detail } = foundation
+    return step(level.emoji, title, detail, 'See why', 'foundation', level.level - 1)
+  }
+  if (book.done && (!profileDone || !inputs.profileRechecked)) {
+    const title = 'Check your profile before your adviser meeting'
+    return step('🧭', title, `${book.slot}. About 2 minutes.`, 'Check my profile', 'profile')
+  }
+  if (weakest && weakest.percent < 95 && !inputs.whatIfSaved) {
+    const title = `Try a what-if for ${weakest.name.toLowerCase()}`
+    const detail = `${weakest.name} is ${weakest.percent}% covered. See what a small change would do.`
+    return step('🔮', title, detail, 'Try it', 'whatIf', weakest.id)
+  }
+  if (!profileDone) {
+    const detail = '6 quick questions on risk, capacity and how you invest.'
+    return step('🧭', 'Finish your profile', detail, 'Start', 'profile')
+  }
+  if (!book.done)
+    return step(
+      '📅',
+      'Talk it through with an adviser',
+      'Free, no obligation.',
+      'Book a meeting',
+      'book',
+    )
+  return step('✅', "You're all set", `Your meeting: ${book.slot}.`, 'See my meeting', 'meeting')
 }

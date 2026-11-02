@@ -12,7 +12,8 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-test-module-mocks --import tsx --test src/vimeo.test.ts"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.92.1",
@@ -21,6 +22,7 @@
     "@payloadcms/richtext-lexical": "3.92.1",
     "@payloadcms/storage-s3": "^3.92.1",
     "@payloadcms/ui": "3.92.1",
+    "@vimeo/vimeo": "^3.0.3",
     "cross-env": "^7.0.3",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
@@ -28,7 +30,8 @@
     "payload": "3.92.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "sharp": "0.35.4"
+    "sharp": "0.35.4",
+    "tus-js-client": "^4.3.1"
   },
   "devDependencies": {
     "@types/node": "22.19.9",

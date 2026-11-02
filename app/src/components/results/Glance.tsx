@@ -1,14 +1,12 @@
 import { isShortYear } from '../../domain/planning/bands'
 import type { project } from '../../domain/planning/project'
 import { useViewport } from '../../hooks/useViewport'
-import { clamp } from '../../lib/clamp'
 import { useStore } from '../../state/store'
-import type { Ui } from '../../state/types'
 import Emo from '../ui/Emo'
+import { chartWidth } from './chart/cashflow'
 import CashflowView from './chart/CashflowView'
 import Chapters from './Chapters'
-import JourneySvg from './JourneySvg'
-import MilestoneList from './MilestoneList'
+import JourneySvg, { MilestoneList } from './JourneySvg'
 
 interface Props {
   /** the plan with the what-if applied */
@@ -31,15 +29,10 @@ const KEY = [
 export default function Glance({ projection }: Props) {
   const view = useStore((store) => store.resultsView)
   const goals = useStore((store) => store.plan.goals)
-  const update = useStore((store) => store.update)
-  // TODO(R-20): a named store action (setView) once the results slice exists
-  const setView = (key: Ui['resultsView']) =>
-    update((_, ui) => {
-      ui.resultsView = key
-    })
+  const setView = useStore((store) => store.setResultsView)
   const viewport = useViewport(false)
   const { landscape } = viewport
-  const width = landscape ? clamp(viewport.width - 72, 322, 780) : 322
+  const width = chartWidth(viewport)
   const hasRetireGoal = goals.some((goal) => goal.kind === 'retire')
   const milestones = goals
     .filter((goal) => goal.kind !== 'retire')

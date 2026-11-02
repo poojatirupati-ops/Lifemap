@@ -7,7 +7,6 @@ import { testApp } from "./testing";
 afterEach(() => vi.unstubAllGlobals());
 
 const ISSUER = "https://idp.cu-a.example";
-const A = { "x-forwarded-host": "app.cu-a.example" };
 
 /** A mock OIDC issuer: /token returns an RS256 ID token for whatever claims the test sets next, /jwks serves the key. */
 const mockIssuer = () => {
@@ -31,10 +30,10 @@ const mockIssuer = () => {
 
 test("SSO: tenant A's OIDC provider signs staff into A with the mapped role; other domains are refused", async () => {
   const { req, login, db } = await testApp();
-  await db.insert(organization).values({ id: "org-a", name: "Credit Union A", slug: "cu-a", metadata: JSON.stringify({ host: "app.cu-a.example" }) });
-  const admin = await login("it@cu-a.example", A);
+  await db.insert(organization).values({ id: "org-a", name: "Credit Union A", slug: "cu-a" });
+  const admin = await login("it@cu-a.example", "org-a");
   await db.update(member).set({ role: "admin" }).where(eq(member.organizationId, "org-a"));
-  const customer = await login("someone@example.com", A);
+  const customer = await login("someone@example.com", "org-a");
 
   const provider = {
     providerId: "cu-a-entra", issuer: ISSUER, domain: "cu-a.example", organizationId: "org-a",
@@ -61,8 +60,8 @@ test("SSO: tenant A's OIDC provider signs staff into A with the mapped role; oth
     return { status: back.status, location: back.headers.get("location") ?? "", cookie: back.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ") };
   };
 
-  // Not usable until the tenant proves the domain (DNS TXT; done by hand here).
-  const tenantSso = async () => ((await (await req("/api/tenant", { headers: A })).json()) as { sso: boolean }).sso;
+  // Not usable until the tenant proves the domain (DNS TXT; done by hand here). GET /api/tenant reads the session's active tenant.
+  const tenantSso = async () => ((await (await req("/api/tenant", {}, admin)).json()) as { sso: boolean }).sso;
   expect((await ssoSignIn({ sub: "1", email: "ann@cu-a.example" })).status).toBe(401);
   expect(await tenantSso()).toBe(false);
   await db.update(ssoProvider).set({ domainVerified: true }).where(eq(ssoProvider.providerId, "cu-a-entra"));

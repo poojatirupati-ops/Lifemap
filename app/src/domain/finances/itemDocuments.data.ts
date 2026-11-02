@@ -2,7 +2,7 @@
 import type { ListKey } from './lists.data.ts'
 
 // what reading an uploaded statement fills in: [field, value, confidence %]
-export type ItemDocument = {
+type ItemDocument = {
   title: string
   figures: [field: string, value: number, confidence: number][]
   texts?: [field: string, text: string][]

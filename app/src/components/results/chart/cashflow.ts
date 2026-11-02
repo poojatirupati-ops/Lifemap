@@ -29,10 +29,10 @@ export function yearSplit(row: YearRow): YearSplit {
   }
 }
 
-export const isShortYear = (row: YearRow) => row.shortfall > 0.5
+export const hasShortfall = (row: YearRow) => row.shortfall > 0.5
 
 export function chartLabel(rows: YearRow[]) {
-  const firstShort = rows.find(isShortYear)
+  const firstShort = rows.find(hasShortfall)
   const range = `Yearly cashflow, age ${rows[0].age} to ${rows[rows.length - 1].age}.`
   return firstShort
     ? `${range} Shortfall from age ${firstShort.age}.`
@@ -41,7 +41,7 @@ export function chartLabel(rows: YearRow[]) {
 
 /** The year shown first: the first short year, else the year retirement starts, else today. */
 export function defaultYear(rows: YearRow[], retiringAge?: number) {
-  const short = rows.findIndex(isShortYear)
+  const short = rows.findIndex(hasShortfall)
   if (short >= 0) return short
   return Math.max(
     0,

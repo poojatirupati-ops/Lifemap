@@ -1,12 +1,13 @@
+import { DEPENDANT_CHOICES } from '../../domain/identity/household.data.ts'
 import { useStore } from '../../state/store.ts'
-import { setDependants } from './aboutActions.ts'
+import { setDependants } from '../../state/about.ts'
 
-// index = the number stored in about.deps (3 means three or more)
+// index = the number stored in about.deps (3 means three or more), as DEPENDANT_CHOICES
 const TILES = [
-  { number: '0', words: 'none', under: 'None' },
-  { number: '1', words: 'one', under: 'person' },
-  { number: '2', words: 'two', under: 'people' },
-  { number: '3+', words: 'three or more', under: 'or more' },
+  { words: 'none', under: 'None' },
+  { words: 'one', under: 'person' },
+  { words: 'two', under: 'people' },
+  { words: 'three or more', under: 'or more' },
 ]
 
 /** Children or others who rely on you, as number tiles. */
@@ -15,9 +16,9 @@ export default function DependantTiles() {
 
   return (
     <div className="bdeps" role="group" aria-label="Children or others who rely on you">
-      {TILES.map(({ number, words, under }, count) => (
+      {TILES.map(({ words, under }, count) => (
         <button
-          key={number}
+          key={count}
           className={dependants === count ? 'bdep on' : 'bdep'}
           aria-pressed={dependants === count}
           aria-label={words}
@@ -25,7 +26,7 @@ export default function DependantTiles() {
           data-p={count}
           onClick={() => setDependants(count)}
         >
-          <b>{number}</b>
+          <b>{DEPENDANT_CHOICES[count]}</b>
           <small>{under}</small>
         </button>
       ))}

@@ -68,7 +68,7 @@ const openSheet = (name: string) => act(() => useStore.getState().openSheet(name
 // Radix hands focus back on a timer after the dialog unmounts.
 const afterClose = () => act(() => new Promise((done) => setTimeout(done, 0)))
 
-beforeEach(() => useStore.setState({ plan: fresh(), screen: 'D0', sheet: null }))
+beforeEach(() => useStore.setState({ plan: fresh(), sheet: null }))
 afterEach(() => vi.unstubAllGlobals())
 
 describe('focus', () => {

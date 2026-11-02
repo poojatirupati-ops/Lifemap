@@ -62,35 +62,29 @@ test("dev OTP logger never prints a full email", () => {
   for (const leak of ["alice.smith@", "lice.smith", "ab@x.io", "a@b.co"]) expect(out).not.toContain(leak);
 });
 
-test("SES sender: to the user, from the verified sender in the tenant's name, code only in the body, nothing logged", async () => {
+test("SES sender: to the user, from the verified sender as LifeMap, code only in the body, nothing logged", async () => {
   const ses = mockClient(SESv2Client);
   ses.on(SendEmailCommand).resolves({ MessageId: "m1" });
   const logs = [vi.spyOn(console, "log"), vi.spyOn(console, "info"), vi.spyOn(console, "warn"), vi.spyOn(console, "error")];
   const db = await pgliteDb();
-  await db.insert(organization).values({ id: "org-a", name: "Crédit Union \"A\"", slug: "cu-a", metadata: JSON.stringify({ host: "app.cu-a.example" }) });
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
-  const app = buildApp(db, sesOtp(new SESv2Client({ region: "eu-west-1", credentials: { accessKeyId: "test", secretAccessKey: "test" } }), "noreply@lifemap.example"), devFiles(tmpdir()));
-  const send = (email: string, host?: string) => app.request("/api/auth/email-otp/send-verification-otp", {
+  const app = await buildApp(db, sesOtp(new SESv2Client({ region: "eu-west-1", credentials: { accessKeyId: "test", secretAccessKey: "test" } }), "noreply@lifemap.example"), devFiles(tmpdir()));
+  const res = await app.request("/api/auth/email-otp/send-verification-otp", {
     method: "POST",
-    headers: { "content-type": "application/json", origin: "http://localhost:3000", ...(host && { "x-forwarded-host": host }) },
-    body: JSON.stringify({ email, type: "sign-in" }),
+    headers: { "content-type": "application/json", origin: "http://localhost:3000" },
+    body: JSON.stringify({ email: "ann@example.com", type: "sign-in" }),
   });
-  expect((await send("ann@example.com", "app.cu-a.example")).status).toBe(200);
-  expect((await send("bob@example.com")).status).toBe(200);
+  expect(res.status).toBe(200);
 
-  const [tenant, direct] = ses.commandCalls(SendEmailCommand).map((c) => c.args[0].input);
-  expect(tenant.Destination).toEqual({ ToAddresses: ["ann@example.com"] });
-  const from = /^=\?UTF-8\?B\?(.+)\?= <noreply@lifemap\.example>$/.exec(tenant.FromEmailAddress ?? "");
-  expect(Buffer.from(from![1], "base64").toString()).toBe('Crédit Union "A"');
-  expect(tenant.Content?.Simple?.Subject?.Data).toBe('Your Crédit Union "A" sign-in code');
-  const code = /code is (\d{6})/.exec(tenant.Content?.Simple?.Body?.Text?.Data ?? "")![1];
-  expect(tenant.Content?.Simple?.Subject?.Data).not.toContain(code);
-  expect(direct.Destination).toEqual({ ToAddresses: ["bob@example.com"] });
-  expect(direct.FromEmailAddress).toBe(`=?UTF-8?B?${Buffer.from("LifeMap").toString("base64")}?= <noreply@lifemap.example>`);
+  const [mail] = ses.commandCalls(SendEmailCommand).map((c) => c.args[0].input);
+  expect(mail.Destination).toEqual({ ToAddresses: ["ann@example.com"] });
+  expect(mail.FromEmailAddress).toBe(`=?UTF-8?B?${Buffer.from("LifeMap").toString("base64")}?= <noreply@lifemap.example>`);
+  expect(mail.Content?.Simple?.Subject?.Data).toBe("Your LifeMap sign-in code");
+  const code = /code is (\d{6})/.exec(mail.Content?.Simple?.Body?.Text?.Data ?? "")![1];
 
   const out = JSON.stringify(logs.flatMap((l) => l.mock.calls));
   expect(out).not.toContain(code);
-  expect(out).not.toMatch(/ann@example|bob@example/);
+  expect(out).not.toMatch(/ann@example/);
   logs.forEach((l) => l.mockRestore());
   ses.restore();
 });
@@ -101,7 +95,7 @@ test("tenant invitation email goes through SES from the tenant, with the accept 
   const ses = mockClient(SESv2Client);
   ses.on(SendEmailCommand).resolves({ MessageId: "m1" });
   const { db, req, login } = await testApp();
-  await db.insert(organization).values({ id: "org-a", name: "CU A", slug: "cu-a" });
+  await db.insert(organization).values({ id: "org-a", name: 'Crédit Union "A"', slug: "cu-a" }); // accents and quotes: RFC 2047 From name
   const cookie = await login("boss@example.com");
   const [{ id: userId }] = await db.select({ id: user.id }).from(user);
   await db.insert(member).values({ id: "m-boss", organizationId: "org-a", userId, role: "admin" });
@@ -110,8 +104,8 @@ test("tenant invitation email goes through SES from the tenant, with the accept 
   const { id } = (await res.json()) as { id: string };
   const [mail] = ses.commandCalls(SendEmailCommand).map((c) => c.args[0].input);
   expect(mail.Destination).toEqual({ ToAddresses: ["new@example.com"] });
-  expect(mail.FromEmailAddress).toBe(`=?UTF-8?B?${Buffer.from("CU A").toString("base64")}?= <noreply@lifemap.example>`);
-  expect(mail.Content?.Simple?.Subject?.Data).toBe("You're invited to CU A");
+  expect(mail.FromEmailAddress).toBe(`=?UTF-8?B?${Buffer.from('Crédit Union "A"').toString("base64")}?= <noreply@lifemap.example>`);
+  expect(mail.Content?.Simple?.Subject?.Data).toBe('You\'re invited to Crédit Union "A"');
   expect(mail.Content?.Simple?.Body?.Text?.Data).toContain(`?invitation=${id}`);
   ses.restore();
 });

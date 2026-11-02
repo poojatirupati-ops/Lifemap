@@ -1,39 +1,3 @@
-export type Adviser = {
-  name: string
-  initials: string
-  qualifications: string
-  languages: string
-  location: string
-  meetingMode: string
-}
-
-export const ADVISERS: Adviser[] = [
-  {
-    name: 'Niamh Byrne',
-    initials: 'NB',
-    qualifications: 'QFA, CFP®',
-    languages: 'English, Irish',
-    location: 'Dublin 2',
-    meetingMode: 'Video or in person',
-  },
-  {
-    name: 'Ciarán Walsh',
-    initials: 'CW',
-    qualifications: 'QFA, APA',
-    languages: 'English',
-    location: 'Cork',
-    meetingMode: 'Video',
-  },
-  {
-    name: 'Aisling Murphy',
-    initials: 'AM',
-    qualifications: 'CFP®, QFA',
-    languages: 'English, Polish',
-    location: 'Galway',
-    meetingMode: 'Video or in person',
-  },
-]
-
 export type Expert = { title: string; blurb: string; icon: string }
 
 export const EXPERTS = {

@@ -1,5 +1,6 @@
+import PlanEndChoice from '../assumptions/PlanEndChoice.tsx'
 import AssumptionField from '../me/AssumptionField.tsx'
-import { rememberOpenGroup } from '../me/assumptionActions.ts'
+import { rememberOpenGroup } from '../../state/assumptions.ts'
 import { useStore } from '../../state/store.ts'
 import { TOOL_ASSUMPTIONS } from '../../domain/calc/bindings.data.ts'
 import { assumptionsToChoose } from '../../domain/calc/values.ts'
@@ -27,12 +28,13 @@ export default function CalcAssumptions({ toolId }: { toolId: string }) {
         Assumptions this tool uses{toChoose > 0 ? ` · ${toChoose} to choose` : null}
       </summary>
       <div style={{ marginTop: 10 }}>
-        {/* TODO(R-26): planEnd has no AssumptionField yet */}
-        {keys
-          .filter((key) => key !== 'planEnd')
-          .map((key) => (
+        {keys.map((key) =>
+          key === 'planEnd' ? (
+            <PlanEndChoice key={key} />
+          ) : (
             <AssumptionField key={key} name={key} />
-          ))}
+          ),
+        )}
         <p className="small" style={{ margin: '6px 0 0' }}>
           Figures tagged Set by LifeMap are used from the start. These are your plan-wide choices:
           changing one here changes it everywhere.

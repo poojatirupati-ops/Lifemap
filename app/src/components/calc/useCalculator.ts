@@ -8,7 +8,7 @@ import {
 } from '../../domain/calc/bindings.data.ts'
 import { calculatorFor } from '../../domain/calc/calculators.ts'
 import { calcContext, toolPlan, type ToolPlan } from '../../domain/calc/context.ts'
-import { fieldInfo } from '../../domain/calc/fieldInfo.ts'
+import { fieldInfo } from '../../domain/calc/guide.ts'
 import type { CalcInput, Calculator } from '../../domain/calc/types.ts'
 import { missingFigures, showsExample, toolFigures } from '../../domain/calc/values.ts'
 import { useStore } from '../../state/store.ts'

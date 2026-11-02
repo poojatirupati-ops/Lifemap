@@ -14,41 +14,27 @@ export const topicPhotoStyle = (topic: Topic) =>
 /** "mortgage expert", "financial planner". */
 export const expertName = (kind: VideoKind) => EXPERTS[kind].title.toLowerCase()
 
-/** The groups whose tools a statement can fill in, and what the statement is. */
+/** The groups whose tools a statement can fill in: what the statement is, and the kinds it reads. */
 export interface Statement {
   what: string
-  reads: string[]
+  reads: string
 }
 
 export const STATEMENTS: Partial<Record<CategoryId, Statement>> = {
   retire: {
     what: 'pension',
-    reads: [
-      'Pension benefit statement',
-      'Annual pension statement',
-      'PRSA statement',
-      'Employer scheme / Occupational pension statement',
-      'State Pension record (MyWelfare)',
-    ],
+    reads:
+      'Pension benefit statement · Annual pension statement · PRSA statement · Employer scheme / Occupational pension statement · State Pension record (MyWelfare)',
   },
   home: {
     what: 'mortgage',
-    reads: [
-      'Mortgage statement',
-      'Annual mortgage statement',
-      'Mortgage offer letter',
-      'Property valuation',
-      'LPT record',
-    ],
+    reads:
+      'Mortgage statement · Annual mortgage statement · Mortgage offer letter · Property valuation · LPT record',
   },
   invest: {
     what: 'investment',
-    reads: [
-      'Investment / brokerage statement',
-      'Fund statement',
-      'Share scheme / ESPP / RSU statement',
-      'Crypto holdings statement',
-    ],
+    reads:
+      'Investment / brokerage statement · Fund statement · Share scheme / ESPP / RSU statement · Crypto holdings statement',
   },
 }
 

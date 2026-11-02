@@ -29,6 +29,7 @@ export function originalNormalized(state: unknown) {
   original.setState(structuredClone(state))
   original.applyAssume()
   original.syncLists()
+  original.autoSafety()
   return original.getState()
 }
 

@@ -1,12 +1,9 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
 import { fresh } from '../../src/state/fresh.ts'
-import * as Account from '../../src/screens/Account.screen.tsx'
-import * as AccountCode from '../../src/screens/AccountCode.screen.tsx'
-import * as AccountPasskey from '../../src/screens/AccountPasskey.screen.tsx'
-import * as AccountDetails from '../../src/screens/AccountDetails.screen.tsx'
+import { path, renderAt, settle } from '../renderAt.tsx'
 import { prefillFinances } from '../../src/domain/finances/prefill.ts'
 
 const auth = vi.hoisted(() => ({
@@ -40,35 +37,25 @@ test('prefillFinances keeps only what the customer already told us', () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  useStore.getState().load({ ...fresh(), screen: 'P1' })
+  useStore.getState().load(fresh())
 })
 
 const type = (label: string, value: string) =>
   fireEvent.input(screen.getByLabelText(label), { target: { value } })
 
 test('P1: Send waits for an email, then sends the code', async () => {
-  render(
-    <>
-      <Account.Body />
-      <Account.Foot />
-    </>,
-  )
+  await renderAt('/sign-in')
   const send = screen.getByText('Send my email code') as HTMLButtonElement
   expect(send.disabled).toBe(true)
   type('Email', 'aoife@example.ie')
   expect(send.disabled).toBe(false)
   fireEvent.click(send)
-  await waitFor(() => expect(useStore.getState().screen).toBe('P1E'))
+  await waitFor(() => expect(path()).toBe('/sign-in/code'))
   expect(auth.sendCode).toHaveBeenCalledWith('aoife@example.ie')
 })
 
 test('P1D: consents start unticked, the notice is required, all three are posted', async () => {
-  render(
-    <>
-      <AccountDetails.Body />
-      <AccountDetails.Foot />
-    </>,
-  )
+  await renderAt('/account/details')
   const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[]
   expect(boxes.map((box) => box.checked)).toEqual([false, false, false])
   type('First name', ' Aoife ')
@@ -79,7 +66,7 @@ test('P1D: consents start unticked, the notice is required, all three are posted
   fireEvent.click(boxes[0])
   fireEvent.click(boxes[2])
   fireEvent.click(screen.getByText('Continue'))
-  await waitFor(() => expect(useStore.getState().screen).toBe('P1K'))
+  await waitFor(() => expect(path()).toBe('/account/passkey'))
   expect(auth.postConsents).toHaveBeenCalledWith({
     terms: true,
     marketing: false,
@@ -88,7 +75,7 @@ test('P1D: consents start unticked, the notice is required, all three are posted
   expect(auth.updateUser).toHaveBeenCalledWith({ name: 'Aoife' })
 })
 
-function renderCodeScreen() {
+async function renderCodeScreen() {
   useStore.getState().update((plan) => {
     Object.assign(plan.account, {
       name: 'Aoife',
@@ -97,17 +84,12 @@ function renderCodeScreen() {
       marketingConsent: false,
     })
   })
-  render(
-    <>
-      <AccountCode.Body />
-      <AccountCode.Foot />
-    </>,
-  )
+  await renderAt('/sign-in/code')
   return screen.getAllByRole('textbox') as HTMLInputElement[]
 }
 
 test('P1E: boxes advance, short codes and wrong codes and lockout show their message', async () => {
-  const boxes = renderCodeScreen()
+  const boxes = await renderCodeScreen()
   expect(document.activeElement).toBe(boxes[0])
   fireEvent.input(boxes[0], { target: { value: 'x7' } })
   expect(boxes[0].value).toBe('7')
@@ -129,34 +111,33 @@ test('P1E: boxes advance, short codes and wrong codes and lockout show their mes
   await waitFor(() =>
     expect(screen.getByRole('alert').textContent).toBe('Too many tries. Tap Send a new code.'),
   )
-  expect(useStore.getState().screen).toBe('P1')
+  expect(path()).toBe('/sign-in/code')
   expect(auth.postConsents).not.toHaveBeenCalled()
 })
 
 test('P1E: the right code signs in and enters the app', async () => {
-  const boxes = renderCodeScreen()
+  const boxes = await renderCodeScreen()
   fireEvent.paste(boxes[0], { clipboardData: { getData: () => '654321' } })
   fireEvent.click(screen.getByText('Verify'))
   await waitFor(() => expect(auth.enterApp).toHaveBeenCalledWith({ name: '', email: 'a@b.ie' }))
   expect(auth.signInWithCode).toHaveBeenCalledWith('a@b.ie', '654321')
 })
 
-test('P1K: Not now (onboarded) returns to the screen the wall caught; otherwise onboarding starts', async () => {
-  useStore.getState().update((plan, ui) => {
-    ui.returnTo = 'XPL'
+test('P1K: Not now (onboarded) returns to the page the wall caught; otherwise onboarding starts', async () => {
+  useStore.getState().update((plan) => {
     plan.account.name = 'Aoife'
     plan.onboarded = true
   })
-  const { unmount } = render(<AccountPasskey.Foot />)
+  const { unmount } = await renderAt('/account/passkey?redirect=%2Fexplore')
   fireEvent.click(screen.getByText('Not now'))
-  expect(useStore.getState().tab).toBe('explore')
-  expect(useStore.getState().returnTo).toBeUndefined()
+  await settle()
+  expect(path()).toBe('/explore')
   expect(useStore.getState().plan.figures.name).toBe('Aoife')
   unmount()
 
-  useStore.getState().load({ ...fresh(), screen: 'P1K' })
-  render(<AccountPasskey.Foot />)
+  useStore.getState().load(fresh())
+  await renderAt('/account/passkey')
   fireEvent.click(screen.getByText('Add Face ID / passkey'))
-  await waitFor(() => expect(useStore.getState().screen).toBe('D0'))
+  await waitFor(() => expect(path()).toBe('/'))
   expect(useStore.getState().plan.account.passkey).toBe(true)
 })

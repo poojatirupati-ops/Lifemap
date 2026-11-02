@@ -113,7 +113,7 @@ interface Goals {
 
 /** The customer's money: totals, list items and where each value came from. */
 interface Finances {
-  // ponytail: numbers plus a few answers kept as text (work, ...); split when finances get a typed model
+  // numbers, plus a few answers kept as text (work, home, ...)
   figures: Record<string, any>
   sources: Record<string, Provenance>
   confidence: Record<string, number>
@@ -149,7 +149,7 @@ interface Finances {
 }
 
 /** A statement the customer uploaded and confirmed, with the figures read from it. */
-export interface UploadedStatement {
+interface UploadedStatement {
   name: string
   date: string
   figures: object
@@ -160,30 +160,24 @@ export type PlanSection = 'timeline' | 'results' | 'wi' | 'fnd'
 
 /** Where the customer is and what is open: never saved with the plan. */
 export interface Ui {
-  screen: string
   sheet: string | null
-  inShell: boolean
+  /** A plan builder is under way: My Plan resumes it at `builderAt` (its last step's URL). */
   planBuilder: boolean
-  tab: string
-  planSegment: string
+  builderAt?: string
+  /** The booking step (c1 to c3) the Experts tab returns to. */
+  resumeBooking?: string
   planScrollTo: PlanSection | null
   editingGoals: boolean
-  mePage: string
-  expertsPage: string
   resultsView: 'journey' | 'chapters' | 'detail'
   cameFrom: string | null
-  /** The screen the sign-in wall caught the visitor on. */
-  returnTo?: string
   timelineOpen: Record<string, boolean>
   highlightedGoal: number | null
   /** index of the open life chapter */
   openChapter: number | null
-  explorePages: { page: string; param?: string }[]
   /** The focus area Explore's card shows. */
   focusArea?: number
   videoFilter: string
   playing: boolean
-  afterGate: Record<string, unknown> | null
   /** Calculators showing their result in today's money ("Adjust for inflation"). */
   todaysMoney?: Record<string, boolean>
   /** Per tool: the inputs the customer moved, their figures, a statement's figures and keys. */
@@ -197,10 +191,8 @@ export interface Ui {
   upload: Upload | null
   /** The Explore statement being read or confirmed. */
   statement: StatementUpload | null
-  adminView?: boolean
-  /** The open box on Your assumptions, and where its Back goes. */
+  /** The open box on Your assumptions. */
   openAssumption?: string | null
-  assumptionsBack?: string
 }
 
 /** Saving the plan and booking an adviser. */

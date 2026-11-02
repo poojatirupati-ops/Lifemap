@@ -4,6 +4,8 @@ import * as schema from "./schema";
 
 export { schema };
 export type Db = ReturnType<typeof drizzle<typeof schema>>;
+/** Nest token for the Db (DbModule). */
+export const DB = "Db";
 
 /**
  * Production: Postgres on DATABASE_URL (Lambda env, from an SST Secret); fails closed without it, never PGlite.

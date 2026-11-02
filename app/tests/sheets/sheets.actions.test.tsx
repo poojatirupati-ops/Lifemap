@@ -9,6 +9,7 @@ import { useStore } from '../../src/state/store'
 import samplePlan from '../../src/state/sample-plan.json'
 import type { Plan } from '../../src/state/types'
 import { seedContent } from '../content/seed'
+import { path, settle } from '../renderAt.tsx'
 
 seedContent()
 
@@ -50,14 +51,13 @@ describe('simple sheets', () => {
     expect(state().plan.goals.at(-1)).toMatchObject({ name: 'Kitchen', emoji: '⭐', amount: 10000 })
   })
 
-  it('talking to an expert opens the Experts tab with that kind picked', () => {
+  it('talking to an expert opens the Experts tab with that kind picked', async () => {
+    useShell.setState({ authed: true })
     open('xpert|pension', { hasResults: true })
     fireEvent.click(screen.getByText('Book a video call'))
-    expect(state()).toMatchObject({
-      tab: 'exp',
-      expertsPage: 'home',
-      plan: { booking: { spec: 'pension', mode: 'Video' } },
-    })
+    await settle()
+    expect(path()).toBe('/experts')
+    expect(state()).toMatchObject({ plan: { booking: { spec: 'pension', mode: 'Video' } } })
     expect(state().sheet).toBeNull()
     expect(toast()).toBe('Pick a time for your video call')
   })

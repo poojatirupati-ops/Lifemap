@@ -1,21 +1,72 @@
 // The journey road: where the road, the flags and the goal rings go.
-import { box, crosses, inset, overlaps, type Box, type Segment } from '../../lib/boxes'
 import { clamp } from '../../lib/clamp'
+import type { Goal } from '../../state/types'
 
-export interface Milestone {
-  id: number
-  age: number
-  name: string
+/** An axis-aligned box the layout places labels with. */
+interface Box {
+  left: number
+  top: number
+  right: number
+  bottom: number
 }
-type TextWidth = (text: string, px: number) => number
-export interface JourneyInputs<M extends Milestone> {
-  ages: number[]
-  /** index of the year retirement starts, or -1 */
-  retireIndex: number
-  milestones: M[]
-  width: number
-  landscape: boolean
-  textWidth: TextWidth
+type Segment = [x1: number, y1: number, x2: number, y2: number]
+
+const box = (left: number, top: number, right: number, bottom: number): Box => ({
+  left,
+  top,
+  right,
+  bottom,
+})
+
+const overlaps = (a: Box, b: Box) =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+
+const inset = (b: Box, by: number) =>
+  box(b.left + by, b.top + by, b.right - by, b.bottom - by)
+
+/** Liang-Barsky: does the segment cross the box? */
+function crosses([x1, y1, x2, y2]: Segment, b: Box) {
+  const dx = x2 - x1
+  const dy = y2 - y1
+  let enter = 0
+  let leave = 1
+  for (const [p, q] of [
+    [-dx, x1 - b.left],
+    [dx, b.right - x1],
+    [-dy, y1 - b.top],
+    [dy, b.bottom - y1],
+  ]) {
+    if (p === 0) {
+      if (q < 0) return false
+      continue
+    }
+    if (p < 0) enter = Math.max(enter, q / p)
+    else leave = Math.min(leave, q / p)
+    if (enter > leave) return false
+  }
+  return true
+}
+
+let context: CanvasRenderingContext2D | null | undefined
+
+/** A character-count guess, where there is no canvas to measure with. */
+const estimate = (text: string, px: number) => text.length * px * 0.62 + 4
+
+function canvasContext() {
+  try {
+    context ??= document.createElement('canvas').getContext('2d')
+  } catch {
+    context = null
+  }
+  return context
+}
+
+/** Width of a bold label in the font rendering now. */
+function textWidth(text: string, px: number) {
+  const canvas = canvasContext()
+  if (!canvas) return estimate(text, px)
+  canvas.font = `700 ${px}px Figtree, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`
+  return canvas.measureText(text).width * 1.06 + 4
 }
 
 interface Point {
@@ -38,22 +89,34 @@ function candidateOffsets(ringRadius: number, nudge: number, width: number) {
   return offsets.toSorted((a, b) => a.cost - b.cost || a.tierIndex - b.tierIndex)
 }
 
-interface Road {
-  width: number
-  height: number
-  wide: boolean
-  ringRadius: number
-  labelHeight: number
-  /** gap from the road to the first tier, and between tiers */
-  first: number
-  tier: number
-  /** furthest sideways a ring goes before the last resort */
-  far: number
-  roadY: (x: number) => number
-  offsets: ReturnType<typeof candidateOffsets>
-  taken: Box[]
-  leaders: Segment[]
+/** What ring placement reads, and the marks and leaders it adds as it goes. */
+function roadFor(
+  width: number,
+  height: number,
+  wide: boolean,
+  roadY: (x: number) => number,
+  taken: Box[],
+) {
+  const ringRadius = wide ? 18 : 13
+  const labelHeight = wide ? 15 : 0
+  return {
+    width,
+    height,
+    wide,
+    ringRadius,
+    labelHeight,
+    /** gap from the road to the first tier, and between tiers */
+    first: ringRadius + (wide ? 12 : 10),
+    tier: 2 * ringRadius + labelHeight + 4 + (wide ? 2 : 4),
+    /** furthest sideways a ring goes before the last resort */
+    far: 4 * (2 * ringRadius + 4),
+    roadY,
+    offsets: candidateOffsets(ringRadius, wide ? 22 : 16, width),
+    taken,
+    leaders: [] as Segment[],
+  }
 }
+type Road = ReturnType<typeof roadFor>
 interface RingSpec {
   anchorX: number
   anchorY: number
@@ -123,7 +186,7 @@ function cropBounds(points: Point[], taken: Box[]) {
 }
 
 /** The decade ages on the axis; "You, today" sits under the start, so a label must clear it. */
-function ageTicks(points: Point[], ages: number[], wide: boolean, textWidth: TextWidth) {
+function ageTicks(points: Point[], ages: number[], wide: boolean) {
   const todayEnd = points[0].x - 4 + textWidth(wide ? 'You, today' : 'today', 11)
   return points
     .map((p, i) => ({ x: p.x, age: ages[i] }))
@@ -134,8 +197,15 @@ function ageTicks(points: Point[], ages: number[], wide: boolean, textWidth: Tex
  * Milestones alternate above and below the road in age order, each on a leader from its age.
  * A ring steps out a tier and/or sideways until it clears the fixed marks and earlier rings.
  */
-export function layoutJourney<M extends Milestone>(inputs: JourneyInputs<M>) {
-  const { ages, retireIndex, width, landscape, textWidth } = inputs
+export function layoutJourney(inputs: {
+  ages: number[]
+  /** index of the year retirement starts, or -1 */
+  retireIndex: number
+  milestones: Goal[]
+  width: number
+  landscape: boolean
+}) {
+  const { ages, retireIndex, width, landscape } = inputs
   const lastIndex = ages.length - 1
   const wide = width > 500
   const height = landscape ? 324 : wide ? 400 : 360
@@ -170,23 +240,8 @@ export function layoutJourney<M extends Milestone>(inputs: JourneyInputs<M>) {
   const sunset = { x: points[lastIndex].x - 8, y: points[lastIndex].y - 12 }
   marks.push(box(sunset.x - 2, sunset.y - 22, sunset.x + 26, sunset.y + 6))
 
-  const ringRadius = wide ? 18 : 13
-  const labelHeight = wide ? 15 : 0
-  const nudge = wide ? 22 : 16
-  const road: Road = {
-    width,
-    height,
-    wide,
-    ringRadius,
-    labelHeight,
-    first: ringRadius + (wide ? 12 : 10),
-    tier: 2 * ringRadius + labelHeight + 4 + (wide ? 2 : 4),
-    far: 4 * (2 * ringRadius + 4),
-    roadY,
-    offsets: candidateOffsets(ringRadius, nudge, width),
-    taken: [...marks, todayColumn],
-    leaders: [],
-  }
+  const road = roadFor(width, height, wide, roadY, [...marks, todayColumn])
+  const { ringRadius } = road
 
   const placed = inputs.milestones.map((milestone, order) => {
     const index = clamp(milestone.age - ages[0], 0, lastIndex)
@@ -219,10 +274,6 @@ export function layoutJourney<M extends Milestone>(inputs: JourneyInputs<M>) {
     flag,
     sunset,
     placed,
-    decades: ageTicks(points, ages, wide, textWidth),
+    decades: ageTicks(points, ages, wide),
   }
 }
-
-// TODO(R-20): GoalCard, GoalStatus, planTopics and ExploreHome still import the bands from here;
-// their owners should import from domain/planning/bands, then delete this line.
-export { BAND_WORDS, band, isShortYear, yearBand, type Band } from '../../domain/planning/bands'

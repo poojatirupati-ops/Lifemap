@@ -1,8 +1,5 @@
 // Report page 9: what happens next. A photo header, the three steps, what to bring and ask.
-import type { PageProps } from './PageFrame.tsx'
-import { FOOTER_LINE } from './PageFrame.tsx'
-import Logo from './Logo.tsx'
-import Photo from './Photo.tsx'
+import { PageFrame, Photo, type PageProps } from './PageFrame.tsx'
 
 const STEPS = [
   { title: 'Share your plan', text: 'Send this guide to an expert, with your permission.' },
@@ -10,35 +7,29 @@ const STEPS = [
   { title: 'Agree your personal plan', text: 'Choose the steps that fit your life.' },
 ]
 
-export default function NextPage({ data, page, total }: PageProps) {
-  const { topics, checklist, questions } = data.next
+export default function NextPage(props: PageProps) {
+  const { topics, checklist, questions } = props.data.next
   return (
-    <section
-      className="lmr-pg"
-      data-page={page}
-      role="group"
-      aria-label={`Page ${page} of ${total}: Share with an expert`}
+    <PageFrame
+      {...props}
+      label="Share with an expert"
+      hero={
+        <div className="lmr-n9">
+          <div className="lmx-ph">
+            <Photo name="team-with-charts" />
+          </div>
+          <div className="lmx-tx">
+            <div className="lmx-ey">WHAT HAPPENS NEXT</div>
+            <h1 className="lmx-tt">Share your plan with an expert</h1>
+            <p className="lmx-ld">
+              This guide is a starting point. An expert can confirm it, answer your questions and
+              help you choose what to do.
+            </p>
+            <span className="lmx-bt">Meet an expert in the app</span>
+          </div>
+        </div>
+      }
     >
-      <div className="lmr-n9">
-        <div className="lmx-ph">
-          <Photo name="team-with-charts" />
-        </div>
-        <div className="lmx-tx">
-          <div className="lmx-ey">WHAT HAPPENS NEXT</div>
-          <h1 className="lmx-tt">Share your plan with an expert</h1>
-          <p className="lmx-ld">
-            This guide is a starting point. An expert can confirm it, answer your questions and help
-            you choose what to do.
-          </p>
-          <span className="lmx-bt">Meet an expert in the app</span>
-        </div>
-      </div>
-      <div className="lmr-rh">
-        <Logo style={{ color: '#fff' }} />
-        <span className="lmr-rr" style={{ color: '#cfd9e6' }}>
-          {data.meta.headerRight}
-        </span>
-      </div>
       <div className="lmr-body lmr-body9" style={{ paddingTop: 0 }}>
         <div className="lmr-steps">
           {STEPS.map((step, index) => (
@@ -87,12 +78,6 @@ export default function NextPage({ data, page, total }: PageProps) {
           <span className="lmr-btn">Meet an expert</span>
         </div>
       </div>
-      <div className="lmr-rf">
-        <span>{FOOTER_LINE}</span>
-        <span>
-          {page} / {total}
-        </span>
-      </div>
-    </section>
+    </PageFrame>
   )
 }

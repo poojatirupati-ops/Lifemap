@@ -1,4 +1,4 @@
-// The words around an assumption input in a tool: its one-tap standard, the guidance under it, its tag.
+// The words around an input in a tool: its one-tap standard, the guidance under it, its tags.
 import { chosenAssumption } from '../planning/assumptions.ts'
 import { guideSource, type Rules } from '../planning/rates.ts'
 import {
@@ -17,12 +17,12 @@ import {
   standardFor,
   type AssumptionPlan,
 } from '../planning/assumptionText.ts'
-import { fieldOf, kindOf } from './assumptions.data.ts'
-import type { Binding } from './bindings.data.ts'
+import { fieldOf, kindOf, type Binding } from './bindings.data.ts'
 import { bindingOf } from './calculators.ts'
 import type { ToolPlan } from './context.ts'
-import { inToolUnits, isStandardBinding } from './values.ts'
-import { STYLE_CHOICES } from './choices.ts'
+import { STYLE_CHOICES } from './inputs.data.ts'
+import type { CalcInput } from './types.ts'
+import { inToolUnits, isRangeOrMarket, isStandardBinding, type ToolFigures } from './values.ts'
 import { years } from './words.ts'
 
 const retireHelp = ({ pen, guide, sp }: Rules) =>
@@ -103,7 +103,7 @@ function assumptionGuide(plan: AssumptionPlan, key: string, rules: Rules) {
   }
   if (kind === 'own') return ''
   const figure = formatAssumption(key, standardFor(plan, key))
-  return `LifeMap uses ${figure} (${standardSource(field.standard as StandardKey)}). Change it if you want to use your own.`
+  return `LifeMap uses ${figure} (${standardSource(field.standard as StandardKey, defaultSettings, rules)}). Change it if you want to use your own.`
 }
 
 /** The guidance under an assumption input in a tool. */
@@ -142,3 +142,47 @@ export function standardTag(
     'assumption' in binding && chosenAssumption(plan.assumptions, binding.assumption) != null
   return chosen || plan.moved[key] ? 'mine' : 'set'
 }
+
+export interface FieldInfo {
+  toolId: string
+  input: CalcInput
+  value: number | null
+  fromStatement: boolean
+  /** The note when the figure was worked out from the customer's own. */
+  workedOut: string
+  /** An assumption ("Not chosen yet") rather than a personal figure ("Not added yet"). */
+  isAssumption: boolean
+  standardTag: StandardTag
+  /** The one-tap figure, shown while the input is blank (chips) or not filled (number box). */
+  standard: ReturnType<typeof toolStandard>
+  guide: string
+  /** Range and market assumptions keep their guidance under the slider. */
+  rangeGuide: boolean
+}
+
+export function fieldInfo(
+  plan: ToolPlan,
+  toolId: string,
+  input: CalcInput,
+  figures: ToolFigures,
+  rules: Rules,
+): FieldInfo {
+  const { key } = input
+  const binding = bindingOf(toolId, key)
+  return {
+    toolId,
+    input,
+    value: figures.figures[key],
+    fromStatement: figures.fromStatement.includes(key),
+    workedOut: figures.workedOut[key] ?? '',
+    isAssumption: !!binding,
+    standardTag: standardTag(plan, toolId, key),
+    standard: toolStandard(plan, toolId, key),
+    guide: guideFor(plan, toolId, key, rules),
+    rangeGuide: !!binding && isRangeOrMarket(binding),
+  }
+}
+
+/** "Use the suggested rate (…)" as it is, else "Use the standard (X)". */
+export const standardChipText = ({ text, suggested }: NonNullable<FieldInfo['standard']>) =>
+  suggested ? text : `Use the standard (${text})`

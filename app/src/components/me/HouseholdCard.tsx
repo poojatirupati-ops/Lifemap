@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
 import { DEPENDANT_CHOICES } from '../../domain/identity/household.data.ts'
-import { setDependants, setPlanningWithPartner } from '../define/aboutActions.ts'
+import { setDependants, setPlanningWithPartner } from '../../state/about.ts'
 import MarriedField from '../define/MarriedField.tsx'
 import PartnerBlock from '../define/PartnerBlock.tsx'
 

@@ -16,6 +16,7 @@ All alarms go to the SNS topic `Alerts` (email set by `LIFEMAP_ALERT_EMAIL` in t
 | `PurgeErrors` | Daily retention purge failed (G5) | Purge logs; run it again from the console (Lambda > Test). Expired OTPs and sessions stay until it succeeds. |
 | `DbCpu`, `DbConnections`, `DbFreeStorage` | RDS under pressure | Performance Insights. Storage: raise `storage` on `Db` in sst.config.ts and release. Connections: raise the instance class (and the alarm threshold). |
 | `DbProxyErrors` | Proxy cannot reach Postgres | RDS instance status (rebooting, failing over, storage full); proxy secret matches the DB password (see "Rotate secrets"). |
+| `BillingDeadLetter` (>= 1 message) | Billing failed a booking event 3 times | The message in the `BillingDeadLetter` queue (its CloudEvent `id` is the idempotency key). Fix billing, then move the messages back (SQS > BillingDeadLetter > Start DLQ redrive) or replay from the `BookingsArchive` (EventBridge > Archives > Start replay); billing dedupes on the id. |
 | `SesBounceRate`, `SesComplaintRate` | SES reputation at risk (AWS reviews at 5% / 0.1%) | SES > Reputation metrics; look for a sign-up attack sending codes to bad addresses (WAF metrics `ApiAuthRateLimitPerIP`). |
 
 ## Roll back a release
@@ -82,8 +83,21 @@ Stage secrets live in SST (SSM, encrypted) and are read at deploy time, so every
 | `PayloadSecret` | same, `openssl rand -hex 32` | Signs CMS editors out. |
 | `CmsCronSecret` | same | None. |
 | `PosthogProjectKey`, `PosthogPersonalApiKey` | rotate in PostHog first, then set | None. |
+| `CalWebhookSecrets` | see "Cal.com webhooks" | Webhooks signed with the old secret get 401 (Cal.com retries them). |
 
 Secrets Manager rotation is not used: the Proxy secret is written by SST from `DbPassword`, and an automatic rotation would leave `DatabaseUrl` stale. `DataKey` (KMS) rotates itself yearly.
+
+## Cal.com webhooks
+
+Adviser bookings (card C-CAL) are confirmed, moved and cancelled by Cal.com, which calls the Api. Each tenant's advisers sit in one Cal.com team (EU: app.cal.eu) with one team webhook:
+
+1. Advisers: make each one a member of the tenant with role `adviser` (tenant admin: invite with that role), then the adviser sets their own Cal.com link and card with Better Auth's update-user: `POST /api/auth/update-user` `{ "calLink": "<user>/<event>", "adviserProfile": { "qualifications": "...", "languages": "...", "location": "...", "meetingMode": "..." } }`. They are listed on the Experts tab from then on.
+2. In Cal.com: the team > Settings > Webhooks > New. Subscriber URL `<appUrl>/api/webhooks/cal/<organization id>`. Triggers: Booking created, Booking rescheduled, Booking cancelled, Meeting ended, Booking no-show updated, After hosts / guests Cal Video no-show. Payload template: default. Secret: `openssl rand -hex 32`.
+3. Store the secret in the stage's `CalWebhookSecrets` (JSON, one entry per tenant), then redeploy:
+   `npx sst secret set CalWebhookSecrets '{"lifemap-direct":"<secret>","<org id>":"<secret>"}' --stage <stage>`
+4. Check: Cal.com's "Ping test" must not get 401 (that means the secret or the organization id is wrong). A booking made through the app shows `booked` in `GET /api/bookings`.
+
+The Api answers 401 to a bad signature, 200 to a delivery it recorded or does not track, and 500 when publishing to the `Bookings` bus failed, so Cal.com retries (a retry never adds a second `booking_event` row and publishes again). Rotate a secret: add it in Cal.com, set it in `CalWebhookSecrets`, redeploy.
 
 ## Personal data breach (GDPR Art. 33-34)
 

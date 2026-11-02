@@ -26,7 +26,7 @@ const discover = ({ chapter, title, subtitle, options, section: _shownLater, ...
   ...rest,
   act: chapter,
   q: title,
-  sub: subtitle,
+  sub: subtitle ?? '',
   o: options.map(option),
 })
 const money = (q: any) =>

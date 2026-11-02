@@ -1,9 +1,7 @@
 // Report page 4: your roadmap. The road, then decade by decade: weather, what happens, savings.
-import CircleIcon from './CircleIcon.tsx'
-import PageFrame, { type PageProps } from './PageFrame.tsx'
+import { CircleIcon, PageFrame, TitleBlock, type PageProps } from './PageFrame.tsx'
 import Road from './Road.tsx'
 import Sparkline from './Sparkline.tsx'
-import TitleBlock from './TitleBlock.tsx'
 import { COLOURS, fillOf, textOf, tintOf } from './tones.ts'
 
 const ROAD = {

@@ -1,6 +1,6 @@
-// The derived fields the original refreshed before every render, in its order: ages, list totals, the emergency fund.
+// The derived fields the original refreshed before every render, in its order: ages, list totals, the emergency fund (added, then sized).
 import { assumption } from '../planning/assumptions.ts'
-import { safetyAmount } from '../goals/goals.ts'
+import { emergencyFundToAdd, safetyAmount } from '../goals/goals.ts'
 import { agesFromDob } from '../identity/dob.ts'
 import { localToday } from '../../lib/today.ts'
 import { syncTotals } from '../finances/syncTotals.ts'
@@ -17,9 +17,18 @@ export function syncSafety(plan: Plan, only?: Goal) {
   for (const goal of goals) goal.amount = safetyAmount(plan)
 }
 
+/** The original's autoSafety, run before every projection: an emergency fund joins a plan whose cash is short (or that asked for one). */
+export function addEmergencyFund(plan: Plan) {
+  const fund = emergencyFundToAdd(plan, plan.nextGoalId)
+  if (!fund) return
+  plan.goals.push(fund)
+  plan.nextGoalId++
+}
+
 /** Mutates the plan (an immer draft). */
 export function normalize(plan: Plan, today = localToday()) {
   syncAges(plan, today)
   syncTotals(plan, assumption(plan, 'ownShare'))
+  addEmergencyFund(plan)
   syncSafety(plan)
 }

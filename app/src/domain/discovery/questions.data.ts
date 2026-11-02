@@ -18,7 +18,7 @@ interface QuestionBase {
   section: [title: string, plain: string]
   chapter: number
   title: string
-  subtitle: string
+  subtitle?: string
   options: Option[]
 }
 
@@ -78,7 +78,6 @@ export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
     section: ['Money mindset', 'how you handle money day to day'],
     chapter: 1,
     title: "Your friends would say you're always…",
-    subtitle: '',
     type: 'cards',
     options: [
       { emoji: '📊', tag: 'The Budgeter', text: 'Sticking to a budget' },
@@ -92,7 +91,6 @@ export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
     section: ['Investor behaviour', 'how you react to a hot tip'],
     chapter: 2,
     title: "A friend's investment doubled in a month. What do you do?",
-    subtitle: '',
     type: 'cards',
     options: [
       { emoji: '🏃', tag: 'FOMO · Herd behaviour', text: 'Buy in quickly, before I miss out' },
@@ -121,7 +119,6 @@ export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
     section: ['Cushion', 'money for surprises'],
     chapter: 3,
     title: 'Your car needs a €1,000 repair tomorrow. How would you cover it?',
-    subtitle: '',
     type: 'cards',
     options: [
       { emoji: '✅', tag: 'Liquidity reserve', text: 'From liquid or emergency fund', score: 4 },
@@ -135,7 +132,6 @@ export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
     section: ['Risk appetite', 'how much risk you want'],
     chapter: 4,
     title: 'Which road would you enjoy most for your long-term money?',
-    subtitle: '',
     type: 'ride',
     options: [
       { emoji: '🛣️', tag: 'Low risk', text: 'Motorway', score: 1, path: 'M0 40 L140 28' },
@@ -167,7 +163,6 @@ export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
     section: ['Investor behaviour', 'how you act when prices fall'],
     chapter: 4,
     title: 'Your €10,000 investment drops to €8,500. What do you do?',
-    subtitle: '',
     type: 'scenario',
     from: 10000,
     to: 8500,

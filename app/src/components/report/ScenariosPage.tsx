@@ -1,9 +1,10 @@
 // Report page 7: what could change the answer. Retirement covered today against one change at a
 // time and the changes combined.
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import { COLOURS, clampPercent, fillOf, textOf } from './tones.ts'
-
-const percentTone = (percent: number) => (percent >= 95 ? 'good' : percent >= 70 ? 'gold' : 'coral')
+import { PageFrame, type PageProps } from './PageFrame.tsx'
+import { clamp } from '../../lib/clamp.ts'
+import { band } from '../../domain/planning/bands.ts'
+import { bandTone } from '../../report/model/text.ts'
+import { COLOURS, fillOf, textOf } from './tones.ts'
 
 export default function ScenariosPage(props: PageProps) {
   const scenarios = props.data.scenarios
@@ -50,7 +51,7 @@ export default function ScenariosPage(props: PageProps) {
               {group.title}
             </div>,
             ...group.rows.map((row) => {
-              const percent = clampPercent(row.pct)
+              const percent = clamp(row.pct, 0, 100)
               return (
                 <div className="lmx-rw" key={`${group.title} ${row.id}`}>
                   <div className="lmx-a">
@@ -61,7 +62,7 @@ export default function ScenariosPage(props: PageProps) {
                   </div>
                   <div className="lmx-bar">
                     <i
-                      style={{ width: `${percent}%`, background: fillOf(percentTone(percent)) }}
+                      style={{ width: `${percent}%`, background: fillOf(bandTone(band(percent))) }}
                     ></i>
                   </div>
                   <div className="lmx-p">{percent}%</div>

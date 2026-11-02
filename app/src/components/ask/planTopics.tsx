@@ -1,14 +1,11 @@
 // Questions about the customer's own plan, answered from their figures.
 import { cushion } from '../../domain/discovery/cushion.ts'
-import {
-  hasEnoughForPersonality,
-  isProfileComplete,
-  suggestedHorizon,
-} from '../../domain/discovery/profile.ts'
+import { hasEnoughForPersonality, suggestedHorizon } from '../../domain/discovery/profile.ts'
+import { isProfileComplete } from '../../domain/discovery/profileQuestions.ts'
 import { RISK_SET_BY } from '../../domain/discovery/profile.data.ts'
 import { riskRead } from '../../domain/discovery/riskRead.ts'
 import { retirementGoal } from '../../domain/goals/goals.ts'
-import { hasPassed } from '../../domain/goals/when.ts'
+import { isPassed } from '../../domain/goals/goalTiming.ts'
 import { findings } from '../../domain/planning/findings.ts'
 import { goalLineFor } from '../../domain/planning/goalLine.ts'
 import { planSettings, type ProjectionInputs } from '../../domain/planning/planSettings.ts'
@@ -17,7 +14,7 @@ import type { WhatIf } from '../../domain/planning/wi.ts'
 import { LAW_TEXT } from '../../domain/planning/rates.ts'
 import { euro } from '../../lib/format.ts'
 import type { Plan } from '../../state/types.ts'
-import { isShortYear } from '../results/journey.ts'
+import { isShortYear } from '../../domain/planning/bands.ts'
 import type { AskAnswer as Topic } from '../../content/cms.tsx'
 
 const RISK_EXPLAIN: Record<string, string> = {
@@ -30,7 +27,7 @@ const RISK_EXPLAIN: Record<string, string> = {
 
 type Projection = ReturnType<typeof project>
 /** The projection's inputs, plus whether the plan is made and the money profile. */
-export type TopicPlan = ProjectionInputs & Pick<Plan, 'hasResults' | 'moneyProfile' | 'sources'>
+type TopicPlan = ProjectionInputs & Pick<Plan, 'hasResults' | 'moneyProfile' | 'sources'>
 
 type Worst = ReturnType<typeof findings>['worst']
 
@@ -44,7 +41,7 @@ function gapTopic(plan: TopicPlan, projection: Projection, whatIf: WhatIf, worst
         "All your goals are at least 95% covered on your figures and our assumptions. That's not a guarantee: prices, pay and markets change, so check it each year.",
     }
   const name = worst.name.toLowerCase()
-  const when = hasPassed(worst, plan.about.age)
+  const when = isPassed(plan, worst)
     ? ' (its date has passed, so we count it from next year: change the date in My plan)'
     : ` (age ${worst.age})`
   const yearly = worst.kind === 'retire' ? ' a year' : ''

@@ -6,22 +6,7 @@ import type { Store } from './store.ts'
 import { toast } from './shell.ts'
 import type { ListItem } from './types.ts'
 
-/** The items of a list in Your finances: cards, loans, pensions and policies. */
-export interface ListActions {
-  /** Returns the new item's id. */
-  addListItem: (list: ListKey) => number
-  removeListItem: (list: ListKey, id: number) => void
-  typeListItemField: (
-    list: ListKey,
-    id: number,
-    field: string,
-    value: number | string | null,
-  ) => void
-  uploadItemStatement: (list: ListKey, id: number) => void
-  removeItemStatement: (list: ListKey, id: number) => void
-}
-
-export function createListsSlice(get: () => Store): ListActions {
+export function createListsSlice(get: () => Store) {
   const update = updateFinances(get)
   const changeItem = (list: ListKey, id: number, change: (item: ListItem) => void) =>
     update((plan) => {
@@ -30,7 +15,8 @@ export function createListsSlice(get: () => Store): ListActions {
     })
 
   return {
-    addListItem: (list) => {
+    /** Returns the new item's id. */
+    addListItem: (list: ListKey): number => {
       update((plan) => {
         plan.listsChanged = { ...plan.listsChanged, [list]: true }
         addItem(plan, list)
@@ -38,7 +24,7 @@ export function createListsSlice(get: () => Store): ListActions {
       return get().plan.nextItemId!
     },
 
-    removeListItem: (list, id) => {
+    removeListItem: (list: ListKey, id: number) => {
       update((plan) => {
         plan.listsChanged = { ...plan.listsChanged, [list]: true }
         plan.lists[list] = itemsOf(plan, list).filter((item) => item.id !== id)
@@ -46,15 +32,18 @@ export function createListsSlice(get: () => Store): ListActions {
       toast('Removed')
     },
 
-    typeListItemField: (list, id, field, value) =>
+    typeListItemField: (list: ListKey, id: number, field: string, value: number | string | null) =>
       changeItem(list, id, (item) => typeItemField(item, field, value)),
 
-    uploadItemStatement: (list, id) =>
+    uploadItemStatement: (list: ListKey, id: number) =>
       get().startUpload(LISTS[list].section, [`${ITEM_DOCUMENTS[list].title}.pdf`], { list, id }),
 
-    removeItemStatement: (list, id) => {
+    removeItemStatement: (list: ListKey, id: number) => {
       changeItem(list, id, removeItemDocument)
       toast(STATEMENT_REMOVED)
     },
   }
 }
+
+/** The items of a list in Your finances: cards, loans, pensions and policies. */
+export type ListActions = ReturnType<typeof createListsSlice>

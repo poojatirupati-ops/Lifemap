@@ -2,23 +2,22 @@ import { authClient } from './client.ts'
 import { hasAcknowledgedNotice } from './consents.ts'
 import { PLAN_KEY, loadPlan, queryClient, send } from './planSync.ts'
 import { testAuthOn } from '../lib/lmTestHook.ts'
-import { returnTo } from '../shell/wall.ts'
+import { goTo, router } from '../shell/router.ts'
+import { TENANT_KEY } from '../shell/tenant.ts'
 import { fresh } from '../state/fresh.ts'
 import { startFrom, toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { DISCOVER_SIX } from '../domain/discovery/questions.data.ts'
-import { questionScreen } from '../state/discovery.ts'
-import type { Plan, Ui } from '../state/types.ts'
+import { questionPath } from '../state/discovery.ts'
+import type { Plan } from '../state/types.ts'
 
 type User = Pick<typeof authClient.$Infer.Session.user, 'name' | 'email'>
 
 /** Where an unfinished onboarding resumes: Welcome, What brought you here, the next open question, or the reveal. */
-function resumeOnboarding(plan: Plan, ui: Ui) {
+function onboardingPath(plan: Plan) {
   const open = DISCOVER_SIX.findIndex(({ id }) => plan.answers[id] == null)
-  ui.inShell = false
-  if (open > 0) plan.discoverStep = open
-  if (open === 0) ui.screen = plan.why.length ? 'D1' : 'D0'
-  else ui.screen = open < 0 ? 'DR' : questionScreen(open)
+  if (open === 0) return plan.why.length ? '/why' : '/'
+  return open < 0 ? '/personality' : questionPath(open)
 }
 
 /** Brings back the user's saved plan; with none, keeps this browser's and fills in the account. */
@@ -39,32 +38,43 @@ async function restoreSavedPlan(user: User) {
   })
 }
 
-/** Onboarding keys: on page load the wall catches Welcome (the fresh start) before the session is known, so it is no target. */
-const ONBOARDING = new Set(['D0', 'D1', 'DQ', 'DR'])
+/** Onboarding and sign-in pages: no place to return to after signing in (Welcome is where every fresh visit starts). */
+const NO_RETURN = /^\/(?:$|why|discover|personality|sign-in|account|jump)/
 
-/** A finished onboarding opens Home (or the screen the wall caught, `rt`); an unfinished one resumes. */
-export function land(rt = useStore.getState().returnTo) {
-  const { plan, update } = useStore.getState()
-  const done = plan.onboarded || plan.hasResults
-  update((draft, ui) => {
-    Object.assign(ui, { planBuilder: false, sheet: null, returnTo: undefined })
-    if (!done) return resumeOnboarding(draft, ui)
-    ui.inShell = true
-    ui.tab = 'home'
-  })
-  if (done && rt && !ONBOARDING.has(rt)) returnTo(rt)
+/** The page to come back to after sign-in: ?redirect on the sign-in pages (from the wall), else the page the session was found on. */
+function redirectTarget() {
+  const { pathname, href, search } = router.latestLocation
+  if (!/^\/(?:sign-in|account)/.test(pathname)) return href
+  return (search as { redirect?: string }).redirect
 }
 
-/** ?invitation=<id> from an invite email: join that tenant and make it the active one. Kept in the URL through sign-in. */
-async function acceptInvitation() {
-  const url = new URL(location.href)
+/** ?redirect=<rt> for the next sign-in page, when there is a page to return to. */
+export const keepRedirect = (rt = redirectTarget()) =>
+  rt && !NO_RETURN.test(new URL(rt, location.origin).pathname)
+    ? `?redirect=${encodeURIComponent(rt)}`
+    : ''
+
+/** A finished onboarding opens Home (or the page the wall caught, `rt`); an unfinished one resumes. */
+export function land(rt = redirectTarget()) {
+  const { plan, update } = useStore.getState()
+  update((_, ui) => Object.assign(ui, { planBuilder: false, sheet: null }))
+  if (!plan.onboarded && !plan.hasResults) return goTo(onboardingPath(plan))
+  return goTo(keepRedirect(rt) ? rt! : '/home')
+}
+
+/**
+ * ?invitation=<id> from an invite email (kept through sign-in inside ?redirect): join that tenant and make it
+ * the active one. Returns the page to land on without it.
+ */
+async function acceptInvitation(rt = '/') {
+  const url = new URL(rt, location.origin)
   const invitationId = url.searchParams.get('invitation')
-  if (!invitationId) return
-  const { data, error } = await authClient.organization.acceptInvitation({ invitationId })
+  if (!invitationId) return rt
   url.searchParams.delete('invitation')
-  history.replaceState(null, '', url)
-  if (error) return toast("Couldn't accept the invitation. Ask for a new one.")
-  await authClient.organization.setActive({ organizationId: data.invitation.organizationId })
+  const { data, error } = await authClient.organization.acceptInvitation({ invitationId })
+  if (error) toast("Couldn't accept the invitation. Ask for a new one.")
+  else await authClient.organization.setActive({ organizationId: data.invitation.organizationId })
+  return url.pathname + url.search
 }
 
 /**
@@ -73,11 +83,12 @@ async function acceptInvitation() {
  */
 export async function enterApp(user: User) {
   useShell.setState({ authed: true }) // signed in now; the session hook catches up after
-  const rt = useStore.getState().returnTo
-  await acceptInvitation()
+  const rt = await acceptInvitation(redirectTarget())
+  // the session (and maybe its tenant) changed: GET /api/tenant again for branding, flags and SSO
+  void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
   const [known] = await Promise.all([hasAcknowledgedNotice(), restoreSavedPlan(user)])
-  if (!known) return useStore.getState().go('P1D')
-  land(rt)
+  if (!known) return goTo(`/account/details${keepRedirect(rt)}`)
+  return land(rt)
 }
 
 /** Forgets everything this browser holds for the user: query cache, plan, wall pass. */
@@ -85,6 +96,7 @@ function clearLocal() {
   queryClient.removeQueries({ queryKey: PLAN_KEY })
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())
+  void goTo('/') // the wall sends a signed-out visitor to sign-in
 }
 
 /** Signs out and returns to sign-in. */

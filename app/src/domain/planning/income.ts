@@ -1,7 +1,7 @@
 // One year's income: pay, pension and State Pension for you and a partner, and the tax on it.
 import type { PlanSettings } from './planSettings'
 import { prsiRate, type Person } from './levies'
-import { householdTax } from './tax'
+import { householdTax, person } from './tax'
 import type { Wallet } from './wallet'
 import { drawPension, payIntoPension, type Balances } from './balances'
 import type { YearContext } from './fundYear'
@@ -90,26 +90,19 @@ function partnerIncome(
   const pay = working ? figures.partnerIncome * payGrowth : 0
   const share = figures.partnerStatePensionShare
   const isQualifiedAdult = share === 'qa'
-  const partner: Person = {
-    age,
-    pay,
-    selfEmployed: false,
-    statePension: age >= 66 && !isQualifiedAdult ? statePension * (Number(share) || 0) * rise : 0,
-    drawdown: 0,
-    otherIncome: 0,
-    pensionRelief: 0,
-  }
+  const partnerPension = age >= 66 && !isQualifiedAdult ? statePension * (Number(share) || 0) : 0
+  const partner = person({ age, pay, statePension: partnerPension * rise })
   if (!isQualifiedAdult || yourAge < rules.sp.age || pay !== 0)
     return { partner, qualifiedAdult: 0 }
   const weekly = age >= 66 ? rules.sp.qa66 : rules.sp.qaUnder66
   return { partner, qualifiedAdult: weekly * rules.sp.weeks * rise }
 }
 
-const inToday = (person: Person, taxBands: number): Person => ({
-  ...person,
-  pay: person.pay / taxBands,
-  statePension: person.statePension / taxBands,
-  drawdown: person.drawdown / taxBands,
-  otherIncome: person.otherIncome / taxBands,
-  pensionRelief: person.pensionRelief / taxBands,
+const inToday = (p: Person, taxBands: number): Person => ({
+  ...p,
+  pay: p.pay / taxBands,
+  statePension: p.statePension / taxBands,
+  drawdown: p.drawdown / taxBands,
+  otherIncome: p.otherIncome / taxBands,
+  pensionRelief: p.pensionRelief / taxBands,
 })

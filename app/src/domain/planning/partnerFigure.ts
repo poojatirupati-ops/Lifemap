@@ -39,7 +39,7 @@ export const LIMITS: Partial<Record<StandardKey, [min: number, max: number]>> = 
 
 export const partnerName = (settings: Settings) => settings.partner || 'your provider'
 
-export type Entry = { figure: StandardValue } | { outOfRange: true }
+type Entry = { figure: StandardValue } | { outOfRange: true }
 
 const EPSILON = 1e-9
 

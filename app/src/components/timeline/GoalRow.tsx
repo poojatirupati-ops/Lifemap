@@ -1,19 +1,48 @@
-import { useStore } from '../../state/store.ts'
-import GIcon from '../ui/GIcon.tsx'
-import Emo from '../ui/Emo.tsx'
-import Stepper from './Stepper.tsx'
-import SafetyMonths from './SafetyMonths.tsx'
-import GoalDetails from './GoalDetails.tsx'
-import TrashIcon from './TrashIcon.tsx'
-import { commitOnBlur } from './commitOnBlur.ts'
+import { Fragment, type FocusEvent } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+import { cushion } from '../../domain/discovery/cushion.ts'
 import { whenText } from '../../domain/goals/goalTiming.ts'
+import { essentialSpending } from '../../domain/goals/goals.ts'
+import { assumption, chosenAssumption } from '../../domain/planning/assumptions.ts'
 import { useTiming } from '../../hooks/useTiming.ts'
+import { euro, plural } from '../../lib/format.ts'
+import { useStore } from '../../state/store.ts'
 import type { Goal } from '../../state/types.ts'
+import Emo from '../ui/Emo.tsx'
+import GIcon from '../ui/GIcon.tsx'
 
 const AMOUNT_LABEL: Record<string, string> = {
   retire: 'Income a year €',
   mfree: 'Mortgage left €',
 }
+
+const DETAILS = [
+  { field: 'who', label: 'For whom', options: ['Me', 'Partner', 'Child', 'Family'] },
+  { field: 'flex', label: 'Flexible on timing?', options: ['Can move', 'Fixed date'] },
+] as const
+
+const trashIcon = (
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+  </svg>
+)
+
+/** Save a typed figure when the field is left, only if it changed. */
+const commitOnBlur =
+  (save: (typed: string) => void) =>
+  ({ currentTarget: input }: FocusEvent<HTMLInputElement>) => {
+    if (input.value !== input.defaultValue) save(input.value)
+  }
 
 /** One goal's editable row under the timeline. */
 export default function GoalRow({ goal }: { goal: Goal }) {
@@ -21,12 +50,8 @@ export default function GoalRow({ goal }: { goal: Goal }) {
   const highlighted = useStore((store) => store.highlightedGoal === goal.id)
   const open = useStore((store) => !!store.timelineOpen[goal.id])
   const fromLiabilities = useStore((store) => goal.kind === 'mfree' && !!store.plan.figures.mortBal)
-  const moveGoal = useStore((store) => store.moveGoal)
-  const removeGoal = useStore((store) => store.removeGoal)
-  const renameGoal = useStore((store) => store.renameGoal)
-  const setGoalAmount = useStore((store) => store.setGoalAmount)
-  const setGoalSaved = useStore((store) => store.setGoalSaved)
-  const toggleDetails = useStore((store) => store.toggleDetails)
+  const { moveGoal, removeGoal, renameGoal, setGoalAmount, setGoalSaved } = useStore.getState()
+  const { setGoalDetail, toggleDetails } = useStore.getState()
   const retire = goal.kind === 'retire'
 
   return (
@@ -46,16 +71,24 @@ export default function GoalRow({ goal }: { goal: Goal }) {
             title="Remove"
             onClick={() => removeGoal(goal.id)}
           >
-            <TrashIcon />
+            {trashIcon}
           </button>
         )}
       </div>
       <div className="flds">
         <div className="full">
           <span className="fl">{retire ? 'Retire at' : 'When'}</span>
-          <Stepper label="When" onStep={(by) => moveGoal(goal.id, goal.age + by)}>
-            <span id={`when-${goal.id}`}>{whenText(timing, goal)}</span>
-          </Stepper>
+          <div className="stepper" role="group" aria-label="When">
+            <button aria-label="Less" onClick={() => moveGoal(goal.id, goal.age - 1)}>
+              −
+            </button>
+            <output aria-live="polite">
+              <span id={`when-${goal.id}`}>{whenText(timing, goal)}</span>
+            </output>
+            <button aria-label="More" onClick={() => moveGoal(goal.id, goal.age + 1)}>
+              +
+            </button>
+          </div>
         </div>
         <label>
           <span className="fl">{AMOUNT_LABEL[goal.kind] ?? 'Amount €'}</span>
@@ -96,7 +129,76 @@ export default function GoalRow({ goal }: { goal: Goal }) {
           </button>
         )}
       </div>
-      {!retire && open && <GoalDetails goal={goal} />}
+      {!retire && open && (
+        <div className="more">
+          {DETAILS.map(({ field, label, options }) => (
+            <Fragment key={field}>
+              <div className="fl" style={{ marginTop: 6 }}>
+                {label}
+              </div>
+              <div className="chips">
+                {options.map((option) => (
+                  <button
+                    key={option}
+                    className={goal[field] === option ? 'chip sm sel' : 'chip sm'}
+                    aria-pressed={goal[field] === option}
+                    onClick={() => setGoalDetail(goal.id, field, option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      )}
     </div>
+  )
+}
+
+/**
+ * The emergency fund's months of essential spending (blank follows the standard), how many months
+ * its amount covers, and why it was added.
+ */
+function SafetyMonths({ goal }: { goal: Goal }) {
+  const chosen = useStore((store) => chosenAssumption(store.plan.assumptions, 'safetyMonths'))
+  const suggested = useStore((store) =>
+    assumption({ ...store.plan, assumptions: {} }, 'safetyMonths'),
+  )
+  const household = useStore(
+    useShallow(({ plan }) => ({
+      about: plan.about,
+      figures: plan.figures,
+      assumptions: plan.assumptions,
+      sources: plan.sources,
+      answers: plan.answers,
+      retireAge: plan.retireAge,
+    })),
+  )
+  const spending = essentialSpending(household)
+  const { months: covered, targetMonths } = cushion(household)
+  const why = goal.autoAdded
+    ? `Added because your cash covers ${covered} of ${targetMonths} months. An emergency fund comes before other goals. You can remove it. `
+    : ''
+  const months = Math.round((goal.amount / spending) * 10) / 10
+
+  return (
+    <label className="full">
+      <span className="fl">Months of essential spending to keep</span>
+      <input
+        key={chosen ?? ''}
+        className="in"
+        inputMode="numeric"
+        defaultValue={chosen ?? ''}
+        placeholder={`e.g. ${suggested}`}
+        onBlur={commitOnBlur(useStore.getState().setSafetyMonths)}
+      />
+      {spending > 0 && goal.amount > 0 ? (
+        <span className="small" style={{ display: 'block' }} id={`sf-note-${goal.id}`}>
+          {why}
+          {`${euro(goal.amount)} is about ${plural(months, 'month')} of your essential spending (${euro(spending)} a month).`}
+        </span>
+      ) : null}
+    </label>
   )
 }

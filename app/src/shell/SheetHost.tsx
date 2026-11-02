@@ -20,7 +20,7 @@ const sheets = new Map(Object.values(modules).map((sheet) => [sheet.key, sheet])
 
 export default function SheetHost() {
   const sheet = useStore((store) => store.sheet)
-  const closeSheet = useStore((store) => store.closeSheet)
+  const { closeSheet } = useStore.getState()
   if (!sheet) return null
 
   // 'ask' and 'elig' are whole keys; the rest are 'key|param'.

@@ -15,12 +15,7 @@ export default function TopicSheet({ topic, toolCount, videoCount }: Props) {
     topic.expert === 'planner' ? 'Planner' : EXPERTS[topic.expert].title.split(' ')[0]
   return (
     <>
-      <div className="dhero2" style={topicPhotoStyle(topic)}>
-        <span className="art" aria-hidden="true"></span>
-        <button className="dcirc" data-a="xback" aria-label="Back" onClick={exploreBack}>
-          ‹
-        </button>
-      </div>
+      <TopicHero topic={topic} />
       <div className="dsheet2">
         <span className="dgrab" aria-hidden="true"></span>
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -53,5 +48,17 @@ export default function TopicSheet({ topic, toolCount, videoCount }: Props) {
         </p>
       </div>
     </>
+  )
+}
+
+/** The topic's photo with a back button (also the Mortgages page's). */
+export function TopicHero({ topic }: { topic: Topic }) {
+  return (
+    <div className="dhero2" style={topicPhotoStyle(topic)}>
+      <span className="art" aria-hidden="true"></span>
+      <button className="dcirc" data-a="xback" aria-label="Back" onClick={exploreBack}>
+        ‹
+      </button>
+    </div>
   )
 }

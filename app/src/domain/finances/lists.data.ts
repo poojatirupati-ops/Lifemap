@@ -1,9 +1,9 @@
 // Repeatable items in Your finances (cards, loans, pensions, policies) and the fields each one asks for.
-export type ListFieldType = 'eur' | 'num' | 'pct' | 'text'
+type ListFieldType = 'eur' | 'num' | 'pct' | 'text'
 
-export type ListField = { label: string; type: ListFieldType; optional?: true; hint?: string }
+type ListField = { label: string; type: ListFieldType; optional?: true; hint?: string }
 
-export type ListDefinition = {
+type ListDefinition = {
   section: string
   emoji?: string
   title?: string

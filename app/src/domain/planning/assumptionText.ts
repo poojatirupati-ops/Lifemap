@@ -1,38 +1,35 @@
 // What Your assumptions shows for each field: the figure in use, its tag and the words under it.
 import { euro, euroWeekly, percent } from '../../lib/format.ts'
 import type { Plan } from '../../state/types.ts'
-import { assumption, chosenAssumption } from './assumptions.ts'
+import { assumption, chosenAssumption, isGrowthKey } from './assumptions.ts'
 import { ASSUMPTIONS, type AssumptionField, type NumberKind } from './assumptionFields.data.ts'
-import { rules2026, rulesFor } from './rates.ts'
+import { rules2026, rulesFor, type Rules } from './rates.ts'
 import { STANDARDS } from './settings.data.ts'
 import {
-  cautiousValue,
+  settingsInUse,
   guidance,
-  GROWTH_KEYS,
   standardLabel,
   standardSource,
   standardValue,
-  type StandardKey,
 } from './settings.ts'
 
 type Amount = number | string
 export type AssumptionPlan = Pick<Plan, 'assumptions' | 'about' | 'figures' | 'assumptionSet'>
-
-const GROWTH_SET = new Set<string>(GROWTH_KEYS)
-
-const isGrowthKey = (key: string): key is StandardKey => GROWTH_SET.has(key)
 
 export const isMine = (plan: AssumptionPlan, key: string) =>
   chosenAssumption(plan.assumptions, key) != null
 
 const isStandard = ({ standard, fromPlan }: AssumptionField) => !!standard || !!fromPlan
 
+/** The rules of the plan's start year, which the derived standards (investment growth) follow. */
+export const planRules = (plan: AssumptionPlan) => rulesFor(assumption(plan, 'startYear'))
+
 /** LifeMap's standard for a field, before the customer changes it. */
 export function standardFor(plan: AssumptionPlan, key: string): Amount | null {
   const { standard, item, fromPlan } = ASSUMPTIONS[key]
   if (fromPlan) return assumption({ ...plan, assumptions: {} }, key)
   if (!standard) return null
-  const value = standardValue(standard)
+  const value = standardValue(standard, settingsInUse(), planRules(plan))
   return (item == null ? value : (value as number[])[item]) as Amount
 }
 
@@ -55,7 +52,7 @@ export function valueInUse(plan: AssumptionPlan, key: string): Amount | null {
   const field = ASSUMPTIONS[key]
   const mine = chosenAssumption(plan.assumptions, key)
   if (mine != null) return mine
-  if (plan.assumptionSet === 'cautious' && isGrowthKey(key)) return cautiousValue(key) ?? null
+  if (plan.assumptionSet === 'cautious' && isGrowthKey(key)) return assumption(plan, key)
   if (isStandard(field)) return standardFor(plan, key)
   if (field.workedOut) return assumption(plan, key)
   return marketSuggestion(field)?.value ?? field.fallback ?? null
@@ -107,7 +104,8 @@ export function tagFor(plan: AssumptionPlan, key: string): keyof typeof TAGS {
   return 'assumed'
 }
 
-const bySource = (field: AssumptionField) => field.by ?? standardSource(field.standard!)
+const bySource = (field: AssumptionField, rules: Rules) =>
+  field.by ?? standardSource(field.standard!, settingsInUse(), rules)
 
 function guide(plan: AssumptionPlan, key: string) {
   const field = ASSUMPTIONS[key]
@@ -117,13 +115,12 @@ function guide(plan: AssumptionPlan, key: string) {
     return `Optional: no published figure, so no suggestion. Leave it blank to count ${blank}.`
   }
   if (field.range) {
-    const rules = rulesFor(assumption(plan, 'startYear'))
-    const [low, high] = field.range(rules).map((end) => formatAssumption(key, end))
+    const [low, high] = field.range(planRules(plan)).map((end) => formatAssumption(key, end))
     return `Usually between ${low} and ${high} (${field.by}).`
   }
   if (!isStandard(field)) return ''
   const figure = formatAssumption(key, standardFor(plan, key))
-  return `LifeMap uses ${figure} (${bySource(field)}). Change it if you want to use your own.`
+  return `LifeMap uses ${figure} (${bySource(field, planRules(plan))}). Change it if you want to use your own.`
 }
 
 function helpFor(key: string) {
@@ -142,10 +139,10 @@ const host = (source: string) =>
   WEB_PREFIX.test(source) ? source.replace(WEB_PREFIX, '').split('/')[0] : source
 
 /** Where a LifeMap standard comes from: "… . Source: centralbank.ie (Jun 2026)." */
-export function standardNote(key: string) {
+export function standardNote(key: string, rules: Rules) {
   const standard = ASSUMPTIONS[key].standard
   const settings = standard && STANDARDS[standard]
   if (!settings) return ''
   const asOf = settings.asOf ? ` (${settings.asOf})` : ''
-  return `${standardSource(standard)}. Source: ${host(settings.source)}${asOf}.`
+  return `${standardSource(standard, settingsInUse(), rules)}. Source: ${host(settings.source)}${asOf}.`
 }

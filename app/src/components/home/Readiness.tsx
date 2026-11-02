@@ -1,10 +1,12 @@
+import { clamp } from '../../lib/clamp.ts'
+
 const ARC = Math.PI * 80 // half circle, radius 80
 
 type Props = { percent: number; onTrack: number; goals: number; rough: boolean }
 
 /** Overall readiness: the average covered percent on a half-circle gauge. */
 export default function Readiness({ percent, onTrack, goals, rough }: Props) {
-  const filled = (ARC * Math.max(0, Math.min(100, percent))) / 100
+  const filled = (ARC * clamp(percent, 0, 100)) / 100
   return (
     <div className="card gcard">
       <div className="eyebrow">Overall readiness{rough ? ' · rough' : ''}</div>

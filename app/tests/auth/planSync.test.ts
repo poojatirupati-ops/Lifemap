@@ -2,7 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { onlineManager } from '@tanstack/react-query'
 import { loadPlan, queryClient, savedFields, startPlanSync } from '../../src/auth/planSync.ts'
-import { returnTo } from '../../src/shell/wall.ts'
+import { land } from '../../src/auth/session.ts'
+import { router } from '../../src/shell/router.ts'
 import { fresh } from '../../src/state/fresh.ts'
 import { useShell } from '../../src/state/shell.ts'
 import { useStore } from '../../src/state/store.ts'
@@ -101,19 +102,19 @@ describe('plan sync', () => {
   })
 })
 
-describe('returnTo', () => {
-  it('lands on the tab the wall caught, or the screen itself', () => {
-    returnTo('XPL')
-    expect(useStore.getState()).toMatchObject({
-      inShell: true,
-      tab: 'explore',
-      returnTo: undefined,
-    })
-    returnTo('B1')
-    expect(useStore.getState()).toMatchObject({ tab: 'plan', planBuilder: true })
-    expect(useStore.getState().screen).toBe('B1')
-    returnTo('F1')
-    expect(useStore.getState()).toMatchObject({ inShell: false, plan: { hasResults: false } })
-    expect(useStore.getState().screen).toBe('F1')
+describe('land', () => {
+  it('after sign-in opens the page the wall caught, Home instead of onboarding, or resumes onboarding', async () => {
+    vi.useRealTimers() // the router waits on timers
+    const landOn = async (rt: string) => {
+      await land(rt)
+      return router.state.location.pathname
+    }
+    useStore.getState().update((plan) => void (plan.onboarded = true))
+    expect(await landOn('/explore')).toBe('/explore')
+    expect(await landOn('/build/goals')).toBe('/build/goals')
+    expect(useStore.getState().planBuilder).toBe(true)
+    expect(await landOn('/discover/2')).toBe('/home')
+    useStore.getState().load(fresh())
+    expect(await landOn('/explore')).toBe('/')
   })
 })

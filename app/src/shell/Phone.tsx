@@ -1,8 +1,25 @@
-import type { CSSProperties } from 'react'
-import ScreenHost from './ScreenHost.tsx'
+import { useEffect, useRef, type CSSProperties } from 'react'
+import { Outlet } from '@tanstack/react-router'
+import { useRipple } from '../hooks/useRipple.ts'
+import { useTilt } from '../hooks/useTilt.ts'
+import SheetHost from './SheetHost.tsx'
+import UpdatePrompt from './UpdatePrompt.tsx'
 import Toast from './Toast.tsx'
+import { router } from './router.ts'
+import { useStore } from '../state/store.ts'
 
 export default function Phone({ style }: { style?: CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useRipple(ref)
+  useTilt(ref)
+  // the browser's Back and Forward leave a sheet open over another page otherwise
+  useEffect(
+    () =>
+      router.history.subscribe(({ action }) => {
+        if (action.type !== 'PUSH' && action.type !== 'REPLACE') useStore.getState().closeSheet()
+      }),
+    [],
+  )
   return (
     <div className="phone" id="phone" style={style}>
       <div className="sbar" aria-hidden="true">
@@ -34,7 +51,12 @@ export default function Phone({ style }: { style?: CSSProperties }) {
           </svg>
         </span>
       </div>
-      <ScreenHost />
+      {/* .enter stays on: each screen remounts its keyed child (shell/Screen.tsx), which replays the rise animation */}
+      <div id="screen" className="enter" ref={ref}>
+        <Outlet />
+        <SheetHost />
+        <UpdatePrompt />
+      </div>
       <Toast />
     </div>
   )

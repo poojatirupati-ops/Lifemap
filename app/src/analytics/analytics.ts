@@ -37,7 +37,7 @@ const consentsQuery = {
 let posthog: Promise<typeof import('./posthog.ts')> | undefined
 
 /** Stops PostHog and clears its storage. Call on sign-out (also happens by itself when the session ends). */
-export function resetAnalytics() {
+function resetAnalytics() {
   void posthog?.then((module) => module.stop())
 }
 

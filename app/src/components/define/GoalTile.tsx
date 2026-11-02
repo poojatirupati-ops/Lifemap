@@ -4,7 +4,7 @@ import { goalCategory } from '../../domain/discovery/goals.data.ts'
 import { canPickGoal } from '../../domain/goals/goals.ts'
 import { useStore } from '../../state/store.ts'
 import GIcon from '../ui/GIcon.tsx'
-import { toggleGoal } from './goalActions.ts'
+import { toggleGoal } from '../../state/goals.ts'
 
 /** The photo behind each goal tile; any other goal shows the everyday photo. */
 const PHOTOS: Record<string, string> = {

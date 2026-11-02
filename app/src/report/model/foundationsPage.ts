@@ -1,9 +1,9 @@
 // Report page 8: foundations and you.
 import { RISK_LABELS } from '../../domain/discovery/profile.data.ts'
 import { foundations } from '../../domain/planning/foundations.ts'
-import { STATUS_LABEL, type Foundation } from '../../domain/planning/foundationCheck.ts'
-import { nextFoundation } from '../../domain/plan/nextFoundation.ts'
-import { hasFigure, type ReportContext } from './context.ts'
+import { hasFigure, STATUS_LABEL, type Foundation } from '../../domain/planning/foundationCheck.ts'
+import { nextFoundation } from '../../domain/planning/nextFoundation.ts'
+import type { ReportContext } from './context.ts'
 import { moneyProfile } from './profile.ts'
 
 const LOOK = {

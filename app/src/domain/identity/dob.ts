@@ -99,7 +99,7 @@ export function datedAges(about: DatedAgesInput, { startYear, today }: AgeOption
   }
 }
 
-// TODO(R-09): apply datedAges in the identity slice action / normalize, then delete this
+/** Writes datedAges into the plan (ages, the partner's age figure); normalize runs it on every update. */
 export function agesFromDob(
   { about, figures, sources }: Pick<Plan, 'about' | 'figures' | 'sources'>,
   options: AgeOptions,

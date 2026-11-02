@@ -12,7 +12,7 @@ export interface StatementFigure {
   optional?: true
 }
 
-export interface StatementText {
+interface StatementText {
   label: string
   text: string
   confidence: number
@@ -39,6 +39,26 @@ export interface StatementKind {
   projectionInTodaysMoney?: 'Yes' | 'No'
 }
 
+type FigureRow = [
+  key: string,
+  label: string,
+  read: number,
+  confidence: number,
+  unit: StatementFigure['unit'],
+  optional?: true,
+]
+
+const figures = (rows: FigureRow[]): StatementFigure[] =>
+  rows.map(([key, label, read, confidence, unit, optional]) => ({
+    key,
+    label,
+    read,
+    confidence,
+    unit,
+    ...(optional && { optional }),
+  }))
+
+// [key, label, as read, % sure, unit, optional]
 export const STATEMENT_KINDS: Record<string, StatementKind> = {
   retire: {
     emoji: '🌅',
@@ -52,38 +72,17 @@ export const STATEMENT_KINDS: Record<string, StatementKind> = {
     ],
     opens: 'retirement',
     where: 'pension',
-    figures: [
-      { key: 'pot', label: 'Current pension value', read: 72000, confidence: 95, unit: '€' },
-      { key: 'youM', label: 'Your monthly contribution', read: 260, confidence: 93, unit: '€' },
-      { key: 'empM', label: 'Employer monthly contribution', read: 260, confidence: 91, unit: '€' },
-      {
-        key: 'nra',
-        label: 'Normal retirement age on the statement',
-        read: 66,
-        confidence: 96,
-        unit: 'age',
-      },
-      {
-        key: 'proj',
-        label: 'Projected value at retirement',
-        read: 722000,
-        confidence: 84,
-        unit: '€',
-        optional: true,
-      },
-      { key: 'chg', label: 'Annual charges', read: 1.0, confidence: 76, unit: '%', optional: true },
-    ],
+    figures: figures([
+      ['pot', 'Current pension value', 72000, 95, '€'],
+      ['youM', 'Your monthly contribution', 260, 93, '€'],
+      ['empM', 'Employer monthly contribution', 260, 91, '€'],
+      ['nra', 'Normal retirement age on the statement', 66, 96, 'age'],
+      ['proj', 'Projected value at retirement', 722000, 84, '€', true],
+      ['chg', 'Annual charges', 1.0, 76, '%', true],
+    ]),
     extra: {
       title: '🏛️ State Pension record (MyWelfare)',
-      figures: [
-        {
-          key: 'prsi',
-          label: 'State Pension record: PRSI years',
-          read: 28,
-          confidence: 88,
-          unit: 'y',
-        },
-      ],
+      figures: figures([['prsi', 'State Pension record: PRSI years', 28, 88, 'y']]),
     },
   },
   home: {
@@ -94,20 +93,13 @@ export const STATEMENT_KINDS: Record<string, StatementKind> = {
     old: false,
     opens: 'repayment',
     where: 'liabilities and assets',
-    figures: [
-      { key: 'bal', label: 'Outstanding balance', read: 203700, confidence: 96, unit: '€' },
-      { key: 'rate', label: 'Interest rate', read: 3.85, confidence: 94, unit: '%' },
-      { key: 'pay', label: 'Monthly repayment', read: 1180, confidence: 93, unit: '€' },
-      { key: 'yrs', label: 'Term remaining', read: 21, confidence: 90, unit: 'y' },
-      {
-        key: 'hval',
-        label: 'Property value (from the valuation)',
-        read: 420000,
-        confidence: 82,
-        unit: '€',
-        optional: true,
-      },
-    ],
+    figures: figures([
+      ['bal', 'Outstanding balance', 203700, 96, '€'],
+      ['rate', 'Interest rate', 3.85, 94, '%'],
+      ['pay', 'Monthly repayment', 1180, 93, '€'],
+      ['yrs', 'Term remaining', 21, 90, 'y'],
+      ['hval', 'Property value (from the valuation)', 420000, 82, '€', true],
+    ]),
     texts: [
       { label: 'Rate type', text: 'Fixed until Mar 2028', confidence: 88 },
       { label: 'Lender', text: 'Demo Bank A', confidence: 97 },
@@ -121,14 +113,14 @@ export const STATEMENT_KINDS: Record<string, StatementKind> = {
     old: false,
     opens: 'regularinvest',
     where: 'assets',
-    figures: [
-      { key: 'tot', label: 'Total value', read: 6200, confidence: 93, unit: '€' },
-      { key: 'mon', label: 'Monthly amount invested', read: 150, confidence: 90, unit: '€' },
-      { key: 'sh', label: 'Holdings: shares', read: 70, confidence: 85, unit: '%', optional: true },
-      { key: 'bo', label: 'Holdings: bonds', read: 20, confidence: 85, unit: '%', optional: true },
-      { key: 'ca', label: 'Holdings: cash', read: 10, confidence: 85, unit: '%', optional: true },
-      { key: 'chg', label: 'Annual charges', read: 0.6, confidence: 80, unit: '%', optional: true },
-    ],
+    figures: figures([
+      ['tot', 'Total value', 6200, 93, '€'],
+      ['mon', 'Monthly amount invested', 150, 90, '€'],
+      ['sh', 'Holdings: shares', 70, 85, '%', true],
+      ['bo', 'Holdings: bonds', 20, 85, '%', true],
+      ['ca', 'Holdings: cash', 10, 85, '%', true],
+      ['chg', 'Annual charges', 0.6, 80, '%', true],
+    ]),
   },
 }
 

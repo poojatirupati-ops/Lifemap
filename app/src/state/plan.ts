@@ -1,12 +1,21 @@
-import { isProfileComplete } from '../domain/discovery/profile.ts'
+import { isProfileComplete } from '../domain/discovery/profileQuestions.ts'
 import { project } from '../domain/planning/project.ts'
 import { EXTRA_MAX, EXTRA_MIN, leastCovered, stepSaving } from '../domain/planning/saving.ts'
-import { GROWTH_KEYS, growthRate } from '../domain/planning/settings.ts'
+import { planRules } from '../domain/planning/assumptionText.ts'
+import { GROWTH_KEYS, growthRate, settingsInUse } from '../domain/planning/settings.ts'
 import { euro } from '../lib/format.ts'
 import { toast } from './shell.ts'
-import type { SetStore, Store } from './store.ts'
+import { useStore, type SetStore, type Store } from './store.ts'
 import type { Plan, PlanSection, Ui } from './types.ts'
 import { addVersion } from './versions.ts'
+import { goTo } from '../shell/router.ts'
+
+/** The original's Me page keys (still the buttons' data-p) whose URL under /me differs. */
+const ME_PATHS: Record<string, string> = {
+  asm: 'assumptions',
+  um: 'profile',
+  umr: 'profile/result',
+}
 
 const setName = (set: 'standard' | 'cautious') => (set === 'cautious' ? 'Cautious' : 'Standard')
 
@@ -14,11 +23,19 @@ const setName = (set: 'standard' | 'cautious') => (set === 'cautious' ? 'Cautiou
 export function createPlanSlice(set: SetStore, get: () => Store) {
   const update = (recipe: (plan: Plan, ui: Ui) => void) => get().update(recipe)
 
-  /** Leave for another tab's page and close any sheet. */
-  const leaveFor = (recipe: (plan: Plan, ui: Ui) => void) => {
-    update(recipe)
+  /** Close any sheet and open another page. */
+  const leaveFor = (href: string) => {
     get().closeSheet()
+    goTo(href)
   }
+
+  /** The money profile's next page: its questions, the re-check of the first answers, or the result. */
+  const profilePage = (plan: Plan) =>
+    !isProfileComplete(plan)
+      ? '/me/profile'
+      : plan.moneyProfile.rechecked
+        ? '/me/profile/result'
+        : '/me/recheck'
 
   /** Change the what-if; the first change picks the least-covered goal. */
   const changeWhatIf = (change: (whatIf: Plan['whatIf']) => void) => {
@@ -31,34 +48,38 @@ export function createPlanSlice(set: SetStore, get: () => Store) {
   }
 
   return {
+    /** Your future at a glance: the journey road, life chapters or the year-by-year detail. */
+    setResultsView: (view: Ui['resultsView']) => set({ resultsView: view }),
+    /** Open a life chapter, or close it when it is already open. */
+    toggleChapter: (index: number) =>
+      set({ openChapter: get().openChapter === index ? null : index }),
     /** My Plan, scrolled to a section: 'timeline', 'results', 'wi' or 'fnd'. */
-    showSection: (section: PlanSection) =>
-      set({ tab: 'plan', planSegment: 'main', planScrollTo: section, sheet: null }),
+    showSection: (section: PlanSection) => {
+      set({ planScrollTo: section })
+      leaveFor('/plan')
+    },
     /** The section has been scrolled to. */
     sectionShown: () => set({ planScrollTo: null }),
-    openAddGoal: () => set({ planSegment: 'add' }),
+    openAddGoal: () => goTo('/plan/add'),
     toggleEditGoals: () =>
       update((_, ui) => {
         ui.editingGoals = !ui.editingGoals
         ui.highlightedGoal = null
       }),
     closeGoalEdit: () => set({ highlightedGoal: null }),
-    openMe: (page: string) => set({ tab: 'me', mePage: page, sheet: null }),
+    /** A Me page by the original's key: 'privacy', 'asm', 'um', ... */
+    openMe: (page: string) => leaveFor(`/me/${ME_PATHS[page] ?? page}`),
     /** A required choice is missing: open Your assumptions (at the top, no jump to the box). */
-    fixChoice: () => set({ tab: 'me', mePage: 'asm', sheet: null }),
-    openProfile: () =>
-      leaveFor((plan, ui) => {
-        plan.moneyProfile.returnTo = 'plan'
-        ui.tab = 'me'
-        if (!isProfileComplete(plan)) ui.mePage = 'um'
-        else ui.mePage = plan.moneyProfile.rechecked ? 'umr' : 'recheck'
-      }),
-    bookAdviser: () =>
-      update((plan, ui) => {
-        ui.tab = 'exp'
-        ui.expertsPage = isProfileComplete(plan) ? 'c1' : 'c0'
-        plan.booking.from = 'plan'
-      }),
+    fixChoice: () => leaveFor('/me/assumptions'),
+    openProfile: () => {
+      update((plan) => void (plan.moneyProfile.returnTo = 'plan'))
+      leaveFor(profilePage(get().plan))
+    },
+    profilePage,
+    bookAdviser: () => {
+      update((plan) => void (plan.booking.from = 'plan'))
+      goTo(isProfileComplete(get().plan) ? '/experts/c1' : '/experts/c0')
+    },
     markUnderstood: () =>
       update((plan) => {
         plan.understood = true
@@ -73,7 +94,9 @@ export function createPlanSlice(set: SetStore, get: () => Store) {
     chooseAssumptions: (set: 'standard' | 'cautious') => {
       update((plan) => {
         plan.assumptionSet = set
-        for (const key of GROWTH_KEYS) plan.assumptions[key] = growthRate(key, set)
+        const rules = planRules(plan)
+        for (const key of GROWTH_KEYS)
+          plan.assumptions[key] = growthRate(key, set, settingsInUse(), rules)
         addVersion(plan, `Growth assumptions: ${setName(set)}`)
       })
       toast(`${setName(set)} assumptions: results updated`)
@@ -134,3 +157,9 @@ export function createPlanSlice(set: SetStore, get: () => Store) {
 }
 
 export type PlanActions = ReturnType<typeof createPlanSlice>
+
+/** Before a plan exists, My money opens the plan builder, where the customer left it. */
+export function makePlan() {
+  useStore.getState().closeSheet()
+  goTo(useStore.getState().builderAt ?? '/build/about')
+}

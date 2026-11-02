@@ -47,3 +47,6 @@ export function parseWholeEuros(text: string) {
   const whole = parseInt(text.replace(/\D/g, ''))
   return isNaN(whole) ? null : whole
 }
+
+/** plural(3, 'yr') -> "3 yrs", plural(1, 'month') -> "1 month" */
+export const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`

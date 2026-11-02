@@ -4,9 +4,8 @@ import { beforeEach, expect, test, vi } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
 import type { Snapshot } from '../../src/state/types.ts'
 import sample from '../fixtures/sample-me.json'
-import * as Me from '../../src/screens/Me.screen.tsx'
-import * as Recheck from '../../src/screens/MeRecheck.screen.tsx'
-import * as Section from '../../src/screens/MeProfileSection.screen.tsx'
+import { useShell } from '../../src/state/shell.ts'
+import { path, renderAt, settle } from '../renderAt.tsx'
 import AssumptionField from '../../src/components/me/AssumptionField.tsx'
 import { formatAssumption, valueInUse } from '../../src/domain/planning/assumptionText.ts'
 import type { MePlan } from '../../src/components/me/mePlan.ts'
@@ -19,11 +18,15 @@ const auth = vi.hoisted(() => ({
 vi.mock('../../src/auth/session.ts', () => ({ signOut: auth.signOut }))
 vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
 vi.mock('../../src/auth/client.ts', () => ({
-  authClient: { useSession: () => ({ data: auth.user && { user: auth.user } }) },
+  authClient: {
+    useSession: () => ({ data: auth.user && { user: auth.user } }),
+    useListPasskeys: () => ({ data: [] }),
+    useActiveMember: () => ({ data: null }),
+  },
 }))
 
 const plan = () => useStore.getState().plan as MePlan
-const open = (page: string) => useStore.getState().update((p, ui) => void (ui.mePage = page))
+const screenId = () => useShell.getState().screenId
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -31,23 +34,22 @@ beforeEach(() => {
   useStore.getState().load(structuredClone(sample) as unknown as Snapshot)
 })
 
-test('the hub opens its pages; sign out shows only with a session', () => {
-  const { rerender } = render(<Me.Body />)
+test('the hub opens its pages; sign out shows only with a session', async () => {
+  const { unmount } = await renderAt('/me')
   expect(screen.queryByText('Sign out')).toBeNull()
   fireEvent.click(screen.getByText('Privacy & preferences'))
-  expect(useStore.getState().mePage).toBe('privacy')
-  expect(Me.id(plan(), useStore.getState())).toBe('ME-PRIV')
+  await settle()
+  expect([path(), screenId()]).toEqual(['/me/privacy', 'ME-PRIV'])
+  unmount()
 
-  open('home')
   auth.user = { email: 'aoife@example.ie' }
-  rerender(<Me.Body />)
+  await renderAt('/me')
   fireEvent.click(screen.getByText('Sign out'))
   expect(auth.signOut).toHaveBeenCalled()
 })
 
-test('privacy: reminders are recorded both ways, export and delete are offered', () => {
-  open('privacy')
-  render(<Me.Body />)
+test('privacy: reminders are recorded both ways, export and delete are offered', async () => {
+  await renderAt('/me/privacy')
   fireEvent.click(screen.getByText('Send me reminders and updates'))
   expect(plan().account.marketingConsent).toBe(true)
   expect(auth.postConsents).toHaveBeenCalledWith({ terms: true, marketing: true })
@@ -56,29 +58,25 @@ test('privacy: reminders are recorded both ways, export and delete are offered',
   expect(useStore.getState().sheet).toBe('delete')
 })
 
-test('recheck confirms the first answers; only pages with a foot get one', () => {
-  expect(Me.footFor(plan(), useStore.getState())).toBeUndefined()
-  open('recheck')
-  expect(Me.footFor(plan(), useStore.getState())).toBe(Recheck.Foot)
-  render(<Recheck.Foot />)
+test('recheck confirms the first answers; only pages with a foot get one', async () => {
+  const { container, unmount } = await renderAt('/me')
+  expect(container.querySelector('.foot')).toBeNull()
+  unmount()
+  await renderAt('/me/recheck')
   fireEvent.click(screen.getByText('These still look right'))
-  expect(useStore.getState()).toMatchObject({
-    mePage: 'home',
-    plan: { moneyProfile: { rechecked: true } },
-  })
+  await settle()
+  expect([path(), plan().moneyProfile.rechecked]).toEqual(['/me', true])
 })
 
-test('saving a profile section marks it done and fills an unanswered horizon', () => {
-  useStore.getState().update((p, ui) => {
-    ui.mePage = 'ums'
-    p.moneyProfile.section = 1
-  })
-  expect(Me.id(plan(), useStore.getState())).toBe('ME-UM1')
-  render(<Section.Foot />)
+test('saving a profile section marks it done and fills an unanswered horizon', async () => {
+  useStore.getState().update((p) => void (p.moneyProfile.section = 1))
+  await renderAt('/me/profile/section')
+  expect(screenId()).toBe('ME-UM1')
   fireEvent.click(screen.getByText('Save this section'))
+  await settle()
   expect(plan().moneyProfile.done[1]).toBe(true)
   expect(plan().moneyProfile.answers.u9).toBeTypeOf('number')
-  expect(useStore.getState().mePage).toBe('um')
+  expect(path()).toBe('/me/profile')
 })
 
 test('an assumption typed as a percent is kept as a fraction, and Back restores the standard', () => {

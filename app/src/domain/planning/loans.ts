@@ -137,8 +137,8 @@ export function debts(inputs: DebtInputs) {
     loanRate,
     monthlyLoanPayment: loan.monthly,
     loanPaymentEstimated: loan.estimated,
-    debt: cardBal + loanBal, // TODO(R-11): derive at the use sites
-    monthlyDebtPayment: card.monthly + loan.monthly, // TODO(R-11)
-    debtPaymentEstimated: card.estimated || loan.estimated, // TODO(R-11)
+    debt: cardBal + loanBal,
+    monthlyDebtPayment: card.monthly + loan.monthly,
+    debtPaymentEstimated: card.estimated || loan.estimated,
   }
 }

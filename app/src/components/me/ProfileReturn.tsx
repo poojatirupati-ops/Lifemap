@@ -1,6 +1,6 @@
 import { useStore } from '../../state/store.ts'
-import { continueToAdviserMatch, returnFromProfile } from './meActions.ts'
-import { isProfileComplete } from '../../domain/discovery/profile.ts'
+import { continueToAdviserMatch, returnFromProfile } from '../../state/profile.ts'
+import { isProfileComplete } from '../../domain/discovery/profileQuestions.ts'
 
 /** Back to where the money profile was opened from: the adviser match, My Plan or the meeting. */
 export default function ProfileReturn() {

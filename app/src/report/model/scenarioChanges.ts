@@ -1,7 +1,7 @@
 // The changes the report tries on the plan: one at a time, then a few together. Pure: nothing is run here.
 import { euro } from '../../lib/format.ts'
 import type { ReportContext } from './context.ts'
-import { pensionRoom, type Change } from './changedPlan.ts'
+import { pensionRelief } from '../../domain/planning/pensions.ts'
 
 export interface ScenarioRow {
   id: string
@@ -17,6 +17,26 @@ export interface ScenarioRow {
   monthlyM?: number
   afterReliefM?: number
   amountM?: number
+}
+
+export interface Change {
+  retireAge?: number
+  saveM?: number
+  pensionAddM?: number
+  fullStatePension?: boolean
+}
+
+/** The largest monthly pension payment that still gets tax relief, and what it costs after relief. */
+function pensionRoom({ figures, rules }: ReportContext) {
+  const limitYear = pensionRelief(rules, figures.income, Infinity, figures.age ?? 0)
+  const limitM = Math.floor(Math.max(0, limitYear - figures.monthlyOwnPension * 12) / 12)
+  const band = figures.married
+    ? rules.it.bandMarried + Math.min(figures.partnerIncome, rules.it.bandUplift)
+    : figures.singleParentCredit
+      ? rules.it.bandSPCCC
+      : rules.it.band
+  const taxRate = figures.income > band ? 0.4 : 0.2
+  return { limitM, taxRate, afterReliefM: Math.round(limitM * (1 - taxRate)) }
 }
 
 export type Candidate = {

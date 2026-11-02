@@ -1,4 +1,4 @@
-// Home's foundations and next best step must equal the ORIGINAL script's, run in node:vm.
+// Home's and Results' foundations, the ladder's next best step (fndNext) and Home's next step must equal the ORIGINAL script's, run in node:vm.
 import { describe, expect, it } from 'vitest'
 import { runOriginal } from '../golden/origSlice'
 import { fixtures, plain } from '../golden/origProfile'
@@ -6,18 +6,15 @@ import { project } from '../../src/domain/planning/project'
 import type { Check } from '../../src/domain/planning/foundationCheck'
 import { foundations } from '../../src/domain/planning/foundations'
 import { monthsToClear } from '../../src/domain/planning/protection'
+import { assumption } from '../../src/domain/planning/assumptions'
+import { nextFoundation } from '../../src/domain/planning/nextFoundation'
 import { homeSummary } from '../../src/components/home/useHome'
 import { fromOriginal } from '../../src/state/migrate'
+import { prepared as preparedBy, chooser } from '../golden/helpers'
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, foundations, fndNext, nextStep')
 
-function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return structuredClone(original.getState())
-}
+const prepared = (state: any) => preparedBy(original, state)
 
 const asCheck = ({ status, text, tool, section }: Check) =>
   ({ st: status, s: text, a: tool, sec: section }) as Record<string, unknown>
@@ -35,7 +32,12 @@ function ours(state: any) {
     ...asCheck(check),
   }))
   const { step } = homeSummary(plan)
-  return { levels: asOriginal, step }
+  const next = nextFoundation(levels, assumption(plan, 'safetyMonths'))
+  return {
+    levels: asOriginal,
+    step,
+    next: next && { n: next.level.level, t: next.title, d: next.detail },
+  }
 }
 
 const ACTION_A = {
@@ -55,6 +57,8 @@ function compare(state: any) {
   for (const level of theirs) delete level.s0
   for (const level of theirs) for (const key of ['sp', 'net', 'on', 'of']) delete level[key]
   expect(plain(mine.levels)).toEqual(theirs)
+  const next = original.fndNext()
+  expect(mine.next).toEqual(next && { n: next.x.n, t: next.t, d: next.d })
   const step = original.nextStep()
   expect([mine.step.emoji, mine.step.title, mine.step.button, ACTION_A[mine.step.action]]).toEqual([
     step.e,
@@ -64,21 +68,10 @@ function compare(state: any) {
   ])
 }
 
-function random(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
 const sample = fixtures.find(([name]) => name === 'sample-home.json')![1]
 
 function randomPlan(seed: number) {
-  const next = random(seed)
-  const pick = <T>(...options: T[]) => options[Math.floor(next() * options.length)]
-  const between = (low: number, high: number) => Math.round(low + next() * (high - low))
+  const { pick, between } = chooser(seed)
   const s = structuredClone(sample)
   const typed = (key: string, value: unknown) => {
     if (value === undefined) {

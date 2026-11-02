@@ -1,6 +1,8 @@
 # Tenancy
 
-LifeMap serves independent users and partner tenants (credit unions, white-label and channel partners) from one API and one database. Tenants are Better Auth **organizations**. All tenancy uses the plugins' own tables (`organization`, `member`, `invitation`, `sso_provider`) and the admin plugin's user fields. There is no separate tenant layer. Code: `api/src/auth.ts` (plugins and hooks), `api/src/tenant.ts` (host resolution, config, flags via PostHog), `api/src/guard.ts`. Migration: `api/drizzle/0003_tenancy.sql`.
+LifeMap serves independent users and partner tenants (credit unions, white-label and channel partners) from one API and one database. Tenants are Better Auth **organizations**. All tenancy uses the plugins' own tables (`organization`, `member`, `invitation`, `sso_provider`) and the admin plugin's user fields. There is no separate tenant layer. Code: `api/src/auth.ts` (plugins and hooks), `api/src/tenant.ts` (config, flags via PostHog), `api/src/guard.ts`. Migrations: `api/drizzle/0003_tenancy.sql`, `api/drizzle/0008_drop_tenant_host.sql` (custom domains removed).
+
+**Decision: no tenant custom domains.** Every tenant is served on LifeMap's own domain. A request's host never selects a tenant.
 
 ## Model
 
@@ -20,19 +22,26 @@ One person (one `user`, one email) can belong to several tenants. They have a se
 |---|---|---|
 | `organization:update` (name, logo, metadata: colours, rates) | yes | no |
 | Register or manage the tenant's SSO provider (plugin checks the `admin` role) | yes | no |
-| Members and invitations | no (not needed yet) | no |
+| Invite and cancel invitations (`invitation:create`, `invitation:cancel`) | yes | no |
+| List the tenant's people (`get-full-organization`, `list-members`, `list-invitations`; a hook in `src/auth.ts` requires `invitation:create`, as the plugin itself only checks membership) | yes | no |
 | Read other members' plans or consents | no (no route exists) | no |
 | Own plan, consents, export, erasure | yes | yes |
 
 Only platform admins can create organizations (`allowUserToCreateOrganization`). The creator becomes the tenant's `admin`.
 
-## Host resolution and sign-in
+## Reaching a tenant and sign-in
 
-- The tenant comes from the request host, `X-Forwarded-Host` first, then `Host`. It is matched against `metadata.host`, which is unique in Postgres through an expression index. The CDN must **overwrite** `X-Forwarded-Host`. Unknown hosts fall back to LifeMap Direct.
-- On every new session (email OTP, passkey), a `databaseHooks.session.create.before` hook adds the user to that host's tenant as `customer` if they are not already a member. It also sets `session.activeOrganizationId`.
-- For SSO sign-ins, the active organization is the provider's organization. The SSO plugin then adds the membership with the mapped role.
-- A tenant's own `https://<host>` is a trusted origin for requests made on it.
-- Switching tenant uses the plugin's `organization/set-active`, which checks membership. A refused switch clears the active tenant (fail closed).
+A tenant is reached only on LifeMap's domain, in one of three ways:
+
+- **SSO:** an SSO sign-in makes the provider's organization active. The SSO plugin adds the membership with the mapped role.
+- **Invitation:** a tenant admin invites by email; accepting (`organization/accept-invitation`) adds the membership and makes that tenant active.
+- **Explicit selection:** the plugin's `organization/set-active`, which checks membership. A refused switch clears the active tenant (fail closed).
+
+Every other new session (email OTP, passkey) lands in **LifeMap Direct**: a `databaseHooks.session.create.before` hook adds the user to LifeMap Direct as `customer` if they are not already a member, and sets `session.activeOrganizationId`. Cross-origin requests are trusted only from `BETTER_AUTH_URL`, `CMS_URL` and `BETTER_AUTH_TRUSTED_ORIGINS`. Sign-in codes are always sent as "LifeMap", because no tenant is known when a code is requested.
+
+## Passkeys
+
+A passkey (Face ID, Touch ID, Windows Hello, or a security key) is bound to one WebAuthn relying-party ID (rpID), a domain. `api/src/auth.ts` sets the rpID to the host of `BETTER_AUTH_URL` and accepts that origin plus `BETTER_AUTH_TRUSTED_ORIGINS`. Since every tenant is served on that one LifeMap domain, one passkey works for every tenant the user belongs to and the passkey button never needs hiding. The name the OS shows (rpName) is "LifeMap", because the plugin takes one static name, not one per tenant.
 
 ## Data isolation
 
@@ -42,17 +51,17 @@ Only platform admins can create organizations (`allowUserToCreateOrganization`).
 
 ## White-label config and feature flags
 
-Branding, host and rates are stored in the plugin's `organization.metadata` JSON, validated by one zod schema (`tenantMetadata` in `api/src/tenant.ts`):
+Branding and rates are stored in the plugin's `organization.metadata` JSON, validated by one zod schema (`tenantMetadata` in `api/src/tenant.ts`):
 
 ```json
-{ "host": "app.cu-a.ie", "colors": { "primary": "#0a3d62" }, "rates": { "growth": 0.04 } }
+{ "colors": { "primary": "#0a3d62" }, "rates": { "growth": 0.04 } }
 ```
 
-`name` and `logo` (https only) are the plugin's own columns. An update merges top-level keys over the stored config. Unknown keys (including the old `features`) and bad values get 400.
+`name` and `logo` (https only) are the plugin's own columns. An update merges top-level keys over the stored config. Unknown keys (including the old `features` and `host`) and bad values get 400.
 
-- `GET /api/tenant` is public and needs no session. It returns `{ id, slug, name, logo, colors, features, rates }` for the current host. `features` is resolved on the server (PostHog, then code defaults), so the browser never calls PostHog for flags and flags work without analytics consent.
-- Tenant admins: `POST /api/auth/organization/update` `{ organizationId, data: { name?, logo?, metadata? } }`. This works for their own tenant only. They cannot change `host` (403).
-- Platform admins: `PATCH /api/admin/organizations/:id/config` `{ logo?, metadata? }`. This works for any tenant, including `host`.
+- `GET /api/tenant` is public and needs no session. It returns `{ id, slug, name, logo, colors, features, rates, sso }` for the session's active tenant, or LifeMap Direct without a session. The app must refetch it when the active tenant changes (sign-in, invitation, set-active). `features` is resolved on the server (PostHog, then code defaults), so the browser never calls PostHog for flags and flags work without analytics consent.
+- Tenant admins: `POST /api/auth/organization/update` `{ organizationId, data: { name?, logo?, metadata? } }`. This works for their own tenant only.
+- Platform admins: `PATCH /api/admin/organizations/:id/config` `{ logo?, metadata? }`. This works for any tenant.
 
 ### Feature flags
 

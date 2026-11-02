@@ -13,9 +13,9 @@ type ExampleOption = [choice: string, meaning: string]
 type SampleKey = keyof typeof SAMPLE_FINANCES
 
 // text: the example sentence; where: where to find your own figure; options: the choices explained
-export type FieldExample = { text: string; where: string; options?: ExampleOption[] }
+type FieldExample = { text: string; where: string; options?: ExampleOption[] }
 
-export type ExampleContext = {
+type ExampleContext = {
   statePensionAge: number
   fullPrsiYears: number
   planStartYear: number

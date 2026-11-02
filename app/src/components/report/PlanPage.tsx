@@ -1,8 +1,8 @@
 // Report page 2: your plan on a page. The goals, when savings run out, and what could close the gap.
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import PlanGoalRow from './PlanGoalRow.tsx'
-import TitleBlock from './TitleBlock.tsx'
-import { fillOf } from './tones.ts'
+import { clamp } from '../../lib/clamp.ts'
+import { goalIconName } from './Icon.tsx'
+import { BandChip, CircleIcon, PageFrame, TitleBlock, type PageProps } from './PageFrame.tsx'
+import { COLOURS, fillOf, textOf } from './tones.ts'
 
 const ROWS_SHOWN = 4
 
@@ -14,9 +14,34 @@ export default function PlanPage(props: PageProps) {
       <div className="lmr-body">
         <TitleBlock {...plan} bigLabel="goals on track" eyebrow="YOUR PLAN ON A PAGE" />
         <div className="lmr-goals">
-          {goals.slice(0, ROWS_SHOWN).map((goal) => (
-            <PlanGoalRow key={goal.name} goal={goal} compact={goals.length > 3} />
-          ))}
+          {goals.slice(0, ROWS_SHOWN).map((goal) => {
+            const percent = clamp(goal.pct, 0, 100)
+            return (
+              <div className={goals.length > 3 ? 'lmr-goal cp' : 'lmr-goal'} key={goal.name}>
+                <CircleIcon name={goalIconName(goal)} tone={goal.band} size={56} iconSize={26} />
+                <div className="lmx-gc">
+                  <div className="lmx-gn lmr-clamp2">{goal.name}</div>
+                  <div className="lmx-gm">{goal.meta}</div>
+                  <div className="lmr-track">
+                    <div
+                      className="lmr-fill"
+                      style={{
+                        width: `${percent}%`,
+                        background: goal.band === 'good' ? COLOURS.teal : fillOf(goal.band),
+                      }}
+                    ></div>
+                  </div>
+                  <div className="lmx-gs">{goal.sentence}</div>
+                </div>
+                <div className="lmx-gp">
+                  <div className="lmx-pc" style={{ color: textOf(goal.band) }}>
+                    {percent}%
+                  </div>
+                  <BandChip tone={goal.band} text={goal.bandText} />
+                </div>
+              </div>
+            )
+          })}
           {goals.length > ROWS_SHOWN ? (
             <div className="lmr-more">
               and {goals.length - ROWS_SHOWN} more goals. See the goal pages.

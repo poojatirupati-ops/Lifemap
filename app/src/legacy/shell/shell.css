@@ -1,8 +1,0 @@
-.tabbar{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabbar a{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;padding:8px 2px;font-size:12px;color:var(--muted);text-decoration:none;min-height:48px}
-.tabbar a[aria-current]{color:var(--sea-d);font-weight:600}
-.tabbar a.centre{font-weight:600}
-.tabbar a.centre span:first-child{font-size:26px;line-height:1}
-.ask-fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));min-height:44px;padding:0 20px;border:0;border-radius:22px;background:var(--sea-d);color:#fff;font:inherit;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.session-note{margin:0;padding:12px 16px;background:var(--sun-l);color:var(--nudge-t)}
-.has-tabs{padding-bottom:calc(72px + env(safe-area-inset-bottom))}

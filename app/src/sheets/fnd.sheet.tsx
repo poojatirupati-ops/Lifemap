@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { makePlan } from '../components/me/meActions.ts'
+import { makePlan } from '../state/plan.ts'
 import { STATUS_LABEL, type Foundation } from '../domain/planning/foundationCheck.ts'
 import { foundations } from '../domain/planning/foundations.ts'
 import { assumption } from '../domain/planning/assumptions.ts'

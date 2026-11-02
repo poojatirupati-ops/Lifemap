@@ -9,7 +9,7 @@ let pending: string | undefined
 /** Keep a version of the plan in its history, e.g. "Goals changed". */
 export function addVersion(plan: Pick<Plan, 'versions'>, note: string) {
   plan.versions.push({ note, date: TODAY })
-  pending = note // ponytail: several versions between two saves keep only the latest note
+  pending = note // several versions between two saves send only the latest note
 }
 
 /** The pending snapshot note, cleared once read. */

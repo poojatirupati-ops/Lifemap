@@ -11,12 +11,12 @@ import { useStore } from '../../src/state/store'
 import { fromOriginal } from '../../src/state/migrate'
 import Chapters from '../../src/components/results/Chapters'
 import Glance from '../../src/components/results/Glance'
-import Findings from '../../src/components/results/Findings'
-import GoalLine from '../../src/components/results/GoalLine'
-import JourneySvg from '../../src/components/results/JourneySvg'
-import MilestoneList from '../../src/components/results/MilestoneList'
-import WhyNote from '../../src/components/results/WhyNote'
+import { Findings } from '../../src/components/plan/Results'
+import { GoalLine, WhyNote } from '../../src/components/plan/GoalsCard'
+import JourneySvg, { MilestoneList } from '../../src/components/results/JourneySvg'
 import { isShortYear } from '../../src/domain/planning/bands'
+import { planSettings } from '../../src/domain/planning/planSettings'
+import { random, withoutActions } from '../golden/helpers'
 
 // a portrait phone; the hook needs a browser
 vi.mock('../../src/hooks/useViewport', () => ({ useViewport: () => ({ landscape: false }) }))
@@ -36,7 +36,6 @@ const markup = (element: ReactElement) =>
     .replaceAll('&amp;', '&')
     .replaceAll('&#x27;', '&#39;')
     .replace(/<(line|circle|path)([^>]*)><\/\1>/g, '<$1$2/>')
-const withoutActions = (html: string) => html.replace(/ data-[ap]="[^"]*"/g, '')
 /** Our emoji spans are the original's post-render hideEmoji step. */
 const withoutEmojiSpans = (html: string) =>
   html.replace(/<span aria-hidden="true">([^<a-zA-Z0-9]+)<\/span>/g, '$1')
@@ -50,16 +49,6 @@ function firstDifference(ours: string, theirs: string) {
   return { ours: ours.slice(i - 80, i + 120), theirs: theirs.slice(i - 80, i + 120) }
 }
 const text = (html: string) => html.replace(/<[^>]+>/g, '').replaceAll('&#39;', "'")
-
-// a seeded generator, so a failure can be replayed
-function random(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
 
 /** A plan with many goals close together, to make the milestone layout work hard. */
 function crowded(seed: number) {
@@ -166,7 +155,10 @@ describe.each(cases)('%s', (_, state) => {
         original.goalLine(theirs, theirGoal),
       )
       // the original starts with a space when nothing is saved yet; a div collapses it
-      expect(text(markup(<WhyNote {...props} />))).toBe(original.goalWhy(theirs, theirGoal).trim())
+      const { figures } = planSettings(plan)
+      expect(text(markup(<WhyNote {...props} figures={figures} />))).toBe(
+        original.goalWhy(theirs, theirGoal).trim(),
+      )
     }
   })
 })

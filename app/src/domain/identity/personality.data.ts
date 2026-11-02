@@ -4,9 +4,11 @@ export type PersonalityType = {
   strapline: string
   strengths: string[]
   watchOut: string
+  /** the reveal's hero photo; without one the cover photo shows */
+  photo?: string
 }
 
-export type Reason = { key: string; emoji: string; label: string; goals?: string[] }
+type Reason = { key: string; emoji: string; label: string; goals?: string[] }
 
 export const PERSONALITY_TYPES = {
   A: {
@@ -15,6 +17,7 @@ export const PERSONALITY_TYPES = {
     strapline: 'In control, goal-driven, disciplined with money.',
     strengths: ['Clear about what you want', 'You stick to a plan'],
     watchOut: 'Being too hard on yourself when life changes the plan.',
+    photo: '/media/graduation.jpg',
   },
   B: {
     name: 'Balancer',
@@ -22,6 +25,7 @@ export const PERSONALITY_TYPES = {
     strapline: 'Value-seeking, vigilant, careful with risk.',
     strengths: ['Careful with money', 'You weigh things up'],
     watchOut: 'Playing so safe that cash quietly loses value to rising prices.',
+    photo: '/media/savings-jar.jpg',
   },
   E: {
     name: 'Explorer',
@@ -36,6 +40,7 @@ export const PERSONALITY_TYPES = {
     strapline: 'Comfortable, steady, low-maintenance with money.',
     strengths: ['Calm about money', 'Not easily rattled'],
     watchOut: 'Putting off decisions, such as pension top-ups.',
+    photo: '/media/retired-reading.jpg',
   },
 } satisfies Record<string, PersonalityType>
 

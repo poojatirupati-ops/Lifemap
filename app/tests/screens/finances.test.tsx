@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { beforeEach, expect, test, vi } from 'vitest'
+import { beforeEach, expect, test } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
 import type { Snapshot } from '../../src/state/types.ts'
 import partial from '../fixtures/finances-partial.json'
-import * as Overview from '../../src/screens/FinanceOverview.screen.tsx'
-import * as Check from '../../src/screens/FinanceCheck.screen.tsx'
+import { path, renderAt, settle } from '../renderAt.tsx'
 import ChoiceNumberBox from '../../src/components/finance/ChoiceNumberBox.tsx'
 
 beforeEach(() => {
@@ -13,22 +12,22 @@ beforeEach(() => {
   window.matchMedia ??= (() => ({ matches: true })) as never
 })
 
-test('Your finances lists the six sections and opens one', () => {
-  render(<Overview.Body />)
+test('Your finances lists the six sections and opens one', async () => {
+  await renderAt('/build/finances')
   expect(
     screen.getAllByRole('button', { name: /^.*(Done|In progress|Not started|Needs a look)$/ }),
   ).toHaveLength(6)
   fireEvent.click(screen.getByText('Income and expenses'))
-  expect(useStore.getState()).toMatchObject({ screen: 'P3', financeSection: 1 })
+  await settle()
+  expect([path(), useStore.getState().financeSection]).toEqual(['/build/finances/2', 1])
 })
 
-test('Check your details: choices gate the results, then Building opens the results', () => {
-  vi.useFakeTimers()
+test('Check your details: choices gate the results, then Building opens the results', async () => {
   useStore.getState().update((plan) => {
     plan.retireSet = false
     plan.inflation = null
   })
-  render(<Check.Foot />)
+  await renderAt('/build/check')
   const see = screen.getByText('See my results') as HTMLButtonElement
   expect(see.disabled).toBe(true)
   expect(screen.getByText(/^Choose your retirement age above/)).toBeTruthy()
@@ -42,18 +41,20 @@ test('Check your details: choices gate the results, then Building opens the resu
     }),
   )
   fireEvent.click(screen.getByText('See my results'))
-  expect(useStore.getState().screen).toBe('U1')
-  vi.runAllTimers()
+  await settle()
+  expect(path()).toBe('/build/results')
+  // reduced motion: the loader shows for 300ms
+  await act(() => new Promise((done) => setTimeout(done, 400)))
+  await settle()
+  expect(path()).toBe('/plan')
   expect(useStore.getState()).toMatchObject({
     plan: { hasResults: true, checked: true },
-    tab: 'plan',
     planScrollTo: 'results',
   })
-  vi.useRealTimers()
 })
 
-test('Leave for my adviser marks a flagged figure', () => {
-  render(<Check.Body />)
+test('Leave for my adviser marks a flagged figure', async () => {
+  await renderAt('/build/check')
   const leave = screen.getAllByText('Leave for my adviser')[0]
   fireEvent.click(leave)
   expect(Object.values(useStore.getState().plan.acknowledged)).toContain(true)

@@ -11,6 +11,7 @@ import { whatIfFrom } from '../../src/domain/planning/wi'
 import { fromOriginal } from '../../src/state/migrate'
 import { useStore } from '../../src/state/store'
 import CashflowView from '../../src/components/results/chart/CashflowView'
+import { prepared as preparedBy } from '../golden/helpers'
 
 // A node test with its own DOM: in the jsdom environment Vite rewrites origSlice's file URLs.
 populateGlobal(globalThis, new JSDOM('', { url: 'http://localhost/' }).window, {
@@ -22,13 +23,7 @@ const original = runOriginal(
   'applyAssume, syncLists, autoSafety, project, chartSVG, chartLegend, chartSummary, chartDefaultSel',
 )
 
-function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return original.getState()
-}
+const prepared = (state: any) => preparedBy(original, state)
 
 function theirLines(state: any, selected: number | null, showSavings: boolean) {
   original.setState({ ...structuredClone(state), csel: selected, csave: showSavings })

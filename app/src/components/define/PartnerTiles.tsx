@@ -1,5 +1,5 @@
 import { useStore } from '../../state/store.ts'
-import { setPlanningWithPartner } from './aboutActions.ts'
+import { setPlanningWithPartner } from '../../state/about.ts'
 
 const CHOICES = [
   { together: true, answer: 'Yes', emoji: '💑', title: 'Together', detail: 'As a couple' },

@@ -1,6 +1,6 @@
 import { euroShort } from '../../lib/format.ts'
 import type { Goal } from '../../state/types.ts'
-import { band } from '../results/journey.ts'
+import { band } from '../../domain/planning/bands.ts'
 import { calendarYear, isPassed } from '../../domain/goals/goalTiming.ts'
 import { useStore } from '../../state/store.ts'
 import { useTiming } from '../../hooks/useTiming.ts'

@@ -22,7 +22,8 @@ export const optionScore = (
   index: number | undefined,
 ) => (index == null ? null : (question?.options[index]?.score ?? null))
 
-const MIN_DISCOVER_ANSWERS = 4
+/** Discover answers needed before a money personality is shown. */
+export const MIN_DISCOVER_ANSWERS = 4
 
 export const hasEnoughForPersonality = (answers: Answers) =>
   discoverAnswered(answers) >= MIN_DISCOVER_ANSWERS
@@ -39,7 +40,7 @@ const chosenWeights = (answers: ProfileAnswers, id: string) => {
   return index == null ? null : PERSONALITY_WEIGHTS[id][index]
 }
 
-/** Needs four of the six Discover answers: never guess a type. */
+/** Needs MIN_DISCOVER_ANSWERS of the six Discover answers: never guess a type. */
 export function personality(answers: ProfileAnswers) {
   if (!hasEnoughForPersonality(answers.discover)) return null
   const totals: Record<PersonalityCode, number> = { A: 0, B: 0, E: 0, C: 0 }
@@ -84,14 +85,3 @@ export function suggestedHorizon(
 
 export const suggestedHorizonFor = (plan: Pick<Plan, 'goals' | 'about' | 'retireAge'>) =>
   suggestedHorizon(plan.goals, plan.about.age ?? 0, plan.retireAge)
-
-// TODO: drop once callers outside src/domain import these from profileQuestions.ts
-export {
-  PROFILE_QUESTIONS,
-  deeperAnswered,
-  discoverAnswered,
-  isProfileComplete,
-  profileAnswered,
-  profilePercent,
-  type AnswerInputs,
-} from './profileQuestions.ts'

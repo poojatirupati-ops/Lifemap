@@ -5,7 +5,7 @@ interface KnownDetails {
   retireSet: boolean
 }
 
-export type KnownFinances = Partial<{ name: string; age: number; retireAge: number }>
+type KnownFinances = Partial<{ name: string; age: number; retireAge: number }>
 
 /** After sign-in, Your finances starts from what the customer already told us: the fields to fill in. */
 export function prefillFinances({ name, age, retireAge, retireSet }: KnownDetails) {

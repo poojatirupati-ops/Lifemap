@@ -1,18 +1,8 @@
-import { useShallow } from 'zustand/react/shallow'
-import { missingChoices } from '../components/finance/requiredChoices.ts'
-import { useStore } from '../state/store.ts'
+import { missingChoices } from '../domain/planning/requiredChoices.ts'
+import { usePlanFields } from './usePlanFields.ts'
 
 /** The choices only the customer can make that are still open. */
 export const useMissingChoices = () =>
   missingChoices(
-    useStore(
-      useShallow(({ plan }) => ({
-        retireSet: plan.retireSet,
-        assumptions: plan.assumptions,
-        inflation: plan.inflation,
-        about: plan.about,
-        figures: plan.figures,
-        partnerRetireSet: plan.partnerRetireSet,
-      })),
-    ),
+    usePlanFields('retireSet', 'assumptions', 'inflation', 'about', 'figures', 'partnerRetireSet'),
   )

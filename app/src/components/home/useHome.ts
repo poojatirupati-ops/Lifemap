@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { profileAnswered } from '../../domain/discovery/profile.ts'
+import { profileAnswered } from '../../domain/discovery/profileQuestions.ts'
 import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { project } from '../../domain/planning/project.ts'
 import { useStore } from '../../state/store.ts'
 import type { Plan } from '../../state/types.ts'
-import { checkItems, withRepaymentLooks } from '../finance/checkList.ts'
+import { checkItems, withRepaymentLooks, type CheckPlan } from '../finance/checkList.ts'
 import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
 import { fieldSource, skippedSections, visibleFields } from '../finance/status.ts'
 import { foundations } from '../../domain/planning/foundations.ts'
@@ -18,10 +18,14 @@ export const unseenLooks = (plan: Plan) =>
     ({ key, state }) => state === 'look' && !plan.acknowledged[key],
   ).length
 
-const blankFigures = (plan: Plan) =>
+const blankFigures = (plan: CheckPlan) =>
   FINANCE_SECTIONS.flatMap((section) => visibleFields(section, plan)).filter(
     (key) => !FINANCE_FIELDS[key].optional && !fieldSource(key, plan),
   ).length
+
+/** A rough picture: a skipped money section, or more than two required figures blank (both count as €0). */
+export const isRough = (plan: CheckPlan) =>
+  skippedSections(plan).length > 0 || blankFigures(plan) > 2
 
 /** Everything Home shows that is worked out from the plan. */
 export function homeSummary(plan: Plan) {
@@ -52,7 +56,7 @@ export function homeSummary(plan: Plan) {
       ? Math.round(covered.reduce((sum, value) => sum + value, 0) / covered.length)
       : 0,
     onTrack: covered.filter((value) => value >= 95).length,
-    rough: skippedSections(plan).length > 0 || blankFigures(plan) > 2,
+    rough: isRough(plan),
   }
 }
 

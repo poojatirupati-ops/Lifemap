@@ -1,7 +1,15 @@
 // Report page 10: what your plan assumes, its known limits and the words it uses.
-import AssumedRows from './AssumedRows.tsx'
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import TitleBlock from './TitleBlock.tsx'
+import { PageFrame, TitleBlock, type PageProps } from './PageFrame.tsx'
+
+/** Two columns of "Prices rise · 2% a year"; a long value takes its own line. */
+function AssumedRows({ rows }: { rows: string[][] }) {
+  return rows.map(([name, value]) => (
+    <div className={value.length > 31 ? 'lmr-ar lg' : 'lmr-ar'} key={name}>
+      <b className="lmx-k">{name}</b>
+      <b className="lmx-v">{value}</b>
+    </div>
+  ))
+}
 
 export default function AssumptionsPage(props: PageProps) {
   const assumptions = props.data.assumptions

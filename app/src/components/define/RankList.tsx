@@ -8,12 +8,16 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useShallow } from 'zustand/react/shallow'
+import { rankWhen } from '../../domain/goals/goalTiming.ts'
 import { fundingOrder } from '../../domain/planning/fund.ts'
+import { useTiming } from '../../hooks/useTiming.ts'
 import { useStore } from '../../state/store.ts'
-import { rankGoal, resetRank } from './goalActions.ts'
-import RankRow from './RankRow.tsx'
+import { rankGoal, resetRank } from '../../state/goals.ts'
+import type { Goal } from '../../state/types.ts'
+import GIcon from '../ui/GIcon.tsx'
 
 const VISUALLY_HIDDEN: CSSProperties = {
   position: 'absolute',
@@ -72,13 +76,7 @@ export default function RankList({ place }: { place: 'f4' | 'plan' }) {
             style={{ listStyle: 'none', margin: 0, padding: 0 }}
           >
             {goals.map((goal, index) => (
-              <RankRow
-                key={goal.id}
-                goal={goal}
-                index={index}
-                count={goals.length}
-                onMove={(at, step) => move(at, at + step)}
-              />
+              <RankRow key={goal.id} goal={goal} index={index} count={goals.length} onMove={move} />
             ))}
           </ol>
         </SortableContext>
@@ -92,5 +90,62 @@ export default function RankList({ place }: { place: 'f4' | 'plan' }) {
         </button>
       ) : null}
     </div>
+  )
+}
+
+const GRIP = Array.from({ length: 6 }, (_, i) => <i key={i} />)
+
+const MOVES = [
+  { dir: 'up', step: -1, glyph: '▲' },
+  { dir: 'down', step: 1, glyph: '▼' },
+] as const
+
+interface Props {
+  goal: Goal
+  index: number
+  count: number
+  onMove: (from: number, to: number) => void
+}
+
+/** One goal in "Which goal first?": drag it to reorder, or use the up/down buttons. */
+function RankRow({ goal, index, count, onMove }: Props) {
+  const when = rankWhen(useTiming(), goal)
+  const position = `now ${index + 1} of ${count}`
+  const { setNodeRef, listeners, transform, isDragging } = useSortable({ id: goal.id })
+  const moved = CSS.Translate.toString(transform)
+
+  return (
+    <li
+      ref={setNodeRef}
+      className={isDragging ? 'mini rk-r drag' : 'mini rk-r'}
+      data-gid={goal.id}
+      style={{ alignItems: 'center', transform: isDragging ? `${moved} scale(1.03)` : moved }}
+      {...listeners}
+    >
+      <span className="rk-grip" aria-hidden="true" title="Drag to reorder">
+        {GRIP}
+      </span>
+      <span className="rk-n">{index + 1}</span>
+      <GIcon emoji={goal.emoji} className="rk-e" aria-hidden="true" />
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <b className="rk-t">{goal.name}</b>
+        <span className="small">{when}</span>
+      </span>
+      <span className="rk-arr">
+        {MOVES.map(({ dir, step, glyph }) => (
+          <button
+            key={dir}
+            className="chip sm"
+            data-a="grank"
+            data-p={`${goal.id}|${dir}`}
+            aria-label={`Move ${goal.name} ${dir}, ${position}`}
+            aria-disabled={index + step < 0 || index + step >= count || undefined}
+            onClick={() => onMove(index, index + step)}
+          >
+            {glyph}
+          </button>
+        ))}
+      </span>
+    </li>
   )
 }

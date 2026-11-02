@@ -1,0 +1,323 @@
+// Every calculator's inputs and what-ifs, and the chips the whole-number units show.
+import type { CalcInput, Unit } from './types.ts'
+
+type Row = [
+  key: string,
+  label: string,
+  example: number,
+  min: number,
+  max: number,
+  step: number,
+  unit: Unit,
+  missingName?: string,
+]
+
+// [key, label, example, min, max, step, unit, name in "Add your …" (else the label without its brackets)]
+const INPUTS: Record<string, Row[]> = {
+  borrow: [
+    ['inc', 'Your gross yearly income', 60000, 15000, 250000, 1000, '€', 'gross yearly income'],
+    [
+      'inc2',
+      "Partner's gross yearly income",
+      0,
+      0,
+      250000,
+      1000,
+      '€',
+      "partner's gross yearly income",
+    ],
+    ['dep', 'Deposit saved', 25000, 0, 200000, 1000, '€', 'deposit saved'],
+    ['ftb', 'First-time buyer?', 1, 0, 1, 1, 'yn', 'the first-time buyer answer'],
+    ['rate', 'Interest rate', 3.75, 1, 8, 0.05, '%'],
+    ['term', 'Mortgage term (years to repay)', 30, 10, 35, 1, 'y', 'mortgage term'],
+  ],
+  repayment: [
+    ['loan', 'Mortgage amount', 300000, 50000, 1000000, 1000, '€', 'the mortgage amount'],
+    ['rate', 'Interest rate', 4, 1, 8, 0.05, '%'],
+    ['term', 'Term (years left to repay)', 30, 5, 35, 1, 'y', 'mortgage years left'],
+  ],
+  deposit: [
+    ['price', 'Home price', 350000, 100000, 1000000, 5000, '€', 'the home price'],
+    ['pc', 'Deposit needed', 10, 10, 30, 1, '%', 'the deposit you need (%)'],
+    ['saved', 'Saved so far', 12000, 0, 200000, 500, '€', 'savings so far'],
+    ['mo', 'Monthly saving', 800, 50, 5000, 50, '€', 'monthly saving'],
+  ],
+  overpay: [
+    ['bal', 'Mortgage balance', 250000, 20000, 1000000, 1000, '€', 'mortgage balance'],
+    ['rate', 'Interest rate', 4, 1, 8, 0.05, '%'],
+    ['yrs', 'Years left', 25, 3, 35, 1, 'y', 'mortgage years left'],
+    ['x', 'Extra each month', 200, 0, 2000, 25, '€', 'the extra each month'],
+  ],
+  ratechange: [
+    ['loan', 'Mortgage balance', 300000, 50000, 1000000, 1000, '€', 'mortgage balance'],
+    ['rate', 'Current rate', 4, 1, 8, 0.05, '%'],
+    ['term', 'Years left', 25, 5, 35, 1, 'y', 'mortgage years left'],
+    ['d', 'Rate change', 1, -2, 3, 0.25, '%', 'the rate change'],
+  ],
+  term: [
+    ['loan', 'Mortgage amount', 300000, 50000, 1000000, 1000, '€', 'the mortgage amount'],
+    ['rate', 'Interest rate', 4, 1, 8, 0.05, '%'],
+    ['a', 'Term A', 25, 5, 35, 1, 'y', 'the first term (your mortgage years left)'],
+    ['b', 'Term B', 35, 5, 35, 1, 'y', 'the second term'],
+  ],
+  rentbuy: [
+    ['rent', 'Monthly rent', 1800, 500, 5000, 50, '€', 'monthly rent'],
+    ['price', 'Home price', 350000, 100000, 1000000, 5000, '€', 'the home price'],
+    ['dep', 'Deposit', 35000, 0, 300000, 1000, '€', 'deposit'],
+    ['rate', 'Mortgage rate', 3.75, 1, 8, 0.05, '%'],
+    ['term', 'Mortgage term', 30, 5, 35, 1, 'y', 'the mortgage term'],
+    ['y', 'Years to compare', 10, 1, 30, 1, 'y', 'the years to compare'],
+    ['g', 'House prices rise a year', 2, 0, 6, 0.5, '%'],
+  ],
+  mortgageprotect: [
+    ['bal', 'Mortgage balance', 250000, 20000, 1000000, 5000, '€', 'mortgage balance'],
+    ['rate', 'Interest rate', 4, 1, 8, 0.05, '%'],
+    ['y', 'Years left', 25, 5, 35, 1, 'y', 'mortgage years left'],
+  ],
+  goalplanner: [
+    ['t', "Goal amount (today's prices)", 15000, 500, 500000, 500, '€', 'goal amount'],
+    ['y', 'Years until the goal', 3, 1, 30, 1, 'y', 'years until the goal'],
+    ['s', 'Already saved', 2000, 0, 200000, 500, '€', 'savings so far'],
+    ['r', 'Growth / interest a year', 2, 0, 7, 0.5, '%'],
+  ],
+  compound: [
+    ['p', 'Starting amount', 5000, 0, 200000, 500, '€', 'starting amount'],
+    ['m', 'Monthly addition', 200, 0, 3000, 25, '€', 'monthly addition'],
+    ['r', 'Growth rate a year', 4, 0, 8, 0.5, '%'],
+    ['y', 'Years', 20, 1, 40, 1, 'y', 'the number of years'],
+  ],
+  emergency: [
+    ['e', 'Essential monthly spending', 2500, 500, 10000, 100, '€', 'essential monthly spending'],
+    ['mt', 'Months you want covered', 6, 1, 12, 1, 'm'],
+    ['s', 'Easy-access savings', 6250, 0, 100000, 250, '€', 'easy-access savings'],
+  ],
+  lumpsum: [
+    ['p', 'Amount', 10000, 500, 500000, 100, '€', 'the amount'],
+    ['r', 'Growth rate a year (before fees)', 4, 0, 8, 0.5, '%'],
+    ['y', 'Years', 15, 1, 40, 1, 'y', 'the number of years'],
+    ['f', 'Yearly fees', 0, 0, 3, 0.05, '%'],
+    ['wait', 'Years you might wait before investing', 5, 1, 20, 1, 'y'],
+  ],
+  realreturn: [
+    ['p', 'Amount', 20000, 500, 500000, 100, '€', 'the amount'],
+    ['r', 'Return a year (before inflation)', 5, 0, 10, 0.25, '%'],
+    ['y', 'Years', 15, 1, 40, 1, 'y', 'the number of years'],
+  ],
+  regularinvest: [
+    ['m', 'Monthly amount', 300, 25, 5000, 25, '€', 'monthly amount'],
+    ['y', 'Years', 15, 1, 40, 1, 'y', 'the number of years'],
+    ['g', 'Growth a year (before fees)', 5, 0, 8, 0.5, '%'],
+    ['f', 'Yearly fees', 1, 0, 3, 0.05, '%'],
+  ],
+  fees: [
+    ['p', 'Amount invested', 50000, 1000, 1000000, 100, '€', 'the amount invested'],
+    ['y', 'Years', 20, 1, 40, 1, 'y', 'the number of years'],
+    ['g', 'Growth a year (before fees)', 5, 0, 8, 0.5, '%'],
+    ['a', 'Fee A a year', 0.5, 0, 3, 0.05, '%', 'the first fee (fee A)'],
+    ['b', 'Fee B a year', 1.5, 0, 3, 0.05, '%', 'the second fee (fee B)'],
+  ],
+  riskreturn: [
+    ['p', 'Amount', 20000, 1000, 1000000, 100, '€', 'the amount'],
+    ['y', 'Years', 10, 1, 30, 1, 'y', 'the number of years'],
+    ['s', 'Style', 2, 1, 3, 1, 'style'],
+  ],
+  retirement: [
+    ['age', 'Your age', 40, 20, 70, 1, 'age', 'age'],
+    ['ra', 'Target retirement age', 65, 21, 104, 1, 'age'],
+    ['pot', 'Pension value today', 60000, 0, 1500000, 1000, '€', 'pension value today'],
+    ['m', 'Monthly contributions (you + employer)', 500, 0, 5000, 10, '€', 'monthly contributions'],
+    [
+      'd',
+      "Desired yearly income in retirement (today's money, before tax)",
+      40000,
+      10000,
+      150000,
+      1000,
+      '€',
+      'desired yearly income in retirement',
+    ],
+    ['o', "Other yearly income, e.g. State Pension (today's money)", 15000, 0, 50000, 500, '€'],
+    ['g', 'Growth after charges', 4.5, 1, 7, 0.25, '%'],
+  ],
+  contrib: [
+    ['sal', 'Salary', 60000, 15000, 250000, 1000, '€', 'salary'],
+    [
+      'inc',
+      'Increase contributions by (% of salary)',
+      2,
+      0.5,
+      10,
+      0.5,
+      '%',
+      'the extra contribution (% of salary)',
+    ],
+    ['y', 'Years to retirement', 25, 1, 45, 1, 'y', 'years to retirement'],
+    ['g', 'Growth assumption', 4.5, 1, 7, 0.25, '%'],
+    ['tr', 'Your tax rate', 40, 20, 40, 20, 'tax', 'tax rate'],
+    ['age', 'Your age (for the relief limit)', 40, 18, 75, 1, 'age', 'age'],
+    [
+      'ex',
+      'What you pay in yourself now, a year',
+      0,
+      0,
+      100000,
+      100,
+      '€',
+      'yearly pension contributions now',
+    ],
+  ],
+  avc: [
+    ['m', 'AVC per month', 200, 25, 2000, 25, '€', 'AVC a month'],
+    ['sal', 'Salary (for the relief limit)', 60000, 15000, 250000, 1000, '€', 'salary'],
+    ['y', 'Years to retirement', 15, 1, 40, 1, 'y', 'years to retirement'],
+    ['g', 'Growth assumption', 4.5, 1, 7, 0.25, '%'],
+    ['tr', 'Your tax rate', 40, 20, 40, 20, 'tax', 'tax rate'],
+    ['age', 'Your age (for the relief limit)', 40, 18, 75, 1, 'age', 'age'],
+    [
+      'ex',
+      'What you pay in yourself now, a year',
+      0,
+      0,
+      100000,
+      100,
+      '€',
+      'yearly pension contributions now',
+    ],
+  ],
+  lastmoney: [
+    ['pot', 'Retirement savings', 400000, 10000, 3000000, 10000, '€', 'retirement savings'],
+    ['w', 'Yearly withdrawal (first year)', 24000, 1000, 200000, 1000, '€', 'yearly withdrawal'],
+    ['g', 'Growth assumption a year (once retired)', 3.15, 0, 7, 0.05, '%'],
+    ['age', 'Your age when withdrawals start', 66, 50, 90, 1, 'age'],
+  ],
+  drawdown: [
+    ['pot', 'Retirement savings', 400000, 10000, 3000000, 10000, '€', 'retirement savings'],
+    ['w', 'Yearly withdrawal (first year)', 20000, 1000, 200000, 1000, '€', 'yearly withdrawal'],
+  ],
+  lifecover: [
+    ['inc', 'Your gross yearly income', 60000, 0, 300000, 1000, '€', 'gross yearly income'],
+    ['y', 'Years your family would need support', 15, 1, 30, 1, 'y'],
+    ['mort', 'Mortgage balance', 250000, 0, 1000000, 5000, '€', 'mortgage balance'],
+    [
+      'mp',
+      'Is the mortgage cleared by mortgage protection? (most are)',
+      1,
+      0,
+      1,
+      1,
+      'yn',
+      'the mortgage protection answer',
+    ],
+    ['debt', 'Other debts', 10000, 0, 200000, 1000, '€', 'other debts'],
+    ['sav', 'Savings & investments', 20000, 0, 1000000, 1000, '€', 'savings and investments'],
+    [
+      'ex',
+      'Existing life cover (incl. through work)',
+      100000,
+      0,
+      2000000,
+      10000,
+      '€',
+      'existing life cover',
+    ],
+    ['surv', "State survivor's pension a week (0 if none)", 259.5, 0, 400, 0.5, '€'],
+  ],
+  incomegap: [
+    ['e', 'Essential monthly spending', 2500, 500, 10000, 100, '€', 'essential monthly spending'],
+    [
+      'sp',
+      "Months of sick pay from your employer's scheme",
+      3,
+      0,
+      12,
+      1,
+      'm',
+      'months of sick pay',
+    ],
+    ['s', 'Easy-access savings', 8000, 0, 200000, 500, '€', 'easy-access savings'],
+    ['inc', 'Your gross yearly income', 60000, 0, 300000, 1000, '€', 'gross yearly income'],
+    ['ib', 'Illness Benefit a week', 254, 0, 500, 0.5, '€'],
+  ],
+  networth: [
+    ['sav', 'Savings', 15000, 0, 1000000, 500, '€', 'savings'],
+    ['inv', 'Investments', 10000, 0, 2000000, 1000, '€', 'investments'],
+    ['pen', 'Pensions', 60000, 0, 3000000, 1000, '€', 'pension value'],
+    ['prop', 'Property value', 350000, 0, 5000000, 5000, '€', 'property value'],
+    ['mort', 'Mortgage', 250000, 0, 3000000, 5000, '€', 'mortgage balance'],
+    ['loans', 'Other loans', 8000, 0, 500000, 500, '€', 'other loans'],
+  ],
+  surplus: [
+    ['inc', 'Take-home pay per month', 3500, 500, 20000, 50, '€', 'take-home pay'],
+    [
+      'ess',
+      'Essentials (rent/mortgage, bills, food)',
+      2000,
+      0,
+      15000,
+      50,
+      '€',
+      'essential spending',
+    ],
+    ['life', 'Lifestyle spending', 800, 0, 10000, 50, '€', 'lifestyle spending'],
+    ['debt', 'Debt repayments', 200, 0, 5000, 25, '€', 'debt repayments'],
+  ],
+  budget: [['inc', 'Take-home pay per month', 3500, 500, 20000, 50, '€', 'take-home pay']],
+  debtpay: [
+    ['b', 'Balance', 5000, 100, 100000, 100, '€', 'the balance'],
+    ['apr', 'Interest (APR)', 20, 0, 35, 0.5, '%'],
+    ['p', 'Monthly payment', 250, 10, 5000, 10, '€', 'monthly payment'],
+  ],
+  loan: [
+    ['a', 'Loan amount', 15000, 500, 100000, 500, '€', 'the loan amount'],
+    ['apr', 'Interest (APR)', 8, 0, 25, 0.25, '%'],
+    ['y', 'Years', 5, 1, 10, 1, 'y', 'the loan term'],
+  ],
+}
+
+const WHAT_IFS: Record<string, Row[]> = {
+  borrow: [['xdep', 'Save extra towards deposit', 0, 0, 50000, 1000, '€']],
+  repayment: [['dr', 'If rates changed by', 0, -2, 3, 0.25, '%']],
+  deposit: [['xmo', 'Save extra each month', 0, 0, 1500, 50, '€']],
+  retirement: [
+    ['later', 'Retire later by', 0, 0, 5, 1, 'y'],
+    ['more', 'Save more each month', 0, 0, 1500, 50, '€'],
+    ['less', 'Spend less in retirement (a year)', 0, 0, 20000, 500, '€'],
+  ],
+  debtpay: [['x', 'Pay extra each month', 0, 0, 1000, 10, '€']],
+}
+
+const toInput = ([key, label, example, min, max, step, unit, missingName]: Row): CalcInput => ({
+  key,
+  label,
+  example,
+  min,
+  max,
+  step,
+  unit,
+  missingName,
+})
+
+/** A calculator's inputs and what-ifs (undefined when it has none). */
+export const inputsOf = (id: string) => ({
+  inputs: INPUTS[id].map(toInput),
+  whatIfs: WHAT_IFS[id]?.map(toInput),
+})
+
+export const STYLE_CHOICES = [
+  { value: 1, label: '1 · Cautious' },
+  { value: 2, label: '2 · Balanced' },
+  { value: 3, label: '3 · Growth' },
+]
+
+/** Whole-number inputs shown as chips, never sliders. */
+export const CHOICES: Partial<Record<Unit, { value: number; label: string }[]>> = {
+  yn: [
+    { value: 1, label: 'Yes' },
+    { value: 0, label: 'No' },
+  ],
+  style: STYLE_CHOICES,
+  tax: [
+    { value: 20, label: '20%' },
+    { value: 40, label: '40%' },
+  ],
+}

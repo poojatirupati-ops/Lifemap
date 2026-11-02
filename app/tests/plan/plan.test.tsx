@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
-import * as Plan from '../../src/screens/Plan.screen.tsx'
+import { renderAt } from '../renderAt.tsx'
 import { stepSaving, suggestedSaving, whatIfTotal } from '../../src/domain/planning/saving.ts'
 import sample from '../fixtures/sample-home.json'
 import type { Snapshot } from '../../src/state/types.ts'
 
 // the report and its PDF engine are not part of My Plan's behaviour
-vi.mock('../../src/report/openReport.ts', () => ({ openReport: () => {} }))
+vi.mock('../../src/report/openReport.ts', () => ({ openReport: () => {}, preloadReport: () => {} }))
 
 const plan = () => useStore.getState().plan
 
@@ -29,18 +29,18 @@ describe('saving maths', () => {
 })
 
 describe('My Plan', () => {
-  beforeEach(() => {
-    useStore.getState().load({ ...(sample as unknown as Snapshot), tab: 'plan' })
+  beforeEach(async () => {
+    useStore.getState().load(sample as unknown as Snapshot)
     window.matchMedia = () => ({ matches: false }) as MediaQueryList
     Element.prototype.scrollIntoView = () => {}
-    render(<Plan.Body />)
+    await renderAt('/plan')
   })
 
   test('shows the results in order', () => {
     const ids = ['tl-strip', 'r-res', 'r-goals', 'r-found', 'r-fnd', 'r-wi', 'r-glancec']
     const found = ids.map((id) => document.getElementById(id))
     expect(found.every(Boolean)).toBe(true)
-    expect(screen.getByText(/goals on track/)).toBeTruthy()
+    expect(screen.getAllByText(/goals on track/).length).toBeGreaterThan(0)
   })
 
   test('the what-if extra starts on the least covered goal and can be saved', () => {

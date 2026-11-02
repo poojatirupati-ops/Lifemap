@@ -120,6 +120,7 @@ export interface Config {
   user: User;
   jobs: {
     tasks: {
+      vimeoPoll: TaskVimeoPoll;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -218,6 +219,7 @@ export interface Video {
   id: number;
   tenant?: (number | null) | Tenant;
   appId: string;
+  vimeoStatus?: ('uploading' | 'transcoding' | 'ready' | 'failed') | null;
   title: string;
   kind: 'mortgage' | 'pension' | 'planner' | 'protection' | 'investment';
   presenter: string;
@@ -231,7 +233,7 @@ export interface Video {
    */
   art?: string | null;
   /**
-   * e.g. https://vimeo.com/123456789. The id, thumbnail and running time are read from Vimeo on save.
+   * For a video already on Vimeo, e.g. https://vimeo.com/123456789 (leave empty when uploading a file above; a pasted URL is never deleted from Vimeo). The id, thumbnail and running time are read from Vimeo on save.
    */
   vimeoUrl?: string | null;
   vimeoId?: string | null;
@@ -585,7 +587,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'schedulePublish';
+        taskSlug: 'inline' | 'vimeoPoll' | 'schedulePublish';
         taskID: string;
         input?:
           | {
@@ -618,7 +620,7 @@ export interface PayloadJob {
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'vimeoPoll' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processing?: boolean | null;
@@ -791,6 +793,7 @@ export interface TenantsSelect<T extends boolean = true> {
 export interface VideosSelect<T extends boolean = true> {
   tenant?: T;
   appId?: T;
+  vimeoStatus?: T;
   title?: T;
   kind?: T;
   presenter?: T;
@@ -1052,6 +1055,17 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskVimeoPoll".
+ */
+export interface TaskVimeoPoll {
+  input: {
+    id: number;
+    vimeoId: string;
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

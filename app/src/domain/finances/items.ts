@@ -16,7 +16,7 @@ export const itemsOf = (book: Pick<FinanceBook, 'lists'>, list: string): ListIte
   book.lists[list] ?? []
 
 export const itemHasDocument = (item: ListItem) => Object.values(item.sources).includes('doc')
-export const itemIsEmpty = (item: ListItem) => !Object.values(item.fields).some(hasValue)
+const itemIsEmpty = (item: ListItem) => !Object.values(item.fields).some(hasValue)
 
 export function addItem(book: FinanceBook, list: string) {
   book.nextItemId = (book.nextItemId ?? 0) + 1
@@ -75,7 +75,7 @@ function moveTotalsIntoList(book: FinanceBook, list: ListKey) {
  * Before a list shows: totals from before lists existed move in, and every list but other
  * mortgages starts with one empty item, until the customer changes the list.
  */
-export function prepareList(book: FinanceBook, list: ListKey) {
+function prepareList(book: FinanceBook, list: ListKey) {
   moveTotalsIntoList(book, list)
   const touched = (book.listsChanged ??= {})
   if (list === 'mort2' || itemsOf(book, list).length || touched[list]) return

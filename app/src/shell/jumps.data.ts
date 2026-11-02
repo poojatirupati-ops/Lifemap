@@ -1,16 +1,28 @@
 import samplePlan from '../state/sample-plan.json'
 import { fresh } from '../state/fresh.ts'
-import { makeSlots } from '../domain/identity/slots.ts'
+import { addDays } from 'date-fns/addDays'
+import { isWeekend } from 'date-fns/isWeekend'
+import { nextMonday } from 'date-fns/nextMonday'
+import { setHours } from 'date-fns/setHours'
+import { slotLabel } from '../domain/identity/booking.ts'
+import { localToday } from '../lib/today.ts'
 import { fromOriginal } from '../state/migrate.ts'
 import type { Snapshot } from '../state/types.ts'
 
 // The reviewer panel's "Jump to any screen": same groups, ids and labels as the original.
-// Each jump builds a whole new plan from a starting point plus a few changed fields.
+// Each jump builds a whole new plan from a starting point plus a few changed fields, then opens its URL
+// (also reachable as /jump/<id>, routes/jump.$id.tsx, which the Playwright screen checks use).
+
+/** The original's sample meeting: 18:00 on the first working day from two days ahead. */
+function sampleSlot() {
+  const day = addDays(localToday(), 2)
+  return slotLabel(setHours(isWeekend(day) ? nextMonday(day) : day, 18))
+}
 
 type Patch = Partial<Snapshot> | ((plan: Snapshot) => Partial<Snapshot>)
-export type Jump = { id: string; label: string; build: () => Snapshot }
+export type Jump = { id: string; label: string; to: string; build: () => Snapshot }
 
-// ponytail: the captured sample customer stands in for the original's loadSample(); swap when a domain card ports it.
+// The captured sample customer stands in for the original's loadSample().
 export const sampleCustomer = () => fromOriginal<Snapshot>(structuredClone(samplePlan))
 
 const discovered = (): Snapshot => ({
@@ -22,9 +34,6 @@ const discovered = (): Snapshot => ({
 const inPlanBuilder = (): Snapshot => ({
   ...sampleCustomer(),
   hasResults: false,
-  inShell: true,
-  planBuilder: true,
-  tab: 'plan',
   versions: [],
 })
 
@@ -36,177 +45,108 @@ const from =
   }
 
 const sample = (patch?: Patch) => from(sampleCustomer, patch)
-const builder = (scr: string, patch?: Patch) =>
-  from(() => ({ ...inPlanBuilder(), screen: scr }), patch)
+const builder = (patch?: Patch) => from(inPlanBuilder, patch)
 
-const meJump = (id: string, label: string, me: string): Jump => ({
-  id,
-  label,
-  build: sample({ tab: 'me', mePage: me }),
-})
-const expertJump = (id: string, label: string, exp: string): Jump => ({
-  id,
-  label,
-  build: sample({ tab: 'exp', expertsPage: exp }),
+// [id, label, URL, plan]; a jump without a plan opens the sample customer's app
+type Row = [id: string, label: string, to: string, build?: () => Snapshot]
+
+const group = (name: string, rows: Row[]) => ({
+  group: name,
+  jumps: rows.map(([id, label, to, build = sample()]): Jump => ({ id, label, to, build })),
 })
 
 export const JUMPS: { group: string; jumps: Jump[] }[] = [
-  {
-    group: 'Sign in',
-    jumps: [
-      { id: 'P1', label: 'Sign in (email)', build: from(fresh, { screen: 'P1' }) },
-      { id: 'P1E', label: 'Email code', build: from(fresh, { screen: 'P1E' }) },
-      { id: 'P1D', label: 'New account: name + consents', build: from(fresh, { screen: 'P1D' }) },
+  group('Sign in', [
+    ['P1', 'Sign in (email)', '/sign-in', from(fresh)],
+    ['P1E', 'Email code', '/sign-in/code', from(fresh)],
+    ['P1D', 'New account: name + consents', '/account/details', from(fresh)],
+  ]),
+  group('Onboarding', [
+    ['D0', 'Welcome', '/', from(fresh)],
+    ['D1', 'What brought you here?', '/why', from(fresh)],
+    ['D2', 'Question 1 of 6', '/discover/1', from(fresh)],
+    ['D5', 'Question 4 (road)', '/discover/4', from(fresh)],
+    ['D6', 'Question 5 (scenario)', '/discover/5', from(fresh)],
+    ['DR', 'Money personality + terms', '/personality', from(discovered)],
+  ]),
+  group('App before a plan', [
+    ['HOME-0', 'Home (no plan yet)', '/home', from(discovered)],
+    ['XPL-01', 'Explore', '/explore', from(discovered)],
+    ['CALC-retirement', 'A calculator', '/explore/calculator/retirement', from(discovered)],
+    ['VID-01', 'A video', '/explore/videos/v2', from(discovered)],
+    ['PLAN-0', 'My Plan (empty state)', '/plan', from(discovered)],
+  ]),
+  group('Admin (not for customers)', [
+    ['ADMIN-SET', 'Settings: standards, wording, sources, partner label', '/admin'],
+  ]),
+  group('Plan builder', [
+    ['B1', '1 · About you & family', '/build/about', builder()],
+    ['F1', '2 · Your goals', '/build/goals', builder()],
+    ['F2', '3 · Your timeline (drag)', '/build/timeline', builder()],
+    ['F4', '3 · Confirm my LifeMap', '/build/review', builder()],
+    [
+      'B4',
+      '4 · Your money profile',
+      '/build/profile',
+      builder(({ answers }) => ({
+        answers: Object.fromEntries(
+          Object.entries(answers).filter(([question]) => question !== '6'),
+        ),
+      })),
     ],
-  },
-  {
-    group: 'Onboarding',
-    jumps: [
-      { id: 'D0', label: 'Welcome', build: from(fresh) },
-      { id: 'D1', label: 'What brought you here?', build: from(fresh, { screen: 'D1' }) },
-      { id: 'D2', label: 'Question 1 of 6', build: from(fresh, { screen: 'D2', discoverStep: 0 }) },
-      {
-        id: 'D5',
-        label: 'Question 4 (road)',
-        build: from(fresh, { screen: 'D5', discoverStep: 3 }),
-      },
-      {
-        id: 'D6',
-        label: 'Question 5 (scenario)',
-        build: from(fresh, { screen: 'D6', discoverStep: 4 }),
-      },
-      { id: 'DR', label: 'Money personality + terms', build: from(discovered, { screen: 'DR' }) },
+    ['P2', '6 · Your finances hub', '/build/finances', builder()],
+    ['P3-2', '6 · Income (type it)', '/build/finances/2', builder()],
+    [
+      'P3-6',
+      '6 · Pension (upload)',
+      '/build/finances/6',
+      builder(({ entryMode }) => ({ entryMode: { ...entryMode, pension: 'upload' } })),
     ],
-  },
-  {
-    group: 'App before a plan',
-    jumps: [
-      {
-        id: 'HOME-0',
-        label: 'Home (no plan yet)',
-        build: from(discovered, { inShell: true, tab: 'home' }),
-      },
-      {
-        id: 'XPL-01',
-        label: 'Explore',
-        build: from(discovered, { inShell: true, tab: 'explore' }),
-      },
-      {
-        id: 'CALC-retirement',
-        label: 'A calculator',
-        build: from(discovered, {
-          inShell: true,
-          tab: 'explore',
-          explorePages: [{ page: 'CALC', param: 'retirement' }],
-        }),
-      },
-      {
-        id: 'VID-01',
-        label: 'A video',
-        build: from(discovered, {
-          inShell: true,
-          tab: 'explore',
-          explorePages: [{ page: 'VID', param: 'v2' }],
-        }),
-      },
-      {
-        id: 'PLAN-0',
-        label: 'My Plan (empty state)',
-        build: from(discovered, { inShell: true, tab: 'plan' }),
-      },
+    ['P4', '7 · Check your details', '/build/check', builder({ checked: false })],
+  ]),
+  group('Results & app', [
+    ['HOME', 'Home dashboard', '/home'],
+    // Opens with the plan's gap question already asked, as the original does.
+    ['ASK', 'Ask (help sheet)', '/home', sample({ sheet: 'ask|pgap' })],
+    ['PLAN', 'My Plan (timeline + results)', '/plan'],
+    ['ME-01', 'Me', '/me'],
+    ['ME-UM', 'Your money profile', '/me/profile'],
+    ['ME-CHK', 'Your first answers (re-check)', '/me/recheck'],
+    ['ME-TERMS', 'Your money terms', '/me/terms'],
+    [
+      'ME-UM2',
+      'Money profile · capacity',
+      '/me/profile/section',
+      sample(({ moneyProfile }) => ({ moneyProfile: { ...moneyProfile, section: 2 } })),
     ],
-  },
-  {
-    group: 'Admin (not for customers)',
-    jumps: [
-      {
-        id: 'ADMIN-SET',
-        label: 'Settings: standards, wording, sources, partner label',
-        build: sample({ adminView: true }),
-      },
+    [
+      'ME-R',
+      'Profile result',
+      '/me/profile/result',
+      sample(({ moneyProfile }) => ({
+        moneyProfile: {
+          ...moneyProfile,
+          answers: { ...moneyProfile.answers, u4: 1, u9: 3, u10: 1, u11: 1, u12: 2, u14: 2 },
+          done: { 1: true, 2: true, 3: true },
+        },
+      })),
     ],
-  },
-  {
-    group: 'Plan builder',
-    jumps: [
-      { id: 'B1', label: '1 · About you & family', build: builder('B1') },
-      { id: 'F1', label: '2 · Your goals', build: builder('F1') },
-      { id: 'F2', label: '3 · Your timeline (drag)', build: builder('F2') },
-      { id: 'F4', label: '3 · Confirm my LifeMap', build: builder('F4') },
-      {
-        id: 'B4',
-        label: '4 · Your money profile',
-        build: builder('B4', ({ answers }) => ({
-          answers: Object.fromEntries(
-            Object.entries(answers).filter(([question]) => question !== '6'),
-          ),
-        })),
-      },
-      { id: 'P2', label: '6 · Your finances hub', build: builder('P2') },
-      { id: 'P3-2', label: '6 · Income (type it)', build: builder('P3', { financeSection: 1 }) },
-      {
-        id: 'P3-6',
-        label: '6 · Pension (upload)',
-        build: builder('P3', ({ entryMode }) => ({
-          financeSection: 5,
-          entryMode: { ...entryMode, pension: 'upload' },
-        })),
-      },
-      { id: 'P4', label: '7 · Check your details', build: builder('P4', { checked: false }) },
+    ['ME-MONEY', 'My money', '/me/money'],
+  ]),
+  group('Connect', [
+    ['C0', 'Help your adviser know you', '/experts/c0'],
+    ['C1', 'Your match', '/experts/c1'],
+    ['C2', 'Share your plan', '/experts/c2'],
+    ['C3', 'Pick a time', '/experts/c3'],
+    [
+      'C4',
+      "You're booked",
+      '/experts/c4',
+      sample(({ booking }) => ({ booking: { ...booking, done: true, slot: sampleSlot() } })),
     ],
-  },
-  {
-    group: 'Results & app',
-    jumps: [
-      { id: 'HOME', label: 'Home dashboard', build: sample({ tab: 'home' }) },
-      // Opens with the plan's gap question already asked, as the original does.
-      { id: 'ASK', label: 'Ask (help sheet)', build: sample({ tab: 'home', sheet: 'ask|pgap' }) },
-      { id: 'PLAN', label: 'My Plan (timeline + results)', build: sample() },
-      meJump('ME-01', 'Me', 'home'),
-      meJump('ME-UM', 'Your money profile', 'um'),
-      meJump('ME-CHK', 'Your first answers (re-check)', 'recheck'),
-      meJump('ME-TERMS', 'Your money terms', 'terms'),
-      {
-        id: 'ME-UM2',
-        label: 'Money profile · capacity',
-        build: sample(({ moneyProfile }) => ({
-          tab: 'me',
-          mePage: 'ums',
-          moneyProfile: { ...moneyProfile, section: 2 },
-        })),
-      },
-      {
-        id: 'ME-R',
-        label: 'Profile result',
-        build: sample(({ moneyProfile }) => ({
-          tab: 'me',
-          mePage: 'umr',
-          moneyProfile: {
-            ...moneyProfile,
-            answers: { ...moneyProfile.answers, u4: 1, u9: 3, u10: 1, u11: 1, u12: 2, u14: 2 },
-            done: { 1: true, 2: true, 3: true },
-          },
-        })),
-      },
-      meJump('ME-MONEY', 'My money', 'money'),
-    ],
-  },
-  {
-    group: 'Connect',
-    jumps: [
-      expertJump('C0', 'Help your adviser know you', 'c0'),
-      expertJump('C1', 'Your match', 'c1'),
-      expertJump('C2', 'Share your plan', 'c2'),
-      expertJump('C3', 'Pick a time', 'c3'),
-      {
-        id: 'C4',
-        label: "You're booked",
-        build: sample(({ booking }) => ({
-          tab: 'exp',
-          expertsPage: 'c4',
-          booking: { ...booking, done: true, slot: makeSlots()[1] },
-        })),
-      },
-    ],
-  },
+  ]),
 ]
+
+/** A jump by its id, for /jump/<id>. */
+export const jumpById = (id: string) =>
+  JUMPS.flatMap(({ jumps }) => jumps).find((jump) => jump.id === id)

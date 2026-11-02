@@ -1,21 +1,8 @@
 // What every report page reads: the plan, its projection and the figures, worked out once.
-import type { Goal, Plan } from '../../state/types.ts'
+import type { Plan } from '../../state/types.ts'
 import { planSettings } from '../../domain/planning/planSettings.ts'
-import { project, livingShort, type YearRow } from '../../domain/planning/project.ts'
-
-/** A year with a shortfall the charts colour coral. */
-export const hasShortfall = (row: YearRow) => row.shortfall > 0.5
-
-/** The first year everyday costs are no longer covered (a goal falling short is a separate note). */
-export const firstGapAge = (rows: YearRow[]) => rows.find(livingShort)?.age ?? null
-
-/** A figure the customer gave (typed or from a document), not left blank. */
-export const hasFigure = (plan: Plan, key: string) =>
-  !!plan.sources[key] && plan.figures[key] != null && plan.figures[key] !== ''
-
-/** A goal whose age is already behind the customer. */
-export const isPassed = (goal: Goal, age: number | null) =>
-  goal.kind !== 'legacy' && goal.age < (age ?? 0)
+import { project, type YearRow } from '../../domain/planning/project.ts'
+import { hasShortfall } from '../../components/results/chart/cashflow.ts'
 
 export function reportContext(plan: Plan, today: Date) {
   const settings = planSettings(plan)

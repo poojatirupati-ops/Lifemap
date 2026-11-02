@@ -17,6 +17,14 @@ process.env.OTP_SENDER = "ses";
 process.env.POSTHOG_API_KEY = r.PosthogProjectKey.value;
 process.env.POSTHOG_PERSONAL_API_KEY = r.PosthogPersonalApiKey.value;
 process.env.POSTHOG_HOST = "https://eu.i.posthog.com";
+// Document reader (src/documents/reader.ts): the provider over HTTP; production never uses the example reader.
+process.env.DOC_READER = "http";
+process.env.DOC_READER_URL = r.DocReaderUrl.value;
+process.env.DOC_READER_API_KEY = r.DocReaderApiKey.value;
+// Booking events (src/events/bus.ts): the EventBridge bus; Cal.com webhook secrets per tenant (JSON { "<organization id>": "<secret>" }, docs/runbook.md).
+process.env.EVENT_BUS = "eventbridge";
+process.env.EVENT_BUS_NAME = (Resource as unknown as Record<string, { name: string }>).Bookings.name;
+process.env.CAL_WEBHOOK_SECRETS = r.CalWebhookSecrets.value;
 
 const { app } = await import("./app");
 const { logger, metrics, tracer } = await import("./observe");

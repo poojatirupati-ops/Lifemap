@@ -14,6 +14,7 @@ import { renderHook } from '@testing-library/react'
 import { seedContent } from '../content/seed'
 import { project } from '../../src/domain/planning/project'
 import { whatIfFrom } from '../../src/domain/planning/wi'
+import { prepared as preparedBy } from '../golden/helpers'
 
 seedContent()
 const { general: GENERAL_TOPICS, guard } = renderHook(() => useAskAnswers()).result.current
@@ -25,13 +26,7 @@ const original = runOriginal(
   'applyAssume, syncLists, autoSafety, askCtx, askPlan, askMatch, ASK_GEN',
 )
 
-function prepared(state: any) {
-  original.setState(structuredClone(state))
-  original.applyAssume()
-  original.syncLists()
-  original.autoSafety()
-  return fromOriginal<any>(structuredClone(original.getState()))
-}
+const prepared = (state: any) => fromOriginal<any>(preparedBy(original, state))
 
 const topicsOf = (plan: any) => planTopics(plan, project(plan), whatIfFrom(plan.whatIf))
 

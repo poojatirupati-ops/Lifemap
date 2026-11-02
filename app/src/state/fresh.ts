@@ -64,14 +64,9 @@ export function fresh(): Plan {
 /** The screen state of a fresh start: Welcome, nothing open. */
 export function freshUi(): Ui {
   return {
-    screen: 'D0',
     sheet: null,
-    tab: 'plan',
-    planSegment: 'main',
     planScrollTo: null,
     editingGoals: false,
-    mePage: 'home',
-    expertsPage: 'home',
     timelineOpen: {},
     highlightedGoal: null,
     calcTouched: {},
@@ -84,19 +79,15 @@ export function freshUi(): Ui {
     editingInflation: false,
     statement: null,
     calcStatementKeys: {},
-    afterGate: null,
-    inShell: false,
     planBuilder: false,
-    explorePages: [],
+    builderAt: undefined,
+    resumeBooking: undefined,
     calcValues: {},
     playing: false,
     videoFilter: 'all',
     editingAnswers: {},
-    returnTo: undefined,
     focusArea: undefined,
     todaysMoney: undefined,
-    adminView: undefined,
     openAssumption: undefined,
-    assumptionsBack: undefined,
   }
 }

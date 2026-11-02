@@ -27,6 +27,17 @@ export default function FocusArea() {
   }, [index])
 
   if (!topic) return null
+  const arrow = (step: 1 | -1) => (
+    <button
+      className="xh-arr"
+      data-a="xswipe"
+      data-p={step}
+      aria-label={step > 0 ? 'Next area' : 'Previous area'}
+      onClick={() => swipe(step)}
+    >
+      {step > 0 ? '›' : '‹'}
+    </button>
+  )
   return (
     <>
       <div className="chips xchips" role="group" aria-label="Choose an area" ref={chips}>
@@ -80,15 +91,7 @@ export default function FocusArea() {
         </button>
       </div>
       <div className="xh-nav">
-        <button
-          className="xh-arr"
-          data-a="xswipe"
-          data-p="-1"
-          aria-label="Previous area"
-          onClick={() => swipe(-1)}
-        >
-          ‹
-        </button>
+        {arrow(-1)}
         <span className="xh-dots" aria-hidden="true">
           {topics.map((area, i) => (
             <i key={area.name} className={i === index ? 'on' : undefined}></i>
@@ -97,15 +100,7 @@ export default function FocusArea() {
         <span className="xh-hint" aria-hidden="true">
           Swipe to explore
         </span>
-        <button
-          className="xh-arr"
-          data-a="xswipe"
-          data-p="1"
-          aria-label="Next area"
-          onClick={() => swipe(1)}
-        >
-          ›
-        </button>
+        {arrow(1)}
       </div>
     </>
   )

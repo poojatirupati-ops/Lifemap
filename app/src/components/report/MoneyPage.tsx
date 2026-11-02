@@ -1,8 +1,6 @@
 // Report page 3: your money today. Where the month goes, what you own and owe, what to add next.
-import Ledger from './Ledger.tsx'
-import PageFrame, { type PageProps } from './PageFrame.tsx'
-import Photo from './Photo.tsx'
-import TitleBlock from './TitleBlock.tsx'
+import type { ReportData } from '../../report/model/reportData.ts'
+import { PageFrame, Photo, TitleBlock, type PageProps } from './PageFrame.tsx'
 import { textOf, tintOf } from './tones.ts'
 
 const PRIORITY_TONE: Record<string, string> = { High: 'coral', Medium: 'gold' }
@@ -15,6 +13,27 @@ function tileShares(amounts: number[]) {
   const others = shares.reduce((sum, share, index) => (index === biggest ? sum : sum + share), 0)
   shares[biggest] = 1 - others
   return shares
+}
+
+type LedgerRow = ReportData['money']['own']['rows'][number]
+
+/** "YOU OWN" or "YOU OWE": a figure per row, or Missing. */
+function Ledger({ title, rows }: { title: string; rows: LedgerRow[] }) {
+  return (
+    <>
+      <div className="lmr-led-t">{title}</div>
+      {rows.map((row) => (
+        <div className="lmr-row" key={row.label}>
+          <span>{row.label}</span>
+          {row.status === 'missing' ? (
+            <span className="lmr-miss">Missing</span>
+          ) : (
+            <b>{row.value}</b>
+          )}
+        </div>
+      ))}
+    </>
+  )
 }
 
 export default function MoneyPage(props: PageProps) {
