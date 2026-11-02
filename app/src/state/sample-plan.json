@@ -1,0 +1,386 @@
+{
+  "scr": "D0",
+  "app": true,
+  "tab": "plan",
+  "planSeg": "main",
+  "planGo": null,
+  "planEdit": false,
+  "me": "home",
+  "exp": "home",
+  "entry": "direct",
+  "why": ["track", "change"],
+  "whyNote": "",
+  "di": 0,
+  "ans": {
+    "2": 0,
+    "4": 1,
+    "6": 2,
+    "7": 1,
+    "8": 2,
+    "9": 2,
+    "12": 1
+  },
+  "about": {
+    "age": 38,
+    "partner": true,
+    "deps": 2,
+    "dob": {
+      "d": "21",
+      "m": "8",
+      "y": "1989"
+    },
+    "_dobAge": 38,
+    "pdob": {
+      "d": "3",
+      "m": "3",
+      "y": "1990"
+    },
+    "ageToday": 37
+  },
+  "goals": [
+    {
+      "id": 1,
+      "k": "edu",
+      "name": "Kids' education",
+      "e": "🎓",
+      "kind": "spend",
+      "spec": "planner",
+      "amount": 50000,
+      "saved": 0,
+      "who": "Me",
+      "prio": "Must have",
+      "flex": "Can move",
+      "age": 48
+    },
+    {
+      "id": 2,
+      "k": "travel",
+      "name": "Travel",
+      "e": "✈️",
+      "kind": "spend",
+      "spec": "planner",
+      "amount": 12000,
+      "saved": 0,
+      "who": "Me",
+      "prio": "Must have",
+      "flex": "Can move",
+      "age": 41
+    },
+    {
+      "id": 3,
+      "k": "mfree",
+      "name": "Be mortgage-free",
+      "e": "🏦",
+      "kind": "mfree",
+      "spec": "mortgage",
+      "amount": 150000,
+      "saved": 0,
+      "who": "Me",
+      "prio": "Must have",
+      "flex": "Can move",
+      "age": 55
+    },
+    {
+      "id": 4,
+      "k": "safety",
+      "name": "Emergency fund",
+      "e": "🪂",
+      "kind": "pot",
+      "spec": "planner",
+      "amount": 15000,
+      "saved": 5000,
+      "who": "Me",
+      "prio": "Must have",
+      "flex": "Can move",
+      "age": 40,
+      "auto": false
+    },
+    {
+      "id": 5,
+      "k": "retire",
+      "name": "Retire comfortably",
+      "e": "🌅",
+      "kind": "retire",
+      "spec": "pension",
+      "amount": 46000,
+      "saved": 0,
+      "who": "Me",
+      "prio": "Must have",
+      "flex": "Can move",
+      "age": 63
+    }
+  ],
+  "gid": 6,
+  "retireAge": 63,
+  "retireSet": true,
+  "asm": {
+    "planEnd": 95,
+    "cardRate": 0.2,
+    "loanRate": 0.08,
+    "pSpWeek": 239.44,
+    "mortRate": 0.0375,
+    "buyFees": 3000,
+    "depEarn": 0.01,
+    "survivor": 269.5
+  },
+  "saved": {},
+  "rank": null,
+  "lists": {
+    "life": [
+      {
+        "id": 1,
+        "f": {
+          "amount": 250000,
+          "term": 21
+        },
+        "src": {
+          "amount": "typed",
+          "term": "typed"
+        },
+        "conf": {},
+        "man": {},
+        "fix": {},
+        "docFrom": null
+      }
+    ],
+    "workCover": [
+      {
+        "id": 2,
+        "f": {
+          "mult": 3
+        },
+        "src": {
+          "mult": "typed"
+        },
+        "conf": {},
+        "man": {},
+        "fix": {},
+        "docFrom": null
+      }
+    ],
+    "health": [
+      {
+        "id": 3,
+        "f": {
+          "amount": 2400
+        },
+        "src": {
+          "amount": "typed"
+        },
+        "conf": {},
+        "man": {},
+        "fix": {},
+        "docFrom": null
+      }
+    ]
+  },
+  "save": {
+    "email": "",
+    "comms": false,
+    "done": false,
+    "asked": false
+  },
+  "tlOpen": {},
+  "tlHl": null,
+  "acct": {
+    "name": "Aoife",
+    "email": "aoife@example.ie",
+    "mobile": "087 123 4567",
+    "c1": true,
+    "c2": false,
+    "ev": true,
+    "sv": false,
+    "pk": true
+  },
+  "fin": {
+    "age": 38,
+    "pAge": 37,
+    "name": "Aoife",
+    "retireAge": 63,
+    "work": "Employed",
+    "income": 58000,
+    "pIncome": 22000,
+    "otherM": 0,
+    "costsM": 3600,
+    "oneOffY": 1800,
+    "home": "Own with mortgage",
+    "homeValue": 420000,
+    "cash": 9000,
+    "invest": 6200,
+    "mortBal": 203700,
+    "mortRate": 3.85,
+    "mortPayM": 1180,
+    "mortYears": 21,
+    "cardBal": 400,
+    "cardPayM": 40,
+    "loanBal": 3500,
+    "loanPayM": 100,
+    "life": "Yes",
+    "ip": "No",
+    "ci": "Not sure",
+    "workCover": "Yes",
+    "health": "Yes",
+    "pension": 72000,
+    "pensionM": 520,
+    "sp": "Expect full"
+  },
+  "src": {
+    "age": "pre",
+    "pAge": "typed",
+    "name": "pre",
+    "retireAge": "pre",
+    "work": "doc",
+    "income": "doc",
+    "pIncome": "typed",
+    "otherM": "typed",
+    "costsM": "typed",
+    "oneOffY": "doc",
+    "home": "doc",
+    "homeValue": "typed",
+    "cash": "doc",
+    "invest": "doc",
+    "mortBal": "doc",
+    "mortRate": "doc",
+    "mortPayM": "doc",
+    "mortYears": "doc",
+    "cardBal": "doc",
+    "cardPayM": "doc",
+    "loanBal": "doc",
+    "loanPayM": "doc",
+    "life": "doc",
+    "ip": "typed",
+    "ci": "typed",
+    "workCover": "doc",
+    "health": "typed",
+    "pension": "doc",
+    "pensionM": "doc",
+    "sp": "typed"
+  },
+  "conf": {
+    "work": 99,
+    "income": 98,
+    "oneOffY": 81,
+    "home": 99,
+    "cash": 97,
+    "invest": 88,
+    "mortBal": 96,
+    "mortRate": 94,
+    "mortPayM": 93,
+    "mortYears": 90,
+    "cardBal": 86,
+    "cardPayM": 80,
+    "loanBal": 88,
+    "loanPayM": 84,
+    "life": 95,
+    "workCover": 90,
+    "pension": 95,
+    "pensionM": 91
+  },
+  "look": {
+    "pension": "Statement is over 12 months old"
+  },
+  "ack": {},
+  "man": {},
+  "fix": {},
+  "docOf": {},
+  "calcT": {},
+  "calcDoc": {},
+  "fsec": null,
+  "fmode": {},
+  "upl": null,
+  "checked": true,
+  "from": null,
+  "um": {
+    "a": {},
+    "chips": [],
+    "done": {},
+    "sec": null
+  },
+  "wi": {
+    "g": null,
+    "m": 0,
+    "l": 0
+  },
+  "pref": null,
+  "versions": [
+    {
+      "note": "LifeMap confirmed",
+      "date": "29 Sep 2026"
+    },
+    {
+      "note": "First results",
+      "date": "29 Sep 2026"
+    }
+  ],
+  "understood": false,
+  "advQs": [],
+  "view": "journey",
+  "chapOpen": null,
+  "infl": 0.02,
+  "inflOther": false,
+  "inflEdit": false,
+  "pst": null,
+  "pdocs": {},
+  "calcSrc": {},
+  "after": null,
+  "saveM": null,
+  "savingCapped": false,
+  "shell": true,
+  "pb": false,
+  "xs": [],
+  "calcV": {},
+  "play": false,
+  "vf": "all",
+  "assume": "standard",
+  "book": {
+    "stage": null,
+    "adv": 0,
+    "share": {
+      "report": false,
+      "fin": false,
+      "docs": false,
+      "um": false
+    },
+    "agree": false,
+    "mode": "Video",
+    "slot": null,
+    "done": false,
+    "from": "plan"
+  },
+  "partner": {
+    "mode": "manual",
+    "email": "",
+    "sent": false,
+    "name": "Cian"
+  },
+  "ask": {
+    "open": null,
+    "q": "",
+    "a": null
+  },
+  "meEdit": {},
+  "sheet": null,
+  "toast": null,
+  "iid": 3,
+  "pRet": 66,
+  "pRetSet": true,
+  "toolPick": {
+    "lumpsum": {
+      "f": 0,
+      "wait": 5
+    },
+    "regularinvest": {
+      "f": 1
+    },
+    "fees": {
+      "a": 0.5,
+      "b": 1.5
+    },
+    "riskreturn": {
+      "s": 2
+    },
+    "incomegap": {
+      "ib": 264
+    }
+  }
+}

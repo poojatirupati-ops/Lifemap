@@ -1,0 +1,7 @@
+# Wave 3: shrink to ~15k lines, finish open work, performance
+Ten agents run in parallel in /Users/sahilpohare/Lifemap/app, each owning one area (in its prompt). All rules of BATCH-F.md apply (ponytail + vercel-react-best-practices, libraries only, verify once at the end, no TODO/FIXME/deferral comments, never delete a feature you cannot finish: stop and report it; Node from /opt/homebrew/opt/node@26/bin).
+- Goal: reach your area's line target (`find <your folders> -name '*.ts*' ! -name '*.test.*' | xargs cat | wc -l`) WITHOUT changing behaviour or look. How: delete duplicates (use one shared helper; check src/lib, src/domain and src/components/ui first), derive instead of storing, drive repeated JSX from data tables, merge one-use components/hooks into their parent, delete dead exports and dead code, simplify types. Readable code beats short code: no golfing, no cryptic names.
+- Do not change public function/action names or props that other areas use; if you must, report it instead.
+- Do not edit files outside your area. If a shared helper is missing, add it in your own area and report it.
+- Check once at the end: `npm run typecheck`, the vitest files for your area, and the Playwright screen checks for your area's screens (`npx playwright test tests/e2e/screens.spec.ts -g "<names>"`).
+- Reply with: lines before/after, what you merged or deleted, open work finished, anything you could not finish (as questions).

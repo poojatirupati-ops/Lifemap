@@ -1,0 +1,63 @@
+# Push to main -> stage "staging". Published GitHub release -> stage "production" (the production environment's required reviewers approve first).
+# AWS access: GitHub OIDC -> the environment's AWS_ROLE_ARN, no stored keys. Per-stage secrets live in SST (`sst secret set --stage`), not here.
+# Setup and release steps: README.md "Release". Rollback: docs/runbook.md.
+name: Deploy
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: deploy-${{ github.event_name == 'release' && 'production' || 'staging' }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  deploy:
+    needs: checks
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'release' && 'production' || 'staging' }}
+      url: ${{ steps.smoke.outputs.url }}
+    env:
+      STAGE: ${{ github.event_name == 'release' && 'production' || 'staging' }}
+      LIFEMAP_EMAIL_SENDER: ${{ vars.LIFEMAP_EMAIL_SENDER }}
+      LIFEMAP_ALERT_EMAIL: ${{ vars.LIFEMAP_ALERT_EMAIL }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: eu-west-1
+      - run: npx sst deploy --stage "$STAGE"
+      # Migrations run after the deploy, so they must be backwards compatible (add, then remove in a later release).
+      # RDS is private: `sst tunnel` routes the VPC through the bastion (the NAT instance) for this job.
+      - name: Open tunnel to the VPC
+        run: |
+          sudo env "PATH=$PATH" npx sst tunnel install
+          nohup npx sst tunnel --stage "$STAGE" > "$RUNNER_TEMP/tunnel.log" 2>&1 &
+      - name: Migrate API and CMS
+        run: |
+          npx sst shell --stage "$STAGE" -- bash -c '
+            set -euo pipefail
+            export DATABASE_URL="$(node -p "JSON.parse(process.env.SST_RESOURCE_DatabaseUrl).value")"
+            host="$(node -p "JSON.parse(process.env.SST_RESOURCE_Db).host")"
+            timeout 120 bash -c "until (exec 3<>/dev/tcp/$host/5432) 2>/dev/null; do sleep 2; done"
+            npm run migrate -w api
+            npm run payload -w cms -- migrate
+          '
+      - name: Smoke test
+        id: smoke
+        run: |
+          url="$(jq -r .appUrl .sst/outputs.json)"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          curl -fsS --retry 5 --retry-all-errors "$url/api/health"
+          curl -fsS -o /dev/null --retry 5 --retry-all-errors "$(jq -r .cmsUrl .sst/outputs.json)/admin"

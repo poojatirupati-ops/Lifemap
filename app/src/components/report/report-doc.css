@@ -1,0 +1,23 @@
+html,
+body {
+  margin: 0;
+  background: #e9edf1;
+}
+.lmr-doc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  .lmr-doc {
+    display: block;
+    padding: 0;
+    gap: 0;
+  }
+}

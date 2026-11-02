@@ -1,0 +1,22 @@
+# Checks for every pull request; deploy.yml calls it before each deploy.
+# `turbo run test` includes the app's Playwright screen suite (tests/scenarios/viewEqual.test.ts, Chrome is preinstalled on ubuntu-latest).
+name: CI
+on:
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.head_ref || github.sha }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx turbo run lint typecheck test build

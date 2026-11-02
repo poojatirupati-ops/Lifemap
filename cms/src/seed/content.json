@@ -1,0 +1,1752 @@
+{
+  "media": [
+    {
+      "id": 7,
+      "alt": "How much can I borrow? A first-time buyer’s guide: captions",
+      "filename": "how-much-can-i-borrow.vtt"
+    },
+    {
+      "id": 8,
+      "alt": "Your first home: deposit to keys: captions",
+      "filename": "first-home-deposit-to-keys.vtt"
+    }
+  ],
+  "explore-categories": [
+    {
+      "id": 19,
+      "appId": "home",
+      "name": "Home & Mortgage",
+      "emoji": "🏡",
+      "color": "var(--c2)",
+      "blurb": "Borrowing, deposits, repayments",
+      "_status": "published"
+    },
+    {
+      "id": 20,
+      "appId": "savings",
+      "name": "Savings & Goals",
+      "emoji": "🎯",
+      "color": "var(--c3)",
+      "blurb": "Plan any goal, see growth",
+      "_status": "published"
+    },
+    {
+      "id": 21,
+      "appId": "retire",
+      "name": "Pensions & Retirement",
+      "emoji": "🌅",
+      "color": "var(--c7)",
+      "blurb": "Projections and income",
+      "_status": "published"
+    },
+    {
+      "id": 22,
+      "appId": "invest",
+      "name": "Investments",
+      "emoji": "📈",
+      "color": "var(--c5)",
+      "blurb": "Growth, fees, ups and downs",
+      "_status": "published"
+    },
+    {
+      "id": 23,
+      "appId": "protect",
+      "name": "Protection",
+      "emoji": "🛡️",
+      "color": "var(--c4)",
+      "blurb": "Cover for you and your family",
+      "_status": "published"
+    },
+    {
+      "id": 24,
+      "appId": "everyday",
+      "name": "Everyday Money",
+      "emoji": "💶",
+      "color": "var(--c1)",
+      "blurb": "Budget, surplus, debt, net worth",
+      "_status": "published"
+    }
+  ],
+  "calculators": [
+    {
+      "id": 85,
+      "appId": "borrow",
+      "name": "How much could I borrow?",
+      "question": "What home price could be within reach?",
+      "emoji": "🏡",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 86,
+      "appId": "repayment",
+      "name": "Monthly mortgage repayment",
+      "question": "What would my monthly repayment be?",
+      "emoji": "🧾",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 87,
+      "appId": "deposit",
+      "name": "Deposit calculator",
+      "question": "How long until I have my deposit?",
+      "emoji": "🐷",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 88,
+      "appId": "overpay",
+      "name": "Mortgage overpayment",
+      "question": "What if I paid a little extra each month?",
+      "emoji": "⏩",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 89,
+      "appId": "ratechange",
+      "name": "Interest-rate impact",
+      "question": "What if my mortgage rate changed?",
+      "emoji": "📊",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 90,
+      "appId": "term",
+      "name": "Mortgage term comparison",
+      "question": "Shorter or longer term: what is the trade-off?",
+      "emoji": "⚖️",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 91,
+      "appId": "rentbuy",
+      "name": "Rent vs buy",
+      "question": "How do renting and buying compare over time?",
+      "emoji": "🔄",
+      "category": 19,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 92,
+      "appId": "goalplanner",
+      "name": "Goal planner",
+      "question": "How much a month to reach my goal?",
+      "emoji": "🎯",
+      "category": 20,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 93,
+      "appId": "compound",
+      "name": "Compound growth",
+      "question": "What could regular saving grow into?",
+      "emoji": "🌱",
+      "category": 20,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 94,
+      "appId": "lumpsum",
+      "name": "Lump-sum growth",
+      "question": "What could a one-off amount become?",
+      "emoji": "💎",
+      "category": 22,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 95,
+      "appId": "emergency",
+      "name": "Emergency fund",
+      "question": "How strong is my emergency fund?",
+      "emoji": "🪂",
+      "category": 20,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 96,
+      "appId": "retirement",
+      "name": "Retirement projection",
+      "question": "Could your current path fund the retirement you want?",
+      "emoji": "🌅",
+      "category": 21,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 97,
+      "appId": "contrib",
+      "name": "Contribution impact",
+      "question": "What difference would a small increase make?",
+      "emoji": "➕",
+      "category": 21,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 98,
+      "appId": "avc",
+      "name": "AVC impact",
+      "question": "What could extra voluntary contributions add?",
+      "emoji": "🧩",
+      "category": 21,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 99,
+      "appId": "lastmoney",
+      "name": "Will my money last?",
+      "question": "How long could my retirement savings last?",
+      "emoji": "⏳",
+      "category": 21,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 100,
+      "appId": "drawdown",
+      "name": "Retirement drawdown scenarios",
+      "question": "How do different growth rates change things?",
+      "emoji": "🧭",
+      "category": 21,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 101,
+      "appId": "realreturn",
+      "name": "Inflation-adjusted return",
+      "question": "What is my money really worth in future?",
+      "emoji": "🔍",
+      "category": 22,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 102,
+      "appId": "regularinvest",
+      "name": "Regular investing",
+      "question": "What could investing monthly build?",
+      "emoji": "🔁",
+      "category": 22,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 103,
+      "appId": "fees",
+      "name": "Fees impact",
+      "question": "How much do fees really cost over time?",
+      "emoji": "🧮",
+      "category": 22,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 104,
+      "appId": "riskreturn",
+      "name": "Risk & return simulator",
+      "question": "What range of outcomes might each style have?",
+      "emoji": "🎢",
+      "category": 22,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 105,
+      "appId": "lifecover",
+      "name": "Life cover estimator",
+      "question": "How much cover might my family need?",
+      "emoji": "🛡️",
+      "category": 23,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 106,
+      "appId": "incomegap",
+      "name": "Income protection gap",
+      "question": "How long could I cope if I couldn't work?",
+      "emoji": "🩺",
+      "category": 23,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 107,
+      "appId": "mortgageprotect",
+      "name": "Mortgage protection",
+      "question": "What cover would clear my mortgage?",
+      "emoji": "🏠",
+      "category": 23,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 108,
+      "appId": "networth",
+      "name": "Net worth",
+      "question": "What am I worth, all in?",
+      "emoji": "🧾",
+      "category": 24,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 109,
+      "appId": "surplus",
+      "name": "Monthly surplus",
+      "question": "What is left at the end of the month?",
+      "emoji": "➗",
+      "category": 24,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 110,
+      "appId": "budget",
+      "name": "Budget (50/30/20)",
+      "question": "A simple way to split your pay",
+      "emoji": "🥧",
+      "category": 24,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 111,
+      "appId": "debtpay",
+      "name": "Debt repayment",
+      "question": "How fast can I clear my debt?",
+      "emoji": "✂️",
+      "category": 24,
+      "help": null,
+      "_status": "published"
+    },
+    {
+      "id": 112,
+      "appId": "loan",
+      "name": "Loan repayment",
+      "question": "What would a loan cost me?",
+      "emoji": "🚗",
+      "category": 24,
+      "help": null,
+      "_status": "published"
+    }
+  ],
+  "topics": [
+    {
+      "id": 19,
+      "name": "Mortgages",
+      "emoji": "🏡",
+      "blurb": "Buying, switching and paying off faster",
+      "expert": "mortgage",
+      "category": 19,
+      "art": "mortgage",
+      "photoPosition": "50% 45%",
+      "tools": [
+        86,
+        85,
+        88,
+        87
+      ],
+      "order": 0,
+      "_status": "published"
+    },
+    {
+      "id": 20,
+      "name": "Pensions",
+      "emoji": "🌅",
+      "blurb": "Tax relief, PRSAs and retirement income",
+      "expert": "pension",
+      "category": 21,
+      "art": "pension",
+      "photoPosition": "50% 35%",
+      "tools": [
+        96,
+        97,
+        99
+      ],
+      "order": 1,
+      "_status": "published"
+    },
+    {
+      "id": 21,
+      "name": "Protection",
+      "emoji": "🛡️",
+      "blurb": "Life cover, income protection, serious illness",
+      "expert": "protection",
+      "category": 23,
+      "art": "protection",
+      "photoPosition": "50% 35%",
+      "tools": [
+        105,
+        106,
+        107
+      ],
+      "order": 2,
+      "_status": "published"
+    },
+    {
+      "id": 22,
+      "name": "Investing",
+      "emoji": "📈",
+      "blurb": "Risk, time and fees, explained simply",
+      "expert": "investment",
+      "category": 22,
+      "art": "investing",
+      "photoPosition": "50% 50%",
+      "tools": [
+        102,
+        94,
+        101,
+        103
+      ],
+      "order": 3,
+      "_status": "published"
+    },
+    {
+      "id": 23,
+      "name": "Savings",
+      "emoji": "🐷",
+      "blurb": "Emergency fund and goal saving",
+      "expert": "planner",
+      "category": 20,
+      "art": "savings",
+      "photoPosition": "50% 50%",
+      "tools": [
+        92,
+        95,
+        93
+      ],
+      "order": 4,
+      "_status": "published"
+    },
+    {
+      "id": 24,
+      "name": "Everyday money",
+      "emoji": "💶",
+      "blurb": "Budget, surplus and debt",
+      "expert": "planner",
+      "category": 24,
+      "art": "everyday",
+      "photoPosition": "40% 62%",
+      "tools": [
+        110,
+        109,
+        111
+      ],
+      "order": 5,
+      "_status": "published"
+    }
+  ],
+  "videos": [
+    {
+      "id": 28,
+      "appId": "v7",
+      "title": "What is auto-enrolment?",
+      "kind": "pension",
+      "presenter": "LifeMap",
+      "role": "Pensions explainer",
+      "tool": "retirement",
+      "art": "savings",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": "1:14",
+      "mins": 2,
+      "caption": "Auto-enrolment: how the workplace pension scheme works.",
+      "captions": null,
+      "transcript": null,
+      "src": "media/auto-enrolment-explained.mp4",
+      "poster": "media/money-plant.jpg",
+      "_status": "published"
+    },
+    {
+      "id": 29,
+      "appId": "v8",
+      "title": "Your retirement plan: how it works",
+      "kind": "pension",
+      "presenter": "LifeMap",
+      "role": "Pensions explainer",
+      "tool": "retirement",
+      "art": "pension",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": "1:22",
+      "mins": 2,
+      "caption": "How your retirement plan works, step by step.",
+      "captions": null,
+      "transcript": null,
+      "src": "media/retirement-plan-how-it-works.mp4",
+      "poster": "media/retired-reading.jpg",
+      "_status": "published"
+    },
+    {
+      "id": 30,
+      "appId": "v9",
+      "title": "How much can I borrow? A first-time buyer’s guide",
+      "kind": "mortgage",
+      "presenter": "LifeMap",
+      "role": "Mortgage guide",
+      "tool": "borrow",
+      "art": "mortgage",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": "2:56",
+      "mins": 3,
+      "caption": "The five checks lenders make, with a real-life example…",
+      "captions": 7,
+      "transcript": "Hey there, I’m John Nugent, and welcome to LifeMap. I’m going to answer the question I get asked more than any other… how much can I actually borrow? Don’t worry, we’ll keep it simple. And we’ll follow a real-life example, so you can see exactly how it works. Let’s meet Aoife and Conor. They’re renting at the moment, paying €1,500 a month… and they’re dreaming of their own front door. Between them, they earn €85,000 a year. So… how much could they borrow? Lenders look at five things. Let’s take them one by one. First… loan to income. As a rule, you can borrow up to four times your combined income. For Aoife and Conor, that’s €85,000 times four… which is €340,000. Some lenders can stretch a little further for high earners. But you’d need to be approved at four times first. Second… your deposit. Every lender asks for at least ten percent of the house price. So we add that to Aoife and Conor’s €340,000. And that gives us a house price of €377,778. That’s €340,000 to borrow, plus a deposit of about €37,778. That’s ten percent of the price. Now, here’s some good news. There’s a Help to Buy scheme that can go towards your deposit. It’s for first-time buyers of a new home priced under €500,000… and you’ll need to have paid income tax and DIRT in Ireland over the last four years. You can claim the lowest of three things: ten percent of the property value, the tax you’ve paid over those four years, or €30,000. Whichever comes out smallest. Third… net disposable income. That’s simply whether you’d have enough left over to live on each month. Lenders work this out with a formula based on your family size, not your actual spending. Fourth… your debt servicing ratio. Lenders limit how much of your income can go on repaying debts, like loans or credit cards. If you’ve already got a lot of borrowing, adding a mortgage could push you over that limit. The good news? Aoife and Conor only have one small loan, so neither of these is a worry for them. Fifth… repayment capacity. Lenders need to be sure you can comfortably afford the monthly payment. Over thirty-five years, a mortgage of €340,000 comes to roughly €1,350 to €1,450 a month, depending on the lender. Some lenders also offer cashback, usually one to two percent when you draw down. That can make the monthly payment a touch higher… but you get some money back at the start. Now… Aoife and Conor are paying €1,500 a month in rent, and they’re saving €300 a month on top. That’s €1,800 a month they’ve shown they can manage. And that comfortably covers the repayment. They could even look at a shorter mortgage term than thirty-five years. So there you have it. Five checks, and a clear picture of what Aoife and Conor could borrow. Your own numbers will be different… and that’s completely okay. That’s what we’re here for. Pop your details into LifeMap, and we’ll talk you through your own options. Book your expert appointment today with us.",
+      "src": "media/how-much-can-i-borrow.mp4",
+      "poster": "media/how-much-can-i-borrow-poster.jpg",
+      "_status": "published"
+    },
+    {
+      "id": 31,
+      "appId": "v1",
+      "title": "Your first home: deposit to keys",
+      "kind": "mortgage",
+      "presenter": "Example video",
+      "role": "Mortgage guide",
+      "tool": "deposit",
+      "art": "mortgage",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": "0:53",
+      "mins": 1,
+      "caption": "Most buyers need a 10% deposit. Here’s how to get there faster…",
+      "captions": 8,
+      "transcript": "Buying your first home in Ireland? Stop. Watch this before you sign anything. One. You can borrow up to four times your income, with a ten percent deposit. But choose a repayment you can sleep on. Two. Add stamp duty, legal fees and a survey to your budget. Three. Claim every benefit: Help to Buy, and the First Home Scheme. Four. Fixed gives certainty, variable can move. Five. Get approval in principle before you view a single house. Six. Protect your family with mortgage protection. Do this, and eight months later, you’re holding the keys. Time to put the kettle on.",
+      "src": "media/first-home-deposit-to-keys.mp4",
+      "poster": "media/first-home-deposit-to-keys-poster.jpg",
+      "_status": "published"
+    },
+    {
+      "id": 32,
+      "appId": "v2",
+      "title": "Pensions made simple: tax relief explained",
+      "kind": "pension",
+      "presenter": "Conor Walsh",
+      "role": "Pension expert",
+      "tool": "retirement",
+      "art": "investing",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": null,
+      "mins": 3,
+      "caption": "For every €100 you pay in, the real cost to you can be much less…",
+      "captions": null,
+      "transcript": null,
+      "src": null,
+      "poster": null,
+      "_status": "published"
+    },
+    {
+      "id": 33,
+      "appId": "v3",
+      "title": "How much emergency money do you need?",
+      "kind": "planner",
+      "presenter": "Aisling Doyle",
+      "role": "Financial planner",
+      "tool": "emergency",
+      "art": "savings",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": null,
+      "mins": 2,
+      "caption": "A simple rule: three to six months of your essential spending…",
+      "captions": null,
+      "transcript": null,
+      "src": null,
+      "poster": null,
+      "_status": "published"
+    },
+    {
+      "id": 34,
+      "appId": "v4",
+      "title": "Protecting your family, simply",
+      "kind": "protection",
+      "presenter": "Mark Byrne",
+      "role": "Protection expert",
+      "tool": "lifecover",
+      "art": "protection",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": null,
+      "mins": 3,
+      "caption": "If your income stopped tomorrow, what would keep your plan going?…",
+      "captions": null,
+      "transcript": null,
+      "src": null,
+      "poster": null,
+      "_status": "published"
+    },
+    {
+      "id": 35,
+      "appId": "v5",
+      "title": "Investing for beginners: risk, time and fees",
+      "kind": "investment",
+      "presenter": "Sarah Kelly",
+      "role": "Investment expert",
+      "tool": "riskreturn",
+      "art": "investing",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": null,
+      "mins": 4,
+      "caption": "Time in the market matters more than timing the market…",
+      "captions": null,
+      "transcript": null,
+      "src": null,
+      "poster": null,
+      "_status": "published"
+    },
+    {
+      "id": 36,
+      "appId": "v6",
+      "title": "Why we spend the way we do",
+      "kind": "planner",
+      "presenter": "Aisling Doyle",
+      "role": "Financial planner",
+      "tool": "surplus",
+      "art": "everyday",
+      "vimeoUrl": null,
+      "vimeoId": null,
+      "thumbnailUrl": null,
+      "duration": null,
+      "mins": 2,
+      "caption": "Your money story shapes every choice. Let’s look at yours…",
+      "captions": null,
+      "transcript": null,
+      "src": null,
+      "poster": null,
+      "_status": "published"
+    }
+  ],
+  "live-sessions": [
+    {
+      "id": 22,
+      "title": "First-time buyers: your questions answered",
+      "when": "Thu 7pm",
+      "expert": "mortgage",
+      "onExplore": true,
+      "_status": "published"
+    },
+    {
+      "id": 23,
+      "title": "Pensions in 20 minutes",
+      "when": "Tue 1pm",
+      "expert": "pension",
+      "onExplore": true,
+      "_status": "published"
+    },
+    {
+      "id": 24,
+      "title": "Protecting your family, simply",
+      "when": "Sat 11am",
+      "expert": "protection",
+      "onExplore": true,
+      "_status": "published"
+    },
+    {
+      "id": 25,
+      "title": "Help to Buy and First Home Scheme in 20 minutes",
+      "when": "Tue 1pm",
+      "expert": "mortgage",
+      "onExplore": false,
+      "_status": "published"
+    },
+    {
+      "id": 26,
+      "title": "Switching in 2026: is now the time?",
+      "when": "Wed 1pm",
+      "expert": "mortgage",
+      "onExplore": false,
+      "_status": "published"
+    },
+    {
+      "id": 27,
+      "title": "Fixed rate ending? Ask us anything",
+      "when": "Mon 7pm",
+      "expert": "mortgage",
+      "onExplore": false,
+      "_status": "published"
+    },
+    {
+      "id": 28,
+      "title": "Extensions and top-ups: what to know",
+      "when": "Sat 11am",
+      "expert": "mortgage",
+      "onExplore": false,
+      "_status": "published"
+    }
+  ],
+  "articles": [
+    {
+      "id": 28,
+      "title": "Help to Buy and First Home Scheme: 2027",
+      "kind": "article",
+      "emoji": "📄",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 29,
+      "title": "Can I get help with my deposit?",
+      "kind": "faq",
+      "emoji": "❓",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 30,
+      "title": "Help to Buy on Revenue",
+      "kind": "link",
+      "emoji": "🔗",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 31,
+      "title": "Are you owed the mortgage interest tax credit?",
+      "kind": "article",
+      "emoji": "📄",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 32,
+      "title": "My fixed rate is ending: should I switch?",
+      "kind": "faq",
+      "emoji": "❓",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 33,
+      "title": "CCPC mortgage comparison",
+      "kind": "link",
+      "emoji": "🔗",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 34,
+      "title": "Helping your child buy a home",
+      "kind": "article",
+      "emoji": "📄",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 35,
+      "title": "Can I borrow against my home?",
+      "kind": "faq",
+      "emoji": "❓",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    },
+    {
+      "id": 36,
+      "title": "CCPC: mortgage top-up",
+      "kind": "link",
+      "emoji": "🔗",
+      "url": null,
+      "body": null,
+      "_status": "published"
+    }
+  ],
+  "journeys": [
+    {
+      "id": 1,
+      "name": "Buying",
+      "topic": 19,
+      "order": 0,
+      "calculators": [
+        {
+          "id": "6ae80da1a5f421a44bfa56f9",
+          "label": "Borrow",
+          "photo": "house-for-sale",
+          "tool": 85,
+          "emoji": "🏡",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56fa",
+          "label": "Deposit",
+          "photo": "savings-jar",
+          "tool": 87,
+          "emoji": "🐷",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56fb",
+          "label": "Repayment",
+          "photo": "home-keys",
+          "tool": 86,
+          "emoji": "🧾",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56fc",
+          "label": "Rent vs buy",
+          "photo": "family-couch",
+          "tool": 91,
+          "emoji": "🔄",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56fd",
+          "label": "Term",
+          "photo": "couple-planning",
+          "tool": 90,
+          "emoji": "⚖️",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56fe",
+          "label": "Rate change",
+          "photo": "invest-charts",
+          "tool": 89,
+          "emoji": "📊",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa56ff",
+          "label": "Overpay",
+          "photo": "money-plant",
+          "tool": 88,
+          "emoji": "⏩",
+          "name": null
+        }
+      ],
+      "stories": [
+        {
+          "id": "6ae80da1a5f421a44bfa5700",
+          "short": "Deposit to keys",
+          "title": "Your first home: deposit to keys",
+          "duration": "0:53",
+          "color": "#0A7068",
+          "emoji": "🔑",
+          "tool": "deposit",
+          "video": 31,
+          "chapters": [
+            "Deposit",
+            "Costs",
+            "Schemes"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5701",
+          "short": "How much can I borrow?",
+          "title": "How much can I borrow? A first-time buyer’s guide",
+          "duration": "2:56",
+          "color": "#0B2545",
+          "emoji": "🏡",
+          "tool": "borrow",
+          "video": 30,
+          "chapters": [
+            "The limit",
+            "Deposit",
+            "Repayments"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5702",
+          "short": "Help to Buy 2027",
+          "title": "Help to Buy: what changed for 2027",
+          "duration": "1:20",
+          "color": "#5E548E",
+          "emoji": "🎁",
+          "tool": "deposit",
+          "video": null,
+          "chapters": [
+            "The change",
+            "Who gains",
+            "How to claim"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5703",
+          "short": "Fixed or variable?",
+          "title": "Fixed or variable: which suits you?",
+          "duration": "1:05",
+          "color": "#13315C",
+          "emoji": "🔒",
+          "tool": "ratechange",
+          "video": null,
+          "chapters": [
+            "Fixed",
+            "Variable",
+            "Choosing"
+          ]
+        }
+      ],
+      "reading": [
+        28,
+        29,
+        30
+      ],
+      "live": [
+        22,
+        25
+      ],
+      "_status": "published"
+    },
+    {
+      "id": 2,
+      "name": "Switching",
+      "topic": 19,
+      "order": 1,
+      "calculators": [
+        {
+          "id": "6ae80da1a5f421a44bfa5704",
+          "label": "Rate change",
+          "photo": "invest-charts",
+          "tool": 89,
+          "emoji": "📊",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5705",
+          "label": "Repayment",
+          "photo": "home-keys",
+          "tool": 86,
+          "emoji": "🧾",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5706",
+          "label": "Overpay",
+          "photo": "money-plant",
+          "tool": 88,
+          "emoji": "⏩",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5707",
+          "label": "Term",
+          "photo": "couple-planning",
+          "tool": 90,
+          "emoji": "⚖️",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5708",
+          "label": "Borrow",
+          "photo": "house-for-sale",
+          "tool": 85,
+          "emoji": "🏡",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5709",
+          "label": "Deposit",
+          "photo": "savings-jar",
+          "tool": 87,
+          "emoji": "🐷",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa570a",
+          "label": "Rent vs buy",
+          "photo": "family-couch",
+          "tool": 91,
+          "emoji": "🔄",
+          "name": null
+        }
+      ],
+      "stories": [
+        {
+          "id": "6ae80da1a5f421a44bfa570b",
+          "short": "Should I switch?",
+          "title": "Should I switch my mortgage?",
+          "duration": "1:30",
+          "color": "#A8432B",
+          "emoji": "🔄",
+          "tool": "ratechange",
+          "video": null,
+          "chapters": [
+            "Why switch",
+            "Costs",
+            "Steps"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa570c",
+          "short": "Fixed rate ending",
+          "title": "Your fixed rate is ending: what now?",
+          "duration": "1:00",
+          "color": "#0B2545",
+          "emoji": "📅",
+          "tool": "ratechange",
+          "video": null,
+          "chapters": [
+            "Timing",
+            "Your lender",
+            "Compare"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa570d",
+          "short": "Tax credit",
+          "title": "Are you owed the mortgage interest tax credit?",
+          "duration": "0:55",
+          "color": "#0A7068",
+          "emoji": "🧾",
+          "tool": "repayment",
+          "video": null,
+          "chapters": [
+            "Who qualifies",
+            "How much",
+            "How to claim"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa570e",
+          "short": "Overpaying",
+          "title": "Is it worth overpaying my mortgage?",
+          "duration": "1:15",
+          "color": "#13315C",
+          "emoji": "⏩",
+          "tool": "overpay",
+          "video": null,
+          "chapters": [
+            "How it works",
+            "Limits",
+            "Or pension?"
+          ]
+        }
+      ],
+      "reading": [
+        31,
+        32,
+        33
+      ],
+      "live": [
+        26,
+        27
+      ],
+      "_status": "published"
+    },
+    {
+      "id": 3,
+      "name": "Borrowing more",
+      "topic": 19,
+      "order": 2,
+      "calculators": [
+        {
+          "id": "6ae80da1a5f421a44bfa570f",
+          "label": "Top-up",
+          "photo": "car-key",
+          "tool": 86,
+          "emoji": "🧾",
+          "name": "Repayment with a top-up"
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5710",
+          "label": "Term",
+          "photo": "couple-planning",
+          "tool": 90,
+          "emoji": "⚖️",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5711",
+          "label": "Overpay",
+          "photo": "money-plant",
+          "tool": 88,
+          "emoji": "⏩",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5712",
+          "label": "Rate change",
+          "photo": "invest-charts",
+          "tool": 89,
+          "emoji": "📊",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5713",
+          "label": "Borrow",
+          "photo": "house-for-sale",
+          "tool": 85,
+          "emoji": "🏡",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5714",
+          "label": "Deposit",
+          "photo": "savings-jar",
+          "tool": 87,
+          "emoji": "🐷",
+          "name": null
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5715",
+          "label": "Rent vs buy",
+          "photo": "family-couch",
+          "tool": 91,
+          "emoji": "🔄",
+          "name": null
+        }
+      ],
+      "stories": [
+        {
+          "id": "6ae80da1a5f421a44bfa5716",
+          "short": "Top-up costs",
+          "title": "What a top-up really costs",
+          "duration": "1:10",
+          "color": "#0B2545",
+          "emoji": "🔨",
+          "tool": "repayment",
+          "video": null,
+          "chapters": [
+            "How it works",
+            "Monthly",
+            "Total cost"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5717",
+          "short": "Top-up or loan?",
+          "title": "Top-up, loan or savings?",
+          "duration": "1:05",
+          "color": "#A8432B",
+          "emoji": "⚖️",
+          "tool": "term",
+          "video": null,
+          "chapters": [
+            "Rates",
+            "Terms",
+            "Choosing"
+          ]
+        },
+        {
+          "id": "6ae80da1a5f421a44bfa5718",
+          "short": "Helping your child",
+          "title": "Helping your child buy a home",
+          "duration": "1:20",
+          "color": "#5E548E",
+          "emoji": "🤝",
+          "tool": "repayment",
+          "video": null,
+          "chapters": [
+            "Gifts",
+            "Lenders",
+            "Your plan"
+          ]
+        }
+      ],
+      "reading": [
+        34,
+        35,
+        36
+      ],
+      "live": [
+        28
+      ],
+      "_status": "published"
+    }
+  ],
+  "ask-answers": [
+    {
+      "id": 34,
+      "key": "advice",
+      "question": "Is this financial advice?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "No. LifeMap gives guidance: it explains your situation and shows what could happen. Only an authorised adviser who knows your full situation can give advice.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 0,
+      "_status": "published"
+    },
+    {
+      "id": 35,
+      "key": "covered",
+      "question": "What does \"% covered\" mean?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "How much of a goal's cost your future income and savings should cover when it comes up. 100% means fully covered. 70% leaves about 30% to plan for.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 1,
+      "_status": "published"
+    },
+    {
+      "id": 36,
+      "key": "today",
+      "question": "What is \"today's money\"?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Prices rise over time. We show amounts as they would feel today, so €10,000 means what €10,000 buys now, not in 20 years.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 2,
+      "_status": "published"
+    },
+    {
+      "id": 37,
+      "key": "risk",
+      "question": "What is a risk profile?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "A short summary of how much ups and downs suit you. It combines the risk you ",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": "want",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 1,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": " to take, the risk you ",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": "can",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 1,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": " afford and ",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": "how long",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 1,
+                  "version": 1
+                },
+                {
+                  "mode": "normal",
+                  "text": " you can wait. It's a guide: your adviser confirms it with you.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 3,
+      "_status": "published"
+    },
+    {
+      "id": 38,
+      "key": "capacity",
+      "question": "What does \"capacity\" mean?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Capacity for loss is how big a fall you could live with without hurting everyday life. Could you still pay your bills if your investments dropped for a while?",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 4,
+      "_status": "published"
+    },
+    {
+      "id": 39,
+      "key": "behaviour",
+      "question": "What is \"investor behaviour\"?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "How you tend to act with money, such as researching, asking an expert or acting fast. It helps your adviser explain things your way.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 5,
+      "_status": "published"
+    },
+    {
+      "id": 40,
+      "key": "estimate",
+      "question": "What if I don't know a figure?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "\"Not sure? See an example\" shows how Aoife and Cian filled it in, and where to find yours. It never fills in a figure for you: everyone's money is different. Nothing to add? Leave it blank. It counts as €0 and stays on your list as optional.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 6,
+      "_status": "published"
+    },
+    {
+      "id": 41,
+      "key": "data",
+      "question": "Is my data safe?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Your data is stored in the EU and never sold. Nothing is shared with an adviser unless you tick what to share. You can delete everything in Me › Privacy & preferences.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 7,
+      "_status": "published"
+    },
+    {
+      "id": 42,
+      "key": "partner",
+      "question": "Can my partner join?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "Yes. In Me you can invite your partner to add their own details, or add their name, age and income yourself.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 8,
+      "_status": "published"
+    },
+    {
+      "id": 43,
+      "key": "free",
+      "question": "Does it cost anything?",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "LifeMap is free for you. If you work with an adviser, their firm may pay us a fee. Your adviser will tell you how they are paid before you agree to anything.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 9,
+      "_status": "published"
+    },
+    {
+      "id": 44,
+      "key": "advice-guard",
+      "question": "(Reply when asked for advice)",
+      "answer": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "I can't tell you what to do with your money: that would be advice. I can explain what your results mean. For a personal recommendation, book a free adviser meeting.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "order": 99,
+      "_status": "published"
+    }
+  ],
+  "personality-types": [
+    {
+      "id": 13,
+      "code": "A",
+      "name": "Achiever",
+      "emoji": "🎯",
+      "strapline": "In control, goal-driven, disciplined with money.",
+      "strengths": [
+        "Clear about what you want",
+        "You stick to a plan"
+      ],
+      "watchOut": "Being too hard on yourself when life changes the plan.",
+      "_status": "published"
+    },
+    {
+      "id": 14,
+      "code": "B",
+      "name": "Balancer",
+      "emoji": "⚖️",
+      "strapline": "Value-seeking, vigilant, careful with risk.",
+      "strengths": [
+        "Careful with money",
+        "You weigh things up"
+      ],
+      "watchOut": "Playing so safe that cash quietly loses value to rising prices.",
+      "_status": "published"
+    },
+    {
+      "id": 15,
+      "code": "E",
+      "name": "Explorer",
+      "emoji": "🧭",
+      "strapline": "Curious, open to new ideas, comfortable with risk.",
+      "strengths": [
+        "Open to new ideas",
+        "Comfortable with change"
+      ],
+      "watchOut": "Jumping in before your emergency fund is in place.",
+      "_status": "published"
+    },
+    {
+      "id": 16,
+      "code": "C",
+      "name": "Contented",
+      "emoji": "🛋️",
+      "strapline": "Comfortable, steady, low-maintenance with money.",
+      "strengths": [
+        "Calm about money",
+        "Not easily rattled"
+      ],
+      "watchOut": "Putting off decisions, such as pension top-ups.",
+      "_status": "published"
+    }
+  ],
+  "legal-pages": [
+    {
+      "id": 4,
+      "title": "Privacy notice",
+      "slug": "privacy-notice",
+      "version": "2026-10",
+      "body": {
+        "root": {
+          "type": "root",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "paragraph",
+              "format": "",
+              "indent": 0,
+              "version": 1,
+              "children": [
+                {
+                  "mode": "normal",
+                  "text": "To be supplied by legal / the DPO.",
+                  "type": "text",
+                  "style": "",
+                  "detail": 0,
+                  "format": 0,
+                  "version": 1
+                }
+              ],
+              "direction": null,
+              "textStyle": "",
+              "textFormat": 0
+            }
+          ],
+          "direction": null
+        }
+      },
+      "_status": "draft"
+    }
+  ]
+}
