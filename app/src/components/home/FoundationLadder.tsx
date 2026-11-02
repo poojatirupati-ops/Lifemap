@@ -1,13 +1,13 @@
 import type { CSSProperties } from 'react'
 import GIcon from '../ui/GIcon.tsx'
-import { STATUS_LABEL, type Foundation } from './foundations.ts'
-import type { nextFoundation } from './nextFoundation.ts'
-import { openFoundation } from './homeActions.ts'
+import { STATUS_LABEL, type Foundation } from '../../domain/planning/foundationCheck.ts'
+import type { NextFoundation } from '../../domain/planning/nextFoundation.ts'
+import { useStore } from '../../state/store.ts'
 
 type Props = {
   levels: Foundation[]
   /** the next best step, shown under the full ladder */
-  next?: ReturnType<typeof nextFoundation>
+  next?: NextFoundation | null
   /** Home's short version: status only, no next step */
   compact?: boolean
 }
@@ -41,7 +41,7 @@ export default function FoundationLadder({ levels, next, compact }: Props) {
               className={`f2 s-${level.status}`}
               data-a="sheet"
               data-p={`fnd|${index}`}
-              onClick={() => openFoundation(index)}
+              onClick={() => useStore.getState().openFoundation(index)}
             >
               <span className="f2n" aria-hidden="true">
                 {isInPlace(level) ? '✓' : level.level}
@@ -50,7 +50,9 @@ export default function FoundationLadder({ levels, next, compact }: Props) {
               <span className="f2m">
                 <b>{level.name}</b>
                 <span className="f2s">
-                  {STATUS_LABEL[level.status] + (compact ? '' : ` · ${level.text}`)}
+                  {compact
+                    ? STATUS_LABEL[level.status]
+                    : `${STATUS_LABEL[level.status]} · ${level.text}`}
                 </span>
               </span>
               <span className="chev" aria-hidden="true">

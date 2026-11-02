@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { euro } from '../../lib/format.ts'
-import type { CalcInput } from './types.ts'
+import type { CalcInput } from '../../domain/calc/types.ts'
 
 interface Props {
   input: CalcInput
@@ -19,7 +19,7 @@ const UNIT_TEXT: Partial<Record<CalcInput['unit'], [before: string, after: strin
 }
 
 /** 12,500 or 3.75 */
-export const formatFigure = (value: number) =>
+const formatFigure = (value: number) =>
   Math.abs(value % 1) > 1e-9
     ? (+value.toFixed(4)).toLocaleString('en-IE', { maximumFractionDigits: 4 })
     : Math.round(value).toLocaleString('en-IE')
@@ -95,11 +95,11 @@ export default function ValueBox({ input, value, onCommit, onHint }: Props) {
 
   return (
     <span className="nbox">
-      {before && (
+      {before ? (
         <span className="nbu" aria-hidden="true">
           {before}
         </span>
-      )}
+      ) : null}
       <input
         ref={box}
         className="nb"
@@ -120,11 +120,11 @@ export default function ValueBox({ input, value, onCommit, onHint }: Props) {
         onKeyDown={commitOnEnter}
         onFocus={(event) => event.currentTarget.select()}
       />
-      {after && (
+      {after ? (
         <span className="nbu" aria-hidden="true">
           {after}
         </span>
-      )}
+      ) : null}
     </span>
   )
 }

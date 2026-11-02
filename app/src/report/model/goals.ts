@@ -1,31 +1,15 @@
 // Each goal as the report tells it: covered percent, band and one sentence (pages 2 and 5).
-import type { Goal } from '../../state/types.ts'
-import { project } from '../../domain/planning/project.ts'
 import { fundingOrder } from '../../domain/planning/fund.ts'
 import { euro } from '../../lib/format.ts'
-import { band, hasShortfall, type ReportContext } from './context.ts'
+import { hasShortfall, type ReportContext } from './context.ts'
+import { band } from '../../domain/planning/bands.ts'
+import { extraToFullyFund } from '../../domain/planning/goalLine.ts'
+import { whatIfFrom } from '../../domain/planning/wi.ts'
 import type { Scenarios } from './scenarios.ts'
 import { yearSplit } from '../../components/results/chart/cashflow.ts'
 
 export type GoalSummary = ReturnType<typeof goalSummaries>[number]
 export type YearsKind = 'gap' | 'savings' | 'income'
-
-/** The smallest extra a month (to €5) that fully covers the goal, on top of a what-if for it. */
-function extraToFullyCover({ plan }: ReportContext, goal: Goal) {
-  const whatIf = plan.wi.g === goal.id ? plan.wi : { m: 0, l: 0 }
-  const covers = (monthly: number) =>
-    project(plan, { goalId: goal.id, monthly: (+whatIf.m || 0) + monthly, lumpSum: +whatIf.l || 0 })
-      .percent[goal.id] >= 100
-  if (!covers(5000)) return null
-  let low = 0
-  let high = 5000
-  for (let step = 0; step < 13; step++) {
-    const middle = (low + high) / 2
-    if (covers(middle)) high = middle
-    else low = middle
-  }
-  return Math.ceil(high / 5) * 5
-}
 
 /** Retirement years in runs: paid from income, from savings, or a gap. */
 function retirementYears(context: ReportContext) {
@@ -58,17 +42,16 @@ export function goalSummaries(context: ReportContext, scenarios: Scenarios) {
   const order = plan.rank
     ? fundingOrder(plan.goals, plan.rank)
     : [...plan.goals].sort((a, b) => a.age - b.age)
-  const withFullStatePension =
-    figures.statePensionShare >= 0.999
-      ? null
-      : ([...scenarios.rows, ...scenarios.combined].find((row) => row.id === 'statePension')
-          ?.covered ?? null)
+  const withFullStatePension = context.fullStatePension
+    ? null
+    : ([...scenarios.rows, ...scenarios.combined].find((row) => row.id === 'statePension')
+        ?.covered ?? null)
 
   return order.map((goal) => {
     const percent = projection.percent[goal.id]
     const summary = {
       id: goal.id,
-      key: goal.k,
+      key: goal.key,
       kind: goal.kind,
       name: goal.name,
       age: goal.kind === 'legacy' ? endAge : goal.age,
@@ -98,7 +81,7 @@ export function goalSummaries(context: ReportContext, scenarios: Scenarios) {
     }
     const funding = projection.goals[goal.id]
     const puttingIn = funding?.averageMonthly ?? 0
-    const extra = percent >= 100 ? null : extraToFullyCover(context, goal)
+    const extra = percent >= 100 ? null : extraToFullyFund(plan, goal, whatIfFrom(plan.whatIf))
     const needs =
       percent >= 100
         ? puttingIn

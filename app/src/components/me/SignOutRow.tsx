@@ -1,5 +1,5 @@
 import { authClient } from '../../auth/client.ts'
-import { signOut } from '../../auth/useWall.ts'
+import { signOut } from '../../auth/session.ts'
 import MeRow from './MeRow.tsx'
 
 /** Sign out, shown only with a real session (not the reviewer's or the test tools' pass). */

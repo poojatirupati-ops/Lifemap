@@ -1,53 +1,43 @@
-import type { ReactNode } from 'react'
+import type { ReadDocument } from '../../domain/finances/upload.ts'
+import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
-import { correctReadValue } from './uploadActions.ts'
 
-export type ReadFigure = {
-  field: string
-  label: string
-  value: number | string
-  confidence: number
-  stale?: string
-}
-
-interface Props {
-  title: string
-  documents?: string
-  figures: ReadFigure[]
-  /** Text read as it is (a lender's name), not editable. */
-  texts?: [label: string, text: string][]
-  edit: Record<string, number>
+function sureTag(confidence: number) {
+  if (confidence >= 80) return <span className="tag doc">✓ {confidence}% sure</span>
+  return (
+    <span className="tag look">
+      <Emo>{`⚠️ Check this · ${confidence}% sure`}</Emo>
+    </span>
+  )
 }
 
 /** One document's figures as read, each with how sure the reader is; numbers can be corrected. */
-export default function UploadReview({ title, documents, figures, texts = [], edit }: Props) {
-  const sureTag = (confidence: number): ReactNode =>
-    confidence < 80 ? (
-      <span className="tag look">
-        <Emo>{`⚠️ Check this · ${confidence}% sure`}</Emo>
-      </span>
-    ) : (
-      <span className="tag doc">✓ {confidence}% sure</span>
-    )
-
+export default function UploadReview({
+  title,
+  documents,
+  figures,
+  texts = [],
+  edit,
+}: ReadDocument & { edit: Record<string, number> }) {
+  const { correctReadValue } = useStore.getState()
   return (
     <div className="card">
       <b>
         <Emo>{title}</Emo>
       </b>
-      {documents && <div className="small">{documents}</div>}
+      {documents ? <div className="small">{documents}</div> : null}
       {figures.map(({ field, label, value, confidence, stale }) => (
         <div key={field} className="mini" style={{ alignItems: 'center' }}>
           <span style={{ flex: 1 }}>
             <b style={{ fontSize: 14 }}>{label}</b>
             <br />
             {sureTag(confidence)}
-            {stale && (
+            {stale ? (
               <>
                 {' '}
                 <span className="tag est">{stale}</span>
               </>
-            )}
+            ) : null}
           </span>
           {typeof value === 'number' ? (
             <input

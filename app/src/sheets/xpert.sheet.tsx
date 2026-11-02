@@ -1,4 +1,4 @@
-import { talkToExpert } from '../components/explore/exploreActions.ts'
+import { talkToExpert } from '../state/explore.ts'
 import { EXPERTS } from '../domain/identity/advisers.data.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
@@ -31,7 +31,7 @@ const WAYS = [
 ]
 
 function contact(kind: string, way: string, note: string) {
-  if (way === 'video') useStore.getState().update((plan) => void (plan.book.mode = 'Video'))
+  if (way === 'video') useStore.getState().setBooking({ mode: 'Video' })
   talkToExpert(kind)
   toast(note)
 }

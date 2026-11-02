@@ -11,6 +11,7 @@ export const note =
 
 const go = (screen: string) => useStore.getState().go(screen)
 
+// A call, not <FlowHead />: the shell's splitHead pins only the progress row by reading the returned tree.
 export const Head = () =>
   FlowHead({
     eye: 'Step 2 · Define',

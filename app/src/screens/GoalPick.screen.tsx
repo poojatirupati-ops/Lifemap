@@ -1,6 +1,5 @@
 import { Fragment } from 'react'
-import { GOAL_CATEGORIES, suggestedGoals } from '../domain/discovery/goals.data.ts'
-import { REASONS } from '../domain/identity/personality.data.ts'
+import { goalPickerSections } from '../domain/discovery/goals.data.ts'
 import { useStore } from '../state/store.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
 import Emo from '../components/ui/Emo.tsx'
@@ -27,11 +26,8 @@ export function Body() {
   const why = useStore((store) => store.plan.why)
   const goals = useStore((store) => store.plan.goals)
 
-  // What brought them here comes first, then the goals for their life stage.
-  const fromWhy = REASONS.filter((reason) => why.includes(reason.key)).flatMap((r) => r.goals ?? [])
-  const suggested = [...new Set([...fromWhy, ...suggestedGoals(age ?? 0)])]
-  const more = GOAL_CATEGORIES.map((c) => c.key).filter((k) => !suggested.includes(k))
-  const otherGoals = goals.filter((goal) => goal.k === 'other')
+  const { suggested, more } = goalPickerSections(why, age ?? 0)
+  const otherGoals = goals.filter((goal) => goal.key === 'other')
   const picked = goals.filter((goal) => goal.kind !== 'retire').length
 
   return (
@@ -56,15 +52,15 @@ export function Body() {
       {otherGoals.map((goal) => (
         <Fragment key={goal.id}>
           <div className="pill mint" style={{ marginTop: 10 }}>
-            <Emo>{`${goal.e} ${goal.name}`}</Emo>
+            <Emo>{`${goal.emoji} ${goal.name}`}</Emo>
           </div>{' '}
         </Fragment>
       ))}
-      {picked > PLENTY && (
+      {picked > PLENTY ? (
         <p className="note" style={{ marginTop: 12 }}>
           That's plenty. You can add more later.
         </p>
-      )}
+      ) : null}
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { FINANCE_FIELDS } from '../components/finance/fields.data.ts'
+import { FINANCE_FIELDS } from '../domain/finances/fields.data.ts'
 import { fieldExamples } from '../domain/finances/examples.ts'
 import { LIST_FIELDS } from '../domain/finances/lists.data.ts'
 import { assumption } from '../domain/planning/assumptions.ts'

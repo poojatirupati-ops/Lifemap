@@ -1,6 +1,6 @@
 // Small wordings the report pages share.
 import { euro } from '../../lib/format.ts'
-import type { Band } from './context.ts'
+import type { Band } from '../../domain/planning/bands.ts'
 
 /** €950, €12,500, €48k, €1.2m (thousands only from €10,000) */
 export function shortEuro(amount: number) {

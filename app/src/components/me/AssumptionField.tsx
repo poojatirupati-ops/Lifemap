@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import ChoiceNumberBox from '../finance/ChoiceNumberBox.tsx'
-import { ASSUMPTIONS } from './assumptionFields.data.ts'
+import { ASSUMPTIONS } from '../../domain/planning/assumptionFields.data.ts'
 import { resetAssumption, setAssumption } from './assumptionActions.ts'
 import {
   formatAssumption,
@@ -10,13 +10,23 @@ import {
   smallPrint,
   standardFor,
   standardNote,
+  TAGS,
   tagFor,
+  typedFigure,
   valueInUse,
-} from './assumptionText.ts'
+} from '../../domain/planning/assumptionText.ts'
 import { useMePlan } from './mePlan.ts'
 import UnknownRateChips from './UnknownRateChips.tsx'
 
-const UNIT = { pct: '%', eur: '€', eurw: '€', yrs: 'yrs', age: 'age', num: '' } as const
+const UNIT = {
+  pct: '%',
+  eur: '€',
+  eurw: '€',
+  yrs: 'yrs',
+  age: 'age',
+  months: '',
+  times: '',
+} as const
 
 /** One assumption: label and tag, a number box or chips, a way back, and how LifeMap sets it. */
 export default function AssumptionField({ name }: { name: string }) {
@@ -26,27 +36,25 @@ export default function AssumptionField({ name }: { name: string }) {
       mine: isMine(plan, name),
       value: valueInUse(plan, name),
       standard: standardFor(plan, name),
-      tagClass: tagFor(plan, name).className,
-      tagText: tagFor(plan, name).text,
       small: smallPrint(plan, name),
+      tag: tagFor(plan, name),
     })),
   )
+  const tag = TAGS[view.tag]
   const [hint, setHint] = useState('')
   const labelId = `asm-${name}`
   const suggestion = field.market ? marketSuggestion(field) : null
-  const kind = view.mine ? 'mine' : view.standard != null ? 'std' : 'assumed'
-  const note = kind === 'std' ? standardNote(name) : ''
-  const shownValue = view.value == null ? null : Number(view.value)
-  const whole = field.kind !== 'pct' && (field.step ?? 1) % 1 === 0
+  const source = view.mine ? 'mine' : view.standard != null ? 'std' : 'assumed'
+  const note = source === 'std' ? standardNote(name) : ''
 
   return (
-    <div className="field asmf" data-k={name} data-kind={kind} style={{ margin: '0 0 14px' }}>
+    <div className="field asmf" data-k={name} data-kind={source} style={{ margin: '0 0 14px' }}>
       <span className="flabel" id={labelId}>
-        {field.label} <span className={view.tagClass}>{view.tagText}</span>
+        {field.label} <span className={tag.className}>{tag.text}</span>
       </span>
       {field.kind === 'choice' ? (
         <div className="chips" role="group" aria-labelledby={labelId}>
-          {field.options!.map(([option, label]) => {
+          {field.options.map(([option, label]) => {
             const on = view.value != null && String(view.value) === String(option)
             return (
               <button
@@ -66,16 +74,12 @@ export default function AssumptionField({ name }: { name: string }) {
         <>
           <ChoiceNumberBox
             name={`asm|${name}`}
-            value={
-              field.kind === 'pct' && shownValue != null
-                ? +(shownValue * 100).toFixed(2)
-                : shownValue
-            }
+            value={view.value == null ? null : typedFigure(field, Number(view.value))}
             unit={UNIT[field.kind]}
             labelledBy={labelId}
-            min={field.min!}
-            max={field.max!}
-            whole={whole}
+            min={field.min}
+            max={field.max}
+            whole={field.kind !== 'pct' && field.step % 1 === 0}
             onCommit={(value) => setAssumption(name, value)}
             onHint={setHint}
             onClear={field.optional ? () => resetAssumption(name) : undefined}
@@ -98,8 +102,8 @@ export default function AssumptionField({ name }: { name: string }) {
             : `Back to the assumed rate (${suggestion!.shown})`}
         </button>
       )}
-      {(name === 'cardRate' || name === 'loanRate') && <UnknownRateChips rate={name} />}
-      {kind === 'assumed' && (!field.optional || suggestion) && view.value != null && (
+      {field.askAdviser ? <UnknownRateChips rate={name} field={field} /> : null}
+      {source === 'assumed' && (!field.optional || suggestion) && view.value != null && (
         <span className="small" style={{ display: 'block', marginTop: 4 }} id={`using-${name}`}>
           We are using {formatAssumption(name, view.value)} (
           {suggestion ? suggestion.source : 'a planning figure'}) until you add yours.

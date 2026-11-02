@@ -1,7 +1,13 @@
-import { PROFILE_SECTIONS } from '../../domain/discovery/terms.data.ts'
+import { PROFILE_SECTIONS, type ProfileSection } from '../../domain/discovery/terms.data.ts'
 
 /** One factor of the risk profile, out of 5. */
-export default function RiskBar({ section, level }: { section: string; level: number | null }) {
+export default function RiskBar({
+  section,
+  level,
+}: {
+  section: ProfileSection
+  level: number | null
+}) {
   const { title, plain } = PROFILE_SECTIONS[section]
   return (
     <div style={{ marginTop: 10, fontSize: 13 }}>

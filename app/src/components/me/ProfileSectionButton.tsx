@@ -1,6 +1,6 @@
 import type { MoneyProfileStep } from '../../domain/discovery/questions.data.ts'
 import GIcon from '../ui/GIcon.tsx'
-import { answerOf, profileQuestion } from '../define/profileActions.ts'
+import { answerOf, profileQuestion } from '../../domain/discovery/profileQuestions.ts'
 import { openProfileSection } from './meActions.ts'
 import { useMePlan } from './mePlan.ts'
 
@@ -13,7 +13,7 @@ export default function ProfileSectionButton({ section }: { section: MoneyProfil
     (plan) =>
       section.questions.filter((entry) => answerOf(plan, profileQuestion(entry)) != null).length,
   )
-  const done = useMePlan((plan) => !!plan.um.done[section.step])
+  const done = useMePlan((plan) => !!plan.moneyProfile.done[section.step])
   const status = done ? 'done' : answered ? 'part' : 'none'
 
   return (

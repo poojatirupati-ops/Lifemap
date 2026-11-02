@@ -4,6 +4,7 @@ import { useViewport } from '../hooks/useViewport.ts'
 import { useWall } from '../auth/useWall.ts'
 import Side from './Side.tsx'
 import Phone from './Phone.tsx'
+import ReportHost from '../report/ReportHost.tsx'
 
 export default function App() {
   const desk = useShell((shell) => shell.desk)
@@ -27,7 +28,7 @@ export default function App() {
           <Phone style={viewport.small ? { width: '100%', height: '100%' } : undefined} />
         </div>
       </main>
-      <div id="report" role="dialog" aria-modal="true" aria-label="Your LifeMap plan report"></div>
+      <ReportHost />
     </>
   )
 }

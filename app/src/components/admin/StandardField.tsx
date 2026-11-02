@@ -1,19 +1,24 @@
-import type { StandardKey } from '../../domain/planning/settings.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
+import { partnerName } from '../../domain/planning/partnerFigure.ts'
 import { rulesFor } from '../../domain/planning/rates.ts'
+import type { StandardKey } from '../../domain/planning/settings.data.ts'
+import { standardOf } from '../../domain/planning/settings.ts'
+import { useSettings } from '../../state/settings.ts'
 import { useStore } from '../../state/store.ts'
-import { formatFigure, limitsText, shownStandard } from './partnerFigure.ts'
+import Line from './Line.tsx'
+import { formatFigure, limitsText } from './partnerFigure.ts'
 import PartnerInput from './PartnerInput.tsx'
-import { partnerName, useSettings } from './settingsStore.ts'
-
-const LINE = { display: 'block' } as const
 
 /** One standard: LifeMap's figure, where it comes from, and the partner's own figure. */
 export default function StandardField({ id }: { id: StandardKey }) {
-  const settings = useSettings((store) => store.settings)
-  const refused = useSettings((store) => (store.refused?.key === id ? store.refused.message : null))
   const startYear = useStore((store) => assumption(store.plan, 'startYear'))
-  const standard = shownStandard(id, settings, rulesFor(startYear))
+  // 'inv' is derived from other standards, so only it subscribes to the whole settings
+  const shown = useSettings((store) =>
+    id === 'inv' ? store.settings : store.settings.standards[id],
+  )
+  const standard = 'standards' in shown ? standardOf(id, shown, rulesFor(startYear)) : shown
+  const partner = useSettings((store) => partnerName(store.settings))
+  const refused = useSettings((store) => (store.refused?.key === id ? store.refused.message : null))
   const changed = standard.partnerValue != null
   const limits = limitsText(id, standard.unit)
 
@@ -24,53 +29,35 @@ export default function StandardField({ id }: { id: StandardKey }) {
         {changed ? (
           <>
             {' '}
-            <span className="tag doc">Changed by {partnerName(settings)}</span>
+            <span className="tag doc">Changed by {partner}</span>
           </>
         ) : null}
       </span>
-      <span className="small" style={LINE}>
+      <Line>
         LifeMap standard: <b>{formatFigure(id, standard.unit, standard.value)}</b> ·{' '}
         {standard.label || standard.by} · as at {standard.asOf}
         {standard.verify ? (
           <>
-            {' · '}
-            <b>verify before release</b>
+            {' '}
+            · <b>verify before release</b>
           </>
         ) : null}
-      </span>
-      {standard.guide ? (
-        <span className="small" style={LINE}>
-          Guidance: {standard.guide}
-        </span>
-      ) : null}
-      {standard.note ? (
-        <span className="small" style={LINE}>
-          Note: {standard.note}
-        </span>
-      ) : null}
+      </Line>
+      {standard.guide ? <Line>Guidance: {standard.guide}</Line> : null}
+      {standard.note ? <Line>Note: {standard.note}</Line> : null}
       {standard.source ? (
-        <span className="small" style={{ display: 'block', wordBreak: 'break-all' }}>
-          Source: {standard.source}
-        </span>
+        <Line style={{ wordBreak: 'break-all' }}>Source: {standard.source}</Line>
       ) : null}
-      <span className="small" style={{ display: 'block', margin: '4px 0' }}>
+      <Line style={{ margin: '4px 0' }}>
         Partner figure (leave blank for the LifeMap standard):
-      </span>
+      </Line>
+      {/* remount to reset the uncontrolled input after Reset or a refused entry */}
       <PartnerInput key={JSON.stringify(standard.partnerValue)} id={id} standard={standard} />
-      {limits ? (
-        <span className="small" style={LINE} id={`setb-${id}`}>
-          {limits}
-        </span>
-      ) : null}
+      {limits ? <Line id={`setb-${id}`}>{limits}</Line> : null}
       {refused ? (
-        <span
-          className="small"
-          role="alert"
-          style={{ display: 'block', color: 'var(--alert-t)' }}
-          id={`setm-${id}`}
-        >
+        <Line role="alert" style={{ color: 'var(--alert-t)' }} id={`setm-${id}`}>
           {refused}
-        </span>
+        </Line>
       ) : null}
       {changed ? (
         <button className="link" onClick={() => useSettings.getState().setPartnerFigure(id, null)}>

@@ -1,39 +1,44 @@
+import { useShallow } from 'zustand/react/shallow'
 import { hasEnoughForPersonality } from '../../domain/discovery/profile.ts'
+import type { Share } from '../../domain/identity/booking.ts'
 import { useStore } from '../../state/store.ts'
 import type { Plan } from '../../state/types.ts'
-import { setAgree, setShare, type Share } from './booking.ts'
 
 const ITEMS: { item: Share; label: string; detail: string }[] = [
   { item: 'report', label: 'Your plan report', detail: 'Goals, results and what-ifs' },
-  { item: 'fin', label: 'Your finances', detail: 'The figures in your 6 sections' },
+  { item: 'finances', label: 'Your finances', detail: 'The figures in your 6 sections' },
   { item: 'docs', label: 'Your documents', detail: 'Statements you uploaded' },
   {
-    item: 'um',
+    item: 'moneyProfile',
     label: 'Your Understand Me profile',
     detail: 'Personality and indicative risk profile',
   },
 ]
 
-const offered = (plan: Plan, item: Share) =>
-  item === 'um'
-    ? hasEnoughForPersonality(plan.ans)
-    : item === 'docs'
-      ? Object.values(plan.src).includes('doc')
-      : plan.app
+type SharePlan = Pick<Plan, 'answers' | 'sources' | 'hasResults'>
+
+const OFFERED: Record<Share, (plan: SharePlan) => boolean> = {
+  report: (plan) => plan.hasResults,
+  finances: (plan) => plan.hasResults,
+  docs: (plan) => Object.values(plan.sources).includes('doc'),
+  moneyProfile: (plan) => hasEnoughForPersonality(plan.answers),
+}
 
 /** Consent before sharing: each item ticked on its own (all unticked at first), then the agreement. */
 export default function SharePicks({ adviserName }: { adviserName: string }) {
-  const plan = useStore((store) => store.plan)
-  const openSheet = useStore((store) => store.openSheet)
+  const plan = useStore(
+    useShallow(({ plan }) => ({ answers: plan.answers, sources: plan.sources, hasResults: plan.hasResults, booking: plan.booking })),
+  )
+  const { setShare, setBooking, openSheet } = useStore.getState()
   return (
     <>
       <div className="card">
-        {ITEMS.filter(({ item }) => offered(plan, item)).map(({ item, label, detail }) => (
+        {ITEMS.filter(({ item }) => OFFERED[item](plan)).map(({ item, label, detail }) => (
           <label className="check" key={item}>
             <input
               type="checkbox"
               data-share={item}
-              defaultChecked={plan.book.share[item]}
+              defaultChecked={plan.booking.share[item]}
               onChange={(event) => setShare(item, event.target.checked)}
             />
             <span>
@@ -49,8 +54,8 @@ export default function SharePicks({ adviserName }: { adviserName: string }) {
           <input
             type="checkbox"
             data-agree="1"
-            defaultChecked={plan.book.agree}
-            onChange={(event) => setAgree(event.target.checked)}
+            defaultChecked={plan.booking.agree}
+            onChange={(event) => setBooking({ agree: event.target.checked })}
           />
           <span>
             I agree to share the items I've ticked with {adviserName}. I can withdraw this at any

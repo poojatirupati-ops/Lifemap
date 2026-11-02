@@ -1,4 +1,5 @@
 // The goal catalogue the customer picks from, as in the original.
+import { REASONS } from '../identity/personality.data.ts'
 
 export type GoalKind = 'spend' | 'retire' | 'pot' | 'mfree' | 'legacy'
 
@@ -78,3 +79,11 @@ export const OTHER_GOALS: OtherGoal[] = [
   { emoji: '🏥', name: 'Long-term care', amount: 60000, years: 40 },
   { emoji: '📚', name: 'Fund a course', amount: 8000, years: 2 },
 ]
+
+/** The picker's two groups: what brought them here first, then the goals for their life stage. */
+export function goalPickerSections(why: string[], age: number) {
+  const fromWhy = REASONS.filter((reason) => why.includes(reason.key)).flatMap((r) => r.goals ?? [])
+  const suggested = [...new Set([...fromWhy, ...suggestedGoals(age)])]
+  const more = GOAL_CATEGORIES.map((c) => c.key).filter((key) => !suggested.includes(key))
+  return { suggested, more }
+}

@@ -11,11 +11,11 @@ import Emo from '../../src/components/ui/Emo.tsx'
 import GIcon from '../../src/components/ui/GIcon.tsx'
 
 const setPlan = (patch: Partial<Plan>, screen = 'D0') =>
-  useStore.getState().load({ ...fresh(), ...patch, scr: screen })
+  useStore.getState().load({ ...fresh(), ...patch, screen: screen })
 
 describe('behaviour', () => {
   it('TabBar marks the current tab and switches tabs', () => {
-    setPlan({ app: true, tab: 'home' })
+    setPlan({ hasResults: true, tab: 'home' })
     const { getByText } = render(<TabBar />)
     expect(getByText('Home').getAttribute('aria-current')).toBe('page')
     fireEvent.click(getByText('My Plan'))
@@ -42,14 +42,14 @@ describe('behaviour', () => {
 
   it('GIcon swaps a goal emoji for its line icon', () => {
     const goal = markup(<GIcon emoji="🏡" className="e" />)
-    expect(goal).toMatch(/^<span class="e gix"><svg class="gi"/)
+    expect(goal).toMatch(/^<span class="e gix"><svg [^>]*class="gi"/)
     expect(markup(<GIcon emoji="🦄" className="e" />)).toBe('<span class="e">🦄</span>')
   })
 
   it('FlowHead back in the plan builder leaves it when no back is given', () => {
-    setPlan({ shell: true, tab: 'plan', pb: true }, 'F1')
+    setPlan({ inShell: true, tab: 'plan', planBuilder: true }, 'F1')
     const { getByLabelText } = render(<>{FlowHead({ eye: 'Step 2', title: 'Goals' })}</>)
     fireEvent.click(getByLabelText('Back'))
-    expect(useStore.getState().plan.pb).toBe(false)
+    expect(useStore.getState().plan.planBuilder).toBe(false)
   })
 })

@@ -1,33 +1,40 @@
 // @vitest-environment jsdom
 import { afterEach, expect, test, vi } from 'vitest'
-import { MARKETING_VERSION, NOTICE_VERSION, postConsents, startPlanSync, stopPlanSync } from './planSync.ts'
-import { deleteAccount } from './useWall.ts'
+import { MARKETING_VERSION, NOTICE_VERSION, postConsents } from './consents.ts'
+import { startPlanSync } from './planSync.ts'
+import { deleteAccount } from './session.ts'
 import { useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 
 const calls = (fetch: ReturnType<typeof vi.fn>) =>
-  fetch.mock.calls.map(([url, init]) => `${(init as RequestInit | undefined)?.method ?? 'GET'} ${url}`)
+  fetch.mock.calls.map(
+    ([url, init]) => `${(init as RequestInit | undefined)?.method ?? 'GET'} ${url}`,
+  )
 
 const stubFetch = (status: number, body: unknown = {}) => {
-  const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response(JSON.stringify(body), { status }))
+  const fetch = vi.fn(
+    async (_url: string, _init?: RequestInit) => new Response(JSON.stringify(body), { status }),
+  )
   vi.stubGlobal('fetch', fetch)
   return fetch
 }
 
+let stopSync = () => {}
+
 afterEach(() => {
-  stopPlanSync()
+  stopSync()
   vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
-test('delete: server error keeps everything, resumes sync, says nothing was deleted', async () => {
-  useStore.getState().update((plan) => void (plan.acct.name = 'Aoife'))
-  startPlanSync()
+test('delete: server error keeps everything and says nothing was deleted', async () => {
+  useStore.getState().update((plan) => void (plan.account.name = 'Aoife'))
+  useShell.setState({ authed: true })
+  stopSync = startPlanSync()
   stubFetch(500)
   await deleteAccount()
-  expect(useStore.getState().plan.acct.name).toBe('Aoife')
+  expect(useStore.getState().plan.account.name).toBe('Aoife')
   expect(useShell.getState().toastMessage).toMatch(/couldn't delete.*Nothing was deleted/)
-  expect(stopPlanSync()).toBe(true) // sync was restarted
 })
 
 test('delete: stale session asks to sign in again, keeps data', async () => {
@@ -38,13 +45,14 @@ test('delete: stale session asks to sign in again, keeps data', async () => {
 
 test('delete: 2xx resets this browser, says deleted, and the blank plan is never saved back', async () => {
   vi.useFakeTimers()
-  useStore.getState().update((plan) => void (plan.acct.name = 'Aoife'))
-  startPlanSync()
+  useStore.getState().update((plan) => void (plan.account.name = 'Aoife'))
+  useShell.setState({ authed: true })
+  stopSync = startPlanSync()
   const fetch = stubFetch(200, { success: true })
   await deleteAccount()
-  expect(useStore.getState().plan.acct.name).toBe('')
+  expect(useStore.getState().plan.account.name).toBe('')
   expect(useShell.getState().toastMessage).toBe('Your account and all your data were deleted')
-  useStore.getState().update((plan) => void (plan.acct.name = 'x'))
+  useStore.getState().update((plan) => void (plan.account.name = 'x'))
   await vi.advanceTimersByTimeAsync(5000)
   expect(calls(fetch).filter((c) => c.startsWith('PUT'))).toEqual([])
   expect(calls(fetch)[0]).toBe('DELETE /api/me')

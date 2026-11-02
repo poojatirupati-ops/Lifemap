@@ -13,8 +13,13 @@
     "deploy": "cd .. && sst deploy"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1161.0",
+    "@aws-sdk/client-sesv2": "^3.1161.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@better-auth/passkey": "^1.7.13",
+    "@better-auth/sso": "^1.7.13",
     "@hono/node-server": "^1.13.0",
+    "@hono/zod-validator": "^0.9.1",
     "better-auth": "^1.7.13",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.6.0",
@@ -27,6 +32,7 @@
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.23.1",
+    "aws-sdk-client-mock": "^4.1.0",
     "drizzle-kit": "^0.31.11",
     "oxlint": "^1.88.0",
     "tsx": "^4.19.0",

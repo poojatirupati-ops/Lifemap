@@ -1,12 +1,13 @@
 import { useStore } from '../../state/store.ts'
 import GoalRow from '../timeline/GoalRow.tsx'
-import { closeGoalEdit, toggleEditGoals } from './planActions.ts'
 
 /** Under the timeline: every goal's row while editing, or the one goal tapped on the timeline. */
 export default function PlanGoalEdit() {
-  const editAll = useStore((store) => store.plan.planEdit)
+  const editAll = useStore((store) => store.plan.editingGoals)
   const goals = useStore((store) => store.plan.goals)
-  const tapped = useStore((store) => store.plan.goals.find((goal) => goal.id === store.plan.tlHl))
+  const toggleEditGoals = useStore((store) => store.toggleEditGoals)
+  const closeGoalEdit = useStore((store) => store.closeGoalEdit)
+  const tapped = useStore((store) => store.plan.goals.find((goal) => goal.id === store.plan.highlightedGoal))
 
   if (editAll)
     return (

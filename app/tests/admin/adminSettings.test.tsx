@@ -2,7 +2,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, expect, test } from 'vitest'
 import { Body } from '../../src/screens/AdminSettings.screen.tsx'
-import { useSettings } from '../../src/components/admin/settingsStore.ts'
+import { useSettings } from '../../src/state/settings.ts'
 
 /** Type into an input and leave it. */
 function enter(input: HTMLElement, value: string) {

@@ -15,7 +15,7 @@ beforeEach(() => useStore.getState().load(structuredClone(goalsSet) as unknown a
 
 test('About you: Next needs an age, a partner answer and dependants', () => {
   useStore.getState().update((draft) => {
-    draft.about = { age: null, partner: null, deps: null }
+    draft.about = { age: null, partner: null, dependants: null }
   })
   render(
     <>
@@ -41,7 +41,7 @@ test('Goal picker toggles a goal and opens Something else as a sheet', () => {
   fireEvent.click(screen.getByText('Wedding'))
   expect(plan().goals.at(-1)).toMatchObject({ k: 'wedding', id: 6 })
   fireEvent.click(screen.getByText('Wedding'))
-  expect(plan().goals.some((goal) => goal.k === 'wedding')).toBe(false)
+  expect(plan().goals.some((goal) => goal.key === 'wedding')).toBe(false)
   fireEvent.click(screen.getByText('Something else'))
   expect(useStore.getState().sheet).toBe('other')
 })
@@ -52,7 +52,8 @@ test('Your LifeMap reorders goals with the arrows and says where one went', () =
   const first = names()
   fireEvent.click(screen.getByLabelText(`Move ${first[1]} up, now 2 of 5`))
   expect(names().slice(0, 2)).toEqual([first[1], first[0]])
-  expect(screen.getByRole('status').textContent).toBe(`${first[1]} is now 1 of 5`)
+  // dnd-kit adds its own live region, so pick ours by id
+  expect(document.getElementById('rank-msg-f4')?.textContent).toBe(`${first[1]} is now 1 of 5`)
   fireEvent.click(screen.getByText('Back to our suggested order'))
   expect(names()).toEqual(first)
 })
@@ -62,6 +63,6 @@ test('Money profile: finishing suggests a horizon once others are answered, then
   fireEvent.click(document.querySelector('[data-p="u10|2"]')!)
   render(<Understand.Foot />)
   fireEvent.click(screen.getByText('Save and continue'))
-  expect(plan().um.a).toMatchObject({ u10: 2, u9: expect.any(Number) })
+  expect(plan().moneyProfile.answers).toMatchObject({ u10: 2, u9: expect.any(Number) })
   expect(useStore.getState().screen).toBe('P1')
 })

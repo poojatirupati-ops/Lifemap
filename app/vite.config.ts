@@ -4,7 +4,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   server: { proxy: { '/api': 'http://localhost:8787', '/health': 'http://localhost:8787' } },
-  test: { setupFiles: ['src/legacy/test/setup.ts'] },
+  test: {
+    setupFiles: ['src/legacy/test/setup.ts'],
+    // the persistent module cache keeps a stale import.meta.glob, so new screens render as placeholders
+    fsModuleCache: false,
+    // golden tests run the original in node:vm and are slow under load
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+  },
   plugins: [
     react(),
     VitePWA({
@@ -26,7 +33,12 @@ export default defineConfig({
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          {
+            src: 'icons/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
         ],
       },
     }),

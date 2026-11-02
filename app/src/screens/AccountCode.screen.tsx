@@ -1,15 +1,16 @@
-import { useEffect } from 'react'
 import { useStore } from '../state/store.ts'
 import { toast } from '../state/shell.ts'
-import { sendCode } from '../auth/client.ts'
+import { sendEmailCode } from '../state/account.ts'
+import { useCodeEntry } from '../state/codeEntry.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
-import { useCodeBoxes } from '../components/account/useCodeBoxes.ts'
-import { resetCode, typeCode, useCodeEntry, verifyCode } from '../components/account/codeEntry.ts'
+import { useCodeBoxes } from '../hooks/useCodeBoxes.ts'
+import { CODE_LENGTH } from '../domain/identity/signIn.ts'
 
 export const key = 'P1E'
-export const id = 'P1E'
+export const id = key
 export const note = 'Email code from the API (Better Auth email OTP); the phone step is skipped.'
 
+// Called as a plain function by ScreenHost (no hooks allowed), so it reads the store directly.
 export function Head() {
   const { plan, go } = useStore.getState()
   return FlowHead({
@@ -17,7 +18,7 @@ export function Head() {
     title: 'Check your email',
     sub: (
       <>
-        We sent a 6-digit code to <b>{plan.acct.email || 'your email'}</b>.
+        We sent a {CODE_LENGTH}-digit code to <b>{plan.account.email || 'your email'}</b>.
       </>
     ),
     back: () => go('P1'),
@@ -25,18 +26,18 @@ export function Head() {
 }
 
 async function sendAgain() {
-  const sent = await sendCode(useStore.getState().plan.acct.email.trim())
-  toast(sent ? 'New code sent' : "Couldn't send the code. Check your connection and try again.")
+  if (await sendEmailCode()) toast('New code sent')
 }
 
 export function Body() {
   const error = useCodeEntry((entry) => entry.error)
-  const boxes = useCodeBoxes(6, typeCode, verifyCode)
-  useEffect(resetCode, [])
+  const typeCode = useCodeEntry((entry) => entry.typeCode)
+  const verifyCode = useCodeEntry((entry) => entry.verifyCode)
+  const boxes = useCodeBoxes(typeCode, verifyCode)
 
   return (
     <div className="card">
-      <div className="codebox" role="group" aria-label="6-digit code">
+      <div className="codebox" role="group" aria-label={`${CODE_LENGTH}-digit code`}>
         {boxes.map((box, index) => (
           <input
             key={index}
@@ -66,6 +67,7 @@ export function Body() {
 
 export function Foot() {
   const checking = useCodeEntry((entry) => entry.checking)
+  const verifyCode = useCodeEntry((entry) => entry.verifyCode)
   return (
     <button className="btn" disabled={checking} onClick={verifyCode}>
       Verify

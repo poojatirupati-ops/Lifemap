@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { devFiles } from "./files";
 import { Hono } from "hono";
 import { expect, test } from "vitest";
 import { app as realApp } from "./app";
@@ -9,7 +11,7 @@ test("deny by default; signed-in user sees only own id", async () => {
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
   const db = await pgliteDb();
   const codes: Record<string, string> = {};
-  const auth = createAuth(db, (e, otp) => void (codes[e] = otp));
+  const auth = createAuth(db, (e, otp) => void (codes[e] = otp), devFiles(tmpdir()));
   const app = new Hono<Env>();
   app.use("*", guard(auth));
   app.get("/health", (c) => c.json({ ok: true }));
@@ -37,10 +39,12 @@ test("deny by default; signed-in user sees only own id", async () => {
   // The real app must deny by default too, so dropping or reordering guard in app.ts fails here.
   expect((await realApp.request("/health")).status).toBe(200);
   expect((await realApp.request("/api/auth/ok")).status).toBe(200); // public: Better Auth's own handler
+  expect((await realApp.request("/api/tenant")).status).toBe(200); // public: white-label config
   for (const [method, path] of [
     ["GET", "/api/me"], ["GET", "/api/plan"], ["PUT", "/api/plan"], ["POST", "/api/consents"],
     ["GET", "/nope"], ["GET", "/api/nope"], ["DELETE", "/api/plan"], ["POST", "/health"], ["GET", "/health/x"],
-    ["GET", "/api/authx"], ["GET", "/api/auth-evil"], ["GET", "/"],
+    ["GET", "/api/authx"], ["GET", "/api/auth-evil"], ["GET", "/"], ["POST", "/api/tenant"], ["GET", "/api/tenantx"],
+    ["PATCH", "/api/admin/organizations/lifemap-direct/config"],
   ])
     expect((await realApp.request(path, { method })).status, `${method} ${path}`).toBe(401);
 

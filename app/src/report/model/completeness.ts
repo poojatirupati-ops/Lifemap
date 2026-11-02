@@ -7,43 +7,80 @@ import {
 } from '../../components/finance/checkList.ts'
 import type { ReportContext } from './context.ts'
 
-// what to add next: [priority, label, why]; one line per label, most useful first
-const NEXT_TO_ADD: Record<string, [number, string, string, string]> = {
-  income: [0, 'High', 'Your income', 'Everything in the plan starts here'],
-  costsM: [0, 'High', 'Monthly living costs', 'Shows how much you can save'],
-  pension: [1, 'High', 'Pension value', 'The biggest tool for retiring early'],
-  cash: [2, 'High', 'Cash savings', 'A head start for your pot'],
-  sp: [3, 'High', 'State Pension record', ''],
-  mortBal: [3.5, 'High', 'Mortgage', 'Your biggest monthly cost'],
-  cardBal: [4, 'Medium', 'Loans and cards', 'Debt can cancel out saving'],
-  loanBal: [4, 'Medium', 'Loans and cards', 'Debt can cancel out saving'],
-  invest: [5, 'Medium', 'Investments', 'Part of your net worth'],
-  pensionM: [6, 'Medium', 'Monthly pension payments', 'What you add each month'],
-  life: [7, 'Medium', 'Protection', 'Cover that protects your plan'],
-  ip: [7, 'Medium', 'Protection', 'Cover that protects your plan'],
+interface NextToAdd {
+  /** most useful first */
+  rank: number
+  priority: 'High' | 'Medium'
+  title: string
+  why: string
+}
+
+const LOANS: NextToAdd = {
+  rank: 4,
+  priority: 'Medium',
+  title: 'Loans and cards',
+  why: 'Debt can cancel out saving',
+}
+const PROTECTION: NextToAdd = {
+  rank: 7,
+  priority: 'Medium',
+  title: 'Protection',
+  why: 'Cover that protects your plan',
+}
+
+// what to add next, by the figure that is missing
+const NEXT_TO_ADD: Record<string, NextToAdd> = {
+  income: {
+    rank: 0,
+    priority: 'High',
+    title: 'Your income',
+    why: 'Everything in the plan starts here',
+  },
+  costsM: {
+    rank: 0,
+    priority: 'High',
+    title: 'Monthly living costs',
+    why: 'Shows how much you can save',
+  },
+  pension: {
+    rank: 1,
+    priority: 'High',
+    title: 'Pension value',
+    why: 'The biggest tool for retiring early',
+  },
+  cash: { rank: 2, priority: 'High', title: 'Cash savings', why: 'A head start for your pot' },
+  sp: { rank: 3, priority: 'High', title: 'State Pension record', why: '' },
+  mortBal: { rank: 3.5, priority: 'High', title: 'Mortgage', why: 'Your biggest monthly cost' },
+  cardBal: LOANS,
+  loanBal: LOANS,
+  invest: { rank: 5, priority: 'Medium', title: 'Investments', why: 'Part of your net worth' },
+  pensionM: {
+    rank: 6,
+    priority: 'Medium',
+    title: 'Monthly pension payments',
+    why: 'What you add each month',
+  },
+  life: PROTECTION,
+  ip: PROTECTION,
 }
 
 export function completeness(context: ReportContext) {
   const { plan } = context
-  const items = checkItems({ ...plan, look: withRepaymentLooks(plan) })
-  const toAdd = items.filter(needsAttention).flatMap(({ key }) => {
-    const known = NEXT_TO_ADD[key]
-    if (!known) return []
-    const [rank, priority, title, why] = known
-    const sub =
-      key === 'sp'
-        ? `Up to ${euro(context.statePensionYear)} a year from ${context.statePensionAge}`
-        : why
-    return [{ rank, title, sub, priority }]
-  })
-  const items4 = toAdd
-    .filter((item, index) => toAdd.findIndex((other) => other.title === item.title) === index)
+  const items = checkItems({ ...plan, warnings: withRepaymentLooks(plan) })
+  const missing = items.filter(needsAttention)
+  const seen = new Set<string>()
+  const nextToAdd = missing
+    .flatMap(({ key }) => (NEXT_TO_ADD[key] ? [{ key, ...NEXT_TO_ADD[key] }] : []))
+    .filter((item) => !seen.has(item.title) && seen.add(item.title))
     .sort((a, b) => a.rank - b.rank)
     .slice(0, 4)
-    .map(({ title, sub, priority }) => ({ title, sub, priority }))
-  return {
-    have: items.length - items.filter(needsAttention).length,
-    total: items.length,
-    items: items4,
-  }
+    .map(({ key, title, why, priority }) => ({
+      title,
+      sub:
+        key === 'sp'
+          ? `Up to ${euro(context.statePensionYear)} a year from ${context.statePensionAge}`
+          : why,
+      priority,
+    }))
+  return { have: items.length - missing.length, total: items.length, items: nextToAdd }
 }

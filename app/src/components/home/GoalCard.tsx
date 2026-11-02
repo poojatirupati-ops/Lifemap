@@ -1,8 +1,9 @@
 import { euroShort } from '../../lib/format.ts'
 import type { Goal } from '../../state/types.ts'
 import { band } from '../results/journey.ts'
-import { calendarYear, isPassed, type TimingInputs } from '../timeline/goalText.ts'
-import { changeGoalDate } from './homeActions.ts'
+import { calendarYear, isPassed } from '../../domain/goals/goalTiming.ts'
+import { useStore } from '../../state/store.ts'
+import { useTiming } from '../../hooks/useTiming.ts'
 
 /** Each goal's photo: one of the built-in pictures. */
 const PHOTO: Record<string, string> = {
@@ -25,10 +26,19 @@ const PHOTO: Record<string, string> = {
 const tagText = (percent: number) =>
   percent >= 95 ? 'On track' : percent >= 60 ? 'Nearly there' : 'Needs attention'
 
-type Props = { goal: Goal; percent: number; timing: TimingInputs }
+type Props = { goal: Goal; percent: number }
+
+/** Scroll the goal's timeline row into view and focus its age stepper. */
+function focusGoalRow(goalId: number) {
+  const row = document.getElementById(`row-${goalId}`)
+  row?.scrollIntoView({ block: 'center', behavior: 'instant' })
+  row?.querySelector<HTMLButtonElement>('.stepper button')?.focus({ preventScroll: true })
+}
 
 /** A goal as a photo card: status tag, name, target, when and covered percent. */
-export default function GoalCard({ goal, percent, timing }: Props) {
+export default function GoalCard({ goal, percent }: Props) {
+  const timing = useTiming()
+  const changeGoalDate = useStore((store) => store.changeGoalDate)
   const passed = isPassed(timing, goal)
   const retire = goal.kind === 'retire'
   const target = goal.amount ? euroShort(goal.amount) + (retire ? '/yr' : '') : '–'
@@ -38,13 +48,13 @@ export default function GoalCard({ goal, percent, timing }: Props) {
     <div className="hcard">
       <div
         className="hc-img"
-        style={{ backgroundImage: `var(--${PHOTO[goal.k] ?? 'art-everyday'})` }}
+        style={{ backgroundImage: `var(--${PHOTO[goal.key] ?? 'art-everyday'})` }}
       >
         <span className="hc-tag" style={{ color: `var(--${band(percent)}-t)` }}>
           {tagText(percent)}
         </span>
         <span className="hc-name">
-          <span aria-hidden="true">{goal.e}</span> {goal.name}
+          <span aria-hidden="true">{goal.emoji}</span> {goal.name}
         </span>
         <span className="hc-stats">
           <span>
@@ -63,13 +73,15 @@ export default function GoalCard({ goal, percent, timing }: Props) {
       </div>
       {passed && (
         <div className="hc-body">
-          {' '}
           <button
             className="link"
             style={{ fontSize: 12.5 }}
             data-a="gdate"
             data-p={goal.id}
-            onClick={() => changeGoalDate(goal.id)}
+            onClick={() => {
+              changeGoalDate(goal.id)
+              requestAnimationFrame(() => focusGoalRow(goal.id))
+            }}
           >
             Change the date
           </button>

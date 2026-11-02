@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest'
 import { runOriginal } from './origSlice'
 import { fixtures, plain } from './origProfile'
 import { livingShort, project } from '../../src/domain/planning/project'
+import { planSettings } from '../../src/domain/planning/planSettings'
 import { extraNeededFor, whatIfFrom } from '../../src/domain/planning/wi'
+import { fromOriginal } from '../../src/state/migrate'
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, project, extraFor')
 
@@ -23,20 +25,17 @@ const ROW_NAMES: Record<string, string> = {
   year: 'yr',
   repayments: 'fixed',
   goalsDue: 'dueG',
-  dueNames: 'due',
   livingShortfall: 'shortLiving',
   shortfall: 'short',
   drawnFromSavings: 'used',
   pension: 'pen',
   retiresThisYear: 'rmark',
-  policyLumpSum: 'polIn',
   downsized: 'downIn',
 }
 const GOAL_NAMES: Record<string, string> = {
   savedSoFar: 'saved0',
   fromAssets: 'src0',
   fromAssetsWhenDue: 'srcDue',
-  savedFromSpare: 'payN',
   neededMonthly: 'needM',
   savingMonthly: 'nowM',
   averageMonthly: 'avgM',
@@ -50,8 +49,11 @@ const SOURCE_NAMES: Record<string, string> = {
 const rename = (object: object, names: Record<string, string>) =>
   Object.fromEntries(Object.entries(object).map(([key, value]) => [names[key] ?? key, value]))
 
-// our result in the original's shape
-function asOriginal(result: ReturnType<typeof project>) {
+// our result in the original's shape; fields no screen reads are derived here
+function asOriginal(result: ReturnType<typeof project>, plan: any) {
+  const { policyLumpSum, policyLumpSumAge } = planSettings(plan).figures
+  const policyPaysOut = (age: number) =>
+    policyLumpSum > 0 && policyLumpSumAge > 0 && age === policyLumpSumAge
   const goal = Object.fromEntries(
     Object.entries(result.goals).map(([id, funding]) => {
       const named = rename(funding, GOAL_NAMES)
@@ -60,9 +62,16 @@ function asOriginal(result: ReturnType<typeof project>) {
       return [id, named]
     }),
   )
-  const rows = result.rows.map(({ goalShort, ...row }) =>
-    rename(goalShort ? { ...row, goalShort } : row, ROW_NAMES),
-  )
+  const rows = result.rows.map(({ goalShort, ...row }) => {
+    const named = rename(goalShort ? { ...row, goalShort } : row, ROW_NAMES)
+    named.due = row.goalsDue.map((goal) => goal.name)
+    named.goalPaid = row.goalsDue.reduce(
+      (total, goal) => total + (goal.kind === 'pot' ? 0 : goal.paid),
+      0,
+    )
+    named.polIn = policyPaysOut(row.age) ? policyLumpSum : 0
+    return named
+  })
   const { spareMonthly, savingMonthly, ruleMonthly } = result.saving
   return {
     rows,
@@ -92,9 +101,11 @@ function difference(ours: any, theirs: any, path = ''): string | null {
 }
 
 function compare(state: any) {
-  const plan = prepared(state)
+  const plan: any = fromOriginal(prepared(state))
   const theirs = plain(original.project(state.wi))
-  const ours = plain(asOriginal(project(plan, whatIfFrom(plan.wi))))
+  // payN (saved from spare money) has no reader in the app
+  for (const goal of Object.values<any>(theirs.goal)) delete goal.payN
+  const ours = plain(asOriginal(project(plan, whatIfFrom(plan.whatIf)), plan))
   expect(difference(ours, theirs)).toBeNull()
 }
 
@@ -186,22 +197,25 @@ function randomPlan(seed: number) {
   return s
 }
 
-describe('project() equals the original', () => {
+describe('project() equals the original', { timeout: 30_000 }, () => {
   it.each(fixtures)('%s', (_, state) => compare(state))
   it.each(Array.from({ length: 200 }, (_, seed) => seed + 1))('random plan, seed %i', (seed) =>
     compare(randomPlan(seed)),
   )
 })
 
-describe('the extra a month a goal needs equals the original', () => {
+describe('the extra a month a goal needs equals the original', { timeout: 30_000 }, () => {
   it.each(Array.from({ length: 16 }, (_, seed) => seed + 1))('random plan, seed %i', (seed) => {
-    const plan = prepared(randomPlan(seed))
-    for (const goal of plan.goals.filter((goal: any) => goal.kind !== 'legacy'))
-      expect(extraNeededFor(plan, goal)).toBe(original.extraFor(goal))
+    const theirs = prepared(randomPlan(seed))
+    const plan: any = fromOriginal(theirs)
+    plan.goals.forEach((goal: any, index: number) => {
+      if (goal.kind !== 'legacy')
+        expect(extraNeededFor(plan, goal)).toBe(original.extraFor(theirs.goals[index]))
+    })
   })
 })
 
-describe('edges the random plans rarely reach', () => {
+describe('edges the random plans rarely reach', { timeout: 30_000 }, () => {
   it('your saving set just below the rule still counts as raised', () => {
     const state = randomPlan(5)
     state.saveM = null
@@ -217,8 +231,9 @@ describe('edges the random plans rarely reach', () => {
     const found = new Set()
     for (let amount = 10000; amount <= 1000000; amount += 15000) {
       state.goals[0] = { ...state.goals[0], kind: 'spend', amount, age: 50 }
-      const plan = prepared(state)
-      const extra = original.extraFor(plan.goals[0])
+      const theirs = prepared(state)
+      const plan: any = fromOriginal(theirs)
+      const extra = original.extraFor(theirs.goals[0])
       expect(extraNeededFor(plan, plan.goals[0])).toBe(extra)
       found.add(extra)
     }

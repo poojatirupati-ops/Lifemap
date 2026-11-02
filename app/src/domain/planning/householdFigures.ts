@@ -43,17 +43,17 @@ export type Finances = DebtFinances &
   Partial<Record<FigureKey, Figure>> & { home?: string; homeUse?: string; ae?: string }
 
 export interface Household extends DebtInputs {
-  fin: Finances
+  figures: Finances
   about: {
     age: number | null
     partner: boolean | null
     married?: boolean | null
-    deps: number | null
-    cred?: Record<string, boolean>
+    dependants: number | null
+    taxCredits?: Record<string, boolean>
   }
   retireAge: number
-  pRet?: number
-  pRetSet?: boolean
+  partnerRetireAge?: number
+  partnerRetireSet?: boolean
 }
 
 const typedFigures = (fin: Finances) =>
@@ -63,7 +63,7 @@ const typedFigures = (fin: Finances) =>
 
 /** Expects lists already synced. */
 export function householdFigures(household: Household, rules: Rules) {
-  const { about, fin, asm } = household
+  const { about, figures: fin, assumptions: asm } = household
   const assumed = (key: string) => assumption(household, key)
   const age = about.age
   const work = fin.work || (toNumber(fin.income) > 0 ? 'Employed' : undefined)
@@ -91,7 +91,7 @@ export function householdFigures(household: Household, rules: Rules) {
 
   const autoEnrolmentEligible =
     work === 'Employed' && monthlyPension === 0 && canAutoEnrol(rules, age, income)
-  const credits = about.cred || {}
+  const credits = about.taxCredits || {}
   const married = !!about.partner && about.married === true
   // the standard pension growth assumes typical charges; a statement's own charges replace them
   const pensionGrowth = isNumber(fin.penChg)
@@ -105,7 +105,7 @@ export function householdFigures(household: Household, rules: Rules) {
     married,
     partner: !!about.partner,
     partnerAge: about.partner ? toNumber(fin.pAge) || age : 0,
-    partnerRetireAge: household.pRetSet ? household.pRet : 0,
+    partnerRetireAge: household.partnerRetireSet ? household.partnerRetireAge : 0,
     income,
     partnerIncome: about.partner ? toNumber(fin.pIncome) : 0,
     ...typedFigures(fin),
@@ -133,7 +133,7 @@ export function householdFigures(household: Household, rules: Rules) {
     autoEnrolmentEligible,
 
     rentCredit: !!credits.rent && fin.home === 'Rent',
-    singleParentCredit: !!credits.lone && (about.deps ?? 0) > 0 && !about.partner,
+    singleParentCredit: !!credits.lone && (about.dependants ?? 0) > 0 && !about.partner,
     homeCarerCredit: !!credits.carer && married,
   }
 }

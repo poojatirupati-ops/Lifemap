@@ -40,11 +40,9 @@ export function cashflowPage(context: ReportContext) {
     big: euro(peakAmount),
     bigLabel: `savings at the peak, age ${peak.age}`,
     bigTone: runOut == null ? 'good' : 'coral',
-    eyebrow: 'CASHFLOW',
     title: runOut == null ? `Your savings last to ${endAge}` : `Your savings run out at ${runOut}`,
     savingsChart: {
       title: `Your savings, age ${startAge} to ${endAge}`,
-      subtitle: 'Cash and investments',
       yMax: savingsMax,
       yTicks: ticks(savingsMax),
       series: rows.map((row) => ({ age: row.age, value: Math.round(row.liquid) })),
@@ -64,12 +62,6 @@ export function cashflowPage(context: ReportContext) {
         (runOut == null ? ` Savings last to ${endAge}.` : ` Savings run out at ${runOut}.`),
     },
     paidChart: {
-      title: 'How each year is paid',
-      legend: [
-        { tone: 'good', label: 'Paid from income' },
-        { tone: 'gold', label: 'Paid from savings' },
-        { tone: 'coral', label: 'Shortfall, not covered' },
-      ],
       yMax: paidMax,
       yTicks: ticks(paidMax),
       bars: paid.map((year) => ({

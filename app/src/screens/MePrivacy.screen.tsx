@@ -5,6 +5,7 @@ import { backToMe } from '../components/finance/financeActions.ts'
 import { setReminders, toggleAdviserQuestion } from '../components/me/meActions.ts'
 import { SUSTAINABLE_QUESTION } from '../domain/identity/advisers.data.ts'
 import { useStore } from '../state/store.ts'
+import type { Plan } from '../state/types.ts'
 
 export const key = 'ME:privacy'
 export const id = 'ME-PRIV'
@@ -13,22 +14,19 @@ export const note =
 
 export const Head = () => meHead({ title: 'Privacy & preferences', back: backToMe })
 
-const SHARED = {
-  report: 'Plan report',
-  fin: 'Finances',
-  docs: 'Documents',
-  um: 'Understand Me profile',
-}
-
-// TODO(R-26): served by B8 (GET /api/me/export: one JSON file of everything held)
-const EXPORT_URL = '/api/me/export'
+const SHARED: [part: keyof Plan['booking']['share'], label: string][] = [
+  ['report', 'Plan report'],
+  ['finances', 'Finances'],
+  ['docs', 'Documents'],
+  ['moneyProfile', 'Understand Me profile'],
+]
 
 export function Body() {
-  const { reminders, sustainable, book } = useStore(
+  const { reminders, sustainable, shared } = useStore(
     useShallow(({ plan }) => ({
-      reminders: plan.acct.c2,
-      sustainable: plan.advQs.includes(SUSTAINABLE_QUESTION),
-      book: plan.book,
+      reminders: plan.account.marketingConsent,
+      sustainable: plan.adviserQuestions.includes(SUSTAINABLE_QUESTION),
+      shared: plan.booking.done ? plan.booking.share : null,
     })),
   )
   const openSheet = useStore((store) => store.openSheet)
@@ -69,11 +67,11 @@ export function Body() {
       </div>
       <div className="card">
         <b>What your adviser can see</b>
-        {book.done ? (
-          Object.entries(SHARED).map(([part, label]) => (
+        {shared ? (
+          SHARED.map(([part, label]) => (
             <div className="mini" key={part}>
               <span>{label}</span>
-              <b>{book.share[part as keyof typeof SHARED] ? 'Shared' : 'Not shared'}</b>
+              <b>{shared[part] ? 'Shared' : 'Not shared'}</b>
             </div>
           ))
         ) : (
@@ -82,10 +80,11 @@ export function Body() {
           </p>
         )}
       </div>
+      {/* api/src/routes/me.ts: one JSON file of everything held */}
       <a
         className="btn ghost"
         style={{ marginTop: 12 }}
-        href={EXPORT_URL}
+        href="/api/me/export"
         download="lifemap-my-data.json"
       >
         Download my data

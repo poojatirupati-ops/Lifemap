@@ -1,13 +1,12 @@
-import { useProfileAnswers } from '../discover/useProfileAnswers.ts'
+import { useGreeting } from '../../hooks/useGreeting.ts'
+import { dateLine, greeting } from '../../lib/greeting.ts'
+import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
 import { personality } from '../../domain/discovery/profile.ts'
 import { useStore } from '../../state/store.ts'
-import { openMe } from '../plan/planActions.ts'
-import { ageToday, dateLine, greeting } from './greeting.ts'
 
 /** The gradient hero: date, greeting, where the customer is on the ladder and their money personality. */
 export default function HomeHero({ stage }: { stage: string }) {
-  const name = useStore((store) => store.plan.acct.name)
-  const age = ageToday(useStore((store) => store.plan.about))
+  const { name, age } = useGreeting()
   const type = personality(useProfileAnswers())
 
   return (
@@ -29,7 +28,12 @@ export default function HomeHero({ stage }: { stage: string }) {
       </h2>
       <p className="hh-sub">{stage + (age ? ` · age ${age}` : '')}</p>
       {type && (
-        <button className="h0pill" data-a="me" data-p="terms" onClick={() => openMe('terms')}>
+        <button
+          className="h0pill"
+          data-a="me"
+          data-p="terms"
+          onClick={() => useStore.getState().openMe('terms')}
+        >
           <span className="h0badge" aria-hidden="true">
             {type.emoji}
           </span>

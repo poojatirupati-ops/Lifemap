@@ -1,6 +1,6 @@
 // Each calculator's result (headline, sentence, rows, plan hand-off, workbook numbers) equals the original's.
 import { describe, expect, it } from 'vitest'
-import { TOOLS } from '../../src/components/explore/explore.data'
+import { TOOLS } from '../../src/components/explore/tools.data'
 import { exampleFigures, figureSets, original, PLANS, runBoth } from './golden'
 
 describe.each(TOOLS.map((t) => t.id))('%s', (id) => {

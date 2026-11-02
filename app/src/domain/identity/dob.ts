@@ -1,41 +1,40 @@
 // Date of birth. The plan age is the age reached in the first plan year (startYear - birth year);
 // "age today" is exact from the date. Without a date of birth the typed age stands.
+import { differenceInYears } from 'date-fns/differenceInYears'
+import { isExists } from 'date-fns/isExists'
+import { isLeapYear } from 'date-fns/isLeapYear'
 import type { Dob, Plan } from '../../state/types.ts'
 
 type DobInput = Partial<Dob> | null | undefined
 
 const parseDob = (dob: Partial<Dob>) => ({
-  year: Number(dob.y),
-  month: Number(dob.m),
-  day: Number(dob.d),
+  year: Number(dob.year),
+  month: Number(dob.month),
+  day: Number(dob.day),
 })
 
-const isLeapYear = (year: number) => new Date(year, 1, 29).getDate() === 29
+const birthDate = (dob: Partial<Dob>) => {
+  const { year, month, day } = parseDob(dob)
+  return new Date(year, month - 1, day)
+}
 
 // born 29 February: the birthday is 1 March in other years
 function birthdayIn(dob: Dob, year: number) {
   const { month, day } = parseDob(dob)
-  if (month === 2 && day === 29 && !isLeapYear(year)) return new Date(year, 2, 1)
+  if (month === 2 && day === 29 && !isLeapYear(new Date(year, 0))) return new Date(year, 2, 1)
   return new Date(year, month - 1, day)
 }
 
-export const isDobComplete = (dob: DobInput) => Boolean(dob?.d && dob.m && dob.y)
+export const isDobComplete = (dob: DobInput) => Boolean(dob?.day && dob.month && dob.year)
 
 export function isDobValid(dob: DobInput, today: Date): dob is Dob {
   if (!dob) return false
   const { year, month, day } = parseDob(dob)
-  if (![year, month, day].every(Number.isInteger)) return false
-  if (String(dob.y).length !== 4 || year < 1900) return false
-  if (month < 1 || month > 12 || day < 1 || day > 31) return false
-  const date = new Date(year, month - 1, day)
-  const exists = date.getMonth() === month - 1 && date.getDate() === day
-  return exists && date <= today
+  if (String(dob.year).length !== 4 || year < 1900) return false
+  return isExists(year, month - 1, day) && birthDate(dob) <= today
 }
 
-export function ageOn(dob: Dob, date: Date) {
-  const hadBirthday = date >= birthdayIn(dob, date.getFullYear())
-  return date.getFullYear() - parseDob(dob).year - (hadBirthday ? 0 : 1)
-}
+export const ageOn = (dob: Dob, date: Date) => differenceInYears(date, birthDate(dob))
 
 export function nextBirthday(dob: Dob, today: Date) {
   const thisYear = birthdayIn(dob, today.getFullYear())
@@ -75,44 +74,44 @@ export function checkDob(
   return { ok: true, ageToday, text: `✓ ${subject}${ageToday} today · ${detail}` }
 }
 
-type DatedAgesInput = Pick<Plan['about'], 'age' | 'dob' | '_dobAge' | 'pdob'>
+type DatedAgesInput = Pick<Plan['about'], 'age' | 'dob' | 'dobAge' | 'partnerDob'>
+type AgeOptions = { startYear: number; today: Date }
 
 /**
  * Ages from the dates of birth: the plan age is startYear - birth year. An age typed since the
  * date of birth set it (_dobAge) wins and drops the date. partnerAge is undefined without a
- * partner date of birth and null when that date is not valid.
+ * partner date of birth and null with an invalid one.
  */
 export function datedAges(about: DatedAgesInput, { startYear, today }: AgeOptions) {
   const typedSinceDob =
-    about.dob != null && about._dobAge != null && about.age != null && about.age !== about._dobAge
+    about.dob != null && about.dobAge != null && about.age != null && about.age !== about.dobAge
   const dob = typedSinceDob ? undefined : about.dob
   const own = dob ? checkDob(dob, 'you', { today, startYear }) : null
-  const age = own ? (own.ok ? startYear - parseDob(dob!).year : null) : about.age
-  const partner = about.pdob ? checkDob(about.pdob, 'partner', { today, startYear }) : null
+  const age = own && dob ? (own.ok ? startYear - parseDob(dob).year : null) : about.age
+  const pdob = about.partnerDob
+  const partner = pdob ? checkDob(pdob, 'partner', { today, startYear }) : null
   return {
     dropDob: typedSinceDob,
     fromDob: own != null,
     age,
     ageToday: own ? (own.ok ? own.ageToday : null) : about.age,
-    partnerAge: partner && (partner.ok ? startYear - parseDob(about.pdob!).year : null),
+    partnerAge: !pdob ? undefined : partner?.ok ? startYear - parseDob(pdob).year : null,
   }
 }
 
-type AgeOptions = { startYear: number; today: Date }
-
 // TODO(R-09): apply datedAges in the identity slice action / normalize, then delete this
 export function agesFromDob(
-  { about, fin, src }: Pick<Plan, 'about' | 'fin' | 'src'>,
+  { about, figures: fin, sources: src }: Pick<Plan, 'about' | 'figures' | 'sources'>,
   options: AgeOptions,
 ) {
   const ages = datedAges(about, options)
   if (ages.dropDob) {
     delete about.dob
-    delete about._dobAge
+    delete about.dobAge
   }
   if (ages.fromDob) {
     about.age = ages.age
-    about._dobAge = ages.age
+    about.dobAge = ages.age
     fin.age = ages.age ?? undefined
     if (ages.age != null) src.age ||= 'pre'
   }

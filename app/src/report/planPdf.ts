@@ -1,5 +1,8 @@
 // The plan report as a PDF: one A4 page picture per report page, with searchable text over it.
-import type { BuiltReport } from './openReport.tsx'
+
+/** An A4 report page in CSS pixels. */
+export const PAGE_WIDTH = 794
+export const PAGE_HEIGHT = 1123
 
 // Invisible text over each page picture, so the PDF can be searched, copied and read aloud.
 function addTextLayer(pdf: import('jspdf').jsPDF, page: HTMLElement) {
@@ -20,28 +23,30 @@ function addTextLayer(pdf: import('jspdf').jsPDF, page: HTMLElement) {
       if (!rect.width || !rect.height || !text) continue
       const height = rect.height * mmPerPx
       pdf.setFontSize(Math.max(height * 2.83 * 0.7, 3))
-      pdf.text(
-        text,
-        (rect.left - box.left) * mmPerPx,
-        (rect.bottom - box.top) * mmPerPx - height * 0.2,
-        {
-          renderingMode: 'invisible',
-        },
-      )
+      const x = (rect.left - box.left) * mmPerPx
+      const y = (rect.bottom - box.top) * mmPerPx - height * 0.2
+      pdf.text(text, x, y, { renderingMode: 'invisible' })
     }
   }
 }
 
-/** One A4 PDF page per report page, drawn off screen at 2x. */
-export async function planPdf(report: BuiltReport) {
+/** One A4 PDF page per report page (copies of the shown pages, unscaled), drawn off screen at 2x. */
+export async function planPdf(shown: HTMLElement[]) {
   const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
     import('jspdf'),
     import('html2canvas'),
   ])
   const host = document.createElement('div')
   host.setAttribute('aria-hidden', 'true')
-  host.style.cssText = 'position:fixed;left:-12000px;top:0;width:794px;background:#fff;z-index:-1'
-  host.innerHTML = `<style>${report.css}</style><div>${report.pages.join('')}</div>`
+  Object.assign(host.style, {
+    position: 'fixed',
+    left: '-12000px',
+    top: '0',
+    width: `${PAGE_WIDTH}px`,
+    background: '#fff',
+    zIndex: '-1',
+  })
+  host.append(...shown.map((page) => page.cloneNode(true)))
   document.body.appendChild(host)
   try {
     await document.fonts?.ready
@@ -54,12 +59,12 @@ export async function planPdf(report: BuiltReport) {
     for (const [index, page] of pages.entries()) {
       const canvas = await html2canvas(page, {
         scale: 2,
-        width: 794,
-        height: 1123,
+        width: PAGE_WIDTH,
+        height: PAGE_HEIGHT,
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
-        windowWidth: 794,
+        windowWidth: PAGE_WIDTH,
       })
       if (index) pdf.addPage()
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 210, 297, undefined, 'FAST')

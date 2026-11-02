@@ -1,11 +1,13 @@
-import { missingChoices } from '../finance/requiredChoices.ts'
-import { fixChoice, showSection } from './planActions.ts'
-import { useProjection } from './useProjection.ts'
+import { useMissingChoices } from '../../hooks/useMissingChoices.ts'
+import { useProjection } from '../../hooks/useProjection.ts'
+import { useStore } from '../../state/store.ts'
 
 /** Under the timeline: how many goals are on track, or what is needed before results show. */
 export default function GoalsOnTrack() {
-  const { plan, base } = useProjection()
-  const missing = missingChoices(plan)
+  const missing = useMissingChoices()
+  const { inputs, base } = useProjection()
+  const fixChoice = useStore((store) => store.fixChoice)
+  const showSection = useStore((store) => store.showSection)
   if (missing.length) {
     const one = missing.length === 1
     return (
@@ -26,8 +28,8 @@ export default function GoalsOnTrack() {
     )
   }
 
-  const total = plan.goals.length
-  const onTrack = plan.goals.filter((goal) => base.percent[goal.id] >= 95).length
+  const total = inputs.goals.length
+  const onTrack = inputs.goals.filter((goal) => base.percent[goal.id] >= 95).length
   return (
     <div className="card tls" id="tl-strip">
       <div className="tls-m">

@@ -1,9 +1,15 @@
-// The risk read: willingness, capacity, horizon and experience, the weakest wins (FP review round 1 §2).
+// The risk read: willingness, capacity, horizon and experience, the weakest wins.
 import {
   ADVISER_NOTES,
   COMFORT_LABELS,
   MISMATCH_MESSAGES,
   RISK_LABELS,
+  EXPERIENCE_BY_KNOWHOW,
+  FALL_CAP,
+  HORIZON_LEVEL,
+  INCOME_CAP,
+  LOW_SCORE_CAP,
+  SAVINGS_CAP,
   type MismatchKey,
   type RiskLimit,
 } from './profile.data.ts'
@@ -35,20 +41,13 @@ export interface RiskRead {
   experienceNote: boolean
   cushionNote: string | null
 }
+
 export const riskLabelText = (read: { label: string | null; provisional: boolean }) =>
   read.label == null ? 'Not answered yet' : read.label + (read.provisional ? ' (first read)' : '')
 
-// Answer -> the cap it puts on a risk factor; no answer, or one not listed, leaves it at 5.
-const FALL_CAP = [2, 3, 4] // u10 option: what a 20% fall would mean
-const INCOME_CAP = [2, 4] // u12 option: how steady the income is
-const SAVINGS_CAP = [2, 3] // u14 option: months the savings last
-const LOW_SCORE_CAP: Record<number, number> = { 1: 2, 2: 3 } // Q7 or Q9 scored 1 or 2
 const capFor = (caps: Record<number, number>, index: number | null | undefined) =>
   caps[index ?? -1] ?? 5
 
-const HORIZON_LEVEL = [1, 2, 4, 5] // u9 option
-// u11 option; a self-rated expert stays at 4 unless they have held shares or funds
-const EXPERIENCE_BY_KNOWHOW = [3, 4, 5, 4]
 // in the order a tie is credited
 const LIMITS: RiskLimit[] = ['want', 'can', 'time', 'experience']
 
@@ -76,10 +75,10 @@ interface RiskContext {
 
 export function riskRead(answers: ProfileAnswers, context: RiskContext): RiskRead {
   const { complete, cushion } = context
-  const discover = (id: string) => optionScore(discoverQuestion(id), answers.discover[id])
-  const appetite = discover('8')
-  const composure = discover('9')
-  const surprise = discover('7')
+  const discoverScore = (id: string) => optionScore(discoverQuestion(id), answers.discover[id])
+  const appetite = discoverScore('8')
+  const composure = discoverScore('9')
+  const surprise = discoverScore('7')
   const surpriseOption = answers.discover['7']
   const shown = {
     comfort: appetite ? COMFORT_LABELS[appetite - 1] : null,
@@ -101,7 +100,7 @@ export function riskRead(answers: ProfileAnswers, context: RiskContext): RiskRea
     thinCushion: isCushionThin(cushion, surprise, understood.u14),
     lowCapacity: complete && can <= 2,
     shortHorizon: complete && time <= 2,
-    canAfford: complete ? can >= 4 && time >= 4 : surprise === 4 && (discover('6') ?? 0) >= 3,
+    canAfford: complete ? can >= 4 && time >= 4 : surprise === 4 && (discoverScore('6') ?? 0) >= 3,
     // a self-rated expert (u11 option 3) never gets K17
     readyForGrowth: understood.u11 != null && understood.u11 >= 1 && understood.u11 !== 3,
   })

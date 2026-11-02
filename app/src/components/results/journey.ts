@@ -1,29 +1,13 @@
-// The journey road: each plan year's colour and where the road, the flags and the goal rings go.
-import { livingShort, type YearRow } from '../../domain/planning/project'
-
-export type Band = 'good' | 'nudge' | 'alert'
-
-/** A goal's band from its covered percent: teal, gold or coral. */
-export const band = (percent: number): Band =>
-  percent >= 95 ? 'good' : percent >= 70 ? 'nudge' : 'alert'
-export const BAND_WORDS: Record<Band, string> = {
-  good: 'On track',
-  nudge: 'Needs a nudge',
-  alert: 'Needs attention',
-}
-
-type Year = Pick<YearRow, 'livingShortfall' | 'needs' | 'goalShort' | 'drawnFromSavings'>
-
-export const isShortYear = (row: Year) => livingShort(row) || row.goalShort
-/** Short of money, paid from savings, or covered by income. */
-export const yearBand = (row: Year): Band =>
-  isShortYear(row) ? 'alert' : row.drawnFromSavings > 1 ? 'nudge' : 'good'
+// The journey road: where the road, the flags and the goal rings go.
+import { box, crosses, inset, overlaps, type Box, type Segment } from '../../lib/boxes'
+import { clamp } from '../../lib/clamp'
 
 export interface Milestone {
   id: number
   age: number
   name: string
 }
+type TextWidth = (text: string, px: number) => number
 export interface JourneyInputs<M extends Milestone> {
   ages: number[]
   /** index of the year retirement starts, or -1 */
@@ -31,41 +15,119 @@ export interface JourneyInputs<M extends Milestone> {
   milestones: M[]
   width: number
   landscape: boolean
-  textWidth: (text: string, px: number) => number
+  textWidth: TextWidth
 }
 
-interface Box {
-  l: number
-  t: number
-  r: number
-  b: number
+interface Point {
+  x: number
+  y: number
 }
-const box = (l: number, t: number, r: number, b: number): Box => ({ l, t, r, b })
-const overlaps = (a: Box, c: Box) => a.l < c.r && c.l < a.r && a.t < c.b && c.t < a.b
-const shrink = (b: Box) => box(b.l + 3, b.t + 3, b.r - 3, b.b - 3)
-const clamp = (v: number, low: number, high: number) => Math.max(low, Math.min(high, v))
 
-/** Liang-Barsky: does the segment cross the box? */
-function crosses(x1: number, y1: number, x2: number, y2: number, b: Box) {
-  const dx = x2 - x1
-  const dy = y2 - y1
-  let t0 = 0
-  let t1 = 1
-  for (const [p, q] of [
-    [-dx, x1 - b.l],
-    [dx, b.r - x1],
-    [-dy, y1 - b.t],
-    [dy, b.b - y1],
-  ]) {
-    if (p === 0) {
-      if (q < 0) return false
-      continue
+/** Where a ring may go relative to its year: tiers out from the road and steps sideways, cheapest first. */
+function candidateOffsets(ringRadius: number, nudge: number, width: number) {
+  const reach = Math.ceil(width / nudge)
+  const ringStep = (2 * ringRadius + 4) / nudge
+  const offsets: { tierIndex: number; dx: number; cost: number }[] = []
+  for (let tierIndex = 0; tierIndex < 6; tierIndex++)
+    for (let step = -reach; step <= reach; step++)
+      offsets.push({
+        tierIndex,
+        dx: step * nudge,
+        cost: tierIndex + Math.abs(step) / ringStep + (step < 0 ? 0.35 : 0),
+      })
+  return offsets.toSorted((a, b) => a.cost - b.cost || a.tierIndex - b.tierIndex)
+}
+
+interface Road {
+  width: number
+  height: number
+  wide: boolean
+  ringRadius: number
+  labelHeight: number
+  /** gap from the road to the first tier, and between tiers */
+  first: number
+  tier: number
+  /** furthest sideways a ring goes before the last resort */
+  far: number
+  roadY: (x: number) => number
+  offsets: ReturnType<typeof candidateOffsets>
+  taken: Box[]
+  leaders: Segment[]
+}
+interface RingSpec {
+  anchorX: number
+  anchorY: number
+  up: boolean
+  labelWidth: number
+}
+interface PlaceOptions {
+  /** stay within `far` of the ring's year */
+  nearOnly?: boolean
+  /** the leader may not cut a mark, nor an earlier leader cut this ring */
+  avoidLeaders?: boolean
+}
+
+/** Where a ring's name sits: above an upper ring, below a lower one. */
+const labelYFor = (y: number, up: boolean, radius: number) =>
+  up ? y - radius - 5 : y + radius + 14
+
+/** The cheapest spot for a ring (and its label) that clears everything already taken. */
+function placeRing(road: Road, spec: RingSpec, { nearOnly, avoidLeaders }: PlaceOptions) {
+  const { width, height, wide, ringRadius: radius, labelHeight, taken, leaders } = road
+  const { anchorX, anchorY, up, labelWidth } = spec
+  for (const { tierIndex, dx } of road.offsets) {
+    const x = anchorX + dx
+    if (x - radius < 2 || x + radius > width - 2) continue
+    if (nearOnly && Math.abs(dx) > road.far) continue
+    let edge = anchorY
+    for (let sampleX = x - radius - 4; sampleX <= x + radius + 4; sampleX += 4)
+      edge = up ? Math.min(edge, road.roadY(sampleX)) : Math.max(edge, road.roadY(sampleX))
+    const offset = road.first + tierIndex * road.tier
+    const y = up ? edge - offset : edge + offset
+    const labelX = wide ? clamp(x, labelWidth / 2 + 2, width - labelWidth / 2 - 2) : x
+    const labelY = labelYFor(y, up, radius)
+    const boxes = [box(x - radius - 2, y - radius - 2, x + radius + 2, y + radius + 2)]
+    if (wide) {
+      const left = labelX - labelWidth / 2
+      const right = labelX + labelWidth / 2
+      boxes.push(
+        up
+          ? box(left, y - radius - labelHeight - 3, right, y - radius - 1)
+          : box(left, y + radius + 1, right, y + radius + labelHeight + 3),
+      )
     }
-    if (p < 0) t0 = Math.max(t0, q / p)
-    else t1 = Math.min(t1, q / p)
-    if (t0 > t1) return false
+    if (boxes.some((b) => b.top < 4 || b.bottom > height - 20)) continue
+    if (boxes.some((b) => taken.some((other) => overlaps(b, other)))) continue
+    const end = up ? y + radius : y - radius
+    if (avoidLeaders) {
+      const leader: Segment = [anchorX, anchorY, x, end]
+      if (taken.some((other) => crosses(leader, inset(other, 3)))) continue
+      if (leaders.some((other) => boxes.some((b) => crosses(other, inset(b, 3))))) continue
+    }
+    return { x, y, labelX, labelY, boxes, end }
   }
-  return true
+}
+
+/** The last resort: straight off the road, overlaps and all. */
+function besideRoad(x: number, y: number, up: boolean, radius: number) {
+  return { x, y, labelX: x, labelY: labelYFor(y, up, radius), boxes: [] as Box[], end: y }
+}
+
+/** Crop to what is drawn, so a quiet road stays compact and a busy one gets the height it needs. */
+function cropBounds(points: Point[], taken: Box[]) {
+  const ys = points.map((p) => p.y)
+  return {
+    top: Math.min(Math.min(...ys) - 12, ...taken.map((b) => b.top)),
+    bottom: Math.max(Math.max(...ys) + 12, ...taken.map((b) => b.bottom)),
+  }
+}
+
+/** The decade ages on the axis; "You, today" sits under the start, so a label must clear it. */
+function ageTicks(points: Point[], ages: number[], wide: boolean, textWidth: TextWidth) {
+  const todayEnd = points[0].x - 4 + textWidth(wide ? 'You, today' : 'today', 11)
+  return points
+    .map((p, i) => ({ x: p.x, age: ages[i] }))
+    .filter(({ x, age }) => age % 10 === 0 && x - textWidth(`age ${age}`, 10.5) / 2 > todayEnd)
 }
 
 /**
@@ -73,125 +135,94 @@ function crosses(x1: number, y1: number, x2: number, y2: number, b: Box) {
  * A ring steps out a tier and/or sideways until it clears the fixed marks and earlier rings.
  */
 export function layoutJourney<M extends Milestone>(inputs: JourneyInputs<M>) {
-  const { ages, retireIndex, width: W, landscape, textWidth } = inputs
-  const n = ages.length
-  const wide = W > 500
-  const H = landscape ? 324 : wide ? 400 : 360
+  const { ages, retireIndex, width, landscape, textWidth } = inputs
+  const lastIndex = ages.length - 1
+  const wide = width > 500
+  const height = landscape ? 324 : wide ? 400 : 360
   const pad = 18
-  const mid = landscape ? 162 : wide ? 196 : 176
-  const amp = landscape ? 20 : wide ? 34 : 24
-  const X = (i: number) => pad + (i / (n - 1)) * (W - 2 * pad)
-  const Y = (i: number) => mid + amp * Math.sin((i / (n - 1)) * Math.PI * 2.4) - (i / (n - 1)) * 8
+  const middle = landscape ? 162 : wide ? 196 : 176
+  const wave = landscape ? 20 : wide ? 34 : 24
+  const xAt = (i: number) => pad + (i / lastIndex) * (width - 2 * pad)
+  const yAt = (i: number) =>
+    middle + wave * Math.sin((i / lastIndex) * Math.PI * 2.4) - (i / lastIndex) * 8
   const roadY = (x: number) => {
-    const f = clamp(((x - pad) / (W - 2 * pad)) * (n - 1), 0, n - 1)
-    const i = Math.floor(f)
-    const j = Math.min(n - 1, i + 1)
-    return Y(i) + (Y(j) - Y(i)) * (f - i)
+    const at = clamp(((x - pad) / (width - 2 * pad)) * lastIndex, 0, lastIndex)
+    const i = Math.floor(at)
+    const next = Math.min(lastIndex, i + 1)
+    return yAt(i) + (yAt(next) - yAt(i)) * (at - i)
   }
-  const points = ages.map((_, i) => ({ x: X(i), y: Y(i) }))
+  const points = ages.map((_, i) => ({ x: xAt(i), y: yAt(i) }))
   const start = points[0]
   // what milestones keep clear of; the "today" column does not count towards the crop
-  const taken: Box[] = [box(start.x - 9, start.y - 9, start.x + 9, start.y + 9)]
-  const todayColumn = box(start.x - 3, start.y, start.x + 3, H)
-  taken.push(todayColumn)
+  const marks = [box(start.x - 9, start.y - 9, start.x + 9, start.y + 9)]
+  const todayColumn = box(start.x - 3, start.y, start.x + 3, height)
 
   let flag = null
   if (retireIndex >= 0) {
     const { x, y } = points[retireIndex]
-    const flipped = x > W - 90
+    const flipped = x > width - 90
     const label = `Retire ${ages[retireIndex]}`
-    const lw = textWidth(label, 11)
+    const labelWidth = textWidth(label, 11)
     flag = { x, y, label, flipped }
-    const right = flipped ? x + 27 : Math.max(x + 27, x + 4 + lw)
-    taken.push(box(flipped ? x - 6 - lw : x - 3, y - 64, right, y - 6))
+    const right = flipped ? x + 27 : Math.max(x + 27, x + 4 + labelWidth)
+    marks.push(box(flipped ? x - 6 - labelWidth : x - 3, y - 64, right, y - 6))
   }
-  const sunset = { x: points[n - 1].x - 8, y: points[n - 1].y - 12 }
-  taken.push(box(sunset.x - 2, sunset.y - 22, sunset.x + 26, sunset.y + 6))
+  const sunset = { x: points[lastIndex].x - 8, y: points[lastIndex].y - 12 }
+  marks.push(box(sunset.x - 2, sunset.y - 22, sunset.x + 26, sunset.y + 6))
 
-  const R = wide ? 18 : 13
+  const ringRadius = wide ? 18 : 13
   const labelHeight = wide ? 15 : 0
-  const first = R + (wide ? 12 : 10)
-  const tier = 2 * R + labelHeight + 4 + (wide ? 2 : 4)
   const nudge = wide ? 22 : 16
-  const far = 4 * (2 * R + 4)
-  const reach = Math.ceil(W / nudge)
-  const tries: { t: number; dx: number; cost: number }[] = []
-  for (let t = 0; t < 6; t++)
-    for (let s = -reach; s <= reach; s++)
-      tries.push({
-        t,
-        dx: s * nudge,
-        cost: t + Math.abs(s) / ((2 * R + 4) / nudge) + (s < 0 ? 0.35 : 0),
-      })
-  tries.sort((a, b) => a.cost - b.cost || a.t - b.t)
+  const road: Road = {
+    width,
+    height,
+    wide,
+    ringRadius,
+    labelHeight,
+    first: ringRadius + (wide ? 12 : 10),
+    tier: 2 * ringRadius + labelHeight + 4 + (wide ? 2 : 4),
+    far: 4 * (2 * ringRadius + 4),
+    roadY,
+    offsets: candidateOffsets(ringRadius, nudge, width),
+    taken: [...marks, todayColumn],
+    leaders: [],
+  }
 
-  const leaders: number[][] = []
-  const placed = inputs.milestones.map((milestone, k) => {
-    const i = clamp(milestone.age - ages[0], 0, n - 1)
-    const { x: cx, y: cy } = points[i]
-    const up = k % 2 === 0
+  const placed = inputs.milestones.map((milestone, order) => {
+    const index = clamp(milestone.age - ages[0], 0, lastIndex)
+    const { x: anchorX, y: anchorY } = points[index]
+    const up = order % 2 === 0
     const name = milestone.name.length > 20 ? milestone.name.slice(0, 19) + '…' : milestone.name
-    const lw = wide ? textWidth(name, 11) : 0
-    const fit = (pass: number) => {
-      for (const { t, dx } of tries) {
-        const x = cx + dx
-        if (x - R < 2 || x + R > W - 2 || (pass < 2 && Math.abs(dx) > far)) continue
-        let edge = cy
-        for (let xx = x - R - 4; xx <= x + R + 4; xx += 4)
-          edge = up ? Math.min(edge, roadY(xx)) : Math.max(edge, roadY(xx))
-        const y = up ? edge - first - t * tier : edge + first + t * tier
-        const labelX = wide ? clamp(x, lw / 2 + 2, W - lw / 2 - 2) : x
-        const labelY = up ? y - R - 5 : y + R + 14
-        const boxes = [box(x - R - 2, y - R - 2, x + R + 2, y + R + 2)]
-        if (wide)
-          boxes.push(
-            up
-              ? box(labelX - lw / 2, y - R - labelHeight - 3, labelX + lw / 2, y - R - 1)
-              : box(labelX - lw / 2, y + R + 1, labelX + lw / 2, y + R + labelHeight + 3),
-          )
-        if (boxes.some((b) => b.t < 4 || b.b > H - 20)) continue
-        if (boxes.some((b) => taken.some((o) => overlaps(b, o)))) continue
-        const end = up ? y + R : y - R
-        const cutsRing = taken.some((o) => crosses(cx, cy, x, end, shrink(o)))
-        const cutByLeader = leaders.some(([x1, y1, x2, y2]) =>
-          boxes.some((b) => crosses(x1, y1, x2, y2, shrink(b))),
-        )
-        if (pass === 0 && (cutsRing || cutByLeader)) continue
-        return { x, y, labelX, labelY, boxes, end }
-      }
-    }
-    const y = up ? cy - first : cy + first
-    const fallback = {
-      x: cx,
-      y,
-      labelX: cx,
-      labelY: up ? y - R - 5 : y + R + 14,
-      boxes: [],
-      end: y,
-    }
-    const ring = fit(0) ?? fit(1) ?? fit(2) ?? fallback
-    taken.push(...ring.boxes)
-    leaders.push([cx, cy, ring.x, ring.end])
-    return { milestone, cx, cy, name, ...ring }
+    const spec = { anchorX, anchorY, up, labelWidth: wide ? textWidth(name, 11) : 0 }
+    const ring =
+      placeRing(road, spec, { avoidLeaders: true, nearOnly: true }) ??
+      placeRing(road, spec, { nearOnly: true }) ??
+      placeRing(road, spec, {}) ??
+      besideRoad(anchorX, up ? anchorY - road.first : anchorY + road.first, up, ringRadius)
+    road.taken.push(...ring.boxes)
+    road.leaders.push([anchorX, anchorY, ring.x, ring.end])
+    return { milestone, anchorX, anchorY, name, ...ring }
   })
 
-  // crop to what is drawn, so a quiet road stays compact and a busy one gets the height it needs
-  let top = Math.min(...points.map((p) => p.y)) - 12
-  let bottom = Math.max(...points.map((p) => p.y)) + 12
-  for (const b of taken)
-    if (b !== todayColumn) {
-      top = Math.min(top, b.t)
-      bottom = Math.max(bottom, b.b)
-    }
-  top = Math.floor(top - 4)
-  bottom = Math.ceil(bottom + (wide ? 22 : 32))
-  // "You, today" sits on the age axis under the start, so an age label must clear it
-  const todayWidth = textWidth(wide ? 'You, today' : 'today', 11)
-  const decades = points
-    .map((p, i) => ({ x: p.x, age: ages[i] }))
-    .filter(
-      ({ x, age }) =>
-        age % 10 === 0 && x - textWidth(`age ${age}`, 10.5) / 2 > start.x - 4 + todayWidth,
-    )
-  return { wide, width: W, top, bottom, R, points, start, flag, sunset, placed, decades }
+  const crop = cropBounds(
+    points,
+    road.taken.filter((b) => b !== todayColumn),
+  )
+  return {
+    wide,
+    width,
+    top: Math.floor(crop.top - 4),
+    bottom: Math.ceil(crop.bottom + (wide ? 22 : 32)),
+    ringRadius,
+    points,
+    start,
+    flag,
+    sunset,
+    placed,
+    decades: ageTicks(points, ages, wide, textWidth),
+  }
 }
+
+// TODO(R-20): GoalCard, GoalStatus, planTopics and ExploreHome still import the bands from here;
+// their owners should import from domain/planning/bands, then delete this line.
+export { BAND_WORDS, band, isShortYear, yearBand, type Band } from '../../domain/planning/bands'

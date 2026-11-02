@@ -22,23 +22,23 @@ export default function SkippedSectionRow({ section, index, leftForAdviser }: Pr
         <span className="small">· skipped</span>
         <div className="small">
           {section.id === 'prot' ? 'Not added yet' : 'Not added yet, so it counts as €0 for now'}
-          {leftForAdviser && (
+          {leftForAdviser ? (
             <>
               {' · '}
               <b>Left for my adviser</b>
             </>
-          )}
+          ) : null}
         </div>
         <div className="a">
           <button className="link" data-a="fix" data-p={index} onClick={() => fixSection(index)}>
             Add now
           </button>
-          {!leftForAdviser && (
+          {leftForAdviser ? null : (
             <button
               className="link"
               data-a="acksec"
               data-p={section.id}
-              onClick={() => leaveSectionForAdviser(section.id)}
+              onClick={() => leaveSectionForAdviser(section)}
             >
               Leave for my adviser
             </button>

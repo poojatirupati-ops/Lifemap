@@ -63,7 +63,7 @@ export const TERMS: Record<string, string> = {
 }
 
 /** The money-profile sections: title, plain meaning and icon. */
-export const PROFILE_SECTIONS: Record<string, { title: string; plain: string; icon: string }> = {
+export const PROFILE_SECTIONS = {
   safety: { title: 'Safety net', plain: 'money for surprises', icon: '🪂' },
   appetite: { title: 'Risk appetite', plain: 'how much risk you want', icon: '🌦️' },
   capacity: { title: 'Capacity for loss', plain: 'how much you can afford to lose', icon: '🛟' },
@@ -75,4 +75,6 @@ export const PROFILE_SECTIONS: Record<string, { title: string; plain: string; ic
     plain: 'how much investing you have done',
     icon: '🎓',
   },
-}
+} satisfies Record<string, { title: string; plain: string; icon: string }>
+
+export type ProfileSection = keyof typeof PROFILE_SECTIONS

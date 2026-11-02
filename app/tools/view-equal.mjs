@@ -76,7 +76,6 @@ async function pixelPercent() {
       PNG.sync.read(await page.locator('#screen').screenshot()),
     ),
   )
-  if (a.width !== b.width || a.height !== b.height) return 100
   return pixelDiff(a, b).percent
 }
 

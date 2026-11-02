@@ -1,10 +1,10 @@
 import type { FinanceSection } from '../../domain/finances/sections.data.ts'
 import Emo from '../ui/Emo.tsx'
-import { chooseSectionMode } from './sectionActions.ts'
-import { startUpload } from './uploadActions.ts'
+import { useStore } from '../../state/store.ts'
 
 /** What the reader can take for this section: choose files or use a sample document. */
 export default function UploadPick({ section }: { section: FinanceSection }) {
+  const { startUpload, chooseSectionMode } = useStore.getState()
   return (
     <div className="card">
       <b>What we can read</b>

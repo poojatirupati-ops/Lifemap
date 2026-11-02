@@ -64,6 +64,9 @@ export const EXPERTS = {
   },
 } satisfies Record<string, Expert>
 
+export type ExpertKind = keyof typeof EXPERTS
+export const isExpertKind = (kind: string): kind is ExpertKind => kind in EXPERTS
+
 // the sustainability preference (MiFID II) is captured here, not as a profile question
 export const SUSTAINABLE_QUESTION = "I'd like sustainable / ethical options"
 

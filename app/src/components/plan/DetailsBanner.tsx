@@ -1,13 +1,13 @@
+import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
+import { useCheckPlan } from '../../hooks/useCheckPlan.ts'
 import { useStore } from '../../state/store.ts'
 import { checkItems, needsAttention } from '../finance/checkList.ts'
 import { fixSection } from '../finance/financeActions.ts'
-import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
-import { openMe } from './planActions.ts'
 
 /** Figures still missing or to look at, counted as €0 for now. */
 export default function DetailsBanner() {
-  const plan = useStore((store) => store.plan)
-  const flagged = checkItems(plan).filter(needsAttention)
+  const flagged = checkItems(useCheckPlan()).filter(needsAttention)
+  const openMe = useStore((store) => store.openMe)
   if (!flagged.length) return null
   const one = flagged.length === 1
   const addThem = () =>

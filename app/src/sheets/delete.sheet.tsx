@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { deleteAccount } from '../auth/useWall.ts'
+import { deleteAccount } from '../auth/session.ts'
 import CloseButton from './CloseButton.tsx'
 import SheetTitle from './SheetTitle.tsx'
 

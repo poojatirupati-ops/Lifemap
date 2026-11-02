@@ -11,7 +11,7 @@ const TILES = [
 
 /** Children or others who rely on you, as number tiles. */
 export default function DependantTiles() {
-  const dependants = useStore((store) => store.plan.about.deps)
+  const dependants = useStore((store) => store.plan.about.dependants)
 
   return (
     <div className="bdeps" role="group" aria-label="Children or others who rely on you">

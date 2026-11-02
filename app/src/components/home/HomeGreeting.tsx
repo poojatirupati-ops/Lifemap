@@ -1,10 +1,9 @@
-import { useStore } from '../../state/store.ts'
-import { ageToday, dateLine, greeting } from './greeting.ts'
+import { useGreeting } from '../../hooks/useGreeting.ts'
+import { dateLine, greeting } from '../../lib/greeting.ts'
 
 /** The plain greeting Home shows while a required choice is missing. */
 export default function HomeGreeting({ stage }: { stage: string }) {
-  const name = useStore((store) => store.plan.acct.name)
-  const age = ageToday(useStore((store) => store.plan.about))
+  const { name, age } = useGreeting()
 
   return (
     <div className="hgreet">

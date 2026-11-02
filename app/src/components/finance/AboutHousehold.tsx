@@ -8,7 +8,7 @@ const DEPENDANTS = ['0', '1', '2', '3+']
 /** About you: partner and dependants from the customer's answers, and the tax credits they open. */
 export default function AboutHousehold() {
   const partner = useStore(({ plan }) => plan.about.partner)
-  const deps = useStore(({ plan }) => plan.about.deps)
+  const deps = useStore(({ plan }) => plan.about.dependants)
   const fromAnswers = <span className="tag pre">From your answers</span>
 
   return (
@@ -55,12 +55,12 @@ export default function AboutHousehold() {
           ))}
         </div>
       </div>
-      {partner && (
+      {partner ? (
         <div style={{ borderTop: '1px dashed var(--line)', marginTop: 14, paddingTop: 12 }}>
           <b>Your partner</b>
           <PartnerBlock />
         </div>
-      )}
+      ) : null}
       <CredChips />
     </div>
   )

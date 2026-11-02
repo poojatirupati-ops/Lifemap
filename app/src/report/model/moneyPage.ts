@@ -1,6 +1,6 @@
 // Report page 3: your money today.
 import { euro } from '../../lib/format.ts'
-import type { ReportContext } from './context.ts'
+import { hasFigure, type ReportContext } from './context.ts'
 import { completeness } from './completeness.ts'
 
 type Row = {
@@ -11,28 +11,26 @@ type Row = {
   status: 'given' | 'missing' | 'none'
 }
 
-const MARGIN_TITLE = {
-  short: 'You spend more than you take home',
-  comfortable: 'A comfortable monthly margin',
-  tight: 'A tight monthly margin',
-}
-const MARGIN_NOTE = {
-  short: 'Costs are higher than pay, so savings are being used.',
-  comfortable: 'That gives you room to save more.',
-  tight: 'There is little room to save more.',
+const MARGIN = {
+  short: {
+    title: 'You spend more than you take home',
+    note: 'Costs are higher than pay, so savings are being used.',
+  },
+  comfortable: { title: 'A comfortable monthly margin', note: 'That gives you room to save more.' },
+  tight: { title: 'A tight monthly margin', note: 'There is little room to save more.' },
 }
 
 export function moneyPage(context: ReportContext) {
   const { plan, rows, projection } = context
-  const { fin } = plan
-  const has = (key: string) => !!plan.src[key] && fin[key] != null && fin[key] !== ''
+  const { figures: fin } = plan
+  const has = (key: string) => hasFigure(plan, key)
   const first = rows[0]
   const takeHomeM = first.inflow / 12
-  const livingM = Math.round(first.living / 12)
-  const debtM = Math.round(first.repayments / 12)
+  const livingM = first.living / 12
+  const debtM = first.repayments / 12
   const goalsM = Math.round(projection.saving.savingMonthly)
-  const left =
-    takeHomeM - first.living / 12 - first.repayments / 12 - projection.saving.savingMonthly
+  const left = takeHomeM - livingM - debtM - projection.saving.savingMonthly
+  const livingCosts = Math.round(livingM) + Math.round(debtM)
   const leftM = Math.round(left)
   const leftPer100 = takeHomeM > 0 ? Math.round((100 * left) / takeHomeM) : 0
   const short = leftM < 0
@@ -60,9 +58,7 @@ export function moneyPage(context: ReportContext) {
       }
     : { key: 'home', label: 'Home', status: 'missing', value: null }
   const mortgage: Row = mortgaged
-    ? has('mortBal')
-      ? figure('mortBal', 'Mortgage')
-      : { key: 'mortBal', label: 'Mortgage', status: 'missing', value: null }
+    ? figure('mortBal', 'Mortgage')
     : {
         key: 'mortgage',
         label: 'Mortgage',
@@ -88,13 +84,12 @@ export function moneyPage(context: ReportContext) {
     big: short ? `${euro(-leftM)} short` : euro(leftM),
     bigLabel: short ? 'each month' : 'left each month',
     bigTone: short ? 'coral' : 'good',
-    eyebrow: 'YOUR MONEY TODAY',
-    title: MARGIN_TITLE[margin],
+    title: MARGIN[margin].title,
     tiles: [
       {
         label: 'Living costs',
-        value: euro(livingM + debtM),
-        amount: livingM + debtM,
+        value: euro(livingCosts),
+        amount: livingCosts,
         tone: 'navy',
       },
       { label: 'Goals', value: euro(goalsM), amount: goalsM, tone: 'teal' },
@@ -107,26 +102,12 @@ export function moneyPage(context: ReportContext) {
     ],
     sentence: short
       ? 'Your costs and goals are more than you take home, so savings are being used. Cutting a cost or moving a goal would help.'
-      : `For every €100 you take home, about €${leftPer100} is left at the end of the month. ${MARGIN_NOTE[margin]}`,
+      : `For every €100 you take home, about €${leftPer100} is left at the end of the month. ${MARGIN[margin].note}`,
     takeHome: `Take-home pay is after tax, USC and PRSI (gross pay ${euro(context.figures.income + context.figures.partnerIncome)}).`,
-    exampleChip: '',
-    own: { title: 'YOU OWN', rows: [...own, home].map(shown) },
-    owe: {
-      title: 'YOU OWE',
-      rows: oweRows.length ? oweRows : [{ label: 'Debts', value: 'No debts told to us' }],
-    },
-    netWorth: anyMissing
-      ? { label: 'Net worth', status: 'not yet known' }
-      : { label: 'Net worth', value: euro(Math.round(assets - debts)) },
-    complete: {
-      eyebrow: 'HOW COMPLETE IS YOUR PICTURE?',
-      have: complete.have,
-      total: complete.total,
-      sub: complete.items.length
-        ? 'Add these next to sharpen your plan.'
-        : 'Your picture is complete. Thank you.',
-      photo: 'money-plant',
-      items: complete.items,
-    },
+    own: { rows: [...own, home].map(shown) },
+    owe: { rows: oweRows.length ? oweRows : [{ label: 'Debts', value: 'No debts told to us' }] },
+    /** no value while a figure is missing */
+    netWorth: anyMissing ? {} : { value: euro(Math.round(assets - debts)) },
+    complete,
   }
 }

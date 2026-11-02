@@ -3,13 +3,16 @@ import { JSDOM } from 'jsdom'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-// a DOM for React to render into; these files run in node because the original is read from disk
+// A browser for React to render into. These files stay in node (the original is read from disk with
+// node's URL), so the window's globals that node lacks are copied over.
 const page = new JSDOM('<!doctype html><body></body>', { url: 'http://localhost/' })
+// events must be the window's own, or its elements refuse them
+for (const key of Object.getOwnPropertyNames(page.window))
+  if (!(key in globalThis) || /Event(Target)?$/.test(key))
+    Object.assign(globalThis, { [key]: page.window[key as keyof typeof page.window] })
 Object.assign(globalThis, {
   window: page.window,
-  document: page.window.document,
-  HTMLElement: page.window.HTMLElement,
-  matchMedia: () => ({ matches: true }),
+  matchMedia: () => ({ matches: true }), // reduced motion
   IS_REACT_ACT_ENVIRONMENT: true,
 })
 const DISPATCH = new Set(['data-a', 'data-p'])

@@ -2,12 +2,15 @@
 // booking journey (match, share with consent, pick a time, confirm) books the meeting.
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { rendered, shape } from '../sheets/dom'
 import { runOriginal, TODAY } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
 import * as Experts from '../../src/screens/Experts.screen'
 import { useStore } from '../../src/state/store'
+
+// slow when the machine is busy: the original runs in node:vm
+vi.setConfig({ testTimeout: 30000 })
 
 Object.assign(globalThis, { __TODAY: TODAY })
 const original = runOriginal('applyAssume, syncLists, autoSafety, V, ACT')
@@ -106,7 +109,7 @@ describe('booking journey', () => {
 
     click('Book my adviser meeting')
     // the profile is not finished, so the optional profile step comes first
-    expect(useStore.getState().plan.exp).toBe('c0')
+    expect(useStore.getState().plan.expertsPage).toBe('c0')
     click('Skip for now')
     click('See another match')
     click('Choose')
@@ -120,8 +123,8 @@ describe('booking journey', () => {
     click('Confirm booking')
 
     const { plan } = useStore.getState()
-    expect(plan.exp).toBe('c4')
-    expect(plan.book).toMatchObject({
+    expect(plan.expertsPage).toBe('c4')
+    expect(plan.booking).toMatchObject({
       adv: 1,
       share: { report: true, fin: false, docs: false, um: false },
       agree: true,

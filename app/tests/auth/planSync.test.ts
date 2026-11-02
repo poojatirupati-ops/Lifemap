@@ -4,6 +4,7 @@ import { onlineManager } from '@tanstack/react-query'
 import { loadPlan, queryClient, savedFields, startPlanSync } from '../../src/auth/planSync.ts'
 import { returnTo } from '../../src/shell/wall.ts'
 import { fresh } from '../../src/state/fresh.ts'
+import { useShell } from '../../src/state/shell.ts'
 import { useStore } from '../../src/state/store.ts'
 
 const json = (status: number, body: unknown) =>
@@ -20,6 +21,7 @@ beforeEach(async () => {
   useStore.getState().load(fresh())
   queryClient.clear()
   onlineManager.setOnline(true)
+  useShell.setState({ authed: true })
   server = { version: 3, plan: null }
   fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
     if (init?.method !== 'PUT') return json(200, server)

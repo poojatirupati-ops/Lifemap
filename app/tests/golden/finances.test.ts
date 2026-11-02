@@ -8,8 +8,8 @@ import {
   SAMPLE_RATES,
   SAMPLE_WORK_COVER_MULTIPLE,
 } from '../../src/domain/finances/sample.data'
+import { ITEM_DOCUMENTS } from '../../src/domain/finances/itemDocuments.data'
 import {
-  ITEM_DOCUMENTS,
   LIST_FIELDS,
   LIST_FOR_FIELD,
   LISTS,

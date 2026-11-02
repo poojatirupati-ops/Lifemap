@@ -2,8 +2,11 @@ import { useShallow } from 'zustand/react/shallow'
 import AgeChoices from '../finance/AgeChoices.tsx'
 import InflationChoice from '../finance/InflationChoice.tsx'
 import AssumptionField from './AssumptionField.tsx'
-import { ASSUMPTIONS, type AssumptionGroup as Group } from './assumptionFields.data.ts'
-import { isMine, valueInUse } from './assumptionText.ts'
+import {
+  ASSUMPTIONS,
+  type AssumptionGroup as Group,
+} from '../../domain/planning/assumptionFields.data.ts'
+import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
 import GrowthSetToggle from './GrowthSetToggle.tsx'
 import { rememberOpenGroup } from './assumptionActions.ts'
 import { useMePlan } from './mePlan.ts'

@@ -1,16 +1,16 @@
 import type { CSSProperties } from 'react'
 
-/** The life goals the cover wheel cycles through: a photo (CSS variable) and its caption. */
+/** The life goals the cover wheel cycles through: a photo (CSS background) and its caption. */
 const GOALS = [
-  { art: 'art-mortgage', caption: 'Buy a home' },
-  { art: 'art-pension', caption: 'Retire well' },
-  { art: 'art-investing', caption: 'Grow your wealth' },
-  { art: 'art-savings', caption: 'Build your savings' },
-  { art: 'art-travel', caption: "Get where you're going" },
+  { photo: 'var(--art-mortgage)', caption: 'Buy a home' },
+  { photo: 'var(--art-pension)', caption: 'Retire well' },
+  { photo: 'var(--art-investing)', caption: 'Grow your wealth' },
+  { photo: 'var(--art-savings)', caption: 'Build your savings' },
+  { photo: 'var(--art-travel)', caption: "Get where you're going" },
 ]
 
-const photo = (art: string) => `var(--${art})`
-const delay = (i: number) => `${i * 3}s`
+/** Goal i's animation starts 3s after the previous goal's. */
+const goalStyle = (i: number) => ({ '--d': `${i * 3}s` }) as CSSProperties
 
 /** The cover's photo wheel; useOrbit (in ScreenHost) turns it. */
 export default function OrbitWheel() {
@@ -23,24 +23,24 @@ export default function OrbitWheel() {
         <i />
       </div>
       <div className="orbit">
-        {GOALS.map(({ art }, i) => (
+        {GOALS.map(({ photo }, i) => (
           <span
-            key={art}
+            key={photo}
             className="o"
-            style={{ '--a': `${i * 72 - 90}deg`, '--d': delay(i) } as CSSProperties}
+            style={{ ...goalStyle(i), '--a': `${i * 72 - 90}deg` } as CSSProperties}
           >
-            <i style={{ backgroundImage: photo(art) }} />
+            <i style={{ backgroundImage: photo }} />
           </span>
         ))}
       </div>
       <span className="orbit-c" style={{ backgroundImage: 'var(--cover-photo)' }}>
-        {GOALS.map(({ art }, i) => (
-          <i key={art} style={{ backgroundImage: photo(art), '--d': delay(i) } as CSSProperties} />
+        {GOALS.map(({ photo }, i) => (
+          <i key={photo} style={{ ...goalStyle(i), backgroundImage: photo }} />
         ))}
       </span>
       <span className="ocap">
-        {GOALS.map(({ art, caption }, i) => (
-          <b key={art} style={{ '--d': delay(i) } as CSSProperties}>
+        {GOALS.map(({ photo, caption }, i) => (
+          <b key={photo} style={goalStyle(i)}>
             {caption}
           </b>
         ))}

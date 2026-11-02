@@ -1,4 +1,4 @@
-import { openSection } from '../finance/financeActions.ts'
+import { useStore } from '../../state/store.ts'
 
 /** One line of My details; tapping it opens About you to change it. Empty shows Add. */
 export default function DetailRow({
@@ -11,7 +11,12 @@ export default function DetailRow({
   value: string
 }) {
   return (
-    <button className="pd-r" data-a="fsec" data-p="0" onClick={() => openSection(0)}>
+    <button
+      className="pd-r"
+      data-a="fsec"
+      data-p="0"
+      onClick={() => useStore.getState().openSection(0)}
+    >
       <span className="pd-i" aria-hidden="true">
         {emoji}
       </span>

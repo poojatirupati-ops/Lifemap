@@ -1,9 +1,11 @@
+import { useStore } from '../state/store.ts'
 import { meHead } from '../components/me/meHead.ts'
 import ProfileReturn from '../components/me/ProfileReturn.tsx'
 import RiskBar from '../components/me/RiskBar.tsx'
 import TermsList from '../components/me/TermsList.tsx'
 import { useProfileRead } from '../components/me/useProfileRead.ts'
-import { openMe } from '../components/plan/planActions.ts'
+import { useProfileAnswers } from '../hooks/useProfileAnswers.ts'
+import { moneyTerms } from '../domain/discovery/moneyTerms.ts'
 import { EXPERIENCE_NOTE, RISK_SET_BY } from '../domain/discovery/profile.data.ts'
 import { riskLabelText } from '../domain/discovery/riskRead.ts'
 import { DISCOVERY_DISCLAIMER } from '../domain/identity/personality.data.ts'
@@ -13,10 +15,12 @@ export const id = 'ME-R'
 export const note =
   'Understand Me result: money personality + indicative risk profile (5 labels, lowest of want, can afford, time and experience; FP review R2–R6). Feeds My Plan. Adviser confirms.'
 
-export const Head = () => meHead({ title: 'Your profile', back: () => openMe('um') })
+export const Head = () =>
+  meHead({ title: 'Your profile', back: () => useStore.getState().openMe('um') })
 
 export function Body() {
   const { type, read } = useProfileRead(true)
+  const terms = moneyTerms(useProfileAnswers())
 
   return (
     <>
@@ -51,7 +55,7 @@ export function Body() {
       )}
       <div className="card rp-terms">
         <h3 className="h">Your money terms</h3>
-        <TermsList />
+        <TermsList terms={terms} />
       </div>
       <div className="card rp-risk">
         <small className="rp-lbl">Your indicative risk profile</small>

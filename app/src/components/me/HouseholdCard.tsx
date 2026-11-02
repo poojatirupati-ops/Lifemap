@@ -1,15 +1,14 @@
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
+import { DEPENDANT_CHOICES } from '../../domain/identity/household.data.ts'
 import { setDependants, setPlanningWithPartner } from '../define/aboutActions.ts'
 import MarriedField from '../define/MarriedField.tsx'
 import PartnerBlock from '../define/PartnerBlock.tsx'
 
-const DEPENDANTS = ['0', '1', '2', '3+']
-
 /** Partner and dependants, changed straight from the hub. */
 export default function HouseholdCard() {
   const { partner, deps } = useStore(
-    useShallow(({ plan }) => ({ partner: plan.about.partner, deps: plan.about.deps })),
+    useShallow(({ plan }) => ({ partner: plan.about.partner, deps: plan.about.dependants })),
   )
 
   return (
@@ -45,7 +44,7 @@ export default function HouseholdCard() {
       <div className="field" style={{ margin: '16px 0 0' }}>
         <span className="flabel">Children or others who rely on you</span>
         <div className="seg" role="group" style={{ margin: '6px 0 0' }}>
-          {DEPENDANTS.map((label, count) => (
+          {DEPENDANT_CHOICES.map((label, count) => (
             <button
               key={label}
               className={deps === count ? 'on' : ''}

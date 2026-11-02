@@ -1,21 +1,22 @@
 import Emo from '../ui/Emo.tsx'
-import { correctFigure } from './statementActions.ts'
-import type { StatementFigure } from './statements.data.ts'
+import { useStore } from '../../state/store.ts'
+import type { StatementFigure } from '../../domain/calc/statements.data.ts'
 
 /** One figure read from a statement: how sure the reader is, and a box to correct it. */
 export default function StatementFigureRow({
-  figure: [key, label, read, confidence, unit, optional],
+  figure: { key, label, read, confidence, unit, optional },
   typed,
 }: {
   figure: StatementFigure
   typed?: string
 }) {
+  const correctFigure = useStore((store) => store.correctStatementFigure)
   return (
     <div className="mini" style={{ alignItems: 'center' }}>
       <span style={{ flex: 1 }}>
         <b style={{ fontSize: 14 }}>
           {label}
-          {unit === '%' && ' (%)'}
+          {unit === '%' ? ' (%)' : null}
         </b>
         <br />
         {confidence < 80 ? (
@@ -25,12 +26,12 @@ export default function StatementFigureRow({
         ) : (
           <span className="tag doc">✓ {confidence}% sure</span>
         )}
-        {optional && (
+        {optional ? (
           <>
             {' '}
             <span className="small">If shown · clear it if not</span>
           </>
-        )}
+        ) : null}
       </span>
       <input
         className="in"

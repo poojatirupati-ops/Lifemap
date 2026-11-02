@@ -1,4 +1,6 @@
 import type { KeyboardEvent } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 import { euro } from '../../lib/format.ts'
 
 type Unit = 'age' | '%' | '€' | 'yrs' | ''
@@ -11,6 +13,9 @@ const AROUND: Record<Unit, [before: string, after: string]> = {
   yrs: ['', 'yrs'],
   '': ['', ''],
 }
+
+// what follows the number in "Max 10%" or "Max 40 yrs"
+const MAX_SUFFIX: Partial<Record<Unit, string>> = { '%': '%', yrs: ' yrs' }
 
 interface Props {
   /** data-nb, e.g. "ret|a": also names the hint (nh-ret-a). */
@@ -45,15 +50,26 @@ export default function ChoiceNumberBox(props: Props) {
   const [before, after] = AROUND[unit]
   const limit = (figure: number) => (unit === '€' ? euro(figure) : format(figure))
 
+  // shows a figure changed elsewhere (plan-until moving retirement back) unless something was typed
+  const { register, setValue } = useForm({
+    values: { typed: shown },
+    resetOptions: { keepDirtyValues: true },
+  })
+  // the DOM keeps the original's markup: no name attribute, React's own onInput
+  const { ref } = register('typed')
+
   function commit(text: string) {
     const typed = parse(text)
     if (typed == null) return
+    // the first limit a typed value breaks is the hint
+    const limits = z
+      .number()
+      .max(max, `Max ${limit(max)}${MAX_SUFFIX[unit] ?? ''}`)
+      .min(min, `Min ${limit(min)}`)
+      .refine((figure) => !whole || Number.isInteger(figure), 'Whole numbers only')
     const limited = Math.min(max, Math.max(min, typed))
-    const rounded = whole ? Math.round(limited) : limited
-    if (typed > max) onHint(`Max ${limit(max)}${unit === '%' ? '%' : unit === 'yrs' ? ' yrs' : ''}`)
-    else if (typed < min) onHint(`Min ${limit(min)}`)
-    else onHint(rounded !== typed ? 'Whole numbers only' : '')
-    onCommit(rounded)
+    onHint(limits.safeParse(typed).error?.issues[0].message ?? '')
+    onCommit(whole ? Math.round(limited) : limited)
   }
 
   function commitOnEnter(event: KeyboardEvent<HTMLInputElement>) {
@@ -66,11 +82,11 @@ export default function ChoiceNumberBox(props: Props) {
 
   return (
     <span className="nbox">
-      {before && (
+      {before ? (
         <span className="nbu" aria-hidden="true">
           {before}
         </span>
-      )}
+      ) : null}
       <input
         className="nb"
         id={id}
@@ -78,21 +94,23 @@ export default function ChoiceNumberBox(props: Props) {
         inputMode={whole ? 'numeric' : 'decimal'}
         style={{ width: width(shown) }}
         data-nb={name}
-        defaultValue={shown}
+        ref={ref}
         aria-labelledby={labelledBy}
         autoComplete="off"
         enterKeyHint="done"
         onInput={(event) => {
-          event.currentTarget.style.width = width(event.currentTarget.value)
-          commit(event.currentTarget.value)
+          const text = event.currentTarget.value
+          event.currentTarget.style.width = width(text)
+          setValue('typed', text, { shouldDirty: true })
+          commit(text)
         }}
         onKeyDown={commitOnEnter}
       />
-      {after && (
+      {after ? (
         <span className="nbu" aria-hidden="true">
           {after}
         </span>
-      )}
+      ) : null}
     </span>
   )
 }

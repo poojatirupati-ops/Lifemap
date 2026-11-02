@@ -1,18 +1,23 @@
 // Questions about the customer's own plan, answered from their figures.
 import { cushion } from '../../domain/discovery/cushion.ts'
-import { hasEnoughForPersonality, suggestedHorizon } from '../../domain/discovery/profile.ts'
+import {
+  hasEnoughForPersonality,
+  isProfileComplete,
+  suggestedHorizon,
+} from '../../domain/discovery/profile.ts'
 import { RISK_SET_BY } from '../../domain/discovery/profile.data.ts'
 import { riskRead } from '../../domain/discovery/riskRead.ts'
 import { retirementGoal } from '../../domain/goals/goals.ts'
+import { hasPassed } from '../../domain/goals/when.ts'
+import { findings } from '../../domain/planning/findings.ts'
+import { goalLineFor } from '../../domain/planning/goalLine.ts'
 import { planSettings, type ProjectionInputs } from '../../domain/planning/planSettings.ts'
-import { project } from '../../domain/planning/project.ts'
+import type { project } from '../../domain/planning/project.ts'
+import type { WhatIf } from '../../domain/planning/wi.ts'
 import { LAW_TEXT } from '../../domain/planning/rates.ts'
 import { euro } from '../../lib/format.ts'
 import type { Plan } from '../../state/types.ts'
-import { hasPassed } from '../define/goalWhen.ts'
-import { PROFILE_QUESTIONS, profileAnswered } from '../me/mePlan.ts'
 import { isShortYear } from '../results/journey.ts'
-import { findings, goalLineText } from '../../sheets/planFindings.ts'
 import type { Topic } from './topics.tsx'
 
 const RISK_EXPLAIN: Record<string, string> = {
@@ -23,8 +28,13 @@ const RISK_EXPLAIN: Record<string, string> = {
   Growth: 'Growth first, comfortable with large ups and downs over the long term.',
 }
 
-function gapTopic(plan: Plan, projection: ReturnType<typeof project>): Topic {
-  const { worst } = findings(plan, projection)
+type Projection = ReturnType<typeof project>
+/** The projection's inputs, plus whether the plan is made and the money profile. */
+export type TopicPlan = ProjectionInputs & Pick<Plan, 'hasResults' | 'moneyProfile' | 'sources'>
+
+type Worst = ReturnType<typeof findings>['worst']
+
+function gapTopic(plan: TopicPlan, projection: Projection, whatIf: WhatIf, worst: Worst): Topic {
   const covered = projection.percent[worst.id]
   if (covered >= 95)
     return {
@@ -38,7 +48,7 @@ function gapTopic(plan: Plan, projection: ReturnType<typeof project>): Topic {
     ? ' (its date has passed, so we count it from next year: change the date in My plan)'
     : ` (age ${worst.age})`
   const yearly = worst.kind === 'retire' ? ' a year' : ''
-  const line = goalLineText(plan, projection, worst)
+  const line = goalLineFor(plan, projection, worst, whatIf)
   return {
     key: 'pgap',
     question: `Why is ${name} ${covered}% covered?`,
@@ -53,10 +63,10 @@ function gapTopic(plan: Plan, projection: ReturnType<typeof project>): Topic {
   }
 }
 
-function retirementTopic(plan: Plan, projection: ReturnType<typeof project>): Topic | null {
+function retirementTopic(plan: TopicPlan, projection: Projection): Topic | null {
   const retirement = retirementGoal(plan.goals)
   if (!retirement) return null
-  const settings = planSettings(plan as ProjectionInputs)
+  const settings = planSettings(plan)
   const short = projection.rows.find((row) => row.age >= retirement.age && isShortYear(row))
   const lumpSum =
     settings.lumpShare > 0
@@ -83,10 +93,10 @@ function retirementTopic(plan: Plan, projection: ReturnType<typeof project>): To
   }
 }
 
-function riskTopic(plan: Plan): Topic {
-  const complete = profileAnswered(plan) === PROFILE_QUESTIONS
+function riskTopic(plan: TopicPlan): Topic {
+  const complete = isProfileComplete(plan)
   const read = riskRead(
-    { discover: plan.ans, money: plan.um.a, products: plan.um.chips },
+    { discover: plan.answers, money: plan.moneyProfile.answers, products: plan.moneyProfile.chips },
     {
       complete,
       cushion: cushion(plan),
@@ -110,20 +120,18 @@ function riskTopic(plan: Plan): Topic {
 }
 
 /** Questions about the customer's own results; none before the plan has goals. */
-export function planTopics(plan: Plan): Topic[] {
-  if (!plan.app || !plan.goals.length) return []
-  const projection = project(plan as ProjectionInputs)
-  const found = findings(plan, projection)
-  const topics = [gapTopic(plan, projection), retirementTopic(plan, projection)]
-  if (hasEnoughForPersonality(plan.ans)) topics.push(riskTopic(plan))
+export function planTopics(plan: TopicPlan, projection: Projection, whatIf: WhatIf): Topic[] {
+  if (!plan.hasResults || !plan.goals.length) return []
+  const found = findings(plan, projection.rows, projection.percent)
+  const topics = [
+    gapTopic(plan, projection, whatIf, found.worst),
+    retirementTopic(plan, projection),
+  ]
+  if (hasEnoughForPersonality(plan.answers)) topics.push(riskTopic(plan))
   topics.push({
     key: 'pbest',
     question: 'What is my main strength?',
-    answer:
-      found.strength +
-      (found.best
-        ? '. Of all your goals, this one is best covered by your future income, savings and pension.'
-        : '. We only call something a strength when a goal is fully covered and your everyday spending is paid for.'),
+    answer: `${found.strength}. ${found.strengthWhy}`,
   })
   return topics.filter((topic) => topic !== null)
 }

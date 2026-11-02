@@ -1,23 +1,10 @@
 // Report page 4: your roadmap, decade by decade.
 import { euro } from '../../lib/format.ts'
 import type { YearRow } from '../../domain/planning/project.ts'
-import { band, hasShortfall, isShortYear, type ReportContext } from './context.ts'
+import { hasShortfall, type ReportContext } from './context.ts'
+import { band, isShortYear } from '../../domain/planning/bands.ts'
+import { byDecade } from '../../domain/planning/chapters.ts'
 import { bandTone } from './text.ts'
-
-/** The plan's years by decade; a lone year in the 90s joins the 80s. */
-function decades(rows: YearRow[]) {
-  const groups: { decade: number; from: number; to: number; rows: YearRow[] }[] = []
-  for (const row of rows) {
-    let decade = Math.floor(row.age / 10) * 10
-    if (decade === 90 && groups.length) decade = 80
-    const last = groups.at(-1)
-    if (last?.decade === decade) {
-      last.to = row.age
-      last.rows.push(row)
-    } else groups.push({ decade, from: row.age, to: row.age, rows: [row] })
-  }
-  return groups
-}
 
 const WEATHER = {
   storm: { icon: 'storm', tone: 'coral', chip: 'A gap to plan for' },
@@ -28,7 +15,7 @@ const WEATHER = {
 export function roadmapPage(context: ReportContext) {
   const { plan, projection, rows, endAge, retirement, retireAge, gap, statePensionAge } = context
   const runOut = gap.runOut?.age
-  const groups = decades(rows)
+  const groups = byDecade(rows)
   const headline =
     runOut == null
       ? `Smooth all the way to ${endAge}`
@@ -88,9 +75,7 @@ export function roadmapPage(context: ReportContext) {
     big: runOut == null ? '0 years' : `Age ${runOut}`,
     bigLabel: runOut == null ? 'with a gap' : 'savings run out',
     bigTone: runOut == null ? 'good' : 'coral',
-    eyebrow: 'YOUR ROADMAP',
     title: headline,
-    lead: 'Green: income covers life. Gold: savings pay. Coral: a gap to plan for.',
     decades: groups.map((group, index) => {
       const short = group.rows.filter(isShortYear)
       const dips = group.rows.filter((row) => row.drawnFromSavings > 1 && !isShortYear(row))
@@ -105,7 +90,6 @@ export function roadmapPage(context: ReportContext) {
         text: sentence(group, short, dips),
         goalChips: goalChips(group.from, group.to),
         spark: {
-          label: 'Savings',
           values: group.rows.map((row) => Math.round(row.liquid)),
           gapYears: group.rows.map(hasShortfall),
         },

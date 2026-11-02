@@ -12,8 +12,8 @@ const TYPING_MS = 650
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** The chat while Ask is open: what was said, and a short typing pause before each answer. */
-export function useAskChat() {
-  const [log, setLog] = useState<Message[]>([])
+export function useAskChat(initial: () => Message[] = () => []) {
+  const [log, setLog] = useState<Message[]>(initial)
   const [showAll, setShowAll] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])

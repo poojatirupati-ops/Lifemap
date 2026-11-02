@@ -20,6 +20,21 @@ export interface Video {
   transcript?: string
 }
 
+/** "1:14", or "2 min" for a video without a running time. */
+export const videoLength = (video: Video) => video.duration ?? `${video.mins} min`
+
+/** The presenter and their role, from "Presenter · role". */
+export function splitWho(video: Video) {
+  const [presenter, role = ''] = video.who.split(' · ')
+  return { presenter, role }
+}
+
+/** The transcript text under the player, or null for a filmed video without captions. */
+export function transcriptFor(video: Video) {
+  if (!video.src) return `${video.caption} [Full transcript appears here.]`
+  return video.captions ? (video.transcript ?? '') : null
+}
+
 export const VIDEO_KIND_LABEL: Record<VideoKind, string> = {
   mortgage: 'Mortgages',
   pension: 'Pensions',
@@ -138,3 +153,6 @@ export const VIDEOS: Video[] = [
     caption: 'Your money story shapes every choice. Let’s look at yours…',
   },
 ]
+
+export const videoById = (id: string) => VIDEOS.find((video) => video.id === id)!
+export const videosBy = (kind: VideoKind) => VIDEOS.filter((video) => video.kind === kind)

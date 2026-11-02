@@ -5,11 +5,11 @@ import type { ListItem } from '../../src/state/types'
 
 const card = (owed: number): ListItem => ({
   id: 1,
-  f: { owed },
-  src: { owed: 'typed' },
-  conf: {},
-  man: {},
-  fix: {},
+  fields: { owed },
+  sources: { owed: 'typed' },
+  confidence: {},
+  manual: {},
+  fixed: {},
   docFrom: null,
 })
 
@@ -38,8 +38,8 @@ test('load splits screen and sheet off a snapshot, normalizes, and leaves the in
   const { plan, screen, sheet } = useStore.getState()
   expect({ screen, sheet }).toEqual({ screen: 'P2', sheet: 'ask' })
   expect(plan).not.toHaveProperty('scr')
-  expect(plan.fin.cardBal).toBe(50)
-  expect(snapshot.fin.cardBal).toBeUndefined()
+  expect(plan.figures.cardBal).toBe(50)
+  expect(snapshot.figures.cardBal).toBeUndefined()
 })
 
 test('update normalizes and returns a new plan', () => {
@@ -47,6 +47,6 @@ test('update normalizes and returns a new plan', () => {
   useStore.getState().update((plan) => {
     plan.lists.cards = [card(50)]
   })
-  expect(useStore.getState().plan.fin.cardBal).toBe(50)
-  expect(before.fin.cardBal).toBeUndefined()
+  expect(useStore.getState().plan.figures.cardBal).toBe(50)
+  expect(before.figures.cardBal).toBeUndefined()
 })

@@ -1,32 +1,36 @@
 import { useShallow } from 'zustand/react/shallow'
 import { percent, toNumber } from '../../lib/format.ts'
 import { rules2026 } from '../../domain/planning/rates.ts'
-import { ASSUMPTIONS } from './assumptionFields.data.ts'
+import type { AdviserRateField } from '../../domain/planning/assumptionFields.data.ts'
 import { capCardRate, leaveRateForAdviser } from './assumptionActions.ts'
-import { isMine, valueInUse } from './assumptionText.ts'
+import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
 import { useMePlan, type MePlan } from './mePlan.ts'
-
-type RateKey = 'cardRate' | 'loanRate'
 
 const CARD_CAP = rules2026.guide.cardCap
 
 // a balance with no rate on the statement
-function rateMissing({ fin }: MePlan, key: RateKey) {
-  if (key === 'cardRate') return toNumber(fin.cardBal) > 0 && !(toNumber(fin.cardRate) > 0)
-  return toNumber(fin.loanBal) + toNumber(fin.debt) > 0 && !(toNumber(fin.loanRate) > 0)
+function rateMissing({ figures: fin }: MePlan, key: string, balances: string[]) {
+  const owed = balances.reduce((sum, balance) => sum + toNumber(fin[balance]), 0)
+  return owed > 0 && !(toNumber(fin[key]) > 0)
 }
 
 /** M4: an unknown card or loan rate is never a dead end: the legal cap, or a planning rate left for the adviser. */
-export default function UnknownRateChips({ rate }: { rate: RateKey }) {
+export default function UnknownRateChips({
+  rate,
+  field,
+}: {
+  rate: string
+  field: AdviserRateField
+}) {
   const { leftForAdviser, mine, missing, value } = useMePlan(
     useShallow((plan) => ({
-      leftForAdviser: !!plan.advRate?.[rate] && plan.asm[rate] != null,
+      leftForAdviser: !!plan.ratesForAdviser?.[rate] && plan.assumptions[rate] != null,
       mine: isMine(plan, rate),
-      missing: rateMissing(plan, rate),
+      missing: rateMissing(plan, rate, field.balances),
       value: valueInUse(plan, rate),
     })),
   )
-  if ((mine && !leftForAdviser) || !(missing || leftForAdviser)) return null
+  if (!leftForAdviser && (mine || !missing)) return null
 
   return (
     <>
@@ -41,10 +45,10 @@ export default function UnknownRateChips({ rate }: { rate: RateKey }) {
             className="chip sm"
             data-a="asmadv"
             data-p={rate}
-            onClick={() => leaveRateForAdviser(rate)}
+            onClick={() => leaveRateForAdviser(rate, field)}
           >
-            I don't know my rate: use a planning rate ({percent(ASSUMPTIONS[rate].fallback!)}) and
-            leave it for my adviser
+            I don't know my rate: use a planning rate ({percent(field.fallback)}) and leave it for
+            my adviser
           </button>
         )}
       </div>

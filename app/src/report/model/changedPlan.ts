@@ -19,25 +19,25 @@ export function changedPlan(plan: Plan, change: Change, today: Date) {
       draft.retireSet = true
       const retirement = draft.goals.find((goal) => goal.kind === 'retire')
       if (retirement) retirement.age = change.retireAge
-      draft.fin.retireAge = change.retireAge
-      draft.src.retireAge ||= 'pre'
+      draft.figures.retireAge = change.retireAge
+      draft.sources.retireAge ||= 'pre'
     }
     if (change.saveM != null) {
-      draft.saveM = change.saveM
-      ;(draft as { saveUp?: boolean }).saveUp = true
+      draft.monthlySaving = change.saveM
+      draft.savingAtRule = true
     }
     if (change.pensionAddM) {
-      draft.fin.pensionM = (Number(draft.fin.pensionM) || 0) + change.pensionAddM
-      draft.fin.pensionOwnM = (Number(draft.fin.pensionOwnM) || 0) + change.pensionAddM
-      draft.src.pensionM = 'typed'
-      draft.src.pensionOwnM = 'typed'
+      draft.figures.pensionM = (Number(draft.figures.pensionM) || 0) + change.pensionAddM
+      draft.figures.pensionOwnM = (Number(draft.figures.pensionOwnM) || 0) + change.pensionAddM
+      draft.sources.pensionM = 'typed'
+      draft.sources.pensionOwnM = 'typed'
     }
     if (change.fullStatePension) {
-      draft.fin.sp = 'Expect full'
-      draft.src.sp = 'typed'
-      delete draft.fin.spYears
-      delete draft.asm.spYears
-      delete draft.asm.spWeek
+      draft.figures.sp = 'Expect full'
+      draft.sources.sp = 'typed'
+      delete draft.figures.spYears
+      delete draft.assumptions.spYears
+      delete draft.assumptions.spWeek
     }
     normalize(draft, today)
   })

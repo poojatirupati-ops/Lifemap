@@ -1,15 +1,18 @@
-import { toolById } from '../explore/explore.data.ts'
-import { openCalculator } from '../explore/exploreActions.ts'
+import clsx from 'clsx'
+import { toolById } from '../explore/tools.data.ts'
+import { openCalculator } from '../../state/explore.ts'
 import { CALCULATOR_CARDS, photo } from './mortgages.data.ts'
 
 /** Every mortgage calculator as a photo card, the most relevant one first. */
 export default function CalculatorGrid({ calculators }: { calculators: string[] }) {
+  // Every mortgage calculator is offered, so the count reads "7 of 7" like the original.
+  const count = calculators.length
   return (
     <>
       <div className="mp-sec" id="mp-calc">
         <h3>Calculators for you</h3>
         <span>
-          {calculators.length} of {calculators.length}
+          {count} of {count}
         </span>
       </div>
       <div className="mp-grid">
@@ -19,7 +22,7 @@ export default function CalculatorGrid({ calculators }: { calculators: string[] 
           return (
             <button
               key={id}
-              className={i === 0 ? 'mp-gc big' : 'mp-gc'}
+              className={clsx('mp-gc', { big: i === 0 })}
               data-a="calc"
               data-p={card.tool}
               aria-label={`${card.label}: ${name}`}

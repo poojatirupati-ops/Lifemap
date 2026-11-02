@@ -36,7 +36,7 @@ it('every estimate', () => {
           const ours = rendered(<EligibilityResult answers={answers} onRestart={noop} />)
           expect(shape(ours)).toEqual(theirs(4, answers))
         }
-})
+}, 30000)
 
 it('answers move on, Back goes back, Start again starts over', () => {
   const container = document.createElement('div')

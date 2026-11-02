@@ -1,14 +1,17 @@
+import clsx from 'clsx'
 import type { CSSProperties } from 'react'
-import { VIDEOS } from '../explore/videos.data.ts'
-import { useMortgagePage } from '../../state/mortgage.ts'
-import { VIDEO_PHOTOS, photo, type StoryVideo } from './mortgages.data.ts'
+import { pageKey, useMortgagePage } from '../../state/mortgage.ts'
+import { VIDEO_PHOTOS, photoAt, videoFor, type StoryVideo } from './mortgages.data.ts'
 
 const SHADE = 'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45))'
 
 /** The situation's story videos as a scrollable row; picking one plays it below. */
 export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
-  const { situation, video: current, watched, playVideo } = useMortgagePage()
-  const watchedCount = videos.filter((_, i) => watched[`${situation}-${i}`]).length
+  const situation = useMortgagePage((p) => p.situation)
+  const current = useMortgagePage((p) => p.video)
+  const watched = useMortgagePage((p) => p.watched)
+  const playVideo = useMortgagePage((p) => p.playVideo)
+  const watchedCount = videos.filter((_, i) => watched[pageKey(situation, i)]).length
 
   return (
     <>
@@ -20,25 +23,25 @@ export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
       </div>
       <div className="mp-bub mp-vrow" role="group" aria-label="Videos">
         {videos.map((story, i) => {
-          const poster = VIDEOS.find((video) => video.id === story.videoId)?.poster
-          const done = watched[`${situation}-${i}`]
+          const poster = videoFor(story)?.poster
+          const done = watched[pageKey(situation, i)]
           const playing = i === current
           const art = {
             '--c': story.color,
-            backgroundImage: `${SHADE},url(${poster ?? photo(VIDEO_PHOTOS[i % VIDEO_PHOTOS.length])})`,
+            backgroundImage: `${SHADE},url(${poster ?? photoAt(VIDEO_PHOTOS, i)})`,
           } as CSSProperties
           return (
             <button
               key={story.title}
-              className={`mp-bu mp-vc${playing ? ' cur' : ''}${done ? ' done' : ''}`}
+              className={clsx('mp-bu mp-vc', { cur: playing, done })}
               data-a="mpvid"
               data-p={i}
-              aria-label={story.title + (done ? ', watched' : '')}
+              aria-label={`${story.title}${done ? ', watched' : ''}`}
               aria-current={playing || undefined}
               onClick={() => playVideo(i)}
             >
               <span className="vc-art" style={art}>
-                {!poster && (
+                {poster ? null : (
                   <i className="vc-badge" aria-hidden="true">
                     {story.emoji}
                   </i>
@@ -52,7 +55,7 @@ export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
                 </b>
               </span>
               <span className="vc-t">{story.short}</span>
-              {playing && <span className="vc-now">Now playing</span>}
+              {playing ? <span className="vc-now">Now playing</span> : null}
             </button>
           )
         })}

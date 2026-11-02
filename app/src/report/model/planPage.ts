@@ -49,15 +49,12 @@ export function planPage(context: ReportContext, goals: GoalSummary[], scenarios
   const gapYears = gap.rows.length
   return {
     big: `${onTrack} of ${goals.length}`,
-    bigLabel: 'goals on track',
     bigTone: onTrack === goals.length || worst === 'good' ? 'good' : bandTone(worst),
-    eyebrow: 'YOUR PLAN ON A PAGE',
     title: allFine ? 'Your plan is on track' : goals.length ? headline(goals) : '',
     lead: allFine ? 'Your income and savings cover everything you told us about.' : subline,
     goals: goals.map((goal) => ({
       name: goal.name,
       icon: goal.key,
-      kind: goal.key,
       pct: goal.pct,
       band: bandKey(goal.band),
       bandText: bandText(goal.band),
@@ -87,21 +84,13 @@ export function planPage(context: ReportContext, goals: GoalSummary[], scenarios
             { big: '€0', small: 'short' },
           ],
         },
-    close: scenarios.topThree.length
-      ? {
-          title: 'What could close the gap',
-          items: scenarios.topThree.map((item, index) => ({
-            points: `+${item.points} points`,
-            tone: CLOSE_TONES[index],
-            title: item.title,
-            text: item.body,
-          })),
-        }
-      : { title: 'What keeps you on track', items: [] },
-    next: {
-      title: 'Next: share this plan with an expert',
-      text: 'They check the numbers and choose the best way forward.',
-      button: 'Meet an expert',
+    close: {
+      items: scenarios.topThree.map((item, index) => ({
+        points: `+${item.points} points`,
+        tone: CLOSE_TONES[index],
+        title: item.title,
+        text: item.body,
+      })),
     },
   }
 }

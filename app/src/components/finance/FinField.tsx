@@ -1,32 +1,20 @@
-import { statementWinsNote } from '../../domain/finances/figures.ts'
+import { planFigures, statementWinsNote } from '../../domain/finances/figures.ts'
 import { useStore } from '../../state/store.ts'
-import type { Plan } from '../../state/types.ts'
-import { workedOutNote } from './checkList.ts'
 import DocNote from './DocNote.tsx'
 import ExampleLink from './ExampleLink.tsx'
 import FieldTag from './FieldTag.tsx'
-import { FINANCE_FIELDS, fieldValue } from './fields.data.ts'
+import { FINANCE_FIELDS, fieldValue } from '../../domain/finances/fields.data.ts'
 import NumberBox from './NumberBox.tsx'
-import { chooseField, typeField } from './sectionActions.ts'
+import WorkedOutNote from './WorkedOutNote.tsx'
 
 const YES_NO_NOT_SURE = ['Yes', 'No', 'Not sure']
-const REPAYMENTS = ['mortPayM', 'cardPayM', 'loanPayM']
-
-const docNoteFor = (key: string, plan: Plan) =>
-  statementWinsNote(
-    plan.src[key] === 'doc',
-    plan.man[key],
-    plan.fin[key],
-    FINANCE_FIELDS[key].type === 'eur',
-  )
 
 /** One Your finances figure: chips for a choice, otherwise a typed box. */
 export default function FinField({ field }: { field: string }) {
   const { label, type, options, hint } = FINANCE_FIELDS[field]
   const value = useStore(({ plan }) => fieldValue(field, plan))
-  const docNote = useStore(({ plan }) => docNoteFor(field, plan))
-  const worked = useStore(({ plan }) =>
-    REPAYMENTS.includes(field) ? workedOutNote(field, plan) : '',
+  const docNote = useStore(({ plan }) =>
+    statementWinsNote(planFigures(plan), field, type === 'eur'),
   )
   const tag = (
     <span id={`tag-${field}`}>
@@ -48,17 +36,17 @@ export default function FinField({ field }: { field: string }) {
               aria-pressed={value === option}
               data-a="fchoice"
               data-p={`${field}|${option}`}
-              onClick={() => chooseField(field, option)}
+              onClick={() => useStore.getState().chooseField(field, option)}
             >
               {option}
             </button>
           ))}
         </div>
-        {docNote && (
+        {docNote ? (
           <span className="small" style={{ display: 'block', color: 'var(--acc-d)' }} role="status">
             {docNote}
           </span>
-        )}
+        ) : null}
         <ExampleLink field={field} />
       </div>
     )
@@ -77,24 +65,16 @@ export default function FinField({ field }: { field: string }) {
         maxPercent={30}
         data-fin={field}
         aria-describedby={hint ? `h-${field}` : undefined}
-        onValue={(typed) => typeField(field, typed)}
+        onValue={(typed) => useStore.getState().typeField(field, typed)}
       />
       <DocNote id={`dn-${field}`} note={docNote} />
-      {hint && (
+      {hint ? (
         <span className="small" id={`h-${field}`}>
           {hint}
         </span>
-      )}
-      {worked && (
-        <span
-          className="small"
-          id={`wo-${field}`}
-          style={{ display: 'block', color: 'var(--sea-d)' }}
-        >
-          {worked}
-        </span>
-      )}
-      {type !== 'text' && <ExampleLink field={field} />}
+      ) : null}
+      <WorkedOutNote field={field} />
+      {type !== 'text' ? <ExampleLink field={field} /> : null}
     </div>
   )
 }

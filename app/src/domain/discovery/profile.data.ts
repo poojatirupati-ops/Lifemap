@@ -73,3 +73,13 @@ export const THIN_CUSHION_REASONS = [
   'a €1,000 surprise would go on a card or a loan',
   "you haven't set up an emergency fund yet",
 ]
+
+// The risk read's lookup tables.
+// Answer -> the cap it puts on a risk factor; no answer, or one not listed, leaves it at 5.
+export const FALL_CAP = [2, 3, 4] // u10 option: what a 20% fall would mean
+export const INCOME_CAP = [2, 4] // u12 option: how steady the income is
+export const SAVINGS_CAP = [2, 3] // u14 option: months the savings last
+export const LOW_SCORE_CAP: Record<number, number> = { 1: 2, 2: 3 } // Q7 or Q9 scored 1 or 2
+export const HORIZON_LEVEL = [1, 2, 4, 5] // u9 option
+// u11 option; a self-rated expert stays at 4 unless they have held shares or funds
+export const EXPERIENCE_BY_KNOWHOW = [3, 4, 5, 4]

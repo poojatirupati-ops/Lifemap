@@ -1,11 +1,12 @@
 import type { HTMLAttributes } from 'react'
-import { GOAL_ICONS } from './icons.data.ts'
-import Svg from './Svg.tsx'
+import { clsx } from 'clsx'
+import { GOAL_ICONS } from './icons.tsx'
 
 const withoutVariation = (emoji: string) => emoji.trim().replace(/\uFE0F/g, '')
 
-const goalIconFor = (emoji: string) =>
-  Object.entries(GOAL_ICONS).find(([key]) => withoutVariation(key) === withoutVariation(emoji))?.[1]
+const ICON_BY_EMOJI = new Map(
+  Object.entries(GOAL_ICONS).map(([emoji, icon]) => [withoutVariation(emoji), icon]),
+)
 
 type Props = { emoji: string } & HTMLAttributes<HTMLSpanElement>
 
@@ -14,10 +15,10 @@ type Props = { emoji: string } & HTMLAttributes<HTMLSpanElement>
  * tile gets .gix; any other emoji shows `children`, or the emoji itself.
  */
 export default function GIcon({ emoji, className, children, ...rest }: Props) {
-  const icon = goalIconFor(emoji)
+  const icon = ICON_BY_EMOJI.get(withoutVariation(emoji))
   return (
-    <span className={icon ? `${className} gix` : className} {...rest}>
-      {icon ? <Svg src={icon} /> : (children ?? emoji)}
+    <span className={clsx(className, icon && 'gix') || undefined} {...rest}>
+      {icon ?? children ?? emoji}
     </span>
   )
 }

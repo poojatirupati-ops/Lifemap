@@ -1,12 +1,10 @@
 // The standards LifeMap suggests (or a partner's own figures), from the original prototype (SETTINGS); checked in tests/golden/settings.test.ts.
 // 'inv' has no value: it is derived from invGross and fundChg (settings.ts). value null = no published figure.
 export type StandardValue = number | string | number[] | null
-export type Standard = {
+type Figure = number | string | null
+type StandardBase = {
   name: string
-  unit: string
   group?: string
-  value?: StandardValue
-  partnerValue?: StandardValue
   cautious?: number
   by?: string
   label?: string
@@ -16,6 +14,16 @@ export type Standard = {
   asOf: string
   verify?: boolean
 }
+/** A list standard ('pct3') holds three rates; every other unit holds one figure. */
+export type Standard = StandardBase &
+  (
+    | { unit: 'pct3'; value: number[]; partnerValue?: number[] }
+    | {
+        unit: 'pct' | 'num' | 'eur' | 'yrs' | 'choice'
+        value?: Figure
+        partnerValue?: Figure
+      }
+  )
 
 export const CENTRAL_BANK_RATES =
   'https://www.centralbank.ie/statistics/data-and-analysis/credit-and-banking-statistics/retail-interest-rates'
@@ -450,6 +458,12 @@ export const STANDARDS = {
   },
 } satisfies Record<string, Standard>
 export type StandardKey = keyof typeof STANDARDS
+
+/** Standard keys by group, in the order they are listed. */
+export const STANDARD_GROUPS = Object.groupBy(
+  Object.keys(STANDARDS) as StandardKey[],
+  (key) => STANDARDS[key].group ?? '',
+)
 export const GUIDANCE_FIGURES: Record<string, Standard> = {
   lifeMen65: {
     name: 'Life expectancy at 65, men (years): guidance only',

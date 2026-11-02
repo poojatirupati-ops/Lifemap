@@ -1,17 +1,20 @@
-import { cushion } from '../../domain/discovery/cushion.ts'
+import { cushion, type CushionInputs } from '../../domain/discovery/cushion.ts'
 import {
   hasEnoughForPersonality,
-  moneyProfileAnswered,
+  isProfileComplete,
   suggestedHorizon,
 } from '../../domain/discovery/profile.ts'
 import { riskRead } from '../../domain/discovery/riskRead.ts'
 import type { Plan } from '../../state/types.ts'
-import { useProfileAnswers } from '../discover/useProfileAnswers.ts'
-import { openMe, openProfile } from './planActions.ts'
+import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
+import { useStore } from '../../state/store.ts'
 
 /** The risk profile as it reads now, with a way to finish or view it in Me. */
-export default function ProfileBanner({ plan }: { plan: Plan }) {
+export default function ProfileBanner({ inputs }: { inputs: CushionInputs & Pick<Plan, 'goals'> }) {
   const answers = useProfileAnswers()
+  const openMe = useStore((store) => store.openMe)
+  const openProfile = useStore((store) => store.openProfile)
+  const complete = useStore((store) => isProfileComplete(store.plan))
   if (!hasEnoughForPersonality(answers.discover))
     return (
       <div className="banner" id="r-prof">
@@ -25,11 +28,10 @@ export default function ProfileBanner({ plan }: { plan: Plan }) {
       </div>
     )
 
-  const complete = moneyProfileAnswered(answers) === 13
   const read = riskRead(answers, {
     complete,
-    cushion: cushion(plan),
-    suggestedHorizon: suggestedHorizon(plan.goals, plan.about.age ?? 0, plan.retireAge),
+    cushion: cushion(inputs),
+    suggestedHorizon: suggestedHorizon(inputs.goals, inputs.about.age ?? 0, inputs.retireAge),
   })
   return (
     <div className="banner" id="r-prof">

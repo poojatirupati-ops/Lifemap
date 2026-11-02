@@ -1,6 +1,6 @@
-import { saveMeeting } from '../../report/saveFiles.ts'
+import { saveMeeting } from './saveMeeting.ts'
 import { useStore } from '../../state/store.ts'
-import { adviserOf } from './booking.ts'
+import { adviserOf } from '../../domain/identity/booking.ts'
 
 const SLOT = /^(\w+)\s+(\d+)\s+(\w+)/
 
@@ -15,9 +15,8 @@ const canOnlySaveText = () => {
 
 /** The confirmed meeting: date tile, when, how and with whom, and a calendar button. */
 export default function BookedCard() {
-  const plan = useStore((store) => store.plan)
-  const { slot, mode } = plan.book
-  const adviser = adviserOf(plan)
+  const { slot, mode } = useStore((store) => store.plan.booking)
+  const adviser = useStore(({ plan }) => adviserOf(plan))
   const date = SLOT.exec(slot ?? '')
   return (
     <div className="card bk-hero">

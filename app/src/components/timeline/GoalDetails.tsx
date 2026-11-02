@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { setGoalDetail } from './goalActions.ts'
+import { useStore } from '../../state/store.ts'
 import type { Goal } from '../../state/types.ts'
 
 const DETAILS = [
@@ -9,6 +9,7 @@ const DETAILS = [
 
 /** "More details": who the goal is for and whether its timing can move. */
 export default function GoalDetails({ goal }: { goal: Goal }) {
+  const setGoalDetail = useStore((store) => store.setGoalDetail)
   return (
     <div className="more">
       {DETAILS.map(({ field, label, options }) => (

@@ -1,40 +1,36 @@
-import { Fragment } from 'react'
 import type { YearRow } from '../../../domain/planning/project.ts'
 import type { Goal } from '../../../state/types.ts'
+import ChartGrid from './ChartGrid.tsx'
 import YearBar from './YearBar.tsx'
 import YearMarks from './YearMarks.tsx'
-import { axisLabel, axisMax, isShortYear, stackMarkers, yearSplit } from './cashflow.ts'
+import { axisMax, chartLabel, PAD_LEFT, PAD_RIGHT, stackMarkers, yearSplit } from './cashflow.ts'
 
-const PAD_LEFT = 34
-const PAD_RIGHT = 6
+const HEIGHT = 250
 const BOTTOM = 20
-const GRID_LINES = [1, 2, 3]
 
 interface Props {
   rows: YearRow[]
   width: number
-  landscape: boolean
   selected: number
   onSelect: (index: number) => void
   showSavings: boolean
+  /** Already filtered to the goals the chart marks. */
   goals: Goal[]
-  hasRetirement: boolean
+  retiringAge?: number
   statePensionAge: number
 }
 
 /** One bar per year: spending paid from income, from savings and not covered, under the income line. */
 export default function CashflowChart(props: Props) {
-  const { rows, width, selected, onSelect, showSavings, hasRetirement, statePensionAge } = props
-  const height = props.landscape || width <= 500 ? 250 : 290
+  const { rows, width, selected, onSelect, showSavings, retiringAge, statePensionAge } = props
   const barStep = (width - PAD_LEFT - PAD_RIGHT) / rows.length
   const barWidth = Math.max(1, barStep - (barStep > 4 ? 1.2 : 0.4))
   const left = (index: number) => PAD_LEFT + index * barStep
   const centre = (index: number) => left(index) + barStep / 2
 
-  const markedGoals = props.goals.filter((goal) => goal.kind !== 'retire' && goal.kind !== 'legacy')
-  const markers = stackMarkers(markedGoals, rows, centre)
+  const markers = stackMarkers(props.goals, rows, centre)
   const levels = Math.max(1, ...markers.map((marker) => marker.level + 1))
-  const top = 14 + levels * 14 + (hasRetirement ? 4 : 0)
+  const top = 14 + levels * 14 + (retiringAge == null ? 0 : 4)
 
   const splits = rows.map(yearSplit)
   const max = axisMax(
@@ -45,61 +41,23 @@ export default function CashflowChart(props: Props) {
       ...(showSavings ? rows.map((row) => row.liquid) : []),
     ),
   )
-  const plotHeight = height - top - BOTTOM
-  const y = (amount: number) => height - BOTTOM - (amount / max) * plotHeight
-  const baseline = y(0)
+  const plotHeight = HEIGHT - top - BOTTOM
+  const y = (amount: number) => HEIGHT - BOTTOM - (amount / max) * plotHeight
   const line = (value: (row: YearRow) => number) =>
     rows
       .map((row, i) => `${i ? 'L' : 'M'}${centre(i).toFixed(1)} ${y(value(row)).toFixed(1)} `)
       .join('')
 
-  const firstShort = rows.find(isShortYear)
-  const label =
-    `Yearly cashflow, age ${rows[0].age} to ${rows[rows.length - 1].age}. ` +
-    (firstShort ? `Shortfall from age ${firstShort.age}.` : 'Every year is covered.')
-
   return (
     <svg
-      viewBox={`0 0 ${width} ${height}`}
+      viewBox={`0 0 ${width} ${HEIGHT}`}
       width="100%"
       role="img"
-      aria-label={label}
+      aria-label={chartLabel(rows)}
       style={{ display: 'block', marginTop: 8 }}
       className="cchart"
     >
-      {GRID_LINES.map((step) => {
-        const amount = (max * step) / 3
-        const at = y(amount)
-        return (
-          <Fragment key={step}>
-            <line
-              x1={PAD_LEFT}
-              x2={width - PAD_RIGHT}
-              y1={at.toFixed(1)}
-              y2={at.toFixed(1)}
-              stroke="#E3EAF0"
-              strokeWidth="1"
-            />
-            <text
-              x={PAD_LEFT - 4}
-              y={(at + 3.5).toFixed(1)}
-              fontSize="9.5"
-              fill="#51627A"
-              textAnchor="end"
-            >
-              {axisLabel(amount)}
-            </text>
-          </Fragment>
-        )
-      })}
-      <line
-        x1={PAD_LEFT}
-        x2={width - PAD_RIGHT}
-        y1={baseline}
-        y2={baseline}
-        stroke="#B9C9D6"
-        strokeWidth="1"
-      />
+      <ChartGrid width={width} max={max} y={y} />
 
       {rows.map((row, i) => (
         <YearBar
@@ -110,13 +68,12 @@ export default function CashflowChart(props: Props) {
           width={barWidth}
           centre={centre(i)}
           y={y}
-          heightOf={(amount) => (amount / max) * plotHeight}
           selected={i === selected}
-          labelY={height - 6}
+          labelY={HEIGHT - 6}
         />
       ))}
 
-      {showSavings && (
+      {showSavings ? (
         <path
           d={line((row) => Math.max(0, row.liquid))}
           fill="none"
@@ -124,7 +81,7 @@ export default function CashflowChart(props: Props) {
           strokeWidth="1.4"
           opacity=".8"
         />
-      )}
+      ) : null}
       <path
         d={line((row) => row.inflow)}
         fill="none"
@@ -138,8 +95,8 @@ export default function CashflowChart(props: Props) {
           key={row.age}
           age={row.age}
           centre={centre(i)}
-          baseline={baseline}
-          retiring={row.retiresThisYear && hasRetirement}
+          baseline={y(0)}
+          retiring={row.age === retiringAge}
           statePension={row.age === statePensionAge}
         />
       ))}
@@ -151,7 +108,7 @@ export default function CashflowChart(props: Props) {
           fontSize="12"
           textAnchor="middle"
         >
-          {goal.e}
+          {goal.emoji}
           <title>{`${goal.name}, age ${goal.age}`}</title>
         </text>
       ))}
@@ -162,7 +119,7 @@ export default function CashflowChart(props: Props) {
           x={left(i).toFixed(1)}
           y={top}
           width={barStep.toFixed(2)}
-          height={height - BOTTOM - top}
+          height={HEIGHT - BOTTOM - top}
           fill="transparent"
           style={{ cursor: 'pointer' }}
           onClick={() => onSelect(i)}

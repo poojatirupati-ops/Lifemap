@@ -1,5 +1,5 @@
 // Loan maths: repayments, other mortgages and the customer's cards and loans.
-import { toNumber } from '../../lib/format'
+import { sum, toNumber } from '../../lib/format'
 import type { ListItem } from '../../state/types'
 import { assumption, isChosen, type AssumptionInputs } from './assumptions'
 
@@ -34,19 +34,16 @@ export function repayForYear(
 
 // a percentage the customer typed, else the assumption
 export const statedRate = (inputs: DebtInputs, key: RateKey) =>
-  positive(inputs.fin[key]) > 0 ? positive(inputs.fin[key]) / 100 : assumption(inputs, key)
+  positive(inputs.figures[key]) > 0 ? positive(inputs.figures[key]) / 100 : assumption(inputs, key)
 
 const positive = (value: unknown) => Math.max(0, toNumber(value))
 
-export const sum = <T>(items: T[], amount: (item: T, index: number) => number) =>
-  items.reduce((total, item, index) => total + amount(item, index), 0)
-
 // Mortgages on other properties count as other loans: total balance, repayment and a balance-weighted rate.
 export function otherMortgages(items: ListItem[], fallbackRate: number) {
-  const mortgages = items.map((item) => item.f).filter((mortgage) => positive(mortgage.owed) > 0)
-  const rateOf = (mortgage: ListItem['f']) => positive(mortgage.rate) / 100 || fallbackRate
+  const mortgages = items.map((item) => item.fields).filter((mortgage) => positive(mortgage.owed) > 0)
+  const rateOf = (mortgage: ListItem['fields']) => positive(mortgage.rate) / 100 || fallbackRate
   // no term and no repayment: 25 years assumed
-  const repaymentOf = (mortgage: ListItem['f']) =>
+  const repaymentOf = (mortgage: ListItem['fields']) =>
     positive(mortgage.pay) ||
     mortgageRepayment(positive(mortgage.owed), rateOf(mortgage), positive(mortgage.years) || 25)
   const balance = sum(mortgages, (mortgage) => positive(mortgage.owed))
@@ -94,12 +91,12 @@ type RateKey = 'cardRate' | 'loanRate' | 'mortRate'
 export type Figure = number | string | null | undefined
 
 /** The cards and loans the customer typed in. */
-export type DebtFinances = AssumptionInputs['fin'] & {
+export type DebtFinances = AssumptionInputs['figures'] & {
   [key in 'loanBal' | 'debt' | 'loanPayM' | 'debtPayM' | 'cardBal' | 'cardPayM' | RateKey]?: Figure
 }
 
 export interface DebtInputs extends AssumptionInputs {
-  fin: DebtFinances
+  figures: DebtFinances
   lists?: { mort2?: ListItem[] }
 }
 
@@ -116,7 +113,7 @@ function debtRepayment(balance: number, stated: number, apr: number) {
 
 // Cards and loans amortise separately at their APR.
 export function debts(inputs: DebtInputs) {
-  const { fin, asm } = inputs
+  const { figures: fin, assumptions: asm } = inputs
   const mortgages = otherMortgages(inputs.lists?.mort2 ?? [], assumption(inputs, 'mortRate'))
   const ownLoans = toNumber(fin.loanBal) + toNumber(fin.debt)
   const cardRate = statedRate(inputs, 'cardRate')
@@ -137,8 +134,8 @@ export function debts(inputs: DebtInputs) {
     loanRate,
     monthlyLoanPayment: loan.monthly,
     loanPaymentEstimated: loan.estimated,
-    debt: cardBal + loanBal,
-    monthlyDebtPayment: card.monthly + loan.monthly,
-    debtPaymentEstimated: card.estimated || loan.estimated,
+    debt: cardBal + loanBal, // TODO(R-11): derive at the use sites
+    monthlyDebtPayment: card.monthly + loan.monthly, // TODO(R-11)
+    debtPaymentEstimated: card.estimated || loan.estimated, // TODO(R-11)
   }
 }

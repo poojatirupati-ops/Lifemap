@@ -1,8 +1,9 @@
+import SeeLink from './SeeLink.tsx'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { euroShort } from '../../lib/format.ts'
 import type { Goal } from '../../state/types.ts'
-import { showSection } from '../plan/planActions.ts'
-import { calendarYear, isPassed, useTiming } from '../timeline/goalText.ts'
+import { calendarYear, isPassed } from '../../domain/goals/goalTiming.ts'
+import { useTiming } from '../../hooks/useTiming.ts'
 
 type Props = { byAge: Goal[]; profileAnswers: number }
 
@@ -25,14 +26,7 @@ export default function HomeTimeline({ byAge, profileAnswers }: Props) {
           <h3 className="h">Your Timeline</h3>
           <div className="small">Your goals by age</div>
         </div>
-        <button
-          className="link"
-          data-a="seg"
-          data-p="timeline"
-          onClick={() => showSection('timeline')}
-        >
-          Open ›
-        </button>
+        <SeeLink section="timeline">Open ›</SeeLink>
       </div>
       <div className="tlv-body">
         <div className="tlv-sum">
@@ -52,7 +46,7 @@ export default function HomeTimeline({ byAge, profileAnswers }: Props) {
                 style={{ height: Math.round(30 + Math.sqrt(total(goal) / tallest) * 110) }}
               ></span>
               <span className="tlv-em" aria-hidden="true">
-                {goal.e}
+                {goal.emoji}
               </span>
               <span className="tlv-age">{goal.age}</span>
             </div>

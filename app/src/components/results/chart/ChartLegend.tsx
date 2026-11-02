@@ -36,17 +36,17 @@ export default function ChartLegend({ showSavings, hasRetirement, statePensionAg
         <i className="sw" style={lineSwatch('2px dashed var(--ink)')} />
         Your income each year
       </span>
-      {showSavings && (
+      {showSavings ? (
         <span>
           <i className="sw" style={lineSwatch('2px solid #6E8AA6')} />
           Savings left
         </span>
-      )}
-      {hasRetirement && (
+      ) : null}
+      {hasRetirement ? (
         <span>
           <i className="sw" style={{ background: 'var(--ink)' }} />▼ Retirement starts
         </span>
-      )}
+      ) : null}
       <span>
         <b style={{ fontSize: 10, marginRight: 4 }}>SP</b>
         {`State Pension from ${statePensionAge}`}

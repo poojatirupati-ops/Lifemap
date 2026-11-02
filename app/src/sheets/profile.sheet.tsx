@@ -1,12 +1,11 @@
-import { openMe } from '../components/plan/planActions.ts'
 import { useStore } from '../state/store.ts'
 import SheetTitle from './SheetTitle.tsx'
 
 export const key = 'profile'
 
 export function Body() {
-  const name = useStore((store) => store.plan.acct.name)
-  const passkey = useStore((store) => store.plan.acct.pk)
+  const name = useStore((store) => store.plan.account.name)
+  const passkey = useStore((store) => store.plan.account.passkey)
   return (
     <>
       <div className="adv">
@@ -20,11 +19,15 @@ export function Body() {
           </div>
         </div>
       </div>
-      <button className="goal" style={{ marginTop: 14 }} onClick={() => openMe('privacy')}>
+      <button
+        className="goal"
+        style={{ marginTop: 14 }}
+        onClick={() => useStore.getState().openMe('privacy')}
+      >
         <span className="ic">🔐</span>
         <b style={{ flex: 1 }}>Privacy & preferences</b>
       </button>
-      <button className="goal" onClick={() => openMe('details')}>
+      <button className="goal" onClick={() => useStore.getState().openMe('details')}>
         <span className="ic">🙋</span>
         <b style={{ flex: 1 }}>My details</b>
       </button>

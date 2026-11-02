@@ -5,7 +5,7 @@ import { retirementGoal } from '../../../domain/goals/goals.ts'
 import { useChartKeys } from '../../../hooks/useChartKeys.ts'
 import { useViewport } from '../../../hooks/useViewport.ts'
 import { useStore } from '../../../state/store.ts'
-import { defaultYear } from './cashflow.ts'
+import { chartWidth, defaultYear, markedGoals } from './cashflow.ts'
 import CashflowChart from './CashflowChart.tsx'
 import ChartLegend from './ChartLegend.tsx'
 import ChartSummary from './ChartSummary.tsx'
@@ -14,16 +14,14 @@ import YearDetail from './YearDetail.tsx'
 /** The results page's Detail view: a bar per year, the chosen year's detail, legend and summary. */
 export default function CashflowView({ rows }: { rows: YearRow[] }) {
   const goals = useStore((store) => store.plan.goals)
-  const { landscape } = useViewport(false)
+  const viewport = useViewport(false)
   const [showSavings, setShowSavings] = useState(false)
-  const hasRetirement = retirementGoal(goals) != null
-  const { selected, select, onKeyDown } = useChartKeys(
-    rows.length,
-    defaultYear(rows, hasRetirement),
-  )
+  const retiringAge = retirementGoal(goals)
+    ? rows.find((row) => row.retiresThisYear)?.age
+    : undefined
+  const { selected, select, onKeyDown } = useChartKeys(rows.length, defaultYear(rows, retiringAge))
   const statePensionAge = rulesFor(rows[0].year).sp.age
   const row = rows[selected]
-  const width = landscape ? Math.max(322, Math.min(780, innerWidth - 72)) : 322
 
   return (
     <>
@@ -58,20 +56,19 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
       >
         <CashflowChart
           rows={rows}
-          width={width}
-          landscape={landscape}
+          width={chartWidth(viewport)}
           selected={selected}
           onSelect={select}
           showSavings={showSavings}
-          goals={goals}
-          hasRetirement={hasRetirement}
+          goals={markedGoals(goals)}
+          retiringAge={retiringAge}
           statePensionAge={statePensionAge}
         />
       </div>
-      <YearDetail row={row} retiring={row.retiresThisYear && hasRetirement} />
+      <YearDetail row={row} retiring={row.age === retiringAge} />
       <ChartLegend
         showSavings={showSavings}
-        hasRetirement={hasRetirement}
+        hasRetirement={retiringAge != null}
         statePensionAge={statePensionAge}
       />
       <ChartSummary rows={rows} />

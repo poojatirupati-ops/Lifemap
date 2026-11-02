@@ -11,28 +11,28 @@ import ChoiceTag from './ChoiceTag.tsx'
 /** Prices rising: the standard, Ireland's rate now, or the customer's own. `place` keeps ids unique. */
 export default function InflationChoice({ place }: { place: string }) {
   const { rate, own } = useStore(
-    useShallow(({ plan }) => ({ rate: plan.infl, own: plan.inflOther })),
+    useShallow(({ plan }) => ({ rate: plan.inflation, own: plan.inflOther })),
   )
   const [hint, setHint] = useState('')
-  const standard = standardValue('infl') as number
+  const standard = Number(standardValue('infl'))
   const { ie: irelandNow, ieSrc: irelandSource } = rules2026.infl
   const isStandard = rate === standard && !own
   const isIreland = rate === irelandNow && !own
   const isOther = own || (rate != null && !isStandard && !isIreland)
-  const chips: [chosen: boolean, label: string, choose: () => void, value: string][] = [
-    [
-      isStandard,
-      `Use the standard (${percent(standard)})`,
-      () => chooseInflation(standard),
-      String(standard),
-    ],
-    [
-      isIreland,
-      `${percent(irelandNow)} · Ireland now (${irelandSource})`,
-      () => chooseInflation(irelandNow),
-      String(irelandNow),
-    ],
-    [isOther, 'Other', chooseOwnInflation, 'other'],
+  const chips = [
+    {
+      value: String(standard),
+      label: `Use the standard (${percent(standard)})`,
+      chosen: isStandard,
+      onChoose: () => chooseInflation(standard),
+    },
+    {
+      value: String(irelandNow),
+      label: `${percent(irelandNow)} · Ireland now (${irelandSource})`,
+      chosen: isIreland,
+      onChoose: () => chooseInflation(irelandNow),
+    },
+    { value: 'other', label: 'Other', chosen: isOther, onChoose: chooseOwnInflation },
   ]
 
   return (
@@ -47,20 +47,20 @@ export default function InflationChoice({ place }: { place: string }) {
         energy. Choose what you want to use.
       </p>
       <div className="chips" role="group" aria-labelledby={`infl-l-${place}`}>
-        {chips.map(([chosen, label, choose, value]) => (
+        {chips.map(({ value, label, chosen, onChoose }) => (
           <button
             key={value}
             className={chosen ? 'chip sm sel' : 'chip sm'}
             aria-pressed={chosen}
             data-a="infl"
             data-p={value}
-            onClick={choose}
+            onClick={onChoose}
           >
             {label}
           </button>
         ))}
       </div>
-      {isOther && (
+      {isOther ? (
         <>
           <div className="flabel" style={{ marginTop: 6 }}>
             <span id={`infl-o-${place}`}>My own rate (0–10%)</span>
@@ -80,7 +80,7 @@ export default function InflationChoice({ place }: { place: string }) {
             {hint}
           </span>
         </>
-      )}
+      ) : null}
     </div>
   )
 }

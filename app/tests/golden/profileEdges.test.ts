@@ -17,7 +17,7 @@ const ourRead = (plan: any) =>
     ),
   )
 
-describe('risk read, every Understand Me capacity answer on its own', () => {
+describe('risk read, every Understand Me capacity answer on its own', { timeout: 30_000 }, () => {
   it('u10 0..3 x u11 0..3 x u12 0..2 x u14 0..3, two answer sets', () => {
     const answerSets = [
       { '6': 3, '7': 3, '8': 3, '9': 3 },
@@ -54,7 +54,7 @@ describe('risk read, every Understand Me capacity answer on its own', () => {
   }, 120_000)
 })
 
-describe('horizon suggestion at every year boundary', () => {
+describe('horizon suggestion at every year boundary', { timeout: 30_000 }, () => {
   it('a pot goal, or another goal, 1..12 years away', () => {
     for (const [fixture, fixturePlan] of withAge) {
       for (const kind of ['pot', 'spend']) {
@@ -74,7 +74,7 @@ describe('horizon suggestion at every year boundary', () => {
   })
 })
 
-describe('emergency fund cash tolerance', () => {
+describe('emergency fund cash tolerance', { timeout: 30_000 }, () => {
   it('cash just under and just over the target', () => {
     for (const [fixture, fixturePlan] of withAge) {
       for (const belowTarget of [0.3, 0.7, -0.3]) {
@@ -92,7 +92,7 @@ describe('emergency fund cash tolerance', () => {
         original.getState().app = true
         original.autoSafety()
         const plan = ourNormalized(input)
-        const added = emergencyFundToAdd(plan, plan.gid)
+        const added = emergencyFundToAdd(plan, plan.nextGoalId)
         if (added) plan.goals.push(added)
         expect(plain(plan.goals), `${fixture} ${belowTarget}`).toEqual(
           plain(original.getState().goals),
@@ -102,7 +102,7 @@ describe('emergency fund cash tolerance', () => {
   })
 })
 
-describe('risk read, the cushion months from their own figures', () => {
+describe('risk read, the cushion months from their own figures', { timeout: 30_000 }, () => {
   it('cash covering 0 to 4 months of essential spending', () => {
     for (const [fixture, fixturePlan] of withAge) {
       for (const months of [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4]) {

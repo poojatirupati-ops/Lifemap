@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import type { Option } from '../../domain/discovery/questions.data.ts'
 import Svg from '../ui/Svg.tsx'
 import { ROAD_ART } from './roadArt.data.ts'
@@ -10,22 +11,18 @@ interface Props {
   selected: boolean
   /** one answer per row, for long answers */
   wide: boolean
-  /** a road card: road picture and the road's line */
-  road: boolean
   onPick: () => void
 }
 
-export default function AnswerOption({ option, index, selected, wide, road, onPick }: Props) {
-  const className = ['opt', wide && 'row1', selected && 'sel'].filter(Boolean).join(' ')
+/** One answer card; a road answer (one with a path) shows its road picture and line. */
+export default function AnswerOption({ option, index, selected, wide, onPick }: Props) {
   return (
     <button
-      className={className}
+      className={clsx('opt', { row1: wide, sel: selected })}
       aria-pressed={selected}
-      data-a="dpick"
-      data-p={index}
       onClick={onPick}
     >
-      {road ? (
+      {option.path ? (
         <span className="em road" aria-hidden="true">
           <Svg src={ROAD_ART[index]} />
         </span>
@@ -40,7 +37,7 @@ export default function AnswerOption({ option, index, selected, wide, road, onPi
       )}
       <span className="tx">{option.text}</span>
       <span className="otag">◆ {option.tag}</span>
-      {road && (
+      {option.path ? (
         <svg
           width="100%"
           height="30"
@@ -56,7 +53,7 @@ export default function AnswerOption({ option, index, selected, wide, road, onPi
             strokeLinecap="round"
           />
         </svg>
-      )}
+      ) : null}
     </button>
   )
 }

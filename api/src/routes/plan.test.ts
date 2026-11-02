@@ -75,7 +75,7 @@ test("plan API: auth, round trip, stale 409, invalid 400, per-user isolation", a
   // DB failure: generic 500, nothing from the plan reaches the log
   const spy = vi.spyOn(console, "error").mockImplementation(() => {});
   const broken = new Hono<Env>();
-  broken.use("*", async (c, next) => (c.set("userId", "u"), next()));
+  broken.use("*", async (c, next) => (c.set("userId", "u"), c.set("orgId", "o"), next()));
   broken.route("/", planRoutes(drizzle(new PGlite(), { schema }) as unknown as Db)); // no tables
   const bad = await broken.request("/plan", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ version: 0, plan: { ...planA, whyNote: "SECRET-NOTE" } }) });
   expect(bad.status).toBe(500);

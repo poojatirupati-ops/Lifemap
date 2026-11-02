@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { closeSheet } from '../hooks/useFocusReturn.ts'
+import { useStore } from '../state/store.ts'
 
 /** The plain "Got it" / "Close" / "Not now" button at the foot of a sheet. */
 export default function CloseButton({
@@ -11,6 +11,7 @@ export default function CloseButton({
   style?: CSSProperties
   children: string
 }) {
+  const closeSheet = useStore((store) => store.closeSheet)
   return (
     <button className={ghost ? 'btn ghost' : 'btn'} style={style} onClick={closeSheet}>
       {children}

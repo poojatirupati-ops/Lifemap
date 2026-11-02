@@ -1,7 +1,6 @@
+import { clsx } from 'clsx'
 import { useStore } from '../../state/store.ts'
-import { rerender } from '../../state/shell.ts'
-import { TAB_ICONS } from '../ui/icons.data.ts'
-import Svg from '../ui/Svg.tsx'
+import { TAB_ICONS } from '../ui/icons.tsx'
 import Brand from './Brand.tsx'
 
 const TABS = [
@@ -10,16 +9,12 @@ const TABS = [
   { tab: 'plan', label: 'My Plan' },
   { tab: 'me', label: 'Me' },
   { tab: 'exp', label: 'Experts' },
-]
-
-function openTab(tab: string) {
-  useStore.getState().switchTab(tab)
-  rerender()
-}
+] as const
 
 /** The main tab bar; the brand shows on desktop only (CSS) and My Plan is the raised centre button. */
 export default function TabBar() {
   const currentTab = useStore((store) => store.plan.tab)
+  const switchTab = useStore((store) => store.switchTab)
 
   return (
     <nav className="tabs" aria-label="Main">
@@ -28,33 +23,17 @@ export default function TabBar() {
       </div>
       {TABS.map(({ tab, label }) => {
         const on = tab === currentTab
-        const ariaCurrent = on ? 'page' : 'false'
-
-        if (tab === 'plan') {
-          return (
-            <button
-              key={tab}
-              className={on ? 'center on' : 'center'}
-              aria-current={ariaCurrent}
-              onClick={() => openTab(tab)}
-            >
-              <span className="fab">
-                <Svg src={TAB_ICONS.plan} />
-              </span>
-              {label}
-            </button>
-          )
-        }
+        const isPlan = tab === 'plan'
         return (
           <button
             key={tab}
-            className={on ? 'on' : ''}
-            aria-current={ariaCurrent}
-            onClick={() => openTab(tab)}
+            className={clsx(isPlan && 'center', on && 'on')}
+            aria-current={on ? 'page' : 'false'}
+            onClick={() => switchTab(tab)}
           >
-            <Svg src={TAB_ICONS[tab]} />
+            {isPlan ? <span className="fab">{TAB_ICONS.plan}</span> : TAB_ICONS[tab]}
             {label}
-            <span className="dot"></span>
+            {isPlan ? null : <span className="dot"></span>}
           </button>
         )
       })}

@@ -1,13 +1,10 @@
+import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { useStore } from '../../state/store.ts'
 
 const typing = () => {
   const el = document.activeElement
-  return (
-    el instanceof HTMLElement &&
-    /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) &&
-    (el as HTMLInputElement).type !== 'file'
-  )
+  return el instanceof HTMLInputElement ? el.type !== 'file' : !!el?.matches('textarea,select')
 }
 
 /** Out of the way while the keyboard is up or a video plays full screen. */
@@ -21,16 +18,21 @@ function useOutOfTheWay() {
           !!document.fullscreenElement ||
           (!!viewport && viewport.height < innerHeight * 0.75),
       )
-    const checkSoon = () => setTimeout(check, 50)
-    document.addEventListener('focusin', check)
-    document.addEventListener('focusout', checkSoon)
-    document.addEventListener('fullscreenchange', check)
-    viewport?.addEventListener('resize', check)
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const checkSoon = () => {
+      clearTimeout(timer)
+      timer = setTimeout(check, 50)
+    }
+    // window.: the test DOM (jsdom) rejects a signal from Node's own AbortController
+    const controller = new window.AbortController()
+    const { signal } = controller
+    document.addEventListener('focusin', check, { signal })
+    document.addEventListener('focusout', checkSoon, { signal })
+    document.addEventListener('fullscreenchange', check, { signal })
+    viewport?.addEventListener('resize', check, { signal })
     return () => {
-      document.removeEventListener('focusin', check)
-      document.removeEventListener('focusout', checkSoon)
-      document.removeEventListener('fullscreenchange', check)
-      viewport?.removeEventListener('resize', check)
+      controller.abort()
+      clearTimeout(timer)
     }
   }, [])
   return hidden
@@ -39,14 +41,15 @@ function useOutOfTheWay() {
 /** The floating "Talk to a mortgage expert" button. */
 export default function ExpertFab() {
   const hidden = useOutOfTheWay()
+  const openSheet = useStore((s) => s.openSheet)
   return (
     <button
-      className={hidden ? 'btn xfab hid' : 'btn xfab'}
+      className={clsx('btn xfab', { hid: hidden })}
       id="xfab"
       data-a="xfab"
       data-p="mortgage"
       aria-haspopup="dialog"
-      onClick={() => useStore.getState().openSheet('xpert|mortgage')}
+      onClick={() => openSheet('xpert|mortgage')}
     >
       <span aria-hidden="true">💬</span>
       <span className="tx">Talk to a mortgage expert</span>

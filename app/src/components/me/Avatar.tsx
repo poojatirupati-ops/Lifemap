@@ -4,7 +4,7 @@ import { DEFAULT_PHOTO, useMePlan } from './mePlan.ts'
 
 /** The profile photo with its camera button; `ring` is the profile's percent done, drawn around it. */
 export default function Avatar({ ring }: { ring?: number }) {
-  const photo = useMePlan((plan) => plan.acct.photo)
+  const photo = useMePlan((plan) => plan.account.photo)
   // the details page always says Change; the hub says Add until there is a photo
   const change = !!photo || ring == null
 
@@ -18,7 +18,7 @@ export default function Avatar({ ring }: { ring?: number }) {
           id="avup"
           accept="image/*"
           aria-label={change ? 'Change your photo' : 'Add a profile photo'}
-          onChange={(event) => changePhoto(event.currentTarget.files?.[0])}
+          onChange={(event) => void changePhoto(event.currentTarget.files?.[0])}
         />
         <svg
           width="16"

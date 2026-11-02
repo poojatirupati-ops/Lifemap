@@ -27,8 +27,8 @@ export function useScrollKeep(ref: RefObject<HTMLElement | null>, screenKey: str
     const root = ref.current
     if (!root) return
     const remember = (event: Event) => {
-      const target = event.target as HTMLElement
-      if (target.matches?.(SCROLLER)) savedTop.current = target.scrollTop
+      const target = event.target as Element
+      if (target.matches(SCROLLER)) savedTop.current = target.scrollTop
     }
     root.addEventListener('scroll', remember, true)
     return () => root.removeEventListener('scroll', remember, true)

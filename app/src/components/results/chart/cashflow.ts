@@ -1,8 +1,25 @@
 // What the cashflow chart shows for each plan year, worked out from the projection's rows.
 import type { YearRow } from '../../../domain/planning/project.ts'
+import type { Goal } from '../../../state/types.ts'
+
+export const PAD_LEFT = 34
+export const PAD_RIGHT = 6
+const MIN_WIDTH = 322
+const MAX_WIDTH = 780
+
+/** Phones in portrait get the fixed width; landscape stretches to the screen, within limits. */
+export const chartWidth = (viewport: { landscape: boolean; width: number }) =>
+  viewport.landscape ? Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, viewport.width - 72)) : MIN_WIDTH
 
 /** How one year's spending is paid: from income, from savings, or not covered. */
-export function yearSplit(row: YearRow) {
+export interface YearSplit {
+  spending: number
+  fromIncome: number
+  fromSavings: number
+  shortfall: number
+}
+
+export function yearSplit(row: YearRow): YearSplit {
   const living = row.living + row.repayments
   return {
     spending: living + row.goalCost,
@@ -14,12 +31,22 @@ export function yearSplit(row: YearRow) {
 
 export const isShortYear = (row: YearRow) => row.shortfall > 0.5
 
+export function chartLabel(rows: YearRow[]) {
+  const firstShort = rows.find(isShortYear)
+  const range = `Yearly cashflow, age ${rows[0].age} to ${rows[rows.length - 1].age}.`
+  return firstShort
+    ? `${range} Shortfall from age ${firstShort.age}.`
+    : `${range} Every year is covered.`
+}
+
 /** The year shown first: the first short year, else the year retirement starts, else today. */
-export function defaultYear(rows: YearRow[], hasRetirement: boolean) {
+export function defaultYear(rows: YearRow[], retiringAge?: number) {
   const short = rows.findIndex(isShortYear)
   if (short >= 0) return short
-  const retiring = hasRetirement ? rows.findIndex((row) => row.retiresThisYear) : -1
-  return Math.max(0, retiring)
+  return Math.max(
+    0,
+    rows.findIndex((row) => row.age === retiringAge),
+  )
 }
 
 const NICE_STEPS = [1.5, 2, 3, 4, 6, 8, 10]
@@ -36,12 +63,12 @@ export const axisLabel = (amount: number) =>
     ? `€${(amount / 1e6).toFixed(amount % 1e6 ? 1 : 0)}m`
     : `€${Math.round(amount / 1000)}k`
 
+/** Goals the chart marks with their emoji: all but retirement and legacy. */
+export const markedGoals = (goals: Goal[]) =>
+  goals.filter((goal) => goal.kind !== 'retire' && goal.kind !== 'legacy')
+
 /** Goals by year, each lifted a level when it would sit within 15px of an earlier one. */
-export function stackMarkers<Goal extends { age: number }>(
-  goals: Goal[],
-  rows: YearRow[],
-  centre: (index: number) => number,
-) {
+export function stackMarkers(goals: Goal[], rows: YearRow[], centre: (index: number) => number) {
   const levelEnds: number[] = []
   return goals
     .map((goal) => ({ goal, index: goal.age - rows[0].age }))

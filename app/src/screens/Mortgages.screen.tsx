@@ -7,21 +7,21 @@ import ReadingCards from '../components/mortgages/ReadingCards.tsx'
 import SeatCard from '../components/mortgages/SeatCard.tsx'
 import VideoRow from '../components/mortgages/VideoRow.tsx'
 import { SITUATIONS } from '../components/mortgages/mortgages.data.ts'
-import { TOPICS } from '../components/explore/explore.data.ts'
-import { exploreBack } from '../components/explore/exploreActions.ts'
-import { useMortgagePage } from '../state/mortgage.ts'
+import { topicNamed } from '../components/explore/explore.data.ts'
+import { exploreBack } from '../state/explore.ts'
+import { pageKey, useMortgagePage } from '../state/mortgage.ts'
 
-// TODO(R-27): the XTOPIC screen shows this Body when its param is 'Mortgages'
+// pickScreen shows this page for the explore stack's XTOPIC 'Mortgages'
 export const key = 'MORT'
 export const id = 'XPL-TOPIC'
 export const note =
   'Mortgages topic page (Pooja, 15 Oct): your situation, upload, all 7 calculators as expanding cards, story videos, read and ask, live sessions, and a floating expert button.'
 
 const JUMPS = [
-  ['mp-calc', 'Calculators'],
-  ['mp-watch', 'Watch'],
-  ['mp-read', 'Read'],
-  ['mp-live', 'Live'],
+  { sectionId: 'mp-calc', label: 'Calculators' },
+  { sectionId: 'mp-watch', label: 'Watch' },
+  { sectionId: 'mp-read', label: 'Read' },
+  { sectionId: 'mp-live', label: 'Live' },
 ]
 
 const jumpTo = (sectionId: string) => {
@@ -31,11 +31,13 @@ const jumpTo = (sectionId: string) => {
     ?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
 }
 
-const topic = TOPICS.find((t) => t.name === 'Mortgages')!
+const topic = topicNamed('Mortgages')
 const heroStyle = { '--art': 'var(--art-mortgage)', '--pos': topic.photoPosition } as CSSProperties
 
 export function Body() {
-  const { situation, video, pickSituation } = useMortgagePage()
+  const situation = useMortgagePage((p) => p.situation)
+  const video = useMortgagePage((p) => p.video)
+  const pickSituation = useMortgagePage((p) => p.pickSituation)
   const page = SITUATIONS[situation]
 
   return (
@@ -70,7 +72,7 @@ export function Body() {
           ))}
         </div>
         <nav className="mp-jump" aria-label="On this page">
-          {JUMPS.map(([sectionId, label]) => (
+          {JUMPS.map(({ sectionId, label }) => (
             <button
               key={sectionId}
               data-a="mpjump"
@@ -81,12 +83,12 @@ export function Body() {
             </button>
           ))}
         </nav>
-        {situation === 0 && <EligibilityCard />}
+        {situation === 0 ? <EligibilityCard /> : null}
         <CalculatorGrid calculators={page.calculators} />
         <VideoRow videos={page.videos} />
         <div id="mp-player">
           <MortgagePlayer
-            key={`${situation}-${video}`}
+            key={pageKey(situation, video)}
             story={page.videos[video]}
             number={video + 1}
             count={page.videos.length}

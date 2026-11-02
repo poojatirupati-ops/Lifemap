@@ -12,8 +12,8 @@ export function syncAges(plan: Plan, today = localToday()) {
 
 // an auto emergency fund goal is months x essential spending once the customer's costs are in
 export function syncSafety(plan: Plan, only?: Goal) {
-  if (!plan.src?.costsM) return
-  const goals = only ? [only] : plan.goals.filter((goal) => goal.k === 'safety' && goal.auto)
+  if (!plan.sources?.costsM) return
+  const goals = only ? [only] : plan.goals.filter((goal) => goal.key === 'safety' && goal.auto)
   for (const goal of goals) goal.amount = safetyAmount(plan)
 }
 

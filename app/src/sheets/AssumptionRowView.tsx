@@ -1,4 +1,10 @@
-import { ASSUMED, GOVERNMENT, HOW, MINE, type AssumptionRow } from './planAssumptions.ts'
+import {
+  ASSUMED,
+  GOVERNMENT,
+  HOW,
+  MINE,
+  type AssumptionRow,
+} from '../domain/planning/assumptions/rows.ts'
 
 const TAG_CLASS: Record<string, string> = {
   [GOVERNMENT]: 'none',

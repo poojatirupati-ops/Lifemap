@@ -1,41 +1,28 @@
-import { budget2027Note } from '../../domain/planning/rates.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
+import { budget2027Note } from '../../domain/planning/rates.ts'
+import { useMissingChoices } from '../../hooks/useMissingChoices.ts'
+import { useProjection } from '../../hooks/useProjection.ts'
+import { openReport } from '../../report/openReport.ts'
 import { useStore } from '../../state/store.ts'
+import Glance from '../results/Glance.tsx'
 import GateNote from '../ui/GateNote.tsx'
-import { missingChoices } from '../finance/requiredChoices.ts'
 import FoundCard from './FoundCard.tsx'
 import GoalsCard from './GoalsCard.tsx'
 import ProfileBanner from './ProfileBanner.tsx'
 import RoughNote from './RoughNote.tsx'
 import WhatIfCard from './WhatIfCard.tsx'
-import { bookAdviser, fixChoice, showSection } from './planActions.ts'
-import { useProjection } from './useProjection.ts'
-
-// TODO(R-22): import { openReport } from '../../report/openReport.tsx'
-const openReport = () => useStore.getState().openSheet('report')
-
-/** How each required choice is named on the gate card. */
-const CHOICE_LABELS: Record<string, string> = {
-  retireAge: 'Retirement age',
-  planEnd: 'Plan until age',
-  infl: 'Inflation',
-  pRetireAge: "Partner's retirement age",
-}
 
 /** Your results: goals, what we found, foundations, what-if, at a glance and the three end actions. */
 export default function Results() {
-  const projection = useProjection()
+  const missing = useMissingChoices()
+  const { inputs, whatIf, base, withWhatIf } = useProjection()
+  const savedWhatIf = useStore((store) => store.plan.whatIf)
+  const versions = useStore((store) => store.plan.versions.length)
   const openSheet = useStore((store) => store.openSheet)
-  const { plan, base } = projection
-  const missing = missingChoices(plan)
-  if (missing.length)
-    return (
-      <GateNote
-        where="res"
-        missing={missing.map(({ key }) => ({ key, label: CHOICE_LABELS[key] }))}
-        onChoose={fixChoice}
-      />
-    )
+  const fixChoice = useStore((store) => store.fixChoice)
+  const bookAdviser = useStore((store) => store.bookAdviser)
+  const showSection = useStore((store) => store.showSection)
+  if (missing.length) return <GateNote where="res" missing={missing} onChoose={fixChoice} />
 
   return (
     <>
@@ -54,10 +41,10 @@ export default function Results() {
           </button>
         </span>
       </div>
-      <RoughNote plan={plan} />
-      <ProfileBanner plan={plan} />
-      <GoalsCard {...projection} />
-      <FoundCard plan={plan} projection={base} />
+      <RoughNote />
+      <ProfileBanner inputs={inputs} />
+      <GoalsCard inputs={inputs} whatIf={whatIf} projection={withWhatIf} />
+      <FoundCard inputs={inputs} projection={base} />
       {/* TODO(R-25): the foundations levels (fndHTML) */}
       <div className="card" id="r-fnd">
         <h3 className="h">Your financial foundations</h3>
@@ -65,16 +52,12 @@ export default function Results() {
           Good planning is built from the bottom up. Tap a level to see why it matters.
         </p>
       </div>
-      <WhatIfCard
-        goals={plan.goals}
-        whatIf={plan.wi}
-        base={base}
-        withWhatIf={projection.withWhatIf}
-      />
-      {/* TODO(R-20): <Glance /> inside #r-glance */}
+      <WhatIfCard goals={inputs.goals} whatIf={savedWhatIf} base={base} withWhatIf={withWhatIf} />
       <div className="card" id="r-glancec">
         <h3 className="h">Your future, at a glance</h3>
-        <div id="r-glance"></div>
+        <div id="r-glance">
+          <Glance projection={withWhatIf} />
+        </div>
       </div>
       <div className="ends">
         <button className="btn navy" data-a="report" onClick={openReport}>
@@ -88,12 +71,12 @@ export default function Results() {
         </button>
       </div>
       <p className="disc" id="b27-res">
-        {budget2027Note(assumption(plan, 'startYear'))}
+        {budget2027Note(assumption(inputs, 'startYear'))}
       </p>
       <p className="disc">
         Guidance, not advice. Projections are illustrative, use standard assumptions and are not
         guaranteed. Only an authorised adviser who knows your full situation can give advice.{' '}
-        {plan.versions.length > 0 && (
+        {versions > 0 ? (
           <button
             className="link"
             style={{ fontSize: 12, padding: 0 }}
@@ -101,9 +84,9 @@ export default function Results() {
             data-p="history"
             onClick={() => openSheet('history')}
           >
-            Plan history ({plan.versions.length})
+            Plan history ({versions})
           </button>
-        )}
+        ) : null}
       </p>
     </>
   )

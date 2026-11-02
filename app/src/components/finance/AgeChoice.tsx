@@ -54,7 +54,7 @@ export default function AgeChoice({
       <span className="small" style={{ display: 'block', marginTop: 4 }}>
         {help}
       </span>
-      {note?.text && (
+      {note?.text ? (
         <span
           className="small"
           id={note.id}
@@ -63,7 +63,7 @@ export default function AgeChoice({
         >
           {note.text}
         </span>
-      )}
+      ) : null}
     </div>
   )
 }

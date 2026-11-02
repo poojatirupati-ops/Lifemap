@@ -1,29 +1,16 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { useStore } from '../state/store.ts'
-import { toast } from '../state/shell.ts'
-import { sendCode } from '../auth/client.ts'
+import { sendEmailCode, setAccount } from '../state/account.ts'
+import { useCodeEntry } from '../state/codeEntry.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
-import { canSendCode, looksLikeEmail } from '../components/account/accountDetails.ts'
-import type { Plan } from '../state/types.ts'
+import { canSendCode, looksLikeEmail } from '../domain/identity/signIn.ts'
 
 export const key = 'P1'
-export const id = 'P1'
+export const id = key
 export const note =
   'Account creation once, before Your finances. Consents start UNTICKED (CBI 2025).'
 
-type Account = Plan['acct']
-
-const setAccount = (patch: Partial<Account>) =>
-  useStore.getState().update((plan) => {
-    Object.assign(plan.acct, patch)
-  })
-
-const typed = (field: 'name' | 'email' | 'mobile') => (event: FormEvent<HTMLInputElement>) =>
-  setAccount({ [field]: event.currentTarget.value })
-
-const ticked = (field: 'c1' | 'c2') => (event: FormEvent<HTMLInputElement>) =>
-  setAccount({ [field]: event.currentTarget.checked })
-
+// Head is called as a plain function by ScreenHost (no hooks allowed), so it reads the store directly.
 export function Head() {
   const { plan, go } = useStore.getState()
   const prefilled = plan.save.done
@@ -39,7 +26,7 @@ export function Head() {
 
 export function Body() {
   // Read once: the inputs are uncontrolled, and the email hint shows for what was there on arrival.
-  const [account] = useState(() => useStore.getState().plan.acct)
+  const [account] = useState(() => useStore.getState().plan.account)
   const openSheet = useStore((store) => store.openSheet)
 
   return (
@@ -52,7 +39,7 @@ export function Body() {
             id="a-name"
             autoComplete="given-name"
             defaultValue={account.name}
-            onInput={typed('name')}
+            onInput={(event) => setAccount({ name: event.currentTarget.value })}
           />
         </div>
         <div className="field">
@@ -63,13 +50,13 @@ export function Body() {
             type="email"
             autoComplete="email"
             defaultValue={account.email}
-            onInput={typed('email')}
+            onInput={(event) => setAccount({ email: event.currentTarget.value })}
           />
-          {account.email && !looksLikeEmail(account.email) && (
+          {account.email !== '' && !looksLikeEmail(account.email) ? (
             <span className="small" style={{ color: 'var(--gap-t)' }}>
               Check your email address
             </span>
-          )}
+          ) : null}
         </div>
         <div className="field" style={{ margin: 0 }}>
           <label htmlFor="a-mob">Mobile</label>
@@ -80,19 +67,27 @@ export function Body() {
             autoComplete="tel"
             placeholder="08x xxx xxxx"
             defaultValue={account.mobile}
-            onInput={typed('mobile')}
+            onInput={(event) => setAccount({ mobile: event.currentTarget.value })}
           />
         </div>
       </div>
       <div className="card">
         <label className="check">
-          <input type="checkbox" defaultChecked={account.c1} onChange={ticked('c1')} />
+          <input
+            type="checkbox"
+            defaultChecked={account.termsAccepted}
+            onChange={(event) => setAccount({ termsAccepted: event.currentTarget.checked })}
+          />
           <span>
             <b>Required:</b> Use my details to build my plan
           </span>
         </label>
         <label className="check">
-          <input type="checkbox" defaultChecked={account.c2} onChange={ticked('c2')} />
+          <input
+            type="checkbox"
+            defaultChecked={account.marketingConsent}
+            onChange={(event) => setAccount({ marketingConsent: event.currentTarget.checked })}
+          />
           <span>Optional: Send me reminders and updates</span>
         </label>
         <p className="small" style={{ margin: '6px 0 0' }}>
@@ -108,20 +103,21 @@ export function Body() {
 }
 
 export function Foot() {
-  const account = useStore((store) => store.plan.acct)
+  const ready = useStore((store) => canSendCode(store.plan.account))
   const go = useStore((store) => store.go)
   const [sending, setSending] = useState(false)
 
   const send = async () => {
     setSending(true)
-    const sent = await sendCode(account.email.trim())
+    const sent = await sendEmailCode()
     setSending(false)
-    if (sent) go('P1E')
-    else toast("Couldn't send the code. Check your connection and try again.")
+    if (!sent) return
+    useCodeEntry.getState().resetCode()
+    go('P1E')
   }
 
   return (
-    <button className="btn" id="acctgo" disabled={!canSendCode(account) || sending} onClick={send}>
+    <button className="btn" id="acctgo" disabled={!ready || sending} onClick={send}>
       Send my email code
     </button>
   )

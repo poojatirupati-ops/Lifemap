@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import ChatBubble from '../components/ask/ChatBubble.tsx'
 import { contextTopic } from '../components/ask/contextTopic.ts'
 import { matchQuestion } from '../components/ask/matchQuestion.ts'
@@ -6,6 +7,8 @@ import { planTopics } from '../components/ask/planTopics.tsx'
 import Suggestions from '../components/ask/Suggestions.tsx'
 import { GENERAL_TOPICS, type Topic } from '../components/ask/topics.tsx'
 import { useAskChat } from '../components/ask/useAskChat.ts'
+import SheetTitle from './SheetTitle.tsx'
+import { useProjection } from '../hooks/useProjection.ts'
 import { toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 
@@ -15,14 +18,29 @@ export const chat = true
 const MAX_QUESTION = 140
 
 /** Ask LifeMap: a chat that explains how LifeMap works and what the results mean, never advice. */
-export function Body() {
-  const plan = useStore((store) => store.plan)
+/** `param` is a plan topic to show as already asked (the ASK jump: 'pgap'). */
+export function Body({ param }: { param?: string }) {
+  const { inputs, base, whatIf } = useProjection()
+  const { hasResults, moneyProfile, name } = useStore(
+    useShallow(({ plan }) => ({ hasResults: plan.hasResults, moneyProfile: plan.moneyProfile, name: plan.account.name })),
+  )
   const screenId = useShell((shell) => shell.screenId)
-  const { log, showAll, ask, showMore } = useAskChat()
   const input = useRef<HTMLInputElement>(null)
   const chatLog = useRef<HTMLDivElement>(null)
 
-  const ownTopics = useMemo(() => planTopics(plan), [plan])
+  const ownTopics = useMemo(
+    () => planTopics({ ...inputs, hasResults, moneyProfile }, base, whatIf),
+    [inputs, hasResults, moneyProfile, base, whatIf],
+  )
+  const { log, showAll, ask, showMore } = useAskChat(() => {
+    const seed = param && (ownTopics.find((topic) => topic.key === param) ?? ownTopics[0])
+    return seed
+      ? [
+          { from: 'me', text: seed.question, topic: seed.key },
+          { from: 'bot', text: seed.answer },
+        ]
+      : []
+  })
   const topics = useMemo(() => {
     const context = contextTopic(screenId)
     return [...(context ? [context] : []), ...ownTopics, ...GENERAL_TOPICS]
@@ -40,16 +58,14 @@ export function Body() {
     input.current?.focus()
   }
   const askTyped = () => {
-    const typed = input.current?.value.trim() ?? ''
+    const field = input.current
+    if (!field) return
+    const typed = field.value.trim()
     if (!typed) return toast('Type a question first')
     const question = typed.slice(0, MAX_QUESTION)
-    input.current!.value = ''
-    ask(
-      question,
-      null,
-      matchQuestion(question, [...ownTopics, ...GENERAL_TOPICS], ownTopics.length > 0, plan.app),
-    )
-    input.current?.focus()
+    field.value = ''
+    ask(question, null, matchQuestion(question, [...ownTopics, ...GENERAL_TOPICS], hasResults))
+    field.focus()
   }
 
   return (
@@ -59,9 +75,7 @@ export function Body() {
           ✦
         </span>
         <span className="chat-ht">
-          <h2 className="t" id="sheet-t" tabIndex={-1}>
-            Ask LifeMap
-          </h2>
+          <SheetTitle>Ask LifeMap</SheetTitle>
           <small>
             <i aria-hidden="true"></i>Explanations only · never advice
           </small>
@@ -71,13 +85,13 @@ export function Body() {
         <ChatBubble
           message={{
             from: 'bot',
-            text: `Hi${plan.acct.name ? ` ${plan.acct.name}` : ''}! 👋 I can explain how LifeMap works and what your results mean. Pick a question or type your own.`,
+            text: `Hi${name ? ` ${name}` : ''}! 👋 I can explain how LifeMap works and what your results mean. Pick a question or type your own.`,
           }}
         />
         {log.map((message, index) => (
           <ChatBubble key={index} message={message} />
         ))}
-        {left.length && !waiting ? (
+        {left.length > 0 && !waiting ? (
           <Suggestions
             topics={left}
             asked={log.length > 0}
@@ -96,7 +110,9 @@ export function Body() {
           aria-label="Type your question"
           defaultValue=""
           ref={input}
-          onKeyDown={(event) => event.key === 'Enter' && askTyped()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') askTyped()
+          }}
         />
         <button className="chat-send" aria-label="Send" onClick={askTyped}>
           <svg

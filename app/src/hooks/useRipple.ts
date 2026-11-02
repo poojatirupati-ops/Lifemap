@@ -3,7 +3,7 @@ import { prefersReducedMotion } from './reducedMotion.ts'
 
 const RIPPLE_MS = 700
 
-/** Tapping a quiz answer sends a ripple out from the finger and fades the other answers back. */
+/** Tapping a quiz answer sends a ripple out from the finger. */
 export function useRipple(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const root = ref.current
@@ -24,7 +24,6 @@ export function useRipple(ref: RefObject<HTMLElement | null>) {
       })
       answer.appendChild(ripple)
       setTimeout(() => ripple.remove(), RIPPLE_MS)
-      answer.parentElement?.classList.add('picked')
     }
 
     root.addEventListener('pointerdown', onPointerDown, { passive: true })

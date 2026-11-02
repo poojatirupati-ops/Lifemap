@@ -3,14 +3,14 @@ import { backToMe } from '../components/finance/financeActions.ts'
 import ProfileReturn from '../components/me/ProfileReturn.tsx'
 import ProfileSectionButton from '../components/me/ProfileSectionButton.tsx'
 import {
+  discoverAnswered,
   PROFILE_QUESTIONS,
   profileAnswered,
-  profileLeftText,
   profilePercent,
-} from '../components/me/mePlan.ts'
-import { openMe } from '../components/plan/planActions.ts'
-import { discoverAnswered } from '../domain/discovery/profile.ts'
+} from '../domain/discovery/profile.ts'
+import { profileProgress } from '../domain/discovery/profileQuestions.ts'
 import { MONEY_PROFILE } from '../domain/discovery/questions.data.ts'
+import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../state/store.ts'
 
 export const key = 'ME:um'
@@ -21,14 +21,19 @@ export const note =
 export const Head = () =>
   meHead({
     title: 'Your money profile',
-    sub: `${profileLeftText(useStore.getState().plan)}.`,
+    sub: `${profileProgress(useStore.getState().plan)}.`,
     back: backToMe,
   })
 
 export function Body() {
-  const plan = useStore((store) => store.plan)
-  const answered = profileAnswered(plan)
-  const percent = profilePercent(plan)
+  const { answered, percent, firstAnswers } = useStore(
+    useShallow(({ plan }) => ({
+      answered: profileAnswered(plan),
+      percent: profilePercent(plan),
+      firstAnswers: discoverAnswered(plan.answers),
+    })),
+  )
+  const openMe = useStore((store) => store.openMe)
 
   return (
     <>
@@ -38,7 +43,7 @@ export function Body() {
             <small>Your progress</small>
             <b>
               {answered}
-              <span> of 13 answered</span>
+              <span> of {PROFILE_QUESTIONS} answered</span>
             </b>
           </div>
           <span className="ump-pct">{percent}%</span>
@@ -47,8 +52,8 @@ export function Body() {
           <i style={{ width: `${percent}%` }}></i>
         </div>
         <p>
-          {discoverAnswered(plan.ans)} came from your first answers. Three short sections make up
-          your risk profile.
+          {firstAnswers} came from your first answers. Three short sections make up your risk
+          profile.
         </p>
       </div>
       {MONEY_PROFILE.map((section) => (

@@ -11,7 +11,7 @@ function saveProgress(email: string, comms: boolean) {
   const { update, closeSheet } = useStore.getState()
   update((plan) => {
     plan.save = { email, comms, done: true, asked: true }
-    if (!plan.acct.email) plan.acct.email = email
+    if (!plan.account.email) plan.account.email = email
   })
   closeSheet()
   toast('Email noted ✓ Sign in with it to keep your plan')

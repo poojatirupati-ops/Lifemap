@@ -1,9 +1,10 @@
+import clsx from 'clsx'
 import { useStore } from '../state/store.ts'
 
 export const key = 'D1'
 export const id = 'D1'
 export const note =
-  'Optional, multi-select life-moment chips (MASTER B5; Pooja 1 Oct). They quietly reorder the suggested goal tiles. “Something else” opens an optional few-words field (max 60). One skippable screen.'
+  'Optional, multi-select life-moment chips (MASTER B5; Pooja 1 Oct). They quietly reorder the suggested goal tiles. One skippable screen.'
 export const kind = 'quiz'
 
 /** What brought the customer here; the keys are stored in plan.why. */
@@ -21,23 +22,14 @@ const REASONS = [
 
 const QUESTION = 'What brings you to LifeMap?'
 
+// TODO(Q-01): rename plan.why to plan.reasons and plan.di to plan.discoveryStep.
+
 export function Body() {
   const chosen = useStore((store) => store.plan.why)
-  const { go, update } = useStore.getState()
-
-  const toggle = (reason: string) =>
-    update((plan) => {
-      plan.why = plan.why.includes(reason)
-        ? plan.why.filter((key) => key !== reason)
-        : [...plan.why, reason]
-    })
-
-  const startQuestions = () => {
-    update((plan) => {
-      plan.di = 0
-    })
-    go('D2')
-  }
+  const go = useStore((store) => store.go)
+  const toggleReason = useStore((store) => store.toggleReason)
+  const showQuestion = useStore((store) => store.showQuestion)
+  const startDiscovery = () => showQuestion(0)
 
   return (
     <>
@@ -59,9 +51,9 @@ export function Body() {
             return (
               <button
                 key={key}
-                className={selected ? 'chip wtile sel' : 'chip wtile'}
+                className={clsx('chip wtile', { sel: selected })}
                 aria-pressed={selected}
-                onClick={() => toggle(key)}
+                onClick={() => toggleReason(key)}
               >
                 <span className="wem" aria-hidden="true">
                   {emoji}
@@ -73,10 +65,10 @@ export function Body() {
         </div>
       </div>
       <div className="qfoot">
-        <button className="qback" onClick={startQuestions}>
+        <button className="qback" onClick={startDiscovery}>
           Skip for now
         </button>
-        <button className="wbtn" disabled={!chosen.length} onClick={startQuestions}>
+        <button className="wbtn" disabled={chosen.length === 0} onClick={startDiscovery}>
           Continue
         </button>
       </div>

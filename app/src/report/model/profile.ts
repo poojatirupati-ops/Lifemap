@@ -1,9 +1,9 @@
 // The customer's money personality and indicative risk profile, as the report shows them.
 import {
+  isProfileComplete,
   personality,
-  moneyProfileAnswered,
+  profileAnswers,
   suggestedHorizon,
-  type ProfileAnswers,
 } from '../../domain/discovery/profile.ts'
 import { riskRead } from '../../domain/discovery/riskRead.ts'
 import { cushion } from '../../domain/discovery/cushion.ts'
@@ -11,12 +11,10 @@ import { moneyTerms } from '../../domain/discovery/moneyTerms.ts'
 import { RISK_LABELS } from '../../domain/discovery/profile.data.ts'
 import type { Plan } from '../../state/types.ts'
 
-const UNDERSTAND_ME_QUESTIONS = 13
-
 export function moneyProfile(plan: Plan) {
-  const answers: ProfileAnswers = { discover: plan.ans, money: plan.um.a, products: plan.um.chips }
+  const answers = profileAnswers(plan)
   const read = riskRead(answers, {
-    complete: moneyProfileAnswered(answers) === UNDERSTAND_ME_QUESTIONS,
+    complete: isProfileComplete(plan),
     cushion: cushion(plan),
     suggestedHorizon: suggestedHorizon(plan.goals, plan.about.age ?? 0, plan.retireAge),
   })

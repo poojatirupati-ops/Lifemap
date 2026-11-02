@@ -1,11 +1,11 @@
 import { meHead } from '../components/me/meHead.ts'
 import Emo from '../components/ui/Emo.tsx'
 import SectionRow from '../components/finance/SectionRow.tsx'
-import { checkItems, needsAttention } from '../components/finance/checkList.ts'
-import { FINANCE_FIELDS } from '../components/finance/fields.data.ts'
+import { checkItems, needsAttention, type CheckState } from '../components/finance/checkList.ts'
+import { FINANCE_FIELDS } from '../domain/finances/fields.data.ts'
 import { backToMe, fixSection } from '../components/finance/financeActions.ts'
 import { sectionStatus, sectionSummary } from '../components/finance/status.ts'
-import { startUpload } from '../components/finance/uploadActions.ts'
+import { useStore } from '../state/store.ts'
 import { useFinancePlan } from '../components/finance/useFinancePlan.ts'
 import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
 
@@ -21,7 +21,7 @@ export const Head = () =>
     back: backToMe,
   })
 
-const MARK = { look: '⚠️', miss: '❓' } as const
+const MARK: Record<CheckState, string> = { look: '⚠️', miss: '❓', ok: '', typed: '' }
 
 export function Body() {
   const plan = useFinancePlan()
@@ -34,7 +34,7 @@ export function Body() {
         style={{ width: '100%' }}
         data-a="upl"
         data-p="smart"
-        onClick={() => startUpload('smart', ['Sample document.pdf'])}
+        onClick={() => useStore.getState().startUpload('smart', ['Sample document.pdf'])}
       >
         <Emo>📥 Add a document</Emo>
       </button>
@@ -57,7 +57,7 @@ export function Body() {
             return (
               <div className="mini" key={item.key}>
                 <span>
-                  <Emo>{`${MARK[item.state as keyof typeof MARK]} ${FINANCE_FIELDS[item.key].label}`}</Emo>
+                  <Emo>{`${MARK[item.state]} ${FINANCE_FIELDS[item.key].label}`}</Emo>
                   {item.state === 'miss' && (
                     <>
                       {' '}

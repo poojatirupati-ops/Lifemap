@@ -1,9 +1,9 @@
 // Unallocated money: cash, savings and assets, sold in order when a goal or a short year needs them.
-import type { Sources } from './fund'
-
 /** In the order they are used; the emergency fund is kept apart. */
 export const HOLDINGS = ['cash', 'savings', 'invest', 'otherAssets', 'alternatives'] as const
 export type Holding = (typeof HOLDINGS)[number]
+/** Money taken from each holding, after tax. */
+export type Sources = Partial<Record<Holding, number>>
 /** the emergency fund is built from cash and savings accounts only */
 export const EASY_ACCESS: Holding[] = ['cash', 'savings']
 
@@ -20,12 +20,7 @@ const taxOnSale = (wallet: Wallet, holding: Holding) =>
   holding === 'otherAssets' || holding === 'alternatives' ? wallet.gainsTax : 0
 
 /** Sells holdings in order until the amount is raised; returns what was raised after tax. */
-export function sell(
-  wallet: Wallet,
-  amount: number,
-  from: readonly Holding[] = HOLDINGS,
-  record?: Sources,
-) {
+export function sell(wallet: Wallet, amount: number, from: readonly Holding[], record: Sources) {
   let need = Math.max(0, amount)
   let total = 0
   for (const holding of from) {
@@ -35,7 +30,7 @@ export function sell(
     wallet.held[holding] -= raised / keep
     need -= raised
     total += raised
-    if (record) record[holding] = (record[holding] ?? 0) + raised
+    record[holding] = (record[holding] ?? 0) + raised
   }
   return total
 }

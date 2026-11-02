@@ -6,6 +6,7 @@ import { fresh } from '../../src/state/fresh.ts'
 import * as Account from '../../src/screens/Account.screen.tsx'
 import * as AccountCode from '../../src/screens/AccountCode.screen.tsx'
 import * as AccountPasskey from '../../src/screens/AccountPasskey.screen.tsx'
+import { prefillFinances } from '../../src/domain/finances/prefill.ts'
 
 const auth = vi.hoisted(() => ({
   sendCode: vi.fn(async () => true),
@@ -19,12 +20,22 @@ vi.mock('../../src/auth/client.ts', () => ({
   signInWithCode: auth.signInWithCode,
   authClient: { passkey: { addPasskey: auth.addPasskey } },
 }))
-vi.mock('../../src/auth/planSync.ts', () => ({ postConsents: auth.postConsents }))
-vi.mock('../../src/auth/useWall.ts', () => ({ restoreSavedPlan: auth.restoreSavedPlan }))
+vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
+vi.mock('../../src/auth/session.ts', () => ({ restoreSavedPlan: auth.restoreSavedPlan }))
+
+test('prefillFinances keeps only what the customer already told us', () => {
+  expect(prefillFinances({ name: 'Aoife', age: 16, retireAge: 66, retireSet: false })).toEqual({
+    name: 'Aoife',
+  })
+  expect(prefillFinances({ name: '', age: 40, retireAge: 66, retireSet: true })).toEqual({
+    age: 40,
+    retireAge: 66,
+  })
+})
 
 beforeEach(() => {
   vi.clearAllMocks()
-  useStore.getState().load({ ...fresh(), scr: 'P1' })
+  useStore.getState().load({ ...fresh(), screen: 'P1' })
 })
 
 const type = (label: string, value: string) =>
@@ -55,7 +66,7 @@ test('P1: consents start unticked and Send waits for every detail plus the requi
 
 function renderCodeScreen() {
   useStore.getState().update((plan) => {
-    Object.assign(plan.acct, { name: 'Aoife', email: 'a@b.ie', c1: true, c2: false })
+    Object.assign(plan.account, { name: 'Aoife', email: 'a@b.ie', c1: true, c2: false })
   })
   render(
     <>
@@ -105,18 +116,18 @@ test('P1E: the right code signs in, posts consents, skips the phone step and off
 
 test('P1K: Not now returns to the screen the wall caught; a passkey goes on to P2', async () => {
   useStore.getState().update((plan) => {
-    plan.rt = 'XPL'
-    plan.acct.name = 'Aoife'
+    plan.returnTo = 'XPL'
+    plan.account.name = 'Aoife'
   })
   const { unmount } = render(<AccountPasskey.Foot />)
   fireEvent.click(screen.getByText('Not now'))
   expect(useStore.getState().plan.tab).toBe('explore')
-  expect(useStore.getState().plan.rt).toBeUndefined()
-  expect(useStore.getState().plan.fin.name).toBe('Aoife')
+  expect(useStore.getState().plan.returnTo).toBeUndefined()
+  expect(useStore.getState().plan.figures.name).toBe('Aoife')
   unmount()
 
   render(<AccountPasskey.Foot />)
   fireEvent.click(screen.getByText('Add Face ID / passkey'))
   await waitFor(() => expect(useStore.getState().screen).toBe('P2'))
-  expect(useStore.getState().plan.acct.pk).toBe(true)
+  expect(useStore.getState().plan.account.passkey).toBe(true)
 })

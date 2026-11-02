@@ -1,6 +1,6 @@
 // "Not sure? See an example" cards: how Aoife and Cian (the sample customers) fill in each field.
 import { euro } from '../../lib/format.ts'
-import { ITEM_DOCUMENTS } from './lists.data.ts'
+import { ITEM_DOCUMENTS } from './itemDocuments.data.ts'
 import {
   SAMPLE_FINANCES,
   SAMPLE_OWN_SHARE,

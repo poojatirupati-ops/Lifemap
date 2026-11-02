@@ -44,3 +44,18 @@ Writers and reviewers invoke the Skill tool with skill "vercel-react-best-practi
 - Rendering: explicit ternaries (no `count && ...`), hoist static JSX/SVG, content-visibility for long lists, animate wrappers not SVG.
 - JS: Map/Set for repeated lookups, toSorted/flatMap, hoisted RegExp, passive scroll/touch listeners, one shared listener per global event.
 Reviewers list each violation by rule number.
+
+## Size budget and file rule (user, overrides "one component per file")
+- Budget: app source (src/ excluding legacy/ and prototype/) at most about 15,000 lines, down from 37,000. `npm run size` prints the count. Every card must leave the count lower, never higher.
+- File rule relaxed: shared components keep their own file; a small component, hook or helper used in only one place lives in its parent's file. Merge files back where this applies.
+- How to get there: delete duplicates (one shared helper/component), derive instead of storing, drive repeated forms and lists from data tables, delete dead code and one-use wrappers. The pixel check and golden tests must keep passing.
+
+## NO HAND-ROLLED CODE (user, hard rule)
+Before writing any non-trivial helper, search npm for a maintained library that does it and use it. Hand-written code is allowed only for LifeMap's own domain logic (financial rules, copy, screens). Known cases to replace:
+- tools/visual-diff.mjs and tools/view-equal.mjs (custom Playwright + pixelmatch scripts): @playwright/test with expect(page).toHaveScreenshot() and its built-in diffing, baselines captured from the original prototype.
+- The journey test (J-01): an @playwright/test spec, not a custom script.
+- Screen switching, go(), pickScreen, the wall: TanStack Router (file routes, beforeLoad).
+- Debounced plan saving and retry: TanStack Query (mutation retry) + TanStack Pacer (or use-debounce), no hand timers.
+- Date maths: date-fns. Forms: react-hook-form + zod. Dialogs, focus traps: Radix. Drag: dnd-kit / @use-gesture. Class names: clsx. Number/currency: Intl.
+- Line counting (npm run size): cloc.
+Every agent reports any hand-written utility it kept, with the library it checked and why it did not fit.

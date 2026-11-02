@@ -24,7 +24,7 @@ const original = runOriginal(
 const mapValues = <T, R>(record: Record<string, T>, map: (value: T, key: string) => R) =>
   Object.fromEntries(Object.entries(record).map(([key, value]) => [key, map(value, key)]))
 
-describe('identity data equals the original', () => {
+describe('identity data equals the original', { timeout: 30_000 }, () => {
   it('advisers and experts', () => {
     expect(ADVISERS).toEqual(
       plain(original.ADVISERS).map((a: any) => ({
@@ -66,7 +66,7 @@ describe('identity data equals the original', () => {
   it('booking slots', () => expect(makeSlots(localToday(TODAY))).toEqual(plain(original.SLOTS)))
 })
 
-describe('date of birth', () => {
+describe('date of birth', { timeout: 30_000 }, () => {
   const today = localToday(TODAY)
   const dates = [
     { d: '21', m: '8', y: '1989' },
@@ -139,14 +139,16 @@ describe('date of birth', () => {
         { dob: { d: '1', m: '1', y: '2015' }, partner: true, pdob: { d: '31', m: '2', y: '1980' } },
         {},
       ],
+      // no partner dob: a typed partner age stays
+      [{ dob: birth, partner: true }, { pAge: 'typed' }, { pAge: 45 }],
     ]
-    for (const [about, src] of cases) {
+    for (const [about, src, fin = {}] of cases) {
       const state = {
         acct: { name: 'Ann' },
         partner: {},
         asm: { startYear: 2027 },
         about,
-        fin: {},
+        fin,
         src,
       }
       const [ours, theirs] = syncBoth(state, 2027)

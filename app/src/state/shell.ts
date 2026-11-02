@@ -22,6 +22,8 @@ interface Shell {
   authed: boolean
   /** Bumped to make the next render count as a new screen (enter animation, focus). */
   renderCount: number
+  /** The plan report is shown over the app (#report). */
+  reportOpen: boolean
 }
 
 export const useShell = create<Shell>(() => ({
@@ -31,7 +33,12 @@ export const useShell = create<Shell>(() => ({
   desk: startsOnDesktop(),
   authed: false,
   renderCount: 0,
+  reportOpen: false,
 }))
+
+export const showReport = () => useShell.setState({ reportOpen: true })
+
+export const closeReport = () => useShell.setState({ reportOpen: false })
 
 export const rerender = () =>
   useShell.setState(({ renderCount }) => ({ renderCount: renderCount + 1 }))
@@ -49,14 +56,15 @@ export function setDesk(desk: boolean) {
   rerender()
 }
 
-/**
- * Start over from a whole saved plan (a fresh start, the sample customer or a jump).
- * `authed` (the reviewer's pass through the wall) only counts in dev; elsewhere the session decides.
- */
-export function startFrom(snapshot: Snapshot, authed?: boolean) {
+/** Start over from a whole saved plan (a fresh start, the sample customer or a jump). */
+export function startFrom(snapshot: Snapshot) {
   useStore.getState().load(snapshot)
-  if (import.meta.env.DEV && authed !== undefined) useShell.setState({ authed })
   rerender()
+}
+
+/** The reviewer's pass through the wall (sample customer, jumps, test hook); only in dev. */
+export function signInForReview() {
+  if (import.meta.env.DEV) useShell.setState({ authed: true })
 }
 
 const PROBLEM = /couldn't|can't|blocked|nothing opened|first\b/i

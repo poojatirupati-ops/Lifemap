@@ -1,5 +1,5 @@
 import { personality } from '../../domain/discovery/profile.ts'
-import { useProfileAnswers } from './useProfileAnswers.ts'
+import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
 
 /** What Save your results keeps: the personality and the answers (nothing before four answers). */
 export default function SavedPersonality() {

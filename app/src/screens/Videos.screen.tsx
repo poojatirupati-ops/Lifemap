@@ -1,10 +1,17 @@
+import clsx from 'clsx'
 import type { CSSProperties } from 'react'
 import AppHead from '../components/frame/AppHead.tsx'
 import { unseenLooks } from '../components/home/useHome.ts'
 import { LIVE_SESSIONS } from '../components/explore/explore.data.ts'
-import { exploreBack, openVideo, remindMe } from '../components/explore/exploreActions.ts'
+import { exploreBack, openVideo, remindMe, showVideoKind } from '../state/explore.ts'
 import VideoCard from '../components/explore/VideoCard.tsx'
-import { VIDEOS, VIDEO_KIND_LABEL } from '../components/explore/videos.data.ts'
+import {
+  VIDEOS,
+  VIDEO_KIND_LABEL,
+  splitWho,
+  videoLength,
+  type VideoKind,
+} from '../components/explore/videos.data.ts'
 import { useStore } from '../state/store.ts'
 
 export const key = 'VIDS'
@@ -12,20 +19,24 @@ export const id = 'VID-00'
 export const note =
   'Video library (Lifecast): short explainers filtered by topic, plus live expert sessions. Every video links to a tool and an expert.'
 
-const FILTERS = [['all', 'All'], ...Object.entries(VIDEO_KIND_LABEL)]
+const FILTERS = [['all', 'All'], ...Object.entries(VIDEO_KIND_LABEL)] as [
+  VideoKind | 'all',
+  string,
+][]
 
-const showKind = (kind: string) => useStore.getState().update((plan) => void (plan.vf = kind))
-
-export const Head = () =>
-  AppHead({
+export function Head() {
+  // Head is called by ScreenHost, not rendered, so it must not use hooks; ScreenHost re-renders on plan changes.
+  const needsLook = unseenLooks(useStore.getState().plan)
+  return AppHead({
     title: 'Watch',
     sub: 'Short videos and live sessions with experts.',
     back: exploreBack,
-    needsLook: unseenLooks(useStore.getState().plan),
+    needsLook,
   })
+}
 
 export function Body() {
-  const shown = useStore((store) => store.plan.vf || 'all')
+  const shown = useStore((store) => store.plan.videoFilter)
   const [featured, ...more] = VIDEOS.filter((video) => shown === 'all' || video.kind === shown)
 
   return (
@@ -34,11 +45,11 @@ export function Body() {
         {FILTERS.map(([kind, label]) => (
           <button
             key={kind}
-            className={kind === shown ? 'chip sm sel' : 'chip sm'}
+            className={clsx('chip sm', { sel: kind === shown })}
             aria-pressed={kind === shown}
             data-a="vfilter"
             data-p={kind}
-            onClick={() => showKind(kind)}
+            onClick={() => showVideoKind(kind)}
           >
             {label}
           </button>
@@ -52,14 +63,14 @@ export function Body() {
           style={{ '--vart': `var(--art-${featured.art})` } as CSSProperties}
           onClick={() => openVideo(featured.id)}
         >
-          <span className="vf-tag">Featured · {featured.duration ?? `${featured.mins} min`}</span>
+          <span className="vf-tag">Featured · {videoLength(featured)}</span>
           <span className="vf-play" aria-hidden="true">
             ▶
           </span>
           <span className="vf-b">
             <small>{VIDEO_KIND_LABEL[featured.kind]}</small>
             <b>{featured.title}</b>
-            <span>{featured.who.split(' · ')[1]}</span>
+            <span>{splitWho(featured).role}</span>
           </span>
         </button>
       ) : null}
@@ -79,7 +90,7 @@ export function Body() {
       <div className="sec">
         <h3>Live with experts</h3>
       </div>
-      {/* TODO(R-30): use LiveCard once it takes the "who" line as a prop. */}
+      {/* TODO(R-27): use LiveCard once R-27 gives it a `who` (subtitle) prop. */}
       {LIVE_SESSIONS.map(({ when, title }) => {
         const [day, ...time] = when.split(' ')
         return (

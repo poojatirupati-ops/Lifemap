@@ -28,14 +28,14 @@ export default function ProfileOption({ option, selected, code, withTag, onPick 
       />
       <span className="tx">
         {option.text}
-        {withTag && option.tag && (
+        {withTag && option.tag ? (
           <>
             <br />
             <span className="otag" style={{ display: 'inline-block', marginTop: 4 }}>
               ◆ {option.tag}
             </span>
           </>
-        )}
+        ) : null}
       </span>
     </button>
   )

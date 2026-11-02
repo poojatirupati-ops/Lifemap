@@ -1,49 +1,46 @@
-import type { CSSProperties, UIEvent } from 'react'
+import type { UIEvent } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { cushion as readCushion } from '../../domain/discovery/cushion.ts'
 import { answerTag } from '../../domain/discovery/moneyTerms.ts'
-import { personality, suggestedHorizon } from '../../domain/discovery/profile.ts'
+import { suggestedHorizonFor } from '../../domain/discovery/profile.ts'
+import { APPETITE_QUESTION, SURPRISE_QUESTION } from '../../domain/discovery/questions.data.ts'
 import { riskRead } from '../../domain/discovery/riskRead.ts'
-import { DISCOVERY_DISCLAIMER } from '../../domain/identity/personality.data.ts'
+import {
+  DISCOVERY_DISCLAIMER,
+  type PersonalityType,
+} from '../../domain/identity/personality.data.ts'
+import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
 import { useStore } from '../../state/store.ts'
+import ColumnFoot from './ColumnFoot.tsx'
 import MismatchPanel from './MismatchPanel.tsx'
 import MoneyTerms from './MoneyTerms.tsx'
 import PersonalityCard from './PersonalityCard.tsx'
 import RiskStats from './RiskStats.tsx'
-import { backFromReveal } from './discoverActions.ts'
-import { useProfileAnswers } from './useProfileAnswers.ts'
 
 const HERO_PHOTO: Record<string, string> = {
   Achiever: 'url(media/graduation.jpg)',
   Balancer: 'url(media/savings-jar.jpg)',
   Contented: 'url(media/retired-reading.jpg)',
 }
-const columnFoot: CSSProperties = { flexDirection: 'column', alignItems: 'stretch', gap: 6 }
 
 /** Past the photo the top bar turns frosted (.dscrolled on the quiz frame). */
+// TODO(R-03): the quiz frame in ScreenHost should own .dscrolled from its own scroll state
 const frostHeaderOnScroll = ({ currentTarget: page }: UIEvent<HTMLDivElement>) =>
   page.closest('.quiz')?.classList.toggle('dscrolled', page.scrollTop > 140)
 
 /** The money personality, risk appetite and cushion, the customer's terms and at most one hint. */
-export default function PersonalityReveal() {
+export default function PersonalityReveal({ type }: { type: PersonalityType }) {
   const answers = useProfileAnswers()
-  const plan = useStore((store) => store.plan)
-  const type = personality(answers)!
-  const cushion = readCushion(plan)
-  const read = riskRead(answers, {
-    complete: false,
-    cushion,
-    suggestedHorizon: suggestedHorizon(plan.goals, plan.about.age ?? 0, plan.retireAge),
-  })
+  const cushion = useStore(useShallow(({ plan }) => readCushion(plan)))
+  const horizon = useStore(({ plan }) => suggestedHorizonFor(plan))
+  const backFromReveal = useStore((store) => store.backFromReveal)
+  const go = useStore((store) => store.go)
+  const read = riskRead(answers, { complete: false, cushion, suggestedHorizon: horizon })
 
   return (
     <>
       <div className="qtop dtop">
-        <button
-          className="dcirc"
-          data-a="dprev"
-          aria-label="Back to the questions"
-          onClick={backFromReveal}
-        >
+        <button className="dcirc" aria-label="Back to the questions" onClick={backFromReveal}>
           ‹
         </button>
         <span className="dtitle">Your money personality</span>
@@ -60,17 +57,16 @@ export default function PersonalityReveal() {
         />
         <PersonalityCard type={type} />
         <RiskStats
-          comfort={read.comfort}
+          read={read}
           cushion={cushion}
-          cushionLevel={read.cushion}
-          appetiteTerm={answerTag(answers.discover, '8')}
-          surpriseTerm={answerTag(answers.discover, '7')}
+          appetiteTerm={answerTag(answers.discover, APPETITE_QUESTION)}
+          surpriseTerm={answerTag(answers.discover, SURPRISE_QUESTION)}
         />
-        {read.cushionNote && (
+        {read.cushionNote ? (
           <p className="small" style={{ margin: '8px 2px 0' }}>
             {read.cushionNote}
           </p>
-        )}
+        ) : null}
         <div className="panel" style={{ marginTop: 12 }}>
           <div className="qeye">Your money terms</div>
           <p className="small" style={{ margin: '4px 0 0' }}>
@@ -78,20 +74,20 @@ export default function PersonalityReveal() {
           </p>
           <MoneyTerms answers={answers} />
         </div>
-        {read.mismatch && (
+        {read.mismatch ? (
           <MismatchPanel
             message={read.mismatch}
             offerEmergencyFund={!!read.cushion && read.cushion !== 'In place'}
           />
-        )}
+        ) : null}
         <p className="disc">A first read from 6 answers, not advice. {DISCOVERY_DISCLAIMER}</p>
       </div>
-      <div className="qfoot" style={columnFoot}>
+      <ColumnFoot>
         <p className="fnote">Get a more accurate picture</p>
-        <button className="wbtn" data-a="drplan" onClick={() => useStore.getState().go('DS')}>
+        <button className="wbtn" onClick={() => go('DS')}>
           Continue
         </button>
-      </div>
+      </ColumnFoot>
     </>
   )
 }

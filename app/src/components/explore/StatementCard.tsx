@@ -1,6 +1,6 @@
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
-import { STATEMENTS, withArticle } from './explore.data.ts'
+import { withArticle, type Statement } from './explore.data.ts'
 import type { CategoryId } from './tools.data.ts'
 
 // TODO(R-28): the upload flow (pstStart, pstRemove) lands with the statement uploads card.
@@ -8,11 +8,15 @@ const startUpload = (_category: CategoryId, _files?: string[]) => {}
 const removeStatement = (_category: CategoryId) => {}
 
 /** The upload card at the top of a calculator group whose tools a statement can fill in. */
-export default function StatementCard({ category }: { category: CategoryId }) {
-  const statement = STATEMENTS[category]!
-  const uploaded = useStore((store) => store.plan.pdocs[category]) as
-    { name: string; date: string } | undefined
-  const verified = useStore((store) => store.plan.acct.ev)
+export default function StatementCard({
+  category,
+  statement,
+}: {
+  category: CategoryId
+  statement: Statement
+}) {
+  const uploaded = useStore((store) => store.plan.statements[category])
+  const verified = useStore((store) => store.plan.account.emailVerified)
 
   return (
     <div className="card pst">
@@ -77,7 +81,7 @@ export default function StatementCard({ category }: { category: CategoryId }) {
           </button>
         </div>
       )}
-      {!verified && (
+      {verified ? null : (
         <p className="small" style={{ margin: '8px 0 0' }}>
           🔐 First we'll secure your account (email and mobile code), so your documents stay
           private.

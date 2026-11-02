@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { axisMarks, layoutTimeline } from '../../src/components/timeline/layout.ts'
+import { axisMarks, layoutTimeline } from '../../src/domain/goals/timelineLayout.ts'
 
 const chip = (id: number, age: number, width = 100) => ({ id, age, width, height: 36 })
 const board = { ageNow: 38, width: 520, landscape: false, visibleHeight: 0 }

@@ -16,14 +16,6 @@ export type ListDefinition = {
   uploadLabel: string
 }
 
-// what reading an uploaded statement fills in: [field, value, confidence %]
-export type ItemDocument = {
-  title: string
-  figures: [field: string, value: number, confidence: number][]
-  texts?: [field: string, text: string][]
-  staleNote?: string
-}
-
 const OPTIONAL_RATE: ListField = {
   label: 'Interest rate, APR % (optional)',
   type: 'pct',
@@ -142,6 +134,17 @@ export const LISTS = {
 
 export type ListKey = keyof typeof LISTS
 
+/** One list's definition, with every optional part (totals, isPolicy) visible. */
+export const listOf = (list: ListKey): ListDefinition => LISTS[list]
+
+const POLICY_LISTS = new Set(
+  Object.entries(LISTS)
+    .filter(([, definition]) => 'isPolicy' in definition)
+    .map(([list]) => list),
+)
+/** Life cover, income protection and the other kinds of cover each hold policies. */
+export const isPolicyList = (key: string): key is ListKey => POLICY_LISTS.has(key)
+
 // finances key -> the list and item field it totals. Rates are averaged, not totalled, and other
 // mortgages have no finances field of their own to edit, so neither is listed.
 export const LIST_FOR_FIELD: Record<string, [list: ListKey, field: string]> = Object.fromEntries(
@@ -151,66 +154,6 @@ export const LIST_FOR_FIELD: Record<string, [list: ListKey, field: string]> = Ob
       .map(([field, key]) => [key, [list, field]]),
   ),
 )
-
-export const ITEM_DOCUMENTS = {
-  cards: {
-    title: 'Credit-card statement · Sep 2026',
-    figures: [
-      ['owed', 400, 86],
-      ['pay', 40, 80],
-    ],
-    texts: [['lender', 'Demo Bank B']],
-  },
-  loans: {
-    title: 'Car loan statement · Aug 2026',
-    figures: [
-      ['owed', 3500, 88],
-      ['pay', 100, 84],
-    ],
-    texts: [['lender', 'Demo Credit Union']],
-  },
-  mort2: {
-    title: 'Mortgage statement (other property) · Aug 2026',
-    figures: [
-      ['owed', 185000, 92],
-      ['pay', 950, 90],
-      ['years', 18, 88],
-      ['rate', 4.1, 90],
-    ],
-  },
-  pens: {
-    title: 'Pension statement · Jul 2025',
-    figures: [
-      ['value', 72000, 95],
-      ['monthly', 520, 91],
-      ['own', 260, 91],
-    ],
-    staleNote: 'Statement is over 12 months old',
-  },
-  life: {
-    title: 'Life cover policy · 2021',
-    figures: [
-      ['amount', 250000, 95],
-      ['term', 21, 90],
-    ],
-  },
-  ip: {
-    title: 'Income protection policy · 2022',
-    figures: [
-      ['amount', 1800, 90],
-      ['term', 20, 88],
-    ],
-  },
-  ci: {
-    title: 'Serious illness policy · 2022',
-    figures: [
-      ['amount', 50000, 90],
-      ['term', 15, 88],
-    ],
-  },
-  workCover: { title: 'Employer benefits statement · 2026', figures: [['amount', 174000, 90]] },
-  health: { title: 'Health insurance policy · 2026', figures: [['amount', 2400, 92]] },
-} satisfies Record<ListKey, ItemDocument>
 
 export const WORK_COVER_HINT =
   'How to find out: ask HR, or look in your employer benefits booklet. Death-in-service is usually a multiple of your salary. Enter what you know; leave the rest blank.'

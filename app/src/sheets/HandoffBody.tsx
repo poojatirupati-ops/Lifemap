@@ -1,17 +1,18 @@
-import type { Handoff } from '../components/calc/types.ts'
+import type { Handoff } from '../domain/calc/types.ts'
 import InflationChoice from '../components/finance/InflationChoice.tsx'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import CloseButton from './CloseButton.tsx'
-import { applyHandoff, buttonFor, describeHandoff } from './handoff.ts'
+import { applyHandoff, buttonFor, describeHandoff } from '../domain/goals/handoff.ts'
 import SheetTitle from './SheetTitle.tsx'
+import { addVersion } from '../state/versions.ts'
 
 function addToPlan(goal: Handoff) {
   const { update, closeSheet } = useStore.getState()
   let message = ''
   update((plan) => {
     message = applyHandoff(plan, goal)
-    if (plan.app) plan.versions.push({ note: 'Goals changed', date: '29 Sep 2026' })
+    if (plan.hasResults) addVersion(plan, 'Goals changed')
   })
   closeSheet()
   toast(message)
@@ -20,7 +21,7 @@ function addToPlan(goal: Handoff) {
 /** "Add to my plan": nothing to add, inflation needed first, or what would be added. */
 export default function HandoffBody({ toolId, goal }: { toolId: string; goal: Handoff | null }) {
   const age = useStore((store) => store.plan.about.age ?? 0)
-  const app = useStore((store) => store.plan.app)
+  const app = useStore((store) => store.plan.hasResults)
   if (!goal)
     return (
       <>
@@ -35,7 +36,7 @@ export default function HandoffBody({ toolId, goal }: { toolId: string; goal: Ha
   if (goal.kind === 'blocked')
     return (
       <>
-        <SheetTitle>{goal.msg}</SheetTitle>
+        <SheetTitle>{goal.message}</SheetTitle>
         <p className="sub">
           Goals are kept in today's money, so we need your inflation rate first.
         </p>
@@ -50,7 +51,7 @@ export default function HandoffBody({ toolId, goal }: { toolId: string; goal: Ha
     <>
       <div className="eyebrow">Add to my plan</div>
       <SheetTitle>
-        {goal.em} {goal.name}
+        {goal.emoji} {goal.name}
       </SheetTitle>
       <p className="sub">
         {describeHandoff(goal, age)} {saves}

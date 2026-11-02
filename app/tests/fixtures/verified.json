@@ -119,7 +119,7 @@
   "calcSrc": {},
   "after": null,
   "saveM": null,
-  "saveNote": "",
+  "savingCapped": false,
   "shell": false,
   "pb": false,
   "xs": [],

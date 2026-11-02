@@ -1,21 +1,21 @@
 import { useMemo } from 'react'
-import { moneyProfileAnswered } from '../../domain/discovery/profile.ts'
+import { profileAnswered } from '../../domain/discovery/profile.ts'
 import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { project } from '../../domain/planning/project.ts'
 import { useStore } from '../../state/store.ts'
 import type { Plan } from '../../state/types.ts'
 import { checkItems, withRepaymentLooks } from '../finance/checkList.ts'
-import { FINANCE_FIELDS } from '../finance/fields.data.ts'
+import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
 import { fieldSource, skippedSections, visibleFields } from '../finance/status.ts'
-import { foundations } from './foundations.ts'
-import { foundationStage, nextFoundation } from './nextFoundation.ts'
-import { nextStep } from './nextStep.ts'
+import { foundations } from '../../domain/planning/foundations.ts'
+import { foundationStage, nextFoundation } from '../../domain/planning/nextFoundation.ts'
+import { nextStep } from '../../domain/planning/nextStep.ts'
 
 /** Money details flagged for a look (low repayments included) that the customer has not acknowledged. */
 export const unseenLooks = (plan: Plan) =>
-  checkItems({ ...plan, look: withRepaymentLooks(plan) }).filter(
-    ({ key, state }) => state === 'look' && !plan.ack[key],
+  checkItems({ ...plan, warnings: withRepaymentLooks(plan) }).filter(
+    ({ key, state }) => state === 'look' && !plan.acknowledged[key],
   ).length
 
 const blankFigures = (plan: Plan) =>
@@ -29,26 +29,22 @@ export function homeSummary(plan: Plan) {
   const { percent } = projection
   const levels = foundations(plan, projection)
   const byAge = plan.goals.toSorted((a, b) => a.age - b.age)
-  const profileAnswers = moneyProfileAnswered({
-    discover: plan.ans,
-    money: plan.um.a,
-    products: plan.um.chips,
-  })
+  const profileAnswers = profileAnswered(plan)
   const weakest = plan.goals.toSorted((a, b) => percent[a.id] - percent[b.id] || a.age - b.age)[0]
   const step = nextStep({
     looks: unseenLooks(plan),
     foundation: nextFoundation(levels, assumption(plan, 'safetyMonths')),
     profileAnswers,
-    profileRechecked: !!(plan.um as { rechecked?: boolean }).rechecked,
-    book: plan.book,
+    profileRechecked: !!plan.moneyProfile.rechecked,
+    book: plan.booking,
     weakest: weakest ? { ...weakest, percent: percent[weakest.id] } : null,
-    whatIfSaved: !!plan.pref,
+    whatIfSaved: !!plan.preferredWhatIf,
   })
   const covered = byAge.map((goal) => percent[goal.id])
   return {
     percent,
     levels,
-    stage: plan.app ? foundationStage(levels) : 'Getting started',
+    stage: plan.hasResults ? foundationStage(levels) : 'Getting started',
     byAge,
     profileAnswers,
     step,

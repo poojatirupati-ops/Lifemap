@@ -4,166 +4,130 @@ import { act, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useStore } from '../../src/state/store.ts'
 import { fresh } from '../../src/state/fresh.ts'
-import { useScreenEnter } from '../../src/hooks/useScreenEnter.ts'
 import { useCountUp } from '../../src/hooks/useCountUp.ts'
 import { useFndWatch } from '../../src/hooks/useFndWatch.ts'
 import { useOrbit } from '../../src/hooks/useOrbit.ts'
 import { useScrollKeep } from '../../src/hooks/useScrollKeep.ts'
-import { focusAfterRender, useFocusReturn } from '../../src/hooks/useFocusReturn.ts'
-import { useGlobalKeys } from '../../src/hooks/useGlobalKeys.ts'
+import { useFocusReturn } from '../../src/hooks/useFocusReturn.ts'
+import SheetFrame from '../../src/components/ui/SheetFrame.tsx'
 
-function Host({ k, children }: { k: string; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null),
-    sheet = useStore((st) => st.sheet)
-  useScreenEnter(ref, k)
-  useCountUp(ref, k)
-  useFndWatch(ref)
-  useOrbit(ref, k)
-  useScrollKeep(ref, k)
-  useFocusReturn(ref, k, sheet)
-  useGlobalKeys()
+function Host({ screenKey, children }: { screenKey: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useCountUp(ref, screenKey)
+  useFndWatch(ref, screenKey)
+  useOrbit(ref, screenKey)
+  useScrollKeep(ref, screenKey)
+  useFocusReturn(ref, screenKey)
   return (
     <div id="screen" ref={ref}>
       {children}
     </div>
   )
 }
-const Sheet = ({ name }: { name: string }) => (
-  <div className="sheet">
-    <h2 tabIndex={-1}>Sheet</h2>
-    {name !== 'ask' && (
-      <>
-        <input id="sf" />
-        <button className="btn" id="sb">
-          Go
-        </button>
-      </>
-    )}
-  </div>
-)
-const Page = ({
-  title,
-  sheet,
-  opener = true,
-  extra,
-}: {
-  title: string
-  sheet?: string | null
-  opener?: boolean
-  extra?: ReactNode
-}) => (
-  <>
-    <h2 tabIndex={-1}>{title}</h2>
-    <input id="in" />
-    {opener && (
-      <button data-a="sheet" data-p="x">
-        open
-      </button>
-    )}
-    <button data-a="fex" data-p="rate">
-      rate
-    </button>
-    {extra}
-    {sheet && <Sheet name={sheet} />}
-  </>
-)
-const view = (k: string, extra?: { opener?: boolean; extra?: ReactNode }) => (
-  <Host k={k}>
-    <Page title={k} sheet={useStore.getState().sheet} {...extra} />
+
+/** A sheet as SheetHost mounts it: Ask is a chat with no field. */
+function Sheet({ name }: { name: string }) {
+  const closeSheet = useStore((store) => store.closeSheet)
+  return (
+    <SheetFrame chat={name === 'ask'} onClose={closeSheet}>
+      <h2 id="sheet-t" tabIndex={-1}>
+        Sheet
+      </h2>
+      {name === 'ask' ? null : (
+        <>
+          <input id="field" />
+          <button className="btn" id="go">
+            Go
+          </button>
+        </>
+      )}
+    </SheetFrame>
+  )
+}
+
+function Page({ title, opener = true }: { title: string; opener?: boolean }) {
+  const sheet = useStore((store) => store.sheet)
+  return (
+    <>
+      <h2 tabIndex={-1}>{title}</h2>
+      <input id="in" />
+      {opener ? <button id="opener">open</button> : null}
+      {sheet ? <Sheet name={sheet} /> : null}
+    </>
+  )
+}
+
+const view = (screenKey: string, opener?: boolean) => (
+  <Host screenKey={screenKey}>
+    <Page title={screenKey} opener={opener} />
   </Host>
 )
-const setSheet = (v: string | null) => act(() => useStore.setState({ sheet: v }))
-const active = () => {
-  const a = document.activeElement as HTMLElement
-  return a.id || a.dataset.a + '|' + (a.dataset.p ?? '') || a.tagName
-}
-// jsdom has no layout: offsetParent is always null, which the Tab trap uses to skip hidden controls
-Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
-  configurable: true,
-  get() {
-    return this.parentNode
-  },
-})
+const focusedId = () => document.activeElement?.id || document.activeElement?.textContent
+const focus = (id: string) => act(() => document.getElementById(id)!.focus())
+const openSheet = (name: string) => act(() => useStore.getState().openSheet(name))
+// Radix hands focus back on a timer after the dialog unmounts.
+const afterClose = () => act(() => new Promise((done) => setTimeout(done, 0)))
 
 beforeEach(() => useStore.setState({ plan: fresh(), screen: 'D0', sheet: null }))
 afterEach(() => vi.unstubAllGlobals())
 
-describe('focus table (the original render() focus block)', () => {
-  it('new screen: its h2 takes focus; a focused #screen input keeps it; same screen re-render leaves focus alone', () => {
-    const r = render(view('A'))
-    expect(document.activeElement?.textContent).toBe('A')
-    act(() => (document.getElementById('in') as HTMLElement).focus())
-    r.rerender(view('B'))
-    expect(active()).toBe('in')
-    act(() => (document.querySelector('[data-a="fex"]') as HTMLElement).focus())
-    r.rerender(view('B'))
-    expect(active()).toBe('fex|rate')
+describe('focus', () => {
+  it('a new screen focuses its h2; a focused #screen input keeps focus; a re-render leaves focus alone', () => {
+    const screen = render(view('A'))
+    expect(focusedId()).toBe('A')
+    focus('in')
+    screen.rerender(view('B'))
+    expect(focusedId()).toBe('in')
+    focus('opener')
+    screen.rerender(view('B'))
+    expect(focusedId()).toBe('opener')
   })
-  it('focusKey wins after a render', () => {
-    const r = render(view('A'))
-    focusAfterRender('[data-a="fex"][data-p="rate"]')
-    r.rerender(view('A'))
-    expect(active()).toBe('fex|rate')
-  })
+
   it.each([
-    ['x', 'sf'],
-    ['ask', ''],
-  ])('sheet %s opens: focus goes to its first field, Ask to its title', (name, want) => {
-    const r = render(view('A'))
-    setSheet(name)
-    r.rerender(view('A'))
-    if (want) expect(active()).toBe(want)
-    else expect(document.activeElement?.textContent).toBe('Sheet')
+    ['x', 'field'],
+    ['ask', 'sheet-t'],
+  ])('sheet %s opens on its first field, Ask on its title', (name, want) => {
+    render(view('A'))
+    openSheet(name)
+    expect(focusedId()).toBe(want)
   })
-  it('sheet closes on the same screen: focus returns to the control that opened it', () => {
-    const r = render(view('A'))
-    act(() => (document.querySelector('[data-a="sheet"]') as HTMLElement).focus())
-    setSheet('x')
-    r.rerender(view('A'))
-    expect(active()).toBe('sf')
-    setSheet(null)
-    r.rerender(view('A'))
-    expect(active()).toBe('sheet|x')
-  })
-  it('explainer sheet (ex|) closed by Escape: focus goes to its link', () => {
-    const r = render(view('A'))
-    setSheet('ex|rate')
-    r.rerender(view('A'))
-    fireEvent.keyDown(document, { key: 'Escape' })
-    r.rerender(view('A'))
+
+  it('Escape closes the sheet and focus returns to the control that opened it', async () => {
+    render(view('A'))
+    focus('opener')
+    openSheet('x')
+    fireEvent.keyDown(document.activeElement!, { key: 'Escape' })
+    await afterClose()
     expect(useStore.getState().sheet).toBeNull()
-    expect(active()).toBe('fex|rate')
+    expect(focusedId()).toBe('opener')
   })
-  it('sheet closes and its opener is gone: focus is never left on the body', () => {
-    const r = render(view('A'))
-    act(() => (document.querySelector('[data-a="sheet"]') as HTMLElement).focus())
-    setSheet('x')
-    r.rerender(view('A'))
-    act(() => {
-      useStore.getState().closeSheet()
-      r.rerender(view('A', { opener: false }))
-    }) // one render, like ScreenHost
-    expect(document.activeElement?.textContent).toBe('A')
+
+  it('a sheet whose opener is gone hands focus to the screen title, never the body', async () => {
+    const screen = render(view('A'))
+    focus('opener')
+    openSheet('x')
+    act(() => useStore.getState().closeSheet())
+    screen.rerender(view('A', false))
+    await afterClose()
+    expect(focusedId()).toBe('A')
   })
-  it('Tab wraps inside an open sheet and pulls stray focus back in', () => {
-    const r = render(view('A'))
-    setSheet('x')
-    r.rerender(view('A'))
-    act(() => (document.getElementById('sb') as HTMLElement).focus())
-    fireEvent.keyDown(document, { key: 'Tab' })
-    expect(active()).toBe('sf')
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true })
-    expect(active()).toBe('sb')
-    act(() => (document.getElementById('in') as HTMLElement).focus())
-    fireEvent.keyDown(document, { key: 'Tab' })
-    expect(active()).toBe('sf')
+
+  it('Tab wraps inside an open sheet', () => {
+    render(view('A'))
+    openSheet('x')
+    const sheet = document.querySelector('.sheet')!
+    focus('go')
+    fireEvent.keyDown(sheet, { key: 'Tab' })
+    expect(document.activeElement?.className).toBe('sx')
+    fireEvent.keyDown(sheet, { key: 'Tab', shiftKey: true })
+    expect(focusedId()).toBe('go')
   })
 })
 
 describe('scroll keep', () => {
   it("same screen restores the reader's place even if the scroller is re-created; a new screen starts at the top", () => {
     const r = render(
-      <Host k="A">
+      <Host screenKey="A">
         <div className="scroll" key="1">
           x
         </div>
@@ -173,7 +137,7 @@ describe('scroll keep', () => {
     sc.scrollTop = 240
     fireEvent.scroll(sc)
     r.rerender(
-      <Host k="A">
+      <Host screenKey="A">
         <div className="scroll" key="2">
           x
         </div>
@@ -184,7 +148,7 @@ describe('scroll keep', () => {
     expect(sc2.scrollTop).toBe(240)
     expect(sc2.style.scrollBehavior).toBe('auto')
     r.rerender(
-      <Host k="B">
+      <Host screenKey="B">
         <div className="scroll" key="3">
           x
         </div>
@@ -208,7 +172,7 @@ describe('motion', () => {
       <div className="fnd2" />
     </>
   )
-  it('normal motion: enter replays per screen, figures count up from 0, years stay still, fnd tiles wait for view', () => {
+  it('normal motion: figures count up from 0, years stay still, fnd tiles wait for view', () => {
     const frames: FrameRequestCallback[] = []
     vi.stubGlobal('requestAnimationFrame', (f: FrameRequestCallback) => frames.push(f))
     vi.stubGlobal(
@@ -219,8 +183,7 @@ describe('motion', () => {
         disconnect() {}
       },
     )
-    render(<Host k="A">{figs}</Host>)
-    expect(document.getElementById('screen')!.classList.contains('enter')).toBe(true)
+    render(<Host screenKey="A">{figs}</Host>)
     frames.shift()!(performance.now())
     expect(document.querySelector('.tlv-big')!.textContent).not.toBe('€12,000')
     expect(document.querySelector('.wi-val')!.textContent).toBe('2031')
@@ -232,7 +195,7 @@ describe('motion', () => {
     const raf = vi.fn()
     vi.stubGlobal('matchMedia', () => ({ matches: true }))
     vi.stubGlobal('requestAnimationFrame', raf)
-    render(<Host k="A">{figs}</Host>)
+    render(<Host screenKey="A">{figs}</Host>)
     expect(raf).not.toHaveBeenCalled()
     expect(document.querySelector('.tlv-big')!.textContent).toBe('€12,000')
     expect(document.querySelector('.fnd2')!.classList.contains('seen')).toBe(true)

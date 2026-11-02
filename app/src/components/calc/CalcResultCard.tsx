@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
-import { EXAMPLE_LABEL } from './words.ts'
-import type { CalcResult } from './types.ts'
+import { EXAMPLE_LABEL } from '../../domain/calc/words.ts'
+import type { CalcResult } from '../../domain/calc/types.ts'
 
 const card: CSSProperties = { background: 'var(--ink)', color: '#fff' }
 const eyebrow: CSSProperties = { color: 'var(--sun)' }
@@ -28,14 +28,14 @@ export default function CalcResultCard({
       <div style={{ fontFamily: 'var(--fh)', fontSize: 36, fontWeight: 800, margin: '4px 0' }}>
         {result.value}
       </div>
-      {example && (
+      {example ? (
         <p
           className="exres"
           style={{ margin: '0 0 6px', fontSize: 12.5, fontWeight: 800, color: 'var(--sun)' }}
         >
           {EXAMPLE_LABEL}
         </p>
-      )}
+      ) : null}
       <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: '#DCE7F2' }}>{result.line}</p>
       {result.rows.map(([label, value]) => (
         <div key={label} className="row" style={rowStyle}>

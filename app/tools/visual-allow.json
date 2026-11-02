@@ -3,5 +3,10 @@
     "name": "jump-P1E",
     "reason": "The Demo code 123456 line is removed: the code is now real (emailed, checked by the API), so the screen is 0.51% shorter than the prototype",
     "maxPct": 1
+  },
+  {
+    "name": "jump-ASK",
+    "reason": "The original double-escapes the apostrophe in the asked question (\"kids&#39; education\"), so its bubble wraps to two lines and everything below sits about 21px lower; the app shows the real apostrophe on one line. Rendering the escaped text in the app measured 0.18%, so all of the 6.09% is that wrap",
+    "maxPct": 6.5
   }
 ]

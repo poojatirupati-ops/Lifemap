@@ -1,10 +1,13 @@
 // Each converted sheet renders the same DOM as the ORIGINAL's sheetHTML() for the same plan.
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { rendered, shape } from './dom'
 import { runOriginal } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
 import SheetHost from '../../src/shell/SheetHost'
 import { useStore } from '../../src/state/store'
+
+// slow when the machine is busy: the original runs in node:vm
+vi.setConfig({ testTimeout: 30000 })
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, sheetHTML')
 
@@ -16,9 +19,13 @@ function theirs(state: any, sheet: string, screenId = '') {
   return shape(original.sheetHTML(screenId))
 }
 
+// Radix's Dialog adds pointer-events to the shell (R-05's SheetFrame); the bodies are what this compares
+const withoutRadixStyle = (lines: string[]) =>
+  lines.map((line) => line.replace(' style=pointer-events: auto;', ''))
+
 function ours(state: any, sheet: string) {
   useStore.getState().load({ ...structuredClone(state), sheet })
-  return shape(rendered(<SheetHost />))
+  return withoutRadixStyle(shape(rendered(<SheetHost />)))
 }
 
 // TODO(R-31): settings.ts quotes the 2026 exit tax for every plan year (see assumptions.golden.test.ts)

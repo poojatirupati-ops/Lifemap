@@ -1,6 +1,6 @@
 // The standards the app suggests: LifeMap's own, or a partner's figure where one is set.
 import { percentToTenth, wholePercent } from '../../lib/format'
-import { rules2026 } from './rates'
+import { rules2026, type Rules } from './rates'
 import {
   DEFAULT_FUND_CHARGES,
   GUIDANCE_FIGURES,
@@ -32,30 +32,32 @@ const rateInUse = (settings: Settings, key: 'invGross' | 'fundChg') =>
 const fundCharges = (settings: Settings) => rateInUse(settings, 'fundChg') ?? DEFAULT_FUND_CHARGES
 
 // Growth after charges and after exit tax taken every 8 years (deemed disposal), as a yearly rate to 0.1%
-export function investmentGrowth(settings = defaultSettings, cut = 0) {
+export function investmentGrowth(settings = defaultSettings, cut = 0, rules: Rules = rules2026) {
   const gross = rateInUse(settings, 'invGross')! - cut
-  const { deemed: years, exit: tax } = rules2026.sav
+  const { deemed: years, exit: tax } = rules.sav
   const grown = (1 + gross - fundCharges(settings)) ** years
   const afterTax = grown - tax * (grown - 1)
   return Math.round((afterTax ** (1 / years) - 1) * 1000) / 1000
 }
 
-export function investmentGrowthBasis(settings = defaultSettings) {
+export function investmentGrowthBasis(settings = defaultSettings, rules: Rules = rules2026) {
   const gross = percentToTenth(rateInUse(settings, 'invGross')!)
   const charges = percentToTenth(fundCharges(settings))
-  const { deemed, exit } = rules2026.sav
-  return `a planning assumption, not a prediction: ${gross} before fees and tax, less about ${charges} charges, less ${wholePercent(exit)} exit tax taken every ${deemed} years`
+  const { deemed, exit } = rules.sav
+  const lessCharges = `less about ${charges} charges`
+  const lessTax = `less ${wholePercent(exit)} exit tax taken every ${deemed} years`
+  return `a planning assumption, not a prediction: ${gross} before fees and tax, ${lessCharges}, ${lessTax}`
 }
 
 // 'inv' has no figure of its own: it is derived from the growth before fees and the charges
-function standardOf(key: StandardKey, settings: Settings): Standard {
+export function standardOf(key: StandardKey, settings: Settings, rules = rules2026): Standard {
   const standard = settings.standards[key]
-  if (key !== 'inv') return standard
+  if (key !== 'inv' || standard.unit === 'pct3') return standard
   return {
     ...standard,
-    value: investmentGrowth(settings),
-    cautious: investmentGrowth(settings, 0.01),
-    by: investmentGrowthBasis(settings),
+    value: investmentGrowth(settings, 0, rules),
+    cautious: investmentGrowth(settings, 0.01, rules),
+    by: investmentGrowthBasis(settings, rules),
   }
 }
 
@@ -98,3 +100,16 @@ const guidanceKey = (key: string) =>
 
 export const guidance = (key: string, settings = defaultSettings) =>
   settings.standards[guidanceKey(key)]?.guide || ''
+
+/** The growth rates the Standard / Cautious switch sets. */
+export const GROWTH_KEYS = ['wage', 'cash', 'inv', 'pen', 'penRet'] as const
+
+/** A growth rate under the standard or the cautious set; each is a plain rate in both. */
+export function growthRate(
+  key: (typeof GROWTH_KEYS)[number],
+  set: 'standard' | 'cautious',
+  settings = defaultSettings,
+) {
+  const standard = standardOf(key, settings)
+  return Number(set === 'cautious' ? standard.cautious : inUse(standard))
+}

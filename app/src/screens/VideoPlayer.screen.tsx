@@ -1,15 +1,21 @@
-import { useMemo, type CSSProperties } from 'react'
 import AppHead from '../components/frame/AppHead.tsx'
 import { unseenLooks } from '../components/home/useHome.ts'
-import { exploreBack, openCalculator, talkToExpert } from '../components/explore/exploreActions.ts'
+import { exploreBack, openCalculator, talkToExpert } from '../state/explore.ts'
+import { whyThisVideo } from '../domain/explore/picks.ts'
+import { useGoalPicks } from '../hooks/useGoalPicks.ts'
 import { toolById } from '../components/explore/tools.data.ts'
 import Strip from '../components/explore/Strip.tsx'
 import VideoCard from '../components/explore/VideoCard.tsx'
 import FilmedPlayer from '../components/video/FilmedPlayer.tsx'
 import MockPlayer from '../components/video/MockPlayer.tsx'
-import { VIDEOS, VIDEO_KIND_LABEL, type Video } from '../components/explore/videos.data.ts'
-import { project } from '../domain/planning/project.ts'
-import { planMissing } from '../report/model/readiness.ts'
+import {
+  VIDEOS,
+  VIDEO_KIND_LABEL,
+  splitWho,
+  transcriptFor,
+  videoById,
+  videoLength,
+} from '../components/explore/videos.data.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 
@@ -18,35 +24,33 @@ export const id = 'VID-01'
 export const note =
   'Video player (Lifecast): captions on by default, transcript. Under the video: why it was picked, the matching tool (pre-filled) and an expert door.'
 
-const PARAGRAPH: CSSProperties = { fontSize: 14, lineHeight: 1.55, margin: '8px 0 0' }
-const CAPTION_NOTE: CSSProperties = { margin: '12px 0 0' }
+const CAPTIONS_ON = 'Captions are on. Use the CC button on the player to turn them off.'
+const CAPTIONS_MISSING = (
+  <>
+    <b>Captions not available yet.</b> A transcript will be added. If you can't listen, talk to an
+    expert or try the calculator above.
+  </>
+)
 
-const videoById = (id = '') => VIDEOS.find((video) => video.id === id)!
-
-export const Head = () =>
-  AppHead({ title: 'Watch', back: exploreBack, needsLook: unseenLooks(useStore.getState().plan) })
-
-/** "Your <goal> goal is n% covered", for the goal this video is about, once the plan is ready. */
-function useWhyForYou(video: Video) {
-  const plan = useStore((store) => store.plan)
-  return useMemo(() => {
-    const goal =
-      plan.goals.find((g) => g.spec === video.kind && g.kind !== 'retire') ??
-      (video.kind === 'pension' ? plan.goals.find((g) => g.kind === 'retire') : undefined)
-    if (!plan.app || !goal || planMissing(plan).length) return null
-    return `Your ${goal.name.toLowerCase()} goal is ${project(plan).percent[goal.id]}% covered.`
-  }, [plan, video.kind])
+export function Head() {
+  // Head is called by ScreenHost, not rendered, so it must not use hooks; ScreenHost re-renders on plan changes.
+  const needsLook = unseenLooks(useStore.getState().plan)
+  return AppHead({ title: 'Watch', back: exploreBack, needsLook })
 }
 
-export function Body({ param }: { param?: string }) {
+export function Body({ param }: { param: string }) {
   const video = videoById(param)
-  const why = useWhyForYou(video)
+  const { goals, percent, ready } = useGoalPicks()
+  const why = whyThisVideo(goals, percent, ready, video.kind)
   const tool = toolById(video.tool)
-  const [presenter, role = ''] = video.who.split(' · ')
+  const { presenter, role } = splitWho(video)
+  const filmed = Boolean(video.src)
+  const captionNote = filmed ? (video.captions ? CAPTIONS_ON : CAPTIONS_MISSING) : null
+  const transcript = transcriptFor(video)
 
   return (
     <>
-      {video.src ? <FilmedPlayer video={video} /> : <MockPlayer video={video} />}
+      {filmed ? <FilmedPlayer key={video.id} video={video} /> : <MockPlayer video={video} />}
       <div className="vm2">
         <span className="vm2-k">{VIDEO_KIND_LABEL[video.kind]}</span>
         <h2 className="t" tabIndex={-1}>
@@ -54,13 +58,13 @@ export function Body({ param }: { param?: string }) {
         </h2>
         <div className="vm2-who">
           <span className="vm2-av" aria-hidden="true">
-            {video.who.trim()[0]}
+            {presenter[0]}
           </span>
           <span>
             <b>{presenter}</b>
             <small>{role}</small>
           </span>
-          <span className="vm2-d">⏱ {video.duration ?? `${video.mins} min`}</span>
+          <span className="vm2-d">⏱ {videoLength(video)}</span>
         </div>
       </div>
       {why ? (
@@ -104,25 +108,16 @@ export function Body({ param }: { param?: string }) {
           <span aria-hidden="true">🔖</span> Save for later
         </button>
       </div>
-      {video.src && !video.captions ? (
-        <p className="small" id="vid-cap" style={CAPTION_NOTE}>
-          <b>Captions not available yet.</b> A transcript will be added. If you can't listen, talk
-          to an expert or try the calculator above.
+      {captionNote ? (
+        <p className="small" id="vid-cap" style={{ margin: '12px 0 0' }}>
+          {captionNote}
         </p>
-      ) : (
-        <>
-          {video.src ? (
-            <p className="small" id="vid-cap" style={CAPTION_NOTE}>
-              Captions are on. Use the CC button on the player to turn them off.
-            </p>
-          ) : null}
-          <details className="card asmg wigrow" style={{ marginTop: 12 }}>
-            <summary>Transcript</summary>
-            <p style={PARAGRAPH}>
-              {video.src ? video.transcript : `${video.caption} [Full transcript appears here.]`}
-            </p>
-          </details>
-        </>
+      ) : null}
+      {transcript === null ? null : (
+        <details className="card asmg wigrow" style={{ marginTop: 12 }}>
+          <summary>Transcript</summary>
+          <p style={{ fontSize: 14, lineHeight: 1.55, margin: '8px 0 0' }}>{transcript}</p>
+        </details>
       )}
       <div className="sec">
         <h3>Up next</h3>

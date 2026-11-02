@@ -1,64 +1,21 @@
 import { useShallow } from 'zustand/react/shallow'
+import { creditsFor, type Household } from '../../domain/finances/credits.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
-import { rulesFor } from '../../domain/planning/rates.ts'
-import { euro } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
-import type { Plan } from '../../state/types.ts'
 
-// TODO(R-19): about.cred belongs in types.ts
-type Credits = Record<string, boolean>
-type CreditPlan = Plan & { about: Plan['about'] & { cred?: Credits } }
-
-/** The tax credits that need a Yes from the customer, each only when it can apply. */
-type Household = {
-  startYear: number
-  home?: string
-  deps: number | null
-  partner: boolean | null
-  married?: boolean | null
-}
-
-function creditsFor({ startYear, home, deps, partner, married }: Household) {
-  const it = rulesFor(startYear).it
-  return [
-    {
-      key: 'rent',
-      label: 'I pay rent on my home (not to a relative)',
-      detail: `Rent Tax Credit, up to ${euro(it.rent)} a year (${euro(it.rentJoint)} for a married couple), to ${it.rentLastYear}`,
-      applies: home !== 'Own outright' && home !== 'Own with mortgage',
-    },
-    {
-      key: 'lone',
-      label: "I'm the main carer of a child, with no partner",
-      detail: `Single Person Child Carer Credit ${euro(it.spccc)} and a ${euro(it.bandSPCCC)} standard-rate band`,
-      applies: (deps ?? 0) > 0 && !partner,
-    },
-    {
-      key: 'carer',
-      label: 'One of us stays at home to care for a child or dependant',
-      detail: `Home Carer Tax Credit up to ${euro(it.homeCarer)} (married couples)`,
-      applies: !!partner && married === true,
-    },
-  ].filter((credit) => credit.applies)
-}
-
-const toggleCredit = (key: string) =>
-  useStore.getState().update((plan: CreditPlan) => {
-    plan.about.cred = { ...plan.about.cred, [key]: !plan.about.cred?.[key] }
-  })
-
+/** The tax credits that need a Yes, as chips; each shows only when it can apply. */
 export default function CredChips() {
   const household = useStore(
     useShallow(({ plan }): Household => ({
       startYear: assumption(plan, 'startYear'),
-      home: plan.fin.home,
-      deps: plan.about.deps,
+      home: plan.figures.home,
+      deps: plan.about.dependants,
       partner: plan.about.partner,
       married: plan.about.married,
     })),
   )
+  const chosen = useStore(({ plan }) => plan.about.taxCredits)
   const credits = creditsFor(household)
-  const chosen = useStore(({ plan }) => (plan as CreditPlan).about.cred)
   if (!credits.length) return null
   return (
     <div
@@ -79,7 +36,7 @@ export default function CredChips() {
             aria-pressed={!!chosen?.[key]}
             data-a="cred"
             data-p={key}
-            onClick={() => toggleCredit(key)}
+            onClick={() => useStore.getState().toggleCredit(key)}
           >
             {label}
           </button>

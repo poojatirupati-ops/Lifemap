@@ -1,96 +1,53 @@
 // One year's income: pay, pension and State Pension for you and a partner, and the tax on it.
-import { arfMinimum, lumpSum, pensionRelief } from './pensions'
 import type { PlanSettings } from './planSettings'
-import { prsiRate } from './levies'
-import { householdTax, type Person } from './tax'
-import { deposit, type Wallet } from './wallet'
-import type { Balances } from './balances'
+import { prsiRate, type Person } from './levies'
+import { householdTax } from './tax'
+import type { Wallet } from './wallet'
+import { drawPension, payIntoPension, type Balances } from './balances'
+import type { YearContext } from './fundYear'
 
-const person = (age: number): Person => ({
-  pay: 0,
-  selfEmployed: false,
-  statePension: 0,
-  drawdown: 0,
-  otherIncome: 0,
-  pensionRelief: 0,
-  age,
-})
-
-/** Pay, pension and State Pension for the year; the pension pot grows or is drawn down. */
-/** pensionWhatIf: a what-if's extra monthly pension contribution, when it targets retirement */
-export function incomes(
+/**
+ * Pay, pension and State Pension for the year, and the tax on it. Grows or draws down the pension
+ * in `balances`; a pension lump sum goes into `wallet`.
+ * @param pensionWhatIf a what-if's extra monthly pension contribution, when it targets retirement
+ */
+export function yearIncome(
   plan: PlanSettings,
   balances: Balances,
   wallet: Wallet,
-  year: number,
+  { index, age, prices, working }: YearContext,
   pensionWhatIf: number | null,
 ) {
-  const { figures: f, growth, rules } = plan
-  const age = (f.age ?? 0) + year
-  const prices = (1 + growth.inflation) ** year
-  const pay = (1 + growth.wage) ** year
+  const { figures, growth, rules } = plan
+  const payGrowth = (1 + growth.wage) ** index
   const taxBands = plan.flatBands ? 1 : prices
-  const statePensionRise = { pay, flat: 1 }[plan.statePensionGrowth] ?? prices
-  const policyIncome = f.policyIncome > 0 && f.policyIncomeAge > 0 && age >= f.policyIncomeAge
-  const you = person(age)
-  you.selfEmployed = f.work === 'Self-employed'
-  you.otherIncome =
-    (f.otherIncomeMonthly + f.monthlyRentReceived) * 12 * prices +
-    (policyIncome ? f.policyIncome : 0)
-  // own pension and auto-enrolment contributions come out of take-home pay
-  let contributionsPaid = 0
-  if (age < f.retireAge) {
-    you.pay = f.income * pay
-    const own = (f.monthlyOwnPension + plan.extraPension) * 12 * pay
-    you.pensionRelief = pensionRelief(rules, you.pay / taxBands, own / taxBands, age) * taxBands
-    contributionsPaid += own
-    let contributions = (f.monthlyPension + plan.extraPension) * 12 * pay
-    if (pensionWhatIf != null) contributions = Math.max(0, contributions + pensionWhatIf * 12)
-    if (f.autoEnrolled) {
-      const earnings = Math.min(you.pay / taxBands, rules.ae.earnCap) * taxBands
-      contributions += (rules.ae.ee + rules.ae.er + rules.ae.state) * earnings
-      contributionsPaid += rules.ae.ee * earnings
-    }
-    balances.pension = balances.pension * (1 + f.pensionGrowth) + contributions
-  } else if (age < Math.max(f.retireAge, plan.accessAge)) {
-    // most pensions can't be drawn yet: the fund stays invested
-    balances.pension *= 1 + f.pensionGrowth
-  } else {
-    you.drawdown = drawDown(plan, balances, wallet, age, prices)
+  const salary = working ? figures.income * payGrowth : 0
+  const contributions = working
+    ? payIntoPension(plan, balances, salary, { age, payGrowth, taxBands }, pensionWhatIf)
+    : { relief: 0, paid: 0 }
+  const drawdown = working ? 0 : drawPension(plan, balances, wallet, age, prices)
+  const rise = statePensionRise(plan.statePensionGrowth, payGrowth, prices)
+  const { partner, qualifiedAdult } = partnerIncome(plan, index, age, payGrowth, rise)
+  const policyIncome =
+    figures.policyIncome > 0 && figures.policyIncomeAge > 0 && age >= figures.policyIncomeAge
+  const you: Person = {
+    age,
+    pay: salary,
+    selfEmployed: figures.work === 'Self-employed',
+    statePension: ownStatePension(plan, age) * rise + qualifiedAdult,
+    drawdown,
+    otherIncome:
+      (figures.otherIncomeMonthly + figures.monthlyRentReceived) * 12 * prices +
+      (policyIncome ? figures.policyIncome : 0),
+    pensionRelief: contributions.relief,
   }
-  if (age >= rules.sp.age) {
-    const over80 = age >= 80 && f.statePensionShare > 0 ? rules.sp.over80 * rules.sp.weeks : 0
-    you.statePension = (plan.statePension * f.statePensionShare + over80) * statePensionRise
-  }
-  const partner = f.partner ? person((f.partnerAge ?? 0) + year) : null
-  if (partner) {
-    const working = (f.partnerAge ?? 0) > 0 && partner.age < (f.partnerRetireAge || 66)
-    partner.pay = working ? f.partnerIncome * pay : 0
-    const share = f.partnerStatePensionShare
-    if (partner.age >= 66 && share !== 'qa')
-      partner.statePension = plan.statePension * (Number(share) || 0) * statePensionRise
-    // a Qualified Adult increase is paid to you
-    if (share === 'qa' && age >= rules.sp.age && partner.pay === 0) {
-      const weekly = partner.age >= 66 ? rules.sp.qa66 : rules.sp.qaUnder66
-      you.statePension += weekly * rules.sp.weeks * statePensionRise
-    }
-  }
-  const inToday = (p: Person | null) =>
-    p && {
-      ...p,
-      pay: p.pay / taxBands,
-      statePension: p.statePension / taxBands,
-      drawdown: p.drawdown / taxBands,
-      otherIncome: p.otherIncome / taxBands,
-      pensionRelief: p.pensionRelief / taxBands,
-    }
   const tax =
-    householdTax(rules, inToday(you)!, inToday(partner), {
-      married: f.married,
-      singleParent: f.singleParentCredit,
-      renting: f.rentCredit && plan.startYear + year <= rules.it.rentLastYear,
-      homeCarer: f.homeCarerCredit,
-      prsiRate: prsiRate(rules, plan.startYear + year),
+    householdTax(rules, inToday(you, taxBands), partner && inToday(partner, taxBands), {
+      married: figures.married,
+      singleParent: figures.singleParentCredit,
+      renting: figures.rentCredit && plan.startYear + index <= rules.it.rentLastYear,
+      homeCarer: figures.homeCarerCredit,
+      prsiRate: prsiRate(rules, plan.startYear + index),
     }).total * taxBands
   const gross =
     you.pay +
@@ -98,37 +55,61 @@ export function incomes(
     you.drawdown +
     you.otherIncome +
     (partner ? partner.pay + partner.statePension : 0)
-  return { gross, tax, inflow: gross - tax - contributionsPaid }
+  return { gross, tax, inflow: gross - tax - contributions.paid }
 }
 
-/** At the access age: the threshold tax and the lump sum; then the yearly drawdown. */
-function drawDown(
-  plan: PlanSettings,
-  balances: Balances,
-  wallet: Wallet,
-  age: number,
-  prices: number,
-) {
-  const { rules } = plan
-  if (age === Math.max(plan.figures.retireAge, plan.accessAge)) {
-    const year = plan.startYear + age - (plan.figures.age ?? 0)
-    balances.pension -= rules.pen.sftRate * Math.max(0, balances.pension - plan.sftAt(year))
-    if (plan.lumpShare > 0) {
-      const lump = lumpSum(rules, balances.pension, plan.lumpShare)
-      balances.pension -= lump.gross
-      deposit(wallet, lump.net)
-    }
+function statePensionRise(growth: string, payGrowth: number, prices: number) {
+  switch (growth) {
+    case 'pay':
+      return payGrowth
+    case 'flat':
+      return 1
+    default:
+      return prices
   }
-  const pot = balances.pension
-  const minimum = arfMinimum(rules, age, pot)
-  const yearsLeft = Math.max(1, plan.end - age + 1)
-  const wanted =
-    plan.drawRule === 'min'
-      ? pot * minimum
-      : plan.drawRule === 'fixed'
-        ? Math.max(plan.drawFixed * prices, pot * minimum)
-        : pot * Math.max(1 / yearsLeft, minimum)
-  const drawn = Math.min(pot, wanted)
-  balances.pension = (pot - drawn) * (1 + plan.growth.pensionRetired)
-  return drawn
 }
+
+/** Your State Pension this year in today's money, before it rises. */
+function ownStatePension({ figures, rules, statePension }: PlanSettings, age: number) {
+  if (age < rules.sp.age) return 0
+  const over80 = age >= 80 && figures.statePensionShare > 0 ? rules.sp.over80 * rules.sp.weeks : 0
+  return statePension * figures.statePensionShare + over80
+}
+
+/** The partner's pay and State Pension; a Qualified Adult increase is paid to you instead. */
+function partnerIncome(
+  { figures, rules, statePension }: PlanSettings,
+  year: number,
+  yourAge: number,
+  payGrowth: number,
+  rise: number,
+) {
+  if (!figures.partner) return { partner: null, qualifiedAdult: 0 }
+  const age = (figures.partnerAge ?? 0) + year
+  const working = (figures.partnerAge ?? 0) > 0 && age < (figures.partnerRetireAge || 66)
+  const pay = working ? figures.partnerIncome * payGrowth : 0
+  const share = figures.partnerStatePensionShare
+  const isQualifiedAdult = share === 'qa'
+  const partner: Person = {
+    age,
+    pay,
+    selfEmployed: false,
+    statePension: age >= 66 && !isQualifiedAdult ? statePension * (Number(share) || 0) * rise : 0,
+    drawdown: 0,
+    otherIncome: 0,
+    pensionRelief: 0,
+  }
+  if (!isQualifiedAdult || yourAge < rules.sp.age || pay !== 0)
+    return { partner, qualifiedAdult: 0 }
+  const weekly = age >= 66 ? rules.sp.qa66 : rules.sp.qaUnder66
+  return { partner, qualifiedAdult: weekly * rules.sp.weeks * rise }
+}
+
+const inToday = (person: Person, taxBands: number): Person => ({
+  ...person,
+  pay: person.pay / taxBands,
+  statePension: person.statePension / taxBands,
+  drawdown: person.drawdown / taxBands,
+  otherIncome: person.otherIncome / taxBands,
+  pensionRelief: person.pensionRelief / taxBands,
+})

@@ -1,9 +1,10 @@
 // Your finances (P2) and Check your details (P4) must read each plan as the ORIGINAL does, run in node:vm.
 import { describe, expect, it } from 'vitest'
+import { fromOriginal } from '../../src/state/migrate'
 import { runOriginal } from './origSlice'
 import { fixtures, plain } from './origProfile'
 import { FINANCE_SECTIONS } from '../../src/domain/finances/sections.data'
-import { FINANCE_FIELDS } from '../../src/components/finance/fields.data'
+import { FINANCE_FIELDS } from '../../src/domain/finances/fields.data'
 import {
   checkItems,
   withRepaymentLooks,
@@ -77,12 +78,13 @@ describe('finances check equals the original', () => {
       it(`${name} #${variant}`, () => {
         const theirs = readOriginal(state)
         // the same synced plan, before the original flagged anything
+        const synced: any = fromOriginal(theirs.state)
         const plan = {
-          ...theirs.state,
-          look: withRepaymentLooks({ ...theirs.state, look: structuredClone(state.look ?? {}) }),
+          ...synced,
+          warnings: withRepaymentLooks({ ...synced, warnings: structuredClone(state.look ?? {}) }),
         }
-        expect(plan.look).toEqual(plain(theirs.state.look))
-        flaggedLooks.push(...Object.keys(plan.look))
+        expect(plan.warnings).toEqual(plain(theirs.state.look))
+        flaggedLooks.push(...Object.keys(plan.warnings))
         workedNotes.push(...theirs.worked.filter(Boolean))
         expect(FINANCE_SECTIONS.map((section) => sectionStatus(section, plan))).toEqual(
           theirs.statuses,

@@ -10,9 +10,9 @@ import Readiness from '../components/home/Readiness.tsx'
 import Shortcuts from '../components/home/Shortcuts.tsx'
 import UpNext from '../components/home/UpNext.tsx'
 import { unseenLooks, useHome } from '../components/home/useHome.ts'
-import { fixChoice, showSection } from '../components/plan/planActions.ts'
+import SeeLink from '../components/home/SeeLink.tsx'
 import RoughNote from '../components/plan/RoughNote.tsx'
-import { useTiming } from '../components/timeline/goalText.ts'
+import { useMissingChoices } from '../hooks/useMissingChoices.ts'
 import GateNote from '../components/ui/GateNote.tsx'
 import { useStore } from '../state/store.ts'
 import type { Plan } from '../state/types.ts'
@@ -24,37 +24,20 @@ export const note = (plan: Plan) =>
     ? 'Home while a required choice is missing (§14): no numbers until it is made.'
     : 'Home (layout v7, 11 Oct 2026): greeting with date, Ask bar, Your Timeline card (total planned, goal stems by age, Profile / Goals / Next goal strip), Up next, readiness, foundations, goal photo cards, shortcuts.'
 
-const CHOICE_LABELS: Record<string, string> = {
-  retireAge: 'Retirement age',
-  planEnd: 'Plan until age',
-  infl: 'Inflation',
-  pRetireAge: "Partner's retirement age",
-}
-
-// only the icon bar stays pinned; the greeting scrolls with the content
+// only the icon bar stays pinned; the greeting scrolls with the content.
+// Head is hook-free by the shell's contract (shell/screens.tsx): splitHead must see .topbar.hdr.
 export const Head = () => HdrBar({ needsLook: unseenLooks(useStore.getState().plan) })
 
-const SeeLink = ({ section, children }: { section: string; children: string }) => (
-  <button className="link" data-a="seg" data-p={section} onClick={() => showSection(section)}>
-    {children}
-  </button>
-)
-
 export function Body() {
-  const plan = useStore((store) => store.plan)
-  const timing = useTiming()
   const home = useHome()
-  const missing = missingChoices(plan)
+  const missing = useMissingChoices()
+  const fixChoice = useStore((store) => store.fixChoice)
 
   if (missing.length)
     return (
       <>
         <HomeGreeting stage={home.stage} />
-        <GateNote
-          where="home"
-          missing={missing.map(({ key }) => ({ key, label: CHOICE_LABELS[key] }))}
-          onChoose={fixChoice}
-        />
+        <GateNote where="home" missing={missing} onChoose={fixChoice} />
       </>
     )
 
@@ -83,14 +66,14 @@ export function Body() {
         </div>
         <FoundationLadder levels={home.levels} compact />
       </div>
-      <RoughNote plan={plan} />
+      <RoughNote />
       <div className="sec">
         <h3>Your goals</h3>
         <SeeLink section="results">See results</SeeLink>
       </div>
       <div className="hstrip gcards">
         {home.byAge.map((goal) => (
-          <GoalCard key={goal.id} goal={goal} percent={home.percent[goal.id]} timing={timing} />
+          <GoalCard key={goal.id} goal={goal} percent={home.percent[goal.id]} />
         ))}
       </div>
       <div className="sec">

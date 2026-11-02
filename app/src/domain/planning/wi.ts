@@ -10,10 +10,10 @@ export interface WhatIf {
   lumpSum: number
 }
 
-export const whatIfFrom = (saved: Plan['wi']): WhatIf => ({
-  goalId: saved.g,
-  monthly: Number(saved.m) || 0,
-  lumpSum: Number(saved.l) || 0,
+export const whatIfFrom = (saved: Plan['whatIf']): WhatIf => ({
+  goalId: saved.goalId,
+  monthly: Number(saved.monthlyExtra) || 0,
+  lumpSum: Number(saved.lumpSum) || 0,
 })
 
 const EXTRA_STEPS = [

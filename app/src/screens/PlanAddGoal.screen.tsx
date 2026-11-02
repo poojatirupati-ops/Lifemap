@@ -4,14 +4,14 @@ import { useStore } from '../state/store.ts'
 import AppHead from '../components/frame/AppHead.tsx'
 import GoalTile from '../components/define/GoalTile.tsx'
 import Emo from '../components/ui/Emo.tsx'
-import { showSection } from '../components/plan/planActions.ts'
 
 export const key = 'GOALS'
 export const id = 'PLAN-ADD'
 export const note = 'Add a goal from My Plan (same goal tiles).'
 
-const backToTimeline = () => showSection('timeline')
+const backToTimeline = () => useStore.getState().showSection('timeline')
 
+// a call, not <AppHead />: the shell's splitHead pins the top bar by reading the returned tree
 export const Head = () =>
   AppHead({ title: 'Add a goal', sub: 'Tap to add or remove.', back: backToTimeline })
 
@@ -25,11 +25,11 @@ export function Body() {
         ))}
       </div>
       {goals
-        .filter((goal) => goal.k === 'other')
+        .filter((goal) => goal.key === 'other')
         .map((goal) => (
           <Fragment key={goal.id}>
             <div className="pill mint" style={{ marginTop: 10 }}>
-              <Emo>{`${goal.e} ${goal.name}`}</Emo>
+              <Emo>{`${goal.emoji} ${goal.name}`}</Emo>
             </div>{' '}
           </Fragment>
         ))}

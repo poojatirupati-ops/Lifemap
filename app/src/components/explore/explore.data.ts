@@ -1,9 +1,8 @@
 // What Explore features: focus areas, live sessions and the statements that fill in tools.
+import type { CSSProperties } from 'react'
+import { EXPERTS } from '../../domain/identity/advisers.data.ts'
 import type { VideoKind } from './videos.data.ts'
 import type { CategoryId } from './tools.data.ts'
-
-// The calculator list is in its own file; other areas import everything Explore from here.
-export * from './tools.data.ts'
 
 export interface Topic {
   emoji: string
@@ -80,6 +79,15 @@ export const TOPICS: Topic[] = [
   },
 ]
 
+export const topicNamed = (name: string) => TOPICS.find((topic) => topic.name === name)!
+
+/** The topic's photo, as the custom properties its .art span reads. */
+export const topicPhotoStyle = (topic: Topic) =>
+  ({ '--art': `var(--art-${topic.art})`, '--pos': topic.photoPosition }) as CSSProperties
+
+/** "mortgage expert", "financial planner". */
+export const expertName = (kind: VideoKind) => EXPERTS[kind].title.toLowerCase()
+
 export interface LiveSession {
   when: string
   title: string
@@ -93,7 +101,12 @@ export const LIVE_SESSIONS: LiveSession[] = [
 ]
 
 /** The groups whose tools a statement can fill in, and what the statement is. */
-export const STATEMENTS: Partial<Record<CategoryId, { what: string; reads: string[] }>> = {
+export interface Statement {
+  what: string
+  reads: string[]
+}
+
+export const STATEMENTS: Partial<Record<CategoryId, Statement>> = {
   retire: {
     what: 'pension',
     reads: [

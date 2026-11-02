@@ -1,10 +1,11 @@
-import { EXPERTS } from '../../domain/identity/advisers.data.ts'
-import { toggleSpecialist, type ExpertKind } from './booking.ts'
+import { EXPERTS, type ExpertKind } from '../../domain/identity/advisers.data.ts'
+import { useStore } from '../../state/store.ts'
 
 const KINDS = Object.keys(EXPERTS) as ExpertKind[]
 
 /** "Talk to a specialist": one toggle per kind of expert. */
 export default function SpecialistBoxes({ selected }: { selected: ExpertKind }) {
+  const toggleSpecialist = useStore((store) => store.toggleSpecialist)
   return (
     <>
       <div className="sec">

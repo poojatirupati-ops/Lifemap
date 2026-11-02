@@ -1,15 +1,15 @@
+import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../state/store.ts'
 import { meHead } from '../components/me/meHead.ts'
-import { answerOf, NEW_QUESTIONS } from '../components/define/profileActions.ts'
 import HouseholdCard from '../components/me/HouseholdCard.tsx'
 import MeRow from '../components/me/MeRow.tsx'
 import PersonalityCard from '../components/me/PersonalityCard.tsx'
 import ProfileCard from '../components/me/ProfileCard.tsx'
 import SignOutRow from '../components/me/SignOutRow.tsx'
 import { makePlan, toProfile } from '../components/me/meActions.ts'
-import { profileAnswered, profilePercent, useMePlan, type MePlan } from '../components/me/mePlan.ts'
-import { openMe } from '../components/plan/planActions.ts'
-import { discoverAnswered } from '../domain/discovery/profile.ts'
+import { needsProfile } from '../domain/identity/booking.ts'
+import { deeperAnswered, discoverAnswered, profilePercent } from '../domain/discovery/profile.ts'
+import { NEW_QUESTIONS } from '../domain/discovery/profileQuestions.ts'
 
 export const key = 'ME:home'
 export const id = 'ME-01'
@@ -19,19 +19,31 @@ export const note =
 export const Head = () =>
   meHead({ title: 'Me', sub: 'Your profile. It shapes your plan and helps your adviser.' })
 
-const needsProfileCheck = (plan: MePlan) =>
-  plan.book.done && (profileAnswered(plan) < 13 || !plan.um.rechecked)
-
-const deeperAnswered = (plan: MePlan) =>
-  NEW_QUESTIONS.filter((entry) => answerOf(plan, entry) != null).length
+const SETTINGS = [
+  { emoji: '🧮', title: 'Your assumptions', detail: 'Prices, growth and retirement', page: 'asm' },
+  {
+    emoji: '🔐',
+    title: 'Privacy & preferences',
+    detail: 'Consents and your data',
+    page: 'privacy',
+  },
+]
 
 export function Body() {
-  const plan = useMePlan((plan) => plan)
-  const inApp = useStore((store) => store.plan.app)
+  const view = useStore(
+    useShallow(({ plan }) => ({
+      inApp: plan.hasResults,
+      checkProfile: plan.booking.done && needsProfile(plan),
+      rechecked: plan.moneyProfile.rechecked,
+      firstAnswers: discoverAnswered(plan.answers),
+      deeperAnswered: deeperAnswered(plan),
+      percent: profilePercent(plan),
+    })),
+  )
 
   return (
     <>
-      {needsProfileCheck(plan) && (
+      {view.checkProfile && (
         <div className="nudge">
           <span aria-hidden="true">🧭</span>
           <span>Check your profile before your adviser meeting</span>
@@ -49,43 +61,28 @@ export function Body() {
           emoji="✅"
           title="Your first answers"
           detail={
-            plan.um.rechecked
-              ? 'Checked ✓'
-              : `${discoverAnswered(plan.ans)} answers · check they still fit`
+            view.rechecked ? 'Checked ✓' : `${view.firstAnswers} answers · check they still fit`
           }
-          action="me"
           page="recheck"
-          onClick={() => openMe('recheck')}
         />
         <MeRow
           emoji="📖"
           title="Your money terms"
           detail="Adviser words, in plain English"
-          action="me"
           page="terms"
-          onClick={() => openMe('terms')}
         />
         <MeRow
           emoji="🧭"
           title="Your full money profile"
-          detail={`${deeperAnswered(plan)} of 7 deeper questions`}
-          action="me"
+          detail={`${view.deeperAnswered} of ${NEW_QUESTIONS.length} deeper questions`}
           page="um"
-          right={<span className="me-pct">{profilePercent(plan)}%</span>}
-          onClick={() => openMe('um')}
+          right={<span className="me-pct">{view.percent}%</span>}
         />
       </div>
       <h3 className="me-gh">Settings</h3>
       <div className="melist">
-        {inApp ? (
-          <MeRow
-            emoji="💶"
-            title="My money"
-            detail="Finances and documents"
-            action="me"
-            page="money"
-            onClick={() => openMe('money')}
-          />
+        {view.inApp ? (
+          <MeRow emoji="💶" title="My money" detail="Finances and documents" page="money" />
         ) : (
           <MeRow
             emoji="💶"
@@ -95,22 +92,9 @@ export function Body() {
             onClick={makePlan}
           />
         )}
-        <MeRow
-          emoji="🧮"
-          title="Your assumptions"
-          detail="Prices, growth and retirement"
-          action="me"
-          page="asm"
-          onClick={() => openMe('asm')}
-        />
-        <MeRow
-          emoji="🔐"
-          title="Privacy & preferences"
-          detail="Consents and your data"
-          action="me"
-          page="privacy"
-          onClick={() => openMe('privacy')}
-        />
+        {SETTINGS.map((row) => (
+          <MeRow key={row.page} {...row} />
+        ))}
         <SignOutRow />
       </div>
       <p className="disc">

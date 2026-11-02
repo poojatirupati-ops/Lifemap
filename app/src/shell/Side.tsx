@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { fresh } from '../state/fresh.ts'
-import { setDesk, startFrom, useShell } from '../state/shell.ts'
+import { setDesk, signInForReview, startFrom, useShell } from '../state/shell.ts'
 import { JUMPS, sampleCustomer } from './jumps.data.ts'
 
 export default function Side() {
@@ -24,7 +24,10 @@ export default function Side() {
       <button
         className="big alt"
         id="startsample"
-        onClick={() => startFrom(sampleCustomer(), true)}
+        onClick={() => {
+          signInForReview()
+          startFrom(sampleCustomer())
+        }}
       >
         ⚡ Load sample customer → Results
       </button>
@@ -49,7 +52,10 @@ export default function Side() {
                 key={id}
                 data-id={id}
                 className={id === screenId ? 'on' : undefined}
-                onClick={() => startFrom(build(), true)}
+                onClick={() => {
+                  signInForReview()
+                  startFrom(build())
+                }}
               >
                 <span className="jid">{id}</span>
                 {label}

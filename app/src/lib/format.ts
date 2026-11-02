@@ -38,3 +38,12 @@ export const isNumber = (value: unknown) => hasValue(value) && !Number.isNaN(Num
 
 /** A typed figure as a number; blank or not a number is 0. */
 export const toNumber = (value: unknown) => (isNumber(value) ? Number(value) : 0)
+
+export const sum = <T>(items: T[], amount: (item: T, index: number) => number) =>
+  items.reduce((total, item, index) => total + amount(item, index), 0)
+
+/** The digits typed in a euro box, as a whole number ("€1,200" is 1200); null when there are none. */
+export function parseWholeEuros(text: string) {
+  const whole = parseInt(text.replace(/\D/g, ''))
+  return isNaN(whole) ? null : whole
+}

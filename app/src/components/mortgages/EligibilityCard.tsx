@@ -2,8 +2,9 @@ import { useStore } from '../../state/store.ts'
 
 /** The invitation to the 4-question borrowing quiz, shown to buyers. */
 export default function EligibilityCard() {
+  const openSheet = useStore((s) => s.openSheet)
   // TODO(R-29): the elig sheet (R-31) starts its quiz at question 1 each time it opens
-  const startQuiz = () => useStore.getState().openSheet('elig')
+  const startQuiz = () => openSheet('elig')
   return (
     <div className="elg2">
       <div

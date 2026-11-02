@@ -14,9 +14,9 @@ import { discoverQuestion, moneyQuestion } from '../../src/domain/discovery/ques
 import {
   discoverAnswered,
   hasEnoughForPersonality,
-  moneyProfileAnswered,
   optionScore,
   personality,
+  profileAnswered,
   suggestedHorizon,
 } from '../../src/domain/discovery/profile'
 import { riskLabelText, riskRead } from '../../src/domain/discovery/riskRead'
@@ -24,7 +24,7 @@ import { asOriginalRead, profileAnswers, riskContext } from './profileAdapters'
 import { original, plain, fixtures, originalNormalized, ourNormalized } from './origProfile'
 import { variant } from './profileVariants'
 
-describe('profile data equals the original', () => {
+describe('profile data equals the original', { timeout: 30_000 }, () => {
   it('tables and wording', () => {
     expect(PERSONALITY_WEIGHTS).toEqual(plain(original.PW))
     expect(PERSONALITY_TIE_ORDER).toEqual(original.P_ORDER)
@@ -69,7 +69,7 @@ const moneyAnswerSets = [
   { u4: 0, u9: 3, u10: 3, u11: 2, u12: 2, u14: 3 },
 ]
 
-describe('profile scoring equals the original', () => {
+describe('profile scoring equals the original', { timeout: 30_000 }, () => {
   it('personality, counts, horizon, risk read on every fixture and answer grid', () => {
     for (const [fixture, fixturePlan] of fixtures) {
       for (const answered of answerGrid(fixturePlan)) {
@@ -88,16 +88,16 @@ describe('profile scoring equals the original', () => {
           expect(personality(answers)?.name ?? null, fixture).toBe(
             original.personality()?.name ?? null,
           )
-          expect(discoverAnswered(plan.ans)).toBe(original.discCount())
-          expect(hasEnoughForPersonality(plan.ans)).toBe(original.discEnough())
-          expect(moneyProfileAnswered(answers)).toBe(original.umCount())
+          expect(discoverAnswered(plan.answers)).toBe(original.discCount())
+          expect(hasEnoughForPersonality(plan.answers)).toBe(original.discEnough())
+          expect(profileAnswered(plan)).toBe(original.umCount())
           expect(suggestedHorizon(plan.goals, plan.about.age, plan.retireAge)).toBe(
             original.suggestU9(),
           )
           for (const id of ['2', '6', '7', '8', '9']) {
-            expect(optionScore(discoverQuestion(id), plan.ans[id])).toBe(original.dsc(id) ?? null)
+            expect(optionScore(discoverQuestion(id), plan.answers[id])).toBe(original.dsc(id) ?? null)
           }
-          expect(optionScore(moneyQuestion('u9'), plan.um.a.u9)).toBe(original.umS('u9') ?? null)
+          expect(optionScore(moneyQuestion('u9'), plan.moneyProfile.answers.u9)).toBe(original.umS('u9') ?? null)
           const originalCushion = plain(original.cushionM())
           for (const complete of [false, true]) {
             const read = riskRead(answers, riskContext(plan, complete, originalCushion))

@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { setFigure, chooseStandard } from './calcActions.ts'
+import { useStore } from '../../state/store.ts'
 import FigureHint from './FigureHint.tsx'
-import { standardChipText, type FieldInfo } from './FieldInfo.ts'
+import type { FieldInfo } from '../../domain/calc/fieldInfo.ts'
 import InputTags from './InputTags.tsx'
+import StandardChip from './StandardChip.tsx'
 import ValueBox from './ValueBox.tsx'
 
 /** A figure not known yet: an empty box, the one-tap standard and how to choose. */
 export default function BlankField({ info }: { info: FieldInfo }) {
-  const { toolId, input, standard } = info
+  const setFigure = useStore((store) => store.setFigure)
+  const { toolId, input } = info
   const [hint, setHint] = useState('')
   return (
     <div className="field">
@@ -23,19 +25,7 @@ export default function BlankField({ info }: { info: FieldInfo }) {
           onHint={setHint}
         />
       </div>
-      {standard && (
-        <button
-          className="chip sm"
-          data-a="ckstd"
-          data-p={input.key}
-          onClick={() => chooseStandard(toolId, input.key)}
-        >
-          {standardChipText(standard)}
-        </button>
-      )}
-      <span className="small" style={{ display: 'block', marginTop: 4 }}>
-        {info.guide}
-      </span>
+      <StandardChip info={info} />
       <FigureHint inputKey={input.key} hint={hint} />
     </div>
   )

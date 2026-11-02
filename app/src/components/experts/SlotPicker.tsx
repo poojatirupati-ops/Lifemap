@@ -1,15 +1,14 @@
 import { makeSlots } from '../../domain/identity/slots.ts'
-import { today } from '../home/greeting.ts'
 import { useStore } from '../../state/store.ts'
-import { pickDay, pickMode, pickSlot } from './booking.ts'
 
 const MODES = ['Video', 'In person']
 const dayOf = (slot: string) => slot.split(' · ')[0]
 
 /** Meeting type, then a day strip and that day's times. */
 export default function SlotPicker() {
-  const book = useStore((store) => store.plan.book)
-  const slots = makeSlots(today())
+  const book = useStore((store) => store.plan.booking)
+  const setBooking = useStore((store) => store.setBooking)
+  const slots = makeSlots()
   const days = [...new Set(slots.map(dayOf))]
   const shownDay = book.day || (book.slot ? dayOf(book.slot) : days[0])
   return (
@@ -20,7 +19,7 @@ export default function SlotPicker() {
             key={mode}
             className={book.mode === mode ? 'on' : ''}
             aria-pressed={book.mode === mode}
-            onClick={() => pickMode(mode)}
+            onClick={() => setBooking({ mode })}
           >
             {mode}
           </button>
@@ -37,7 +36,7 @@ export default function SlotPicker() {
               key={day}
               className={day === shownDay ? 'dday on' : 'dday'}
               aria-pressed={day === shownDay}
-              onClick={() => pickDay(day)}
+              onClick={() => setBooking({ day })}
             >
               <span>{weekday}</span>
               <b>{date}</b>
@@ -58,7 +57,7 @@ export default function SlotPicker() {
               key={slot}
               className={book.slot === slot ? 'chip sel' : 'chip'}
               aria-pressed={book.slot === slot}
-              onClick={() => pickSlot(slot)}
+              onClick={() => setBooking({ slot })}
             >
               {slot.split(' · ')[1]}
             </button>

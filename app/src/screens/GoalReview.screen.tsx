@@ -26,7 +26,7 @@ export function Body() {
     <>
       <GoalRecap />
       <RankList place="f4" />
-      {!ready && (
+      {ready ? null : (
         <p className="note" style={{ marginTop: 12 }}>
           Add an amount to at least one goal.
         </p>

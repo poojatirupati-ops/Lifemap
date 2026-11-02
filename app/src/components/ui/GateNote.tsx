@@ -1,5 +1,5 @@
 /** A choice only the customer can make before results show (e.g. "Retirement age"). */
-export interface MissingChoice {
+interface MissingChoice {
   key: string
   label: string
 }

@@ -10,7 +10,7 @@ const plan = () => useStore.getState().plan
 const ageOf = (name: string) => plan().goals.find((goal) => goal.name === name)!.age
 
 beforeEach(() => {
-  useStore.getState().load({ ...(goalsSet as unknown as Snapshot), scr: 'F2' })
+  useStore.getState().load({ ...(goalsSet as unknown as Snapshot), screen: 'F2' })
   window.matchMedia = () => ({ matches: false }) as MediaQueryList
   Element.prototype.scrollIntoView = () => {}
   // jsdom has no layout: give the track a width so a drag maps to years
@@ -29,7 +29,7 @@ test('dragging a chip snaps to whole years and shows the year bubble while it mo
   expect(document.querySelector('.tl-tip b')?.textContent).toBe(String(2027 + 50 - 38))
   fireEvent.pointerUp(travel)
   expect(document.querySelector('.tl-tip')).toBeNull()
-  expect(plan().tlHl).toBeNull()
+  expect(plan().highlightedGoal).toBeNull()
   expect(document.getElementById('when-2')!.textContent).toBe('in 12 yrs · age 50 · 2039')
 })
 
@@ -37,7 +37,7 @@ test('a tap highlights the goal row instead of moving it', () => {
   const travel = screen.getByRole('slider', { name: 'Travel' })
   fireEvent.pointerDown(travel, { clientX: 100, button: 0 })
   fireEvent.pointerUp(travel)
-  expect(plan().tlHl).toBe(2)
+  expect(plan().highlightedGoal).toBe(2)
   expect(document.getElementById('row-2')!.className).toBe('grow hl')
 })
 
@@ -50,11 +50,12 @@ test('keys move a goal: arrows by a year, shift by five, Home and End to the lim
   expect(ageOf('Travel')).toBe(39)
   fireEvent.keyDown(travel, { key: 'End' })
   expect(ageOf('Travel')).toBe(95) // plan end with a partner
+  expect(travel.getAttribute('aria-valuemax')).toBe('95')
 
   const retire = screen.getByRole('slider', { name: 'Retire comfortably' })
   fireEvent.keyDown(retire, { key: 'End' })
   expect(plan()).toMatchObject({ retireAge: 94, retireSet: true })
-  expect(plan().fin.retireAge).toBe(94)
+  expect(plan().figures.retireAge).toBe(94)
 })
 
 test('the goal rows edit amounts, details and remove goals', () => {
@@ -71,5 +72,5 @@ test('the goal rows edit amounts, details and remove goals', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Remove Emergency fund' }))
   })
   expect(plan()).toMatchObject({ safetyOff: true, safetyWanted: false })
-  expect(plan().goals.some((goal) => goal.k === 'safety')).toBe(false)
+  expect(plan().goals.some((goal) => goal.key === 'safety')).toBe(false)
 })

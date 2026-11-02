@@ -12,7 +12,7 @@ const tap = (name: string | RegExp) => fireEvent.click(screen.getByRole('button'
 
 beforeEach(() => {
   vi.useFakeTimers()
-  startFrom({ ...fresh(), scr: 'D2', di: 0 })
+  startFrom({ ...fresh(), screen: 'D2', discoverStep: 0 })
 })
 afterEach(() => vi.useRealTimers())
 
@@ -35,38 +35,40 @@ describe('Discover', () => {
   it('Back and Skip move between questions', () => {
     render(<ScreenHost />)
     tap('Skip')
-    expect([state().screen, state().plan.di]).toEqual(['D3', 1])
+    expect([state().screen, state().plan.discoverStep]).toEqual(['D3', 1])
     tap('← Back')
     tap('← Back')
     expect(state().screen).toBe('D1')
   })
 
   it('asks for more answers before four, and the dots jump to a question', () => {
-    startFrom({ ...fresh(), scr: 'DR', ans: { 2: 0, 4: 1 } })
+    startFrom({ ...fresh(), screen: 'DR', answers: { 2: 0, 4: 1 } })
     render(<ScreenHost />)
     expect(screen.getByRole('heading', { name: 'Just 2 more to go' })).toBeTruthy()
     tap('Answer a few more')
-    expect([state().screen, state().plan.di]).toEqual(['D4', 2])
+    expect([state().screen, state().plan.discoverStep]).toEqual(['D4', 2])
   })
 
-  it('Save checks the email, then saves and enters the app', () => {
+  it('Save checks the email, then saves and enters the app', async () => {
     useShell.setState({ authed: true })
-    startFrom({ ...fresh(), scr: 'DS', ans: { 2: 0, 4: 1, 7: 1, 8: 2 } })
+    startFrom({ ...fresh(), screen: 'DS', answers: { 2: 0, 4: 1, 7: 1, 8: 2 } })
     render(<ScreenHost />)
     expect(screen.getByText(/Achiever · your 6 answers/)).toBeTruthy()
     const email = screen.getByLabelText('Email') as HTMLInputElement
     fireEvent.input(email, { target: { value: 'nope' } })
     tap('Save my results')
+    await act(async () => {})
     expect(screen.getByRole('alert').textContent).toMatch(/valid email/)
     fireEvent.input(email, { target: { value: ' me@example.com ' } })
     tap('Save my results')
+    await act(async () => {})
     expect(state().plan.save).toMatchObject({ email: 'me@example.com', done: true, asked: true })
-    expect([state().plan.shell, state().plan.tab]).toEqual([true, 'home'])
+    expect([state().plan.inShell, state().plan.tab]).toEqual([true, 'home'])
   })
 
   it('Skip for now on save enters the app, which sends a signed-out visitor to sign-in', () => {
     useShell.setState({ authed: false })
-    startFrom({ ...fresh(), scr: 'DS' })
+    startFrom({ ...fresh(), screen: 'DS' })
     render(<ScreenHost />)
     tap('Skip for now')
     expect(state().plan.save.asked).toBe(true)

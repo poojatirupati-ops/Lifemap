@@ -1,20 +1,16 @@
 import FlowHead from '../components/frame/FlowHead.tsx'
 import SectionFields from '../components/finance/SectionFields.tsx'
 import UploadPick from '../components/finance/UploadPick.tsx'
-import {
-  chooseSectionMode,
-  leaveSection,
-  saveSection,
-} from '../components/finance/sectionActions.ts'
 import Emo from '../components/ui/Emo.tsx'
 import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
+import { currentSection, sectionMode } from '../state/finances.ts'
 import { useStore } from '../state/store.ts'
 import type { Plan } from '../state/types.ts'
 
 export const key = 'P3'
-export const id = (plan: Plan) => `P3-${plan.fsec! + 1}`
+export const id = (plan: Plan) => `P3-${plan.financeSection! + 1}`
 export const note = (plan: Plan) =>
-  `Section ${plan.fsec! + 1} of 6 · ${FINANCE_SECTIONS[plan.fsec!].title}. Upload vs Type it; every field has "Not sure? See an example" (§15), which never fills the field.`
+  `Section ${plan.financeSection! + 1} of 6 · ${currentSection(plan)!.title}. Upload vs Type it; every field has "Not sure? See an example" (§15), which never fills the field.`
 
 const SUBTITLE: Record<string, string> = {
   about: 'Mostly filled in from your answers. Just check it.',
@@ -25,11 +21,12 @@ const MODES = [
   ['type', '⌨️ Type it'],
 ] as const
 
-export const Head = () => {
-  const index = useStore.getState().plan.fsec!
-  const { id, emoji, title } = FINANCE_SECTIONS[index]
+// ScreenHost calls Head as a plain function (no hooks), so it reads the store directly.
+export function Head() {
+  const { plan, leaveSection } = useStore.getState()
+  const { id, emoji, title } = currentSection(plan)!
   return FlowHead({
-    eye: `Your finances · ${index + 1} of 6`,
+    eye: `Your finances · ${plan.financeSection! + 1} of 6`,
     title: <Emo>{`${emoji} ${title}`}</Emo>,
     sub: SUBTITLE[id] ?? 'Upload a document or type it in. Round figures are fine.',
     back: leaveSection,
@@ -37,16 +34,14 @@ export const Head = () => {
 }
 
 export function Body() {
-  const index = useStore(({ plan }) => plan.fsec)
-  const modes = useStore(({ plan }) => plan.fmode)
-  if (index == null) return null
-  const section = FINANCE_SECTIONS[index]
-  const canUpload = section.documents.length > 0
-  const mode = (canUpload && modes[section.id]) || 'type'
+  const section = useStore(({ plan }) => currentSection(plan))
+  const mode = useStore(({ plan }) => sectionMode(plan))
+  const chooseSectionMode = useStore((store) => store.chooseSectionMode)
+  if (!section) return null
 
   return (
     <>
-      {canUpload ? (
+      {section.documents.length > 0 ? (
         <div className="seg" role="group" aria-label="How to add">
           {MODES.map(([value, label]) => (
             <button
@@ -68,21 +63,26 @@ export function Body() {
             : 'No documents needed here. ID and proof of address are handled by your adviser later.'}
         </p>
       )}
-      {section.id !== 'about' && (
+      {section.id !== 'about' ? (
         <p className="small" style={{ margin: '0 2px 10px' }}>
           Skip anything you don't have. It counts as €0.
         </p>
-      )}
+      ) : null}
       {mode === 'upload' ? (
         <UploadPick section={section} />
       ) : (
-        <SectionFields key={section.id} section={section} index={index} />
+        <SectionFields
+          key={section.id}
+          section={section}
+          index={FINANCE_SECTIONS.indexOf(section)}
+        />
       )}
     </>
   )
 }
 
 export function Foot() {
+  const saveSection = useStore((store) => store.saveSection)
   return (
     <button className="btn" data-a="fsave" onClick={saveSection}>
       Save this section

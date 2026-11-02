@@ -1,31 +1,33 @@
+import type { NextAction, NextStep } from '../../domain/planning/nextStep.ts'
 import { useStore } from '../../state/store.ts'
-import { bookAdviser, openMe, openProfile } from '../plan/planActions.ts'
-import { openFoundation, tryWhatIf } from './homeActions.ts'
-import type { NextAction, NextStep } from './nextStep.ts'
 
-const ACTIONS: Record<NextAction, (target?: number) => void> = {
-  looks: () => openMe('money'),
-  foundation: (index) => openFoundation(index!),
-  profile: openProfile,
-  whatIf: tryWhatIf,
-  book: bookAdviser,
-  meeting: () => useStore.getState().switchTab('exp'),
+type Button = {
+  /** the original's data-a / data-p, kept so the DOM matches */
+  a: string
+  p?: (target?: number) => string | number | undefined
+  open: (target?: number) => void
 }
 
-// the original's button names, kept so the DOM matches
-const DATA_A: Record<NextAction, [string, string?]> = {
-  looks: ['me', 'money'],
-  foundation: ['sheet'],
-  profile: ['toprofile'],
-  whatIf: ['gowi'],
-  book: ['book'],
-  meeting: ['tab', 'exp'],
+const BUTTONS: Record<NextAction, Button> = {
+  looks: { a: 'me', p: () => 'money', open: () => useStore.getState().openMe('money') },
+  foundation: {
+    a: 'sheet',
+    p: (index) => `fnd|${index}`,
+    open: (index = 0) => useStore.getState().openFoundation(index),
+  },
+  profile: { a: 'toprofile', open: () => useStore.getState().openProfile() },
+  whatIf: {
+    a: 'gowi',
+    p: (goalId) => goalId,
+    open: (goalId) => useStore.getState().tryWhatIf(goalId),
+  },
+  book: { a: 'book', open: () => useStore.getState().bookAdviser() },
+  meeting: { a: 'tab', p: () => 'exp', open: () => useStore.getState().switchTab('exp') },
 }
 
 /** "Your next best step" card. */
 export default function UpNext({ step }: { step: NextStep }) {
-  const [a, p] = DATA_A[step.action]
-  const param = step.action === 'foundation' ? `fnd|${step.target}` : (p ?? step.target)
+  const button = BUTTONS[step.action]
   return (
     <div className="card upnext">
       <div className="un-img" aria-hidden="true"></div>
@@ -45,9 +47,9 @@ export default function UpNext({ step }: { step: NextStep }) {
         <button
           className="btn sm"
           style={{ width: '100%', marginTop: 12 }}
-          data-a={a}
-          data-p={param}
-          onClick={() => ACTIONS[step.action](step.target)}
+          data-a={button.a}
+          data-p={button.p?.(step.target)}
+          onClick={() => button.open(step.target)}
         >
           {step.button}
         </button>

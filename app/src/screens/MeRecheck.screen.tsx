@@ -1,7 +1,7 @@
 import { meHead } from '../components/me/meHead.ts'
 import PrefilledAnswers from '../components/define/PrefilledAnswers.tsx'
 import ProfileQuestionCard from '../components/define/ProfileQuestionCard.tsx'
-import { profileQuestion } from '../components/define/profileActions.ts'
+import { profileQuestion } from '../domain/discovery/profileQuestions.ts'
 import { backToMe } from '../components/finance/financeActions.ts'
 import { confirmFirstAnswers } from '../components/me/meActions.ts'
 import { DISCOVER_SIX } from '../domain/discovery/questions.data.ts'
@@ -21,7 +21,7 @@ export const Head = () =>
 const FIRST_ANSWERS = DISCOVER_SIX.map((question) => profileQuestion(question.id))
 
 export function Body() {
-  const answers = useStore((store) => store.plan.ans)
+  const answers = useStore((store) => store.plan.answers)
   return (
     <>
       <PrefilledAnswers entries={FIRST_ANSWERS} />

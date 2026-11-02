@@ -13,6 +13,7 @@ export function useViewport(desk: boolean) {
     isDesk = desk && w > 800,
     small = w <= 800 || landscape || isDesk
   return {
+    width: w,
     landscape,
     isDesk,
     small,

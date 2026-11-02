@@ -1,83 +1,84 @@
-import { useEffect, useRef, type InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { parseWholeEuros } from '../../lib/format.ts'
 
 type Kind = 'eur' | 'pct' | 'num' | 'text'
 
-interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'type'> {
+interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'type' | 'name'> {
   id: string
   kind: Kind
   value: unknown
   /** The highest percentage accepted. */
-  maxPercent: number
+  maxPercent?: number
   onValue: (value: number | string | null) => void
 }
 
-const shown = (kind: Kind, value: unknown) =>
-  value == null
-    ? ''
-    : kind === 'pct' || kind === 'text'
-      ? String(value)
-      : String(Math.round(Number(value)))
+// What was typed: text (blank is none), a count up to 120, or whole euros.
+const TYPED = {
+  text: z.string().transform((text) => (text.trim() ? text : null)),
+  num: z.string().transform((text) => {
+    const count = parseWholeEuros(text)
+    return count == null ? null : Math.min(120, count)
+  }),
+  eur: z.string().transform(parseWholeEuros),
+}
 
-/** What was typed: text as it is, a percentage up to maxPercent, a count of 0 to 120, or euros. */
-function parse(kind: Kind, text: string, maxPercent: number) {
-  if (kind === 'text') return text
-  if (kind === 'pct') {
+const percentUpTo = (max: number) =>
+  z.string().transform((text) => {
     const percent = parseFloat(text.replace(/[^\d.]/g, ''))
-    return isNaN(percent) ? null : Math.min(maxPercent, percent)
-  }
-  const whole = parseInt(text.replace(/\D/g, ''))
-  if (isNaN(whole)) return null
-  return kind === 'num' ? Math.min(120, whole) : whole
+    return isNaN(percent) ? null : Math.min(max, percent)
+  })
+
+function shown(kind: Kind, value: unknown) {
+  if (value == null) return ''
+  if (kind === 'pct' || kind === 'text') return String(value)
+  return String(Math.round(Number(value)))
 }
 
 /**
  * A typed figure in the original's .in box (with € or % for amounts). Uncontrolled: what is typed
  * stays while typing, as in the original; the box shows the figure in use again on leaving it, or
- * when something else changes it (a statement read or removed).
+ * when something else changes it (a statement read or removed) while nothing is being typed.
  */
-export default function NumberBox({ id, kind, value, maxPercent, onValue, ...input }: Props) {
-  const box = useRef<HTMLInputElement>(null)
-  // the figure the box shows now
-  const showing = useRef(value)
-
-  const show = (figure: unknown) => {
-    showing.current = figure
-    if (box.current) box.current.value = shown(kind, figure)
-  }
-  useEffect(() => {
-    if (!Object.is(value, showing.current)) show(value)
+export default function NumberBox({ id, kind, value, maxPercent = 100, onValue, ...input }: Props) {
+  const inUse = { typed: shown(kind, value) }
+  const { register, setValue, reset } = useForm({
+    values: inUse,
+    resetOptions: { keepDirtyValues: true },
   })
+  // the DOM keeps the original's markup: no name attribute, React's own onInput
+  const { ref } = register('typed')
 
   const field = (
     <input
       {...input}
-      ref={box}
+      ref={ref}
       className={{ eur: 'in eur', pct: 'in pct', num: 'in', text: 'in' }[kind]}
       id={id}
       inputMode={kind === 'text' ? undefined : kind === 'pct' ? 'decimal' : 'numeric'}
-      defaultValue={shown(kind, value)}
       onInput={(event) => {
-        const typed = parse(kind, event.currentTarget.value, maxPercent)
-        showing.current = typed
-        onValue(typed)
+        const text = event.currentTarget.value
+        setValue('typed', text, { shouldDirty: true })
+        onValue((kind === 'pct' ? percentUpTo(maxPercent) : TYPED[kind]).parse(text))
       }}
-      onBlur={() => show(value)}
+      onBlur={() => reset(inUse, { keepDirtyValues: false, keepFieldsRef: true })}
     />
   )
   if (kind === 'text') return field
   return (
     <div className="inw">
-      {kind === 'eur' && (
+      {kind === 'eur' ? (
         <span className="cur" aria-hidden="true">
           €
         </span>
-      )}
+      ) : null}
       {field}
-      {kind === 'pct' && (
+      {kind === 'pct' ? (
         <span className="cur suf" aria-hidden="true">
           %
         </span>
-      )}
+      ) : null}
     </div>
   )
 }

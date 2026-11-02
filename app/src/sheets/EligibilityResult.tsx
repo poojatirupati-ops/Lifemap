@@ -1,13 +1,12 @@
-import { openCalculator } from '../components/explore/exploreActions.ts'
+import { openCalculator } from '../state/explore.ts'
 import { euro } from '../lib/format.ts'
 import { useStore } from '../state/store.ts'
-import { estimate } from './eligibility.ts'
+import { estimate, type Estimate } from '../domain/finances/eligibility.ts'
 import SheetTitle from './SheetTitle.tsx'
 
 const thousands = (amount: number) => euro(Math.round(amount / 1000) * 1000)
 
-function LimitNote({ answers }: { answers: number[] }) {
-  const { limitedBy, incomeMultiple, firstHome, depositShare } = estimate(answers)
+function limitNote({ limitedBy, incomeMultiple, firstHome, depositShare }: Estimate) {
   if (limitedBy === 'income')
     return `Your income sets the limit: lenders usually lend up to ${incomeMultiple}× income${firstHome ? ' for first-time buyers' : ''}.`
   return `Your deposit sets the limit: you need at least ${Math.round(depositShare * 100)}% of the price saved.`
@@ -21,7 +20,8 @@ export default function EligibilityResult({
   answers: number[]
   onRestart: () => void
 }) {
-  const { borrow, price, deposit } = estimate(answers)
+  const result = estimate(answers)
+  const { borrow, price, deposit } = result
   return (
     <div className="elr">
       <span className="elr-ok">✓ Your estimate</span>
@@ -37,9 +37,7 @@ export default function EligibilityResult({
           <b>{euro(deposit)}</b>
         </div>
       </div>
-      <p className="elr-n">
-        <LimitNote answers={answers} /> A rough guide only, not a mortgage offer.
-      </p>
+      <p className="elr-n">{limitNote(result)} A rough guide only, not a mortgage offer.</p>
       <button className="btn" onClick={() => openCalculator('borrow')}>
         Open the Borrow calculator
       </button>

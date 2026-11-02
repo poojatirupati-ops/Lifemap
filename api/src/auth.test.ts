@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { devFiles } from "./files";
 import { afterEach, expect, test, vi } from "vitest";
 import { OTP_SENDS_PER_EMAIL, createAuth, logOtp } from "./auth";
 import { pgliteDb } from "./db/devSetup";
@@ -29,7 +31,7 @@ test("production: per-IP limit in the database, shared across instances", async 
   vi.stubEnv("BETTER_AUTH_URL", "https://lifemap.example");
   vi.stubEnv("BETTER_AUTH_SECRET", "test-secret-test-secret-test-secret-123");
   const db = await pgliteDb();
-  const [a, b] = [createAuth(db, () => {}), createAuth(db, () => {})];
+  const [a, b] = [createAuth(db, () => {}, devFiles(tmpdir())), createAuth(db, () => {}, devFiles(tmpdir()))];
   const send = (auth: typeof a, n: number) =>
     auth.handler(new Request("https://lifemap.example/api/auth/email-otp/send-verification-otp", {
       method: "POST",
@@ -44,7 +46,7 @@ test("production: per-IP limit in the database, shared across instances", async 
 test("production without BETTER_AUTH_URL fails closed", async () => {
   vi.stubEnv("NODE_ENV", "production");
   vi.stubEnv("BETTER_AUTH_URL", ""); // what sst passes when the deploy shell forgot it
-  expect(() => createAuth({} as never, () => {})).toThrow(/BETTER_AUTH_URL/);
+  expect(() => createAuth({} as never, () => {}, devFiles(tmpdir()))).toThrow(/BETTER_AUTH_URL/);
 });
 
 test("dev OTP logger never prints a full email", () => {

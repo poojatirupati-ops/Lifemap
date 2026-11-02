@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useStore } from '../../state/store.ts'
-import { SVG_BELL, SVG_CHAT } from '../ui/icons.data.ts'
-import Svg from '../ui/Svg.tsx'
+import { BellIcon, ChatIcon } from '../ui/icons.tsx'
 import BackButton from './BackButton.tsx'
 import Brand from './Brand.tsx'
 
@@ -14,9 +13,9 @@ const DEFAULT_PHOTO = 'media/profile-photo.jpg'
  */
 export default function HdrBar({ back, needsLook = 0 }: { back?: () => void; needsLook?: number }) {
   const { plan, openAsk, openSheet, showMoneyLooks } = useStore.getState()
-  const bellCount = plan.app ? needsLook : 0
+  const bellCount = plan.hasResults ? needsLook : 0
   // TODO(R-05): acct.photo is not in the Plan type yet (the profile photo upload sets it).
-  const photo = (plan.acct as { photo?: string }).photo || DEFAULT_PHOTO
+  const photo = (plan.account as { photo?: string }).photo || DEFAULT_PHOTO
 
   return (
     <div className="topbar hdr">
@@ -27,20 +26,20 @@ export default function HdrBar({ back, needsLook = 0 }: { back?: () => void; nee
           aria-label="Ask: help and plain-English explanations"
           onClick={openAsk}
         >
-          <Svg src={SVG_CHAT} />
+          <ChatIcon />
         </button>
-        {bellCount > 0 && (
+        {bellCount > 0 ? (
           <button
             className="icb"
             aria-label={`${bellCount} ${bellCount === 1 ? 'detail needs' : 'details need'} a look`}
             onClick={showMoneyLooks}
           >
-            <Svg src={SVG_BELL} />
+            <BellIcon />
             <span className="badge" aria-hidden="true">
               {bellCount}
             </span>
           </button>
-        )}
+        ) : null}
         <button
           className="avb"
           aria-label="Profile and privacy"

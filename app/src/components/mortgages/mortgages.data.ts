@@ -1,3 +1,5 @@
+import { VIDEOS } from '../explore/videos.data.ts'
+
 // What the Mortgages topic page shows for each situation: calculators, story videos, reading and live sessions.
 
 export interface CalculatorCard {
@@ -211,3 +213,10 @@ export const VIDEO_PHOTOS = [
 export const READING_PHOTOS = ['home-keys', 'savings-jar', 'invest-charts']
 
 export const photo = (name: string) => `media/${name}.jpg`
+
+/** The picture for the i-th card, cycling through the list. */
+export const photoAt = (names: string[], i: number) => photo(names[i % names.length])
+
+/** The filmed video for a story, if it has been filmed. */
+export const videoFor = (story: StoryVideo) =>
+  VIDEOS.find((video) => video.src && video.id === story.videoId)

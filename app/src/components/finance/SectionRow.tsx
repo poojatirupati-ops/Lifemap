@@ -1,6 +1,6 @@
 import type { FinanceSection } from '../../domain/finances/sections.data.ts'
 import GIcon from '../ui/GIcon.tsx'
-import { openSection } from './financeActions.ts'
+import { useStore } from '../../state/store.ts'
 import type { SectionStatus } from './status.ts'
 
 const STATUS: Record<SectionStatus, { word: string; className: string; mark: string }> = {
@@ -21,7 +21,12 @@ interface Props {
 export default function SectionRow({ section, index, status, summary }: Props) {
   const { word, className, mark } = STATUS[status]
   return (
-    <button className="goal" data-a="fsec" data-p={index} onClick={() => openSection(index)}>
+    <button
+      className="goal"
+      data-a="fsec"
+      data-p={index}
+      onClick={() => useStore.getState().openSection(index)}
+    >
       <GIcon emoji={section.emoji} className="ic" aria-hidden="true" />
       <span style={{ flex: 1, minWidth: 0 }}>
         <b>{section.title}</b>

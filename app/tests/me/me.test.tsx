@@ -8,7 +8,7 @@ import * as Me from '../../src/screens/Me.screen.tsx'
 import * as Recheck from '../../src/screens/MeRecheck.screen.tsx'
 import * as Section from '../../src/screens/MeProfileSection.screen.tsx'
 import AssumptionField from '../../src/components/me/AssumptionField.tsx'
-import { formatAssumption, valueInUse } from '../../src/components/me/assumptionText.ts'
+import { formatAssumption, valueInUse } from '../../src/domain/planning/assumptionText.ts'
 import type { MePlan } from '../../src/components/me/mePlan.ts'
 
 const auth = vi.hoisted(() => ({
@@ -16,14 +16,14 @@ const auth = vi.hoisted(() => ({
   postConsents: vi.fn(async () => {}),
   user: null as { email: string } | null,
 }))
-vi.mock('../../src/auth/useWall.ts', () => ({ signOut: auth.signOut }))
-vi.mock('../../src/auth/planSync.ts', () => ({ postConsents: auth.postConsents }))
+vi.mock('../../src/auth/session.ts', () => ({ signOut: auth.signOut }))
+vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
 vi.mock('../../src/auth/client.ts', () => ({
   authClient: { useSession: () => ({ data: auth.user && { user: auth.user } }) },
 }))
 
 const plan = () => useStore.getState().plan as MePlan
-const open = (page: string) => useStore.getState().update((p) => void (p.me = page))
+const open = (page: string) => useStore.getState().update((p) => void (p.mePage = page))
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -35,7 +35,7 @@ test('the hub opens its pages; sign out shows only with a session', () => {
   const { rerender } = render(<Me.Body />)
   expect(screen.queryByText('Sign out')).toBeNull()
   fireEvent.click(screen.getByText('Privacy & preferences'))
-  expect(plan().me).toBe('privacy')
+  expect(plan().mePage).toBe('privacy')
   expect(Me.id(plan())).toBe('ME-PRIV')
 
   open('home')
@@ -49,7 +49,7 @@ test('privacy: reminders are recorded both ways, export and delete are offered',
   open('privacy')
   render(<Me.Body />)
   fireEvent.click(screen.getByText('Send me reminders and updates'))
-  expect(plan().acct.c2).toBe(true)
+  expect(plan().account.marketingConsent).toBe(true)
   expect(auth.postConsents).toHaveBeenCalledWith({ terms: true, marketing: true })
   expect(screen.getByText('Download my data').getAttribute('href')).toBe('/api/me/export')
   fireEvent.click(screen.getByText('Delete my data'))
@@ -67,25 +67,25 @@ test('recheck confirms the first answers; only pages with a foot get one', () =>
 
 test('saving a profile section marks it done and fills an unanswered horizon', () => {
   useStore.getState().update((p) => {
-    p.me = 'ums'
-    p.um.sec = 1
+    p.mePage = 'ums'
+    p.moneyProfile.section = 1
   })
   expect(Me.id(plan())).toBe('ME-UM1')
   render(<Section.Foot />)
   fireEvent.click(screen.getByText('Save this section'))
-  expect(plan().um.done[1]).toBe(true)
-  expect(plan().um.a.u9).toBeTypeOf('number')
-  expect(plan().me).toBe('um')
+  expect(plan().moneyProfile.done[1]).toBe(true)
+  expect(plan().moneyProfile.answers.u9).toBeTypeOf('number')
+  expect(plan().mePage).toBe('um')
 })
 
 test('an assumption typed as a percent is kept as a fraction, and Back restores the standard', () => {
   render(<AssumptionField name="wage" />)
   const box = document.querySelector('[data-nb="asm|wage"]') as HTMLInputElement
   fireEvent.input(box, { target: { value: '9' } })
-  expect(plan().asm.wage).toBe(0.06) // capped at the 6% maximum
+  expect(plan().assumptions.wage).toBe(0.06) // capped at the 6% maximum
   expect(screen.getByText('Max 6%')).toBeTruthy()
   fireEvent.click(screen.getByText(/^Back to LifeMap's figure/))
-  expect(plan().asm.wage).toBeUndefined()
+  expect(plan().assumptions.wage).toBeUndefined()
   expect(valueInUse(plan(), 'wage')).toBeTypeOf('number')
 })
 

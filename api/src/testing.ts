@@ -14,11 +14,11 @@ export const testApp = async (db?: Awaited<ReturnType<typeof pgliteDb>>) => {
       headers: { "content-type": "application/json", origin: "http://localhost:3000", cookie, ...init.headers },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
-  const sendCode = (email: string) => req("/api/auth/email-otp/send-verification-otp", { method: "POST", body: { email, type: "sign-in" } });
-  /** Signs in by email OTP; returns the session cookie. */
-  const login = async (email: string) => {
-    await sendCode(email);
-    const res = await req("/api/auth/sign-in/email-otp", { method: "POST", body: { email, otp: codes[email] } });
+  const sendCode = (email: string, headers?: Record<string, string>) => req("/api/auth/email-otp/send-verification-otp", { method: "POST", body: { email, type: "sign-in" }, headers });
+  /** Signs in by email OTP (on a tenant's host when `headers` carry one); returns the session cookie. */
+  const login = async (email: string, headers?: Record<string, string>) => {
+    await sendCode(email, headers);
+    const res = await req("/api/auth/sign-in/email-otp", { method: "POST", body: { email, otp: codes[email] }, headers });
     expect(res.status).toBe(200);
     return res.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
   };

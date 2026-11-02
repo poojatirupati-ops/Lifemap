@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { axisMarks, type PlacedChip } from './layout.ts'
+import { axisMarks, type PlacedChip } from '../../domain/goals/timelineLayout.ts'
 
 interface Props {
   ageNow: number

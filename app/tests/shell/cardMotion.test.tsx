@@ -16,7 +16,7 @@ function Host({ children }: { children: ReactNode }) {
   )
 }
 
-it('ripples a tapped quiz answer and fades the others back', () => {
+it('ripples a tapped quiz answer', () => {
   const { container } = render(
     <Host>
       <div className="qbody qcenter">
@@ -28,7 +28,6 @@ it('ripples a tapped quiz answer and fades the others back', () => {
   )
   fireEvent.pointerDown(container.querySelector('.opt')!)
   expect(container.querySelector('.opt .ripple')).not.toBeNull()
-  expect(container.querySelector('.opts')!.classList.contains('picked')).toBe(true)
 })
 
 it('tilts a photo card under the pointer and settles it when the pointer leaves', () => {

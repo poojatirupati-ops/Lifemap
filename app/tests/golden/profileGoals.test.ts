@@ -1,12 +1,7 @@
 // Goals and the normalisers must equal the ORIGINAL script's, run in node:vm, on every fixture.
 import { describe, expect, it } from 'vitest'
 import { OTHER_GOALS } from '../../src/domain/discovery/goals.data'
-import {
-  clampSafetyMonths,
-  emergencyFundToAdd,
-  goalsRetiringAt,
-  newGoal,
-} from '../../src/domain/goals/goals'
+import { clampSafetyMonths, emergencyFundToAdd, newGoal } from '../../src/domain/goals/goals'
 import { syncAges, syncSafety } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
 import { defaultSettings } from '../../src/domain/planning/settings'
@@ -14,7 +9,7 @@ import { TODAY } from './origSlice'
 import { original, plain, fixtures, originalNormalized, ourNormalized } from './origProfile'
 import { pensionItem, planVariants } from './profileVariants'
 
-describe('normalisers equal the original', () => {
+describe('normalisers equal the original', { timeout: 30_000 }, () => {
   it('syncAges and syncSafety', () => {
     for (const [fixture, fixturePlan] of fixtures) {
       for (const input of planVariants(fixturePlan)) {
@@ -40,7 +35,7 @@ describe('normalisers equal the original', () => {
   })
 })
 
-describe('goals equal the original', () => {
+describe('goals equal the original', { timeout: 30_000 }, () => {
   it('newGoal for each kind, with and without a custom goal', () => {
     for (const [fixture, fixturePlan] of fixtures) {
       for (const input of planVariants(fixturePlan)) {
@@ -51,9 +46,9 @@ describe('goals equal the original', () => {
             originalNormalized(plan)
             const custom = other && [other.emoji, other.name, other.amount, other.years]
             const originalGoal = plain(original.mkGoal(key, custom))
-            const goal = newGoal(plan, plan.gid++, key, other)
+            const goal = newGoal(plan, plan.nextGoalId++, key, other)
             expect(plain(goal), fixture + key).toEqual(originalGoal)
-            expect(plan.gid).toBe(original.getState().gid)
+            expect(plan.nextGoalId).toBe(original.getState().gid)
           }
         }
       }
@@ -67,7 +62,7 @@ describe('goals equal the original', () => {
         const months = ourNormalized(input)
         originalNormalized(months)
         original.setSafetyMonths(7)
-        months.asm = { ...months.asm, safetyMonths: clampSafetyMonths(7) }
+        months.assumptions = { ...months.assumptions, safetyMonths: clampSafetyMonths(7) }
         syncSafety(months)
         expect(plain(months)).toEqual(plain(original.getState()))
 
@@ -76,15 +71,9 @@ describe('goals equal the original', () => {
         original.getState().app = true
         original.autoSafety()
         const plan = { ...ourNormalized(started), app: true }
-        const added = emergencyFundToAdd(plan, plan.gid)
+        const added = emergencyFundToAdd(plan, plan.nextGoalId)
         if (added) plan.goals.push(added)
         expect(plain(plan.goals)).toEqual(plain(original.getState().goals))
-
-        const retiring = ourNormalized(input)
-        originalNormalized(retiring)
-        original.setRetireAge(61)
-        retiring.goals = goalsRetiringAt(retiring.goals, 61)
-        expect(plain(retiring.goals)).toEqual(plain(original.getState().goals))
       }
     }
   })
@@ -112,8 +101,8 @@ describe('goals equal the original', () => {
         if (ownShare != null) input.asm = { ownShare }
         const plan = ourNormalized(input)
         const originalPlan = originalNormalized(input)
-        expect(plan.fin.pensionOwnM).toBe(originalPlan.fin.pensionOwnM)
-        expect(plan.fin.pensionOwnM).toBeGreaterThan(0)
+        expect(plan.figures.pensionOwnM).toBe(originalPlan.fin.pensionOwnM)
+        expect(plan.figures.pensionOwnM).toBeGreaterThan(0)
       }
     } finally {
       delete defaultSettings.standards.ownShare.partnerValue

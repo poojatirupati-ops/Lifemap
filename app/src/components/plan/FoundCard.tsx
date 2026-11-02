@@ -1,8 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
 import Findings from '../results/Findings.tsx'
-import { markUnderstood, toggleAdviserQuestion } from './planActions.ts'
-import type { Projection } from './useProjection.ts'
+import type { Projection } from '../../hooks/useProjection.ts'
 
 const ADVISER_QUESTIONS = [
   'Can I retire earlier?',
@@ -13,17 +12,22 @@ const ADVISER_QUESTIONS = [
   "I'd like sustainable / ethical options",
 ]
 
-type Props = Parameters<typeof Findings>[0] & { projection: Projection }
+interface Props {
+  inputs: Parameters<typeof Findings>[0]['plan']
+  projection: Projection
+}
 
 /** What we found, then "That makes sense" or, once understood, questions for an adviser. */
-export default function FoundCard(props: Props) {
+export default function FoundCard({ inputs, projection }: Props) {
   const { understood, asked } = useStore(
-    useShallow(({ plan }) => ({ understood: plan.understood, asked: plan.advQs })),
+    useShallow(({ plan }) => ({ understood: plan.understood, asked: plan.adviserQuestions })),
   )
+  const markUnderstood = useStore((store) => store.markUnderstood)
+  const toggleAdviserQuestion = useStore((store) => store.toggleAdviserQuestion)
   return (
     <div className="card" id="r-found">
       <h3 className="h">What we found</h3>
-      <Findings {...props} />
+      <Findings plan={inputs} projection={projection} />
       {understood ? (
         <>
           <p className="pill ok" style={{ margin: '12px 0 8px' }}>

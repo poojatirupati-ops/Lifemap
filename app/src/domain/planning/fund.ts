@@ -1,6 +1,6 @@
 // Honest goal funding: the order goals are funded in, how much is saved, and the money they draw on.
 import type { Goal } from '../../state/types'
-import type { Holding } from './wallet'
+import type { Sources } from './wallet'
 
 /** Goals paid from savings; retirement uses the pension and cashflow, a legacy is what is left. */
 export const SAVED_FOR_KINDS = ['spend', 'mfree', 'pot']
@@ -26,12 +26,12 @@ export interface SavingChoice {
   saveUp?: boolean | null
 }
 
-export const isSafety = (goal: Goal) => goal.k === 'safety'
+export const isSafety = (goal: Goal) => goal.key === 'safety'
 
 // Emergency fund first, then Must have before Nice to have, then soonest
 const byDefault = (a: Goal, b: Goal) =>
   Number(!isSafety(a)) - Number(!isSafety(b)) ||
-  Number(a.prio === 'Nice to have') - Number(b.prio === 'Nice to have') ||
+  Number(a.priority === 'Nice to have') - Number(b.priority === 'Nice to have') ||
   a.age - b.age ||
   a.id - b.id
 
@@ -75,9 +75,6 @@ export function savedGrowth(years: number, rate: number, payRise: number) {
   return total
 }
 
-/** Money taken from each holding, after tax. */
-export type Sources = Partial<Record<Holding, number>>
-
 /** One goal's savings pot through the plan. */
 export interface GoalPot {
   /** with its age moved inside the plan */
@@ -92,7 +89,6 @@ export interface GoalPot {
   savedFirstYear: number
   /** saved from spare money, in today's money */
   savedReal: number
-  savedFromSpare: number
   yearsSaving: number
   neededFirstYear: number
   fromAssets: Sources
@@ -110,7 +106,6 @@ export const newPot = (goal: Goal, years: number, rate: number, cost: number): G
   savedSoFar: 0,
   savedFirstYear: 0,
   savedReal: 0,
-  savedFromSpare: 0,
   yearsSaving: 0,
   neededFirstYear: 0,
   fromAssets: {},
@@ -138,7 +133,6 @@ export const goalFunding = (pot: GoalPot) => ({
   savedSoFar: pot.savedSoFar,
   fromAssets: pot.fromAssets,
   fromAssetsWhenDue: pot.fromAssetsWhenDue,
-  savedFromSpare: pot.savedFromSpare,
   gap: Math.max(0, pot.cost - pot.paid),
   neededMonthly: Math.round(pot.neededFirstYear / 12),
   savingMonthly: Math.round(pot.savedFirstYear / 12),

@@ -4,6 +4,17 @@ import { setPartnerDetail, setPartnerIncome, setPartnerMode } from './aboutActio
 import DobField from './DobField.tsx'
 import PartnerInvite from './PartnerInvite.tsx'
 
+const CHOICES = [
+  {
+    key: 'invite',
+    emoji: '💌',
+    title: 'Invite my partner',
+    detail: 'They add their own details, privately',
+  },
+  // the manual tile's detail depends on whether income is asked
+  { key: 'manual', emoji: '✍️', title: 'Add their details myself', detail: null },
+] as const
+
 /**
  * How to add the partner: invite them, or add their details yourself. Same state in Your finances
  * and the Me tab, so it is never asked twice. `noMoney` leaves out their income (before sign-in).
@@ -11,27 +22,13 @@ import PartnerInvite from './PartnerInvite.tsx'
 export default function PartnerBlock({ noMoney = false }: { noMoney?: boolean }) {
   const mode = useStore((store) => store.plan.partner.mode)
   const name = useStore((store) => store.plan.partner.name)
-  const income = useStore((store) => store.plan.fin.pIncome)
-
-  const choices = [
-    {
-      key: 'invite',
-      emoji: '💌',
-      title: 'Invite my partner',
-      detail: 'They add their own details, privately',
-    },
-    {
-      key: 'manual',
-      emoji: '✍️',
-      title: 'Add their details myself',
-      detail: noMoney ? 'Name and age' : 'Name, age and income (optional)',
-    },
-  ] as const
+  const income = useStore((store) => store.plan.figures.pIncome)
+  const manualDetail = noMoney ? 'Name and age' : 'Name, age and income (optional)'
 
   return (
     <>
       <div className="pchoice" role="group" aria-label="How to add your partner">
-        {choices.map(({ key, emoji, title, detail }) => (
+        {CHOICES.map(({ key, emoji, title, detail }) => (
           <button
             key={key}
             className={mode === key ? 'ptile sel' : 'ptile'}
@@ -42,12 +39,12 @@ export default function PartnerBlock({ noMoney = false }: { noMoney?: boolean })
           >
             <GIcon emoji={emoji} className="em" aria-hidden="true" />
             <b>{title}</b>
-            <span className="small">{detail}</span>
+            <span className="small">{detail ?? manualDetail}</span>
           </button>
         ))}
       </div>
-      {mode === 'invite' && <PartnerInvite />}
-      {mode === 'manual' && (
+      {mode === 'invite' ? <PartnerInvite /> : null}
+      {mode === 'manual' ? (
         <div style={{ marginTop: 12 }}>
           <div className="field">
             <label htmlFor="p-name">Their first name</label>
@@ -90,8 +87,8 @@ export default function PartnerBlock({ noMoney = false }: { noMoney?: boolean })
             </div>
           )}
         </div>
-      )}
-      {!mode && (
+      ) : null}
+      {mode ? null : (
         <p className="small" style={{ margin: '10px 0 0' }}>
           Pick one. You can change it later in <b>Me</b>.
         </p>

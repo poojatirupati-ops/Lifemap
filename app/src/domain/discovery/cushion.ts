@@ -2,10 +2,10 @@
 import { assumption } from '../planning/assumptions.ts'
 import { essentialMonthly, householdFigures, type Household } from '../planning/householdFigures.ts'
 import { rulesFor } from '../planning/rates.ts'
-import type { Plan } from '../../state/types.ts'
+import { SURPRISE_QUESTION } from './questions.data.ts'
 import type { Cushion, CushionLevel } from './riskMismatch.ts'
 
-/** Q7 (a €1,000 surprise) option -> cushion level. */
+/** The surprise answer -> cushion level. */
 const LEVEL_BY_ANSWER: CushionLevel[] = [
   'In place',
   'Thin',
@@ -13,11 +13,15 @@ const LEVEL_BY_ANSWER: CushionLevel[] = [
   'Not set up yet',
 ]
 
-export type CushionInputs = Household & Pick<Plan, 'src' | 'ans'>
+export type CushionInputs = Household & {
+  /** where each figure came from; cash and essential costs must both be given */
+  sources: Record<string, unknown>
+  answers: Record<string, number>
+}
 
 export function cushion(plan: CushionInputs): Cushion {
   const targetMonths = assumption(plan, 'safetyMonths')
-  const answer = LEVEL_BY_ANSWER[plan.ans['7']] ?? null
+  const answer = LEVEL_BY_ANSWER[plan.answers[SURPRISE_QUESTION]] ?? null
   const fromAnswer = {
     hasFigures: false,
     months: null,
@@ -26,7 +30,7 @@ export function cushion(plan: CushionInputs): Cushion {
     level: answer,
     answer,
   }
-  if (!plan.src.cash || !plan.src.costsM) return fromAnswer
+  if (!plan.sources.cash || !plan.sources.costsM) return fromAnswer
 
   const figures = householdFigures(plan, rulesFor(assumption(plan, 'startYear')))
   const spending = essentialMonthly(figures)

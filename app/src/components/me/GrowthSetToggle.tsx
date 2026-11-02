@@ -1,15 +1,14 @@
 import { useStore } from '../../state/store.ts'
-import { chooseAssumptions } from '../plan/planActions.ts'
 
 const SETS = [
   ['standard', 'Standard'],
   ['cautious', 'Cautious'],
 ] as const
 
-// ponytail: same block as GrowthSettings (R-23) inlines; share it if a third place needs it
 /** Standard or Cautious growth: fills pay rises, cash, investment and pension growth. */
 export default function GrowthSetToggle() {
-  const chosen = useStore((store) => store.plan.assume || 'standard')
+  const chosen = useStore((store) => store.plan.assumptionSet || 'standard')
+  const chooseAssumptions = useStore((store) => store.chooseAssumptions)
 
   return (
     <div className="asm">

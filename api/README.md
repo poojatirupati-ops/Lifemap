@@ -1,6 +1,6 @@
 # LifeMap API
 
-Hono on AWS Lambda (function URL), eu-west-1 (GDPR data residency). Auth: Better Auth (email OTP + passkey) on Postgres (see ../app/PLAN.md).
+Hono on AWS Lambda (function URL), eu-west-1 (GDPR data residency). Auth: Better Auth (email OTP + passkey, organization + admin + SSO plugins) on Postgres (see ../app/PLAN.md). Multi-tenancy: ../docs/tenancy.md.
 
 ## Database
 `connect()` in `src/db/index.ts` picks the database:
@@ -51,10 +51,15 @@ Periods marked *DPO* are proposals to be confirmed by the DPO / legal before lau
 | CloudWatch logs (API, cron) | 30 days | `logging.retention` in sst.config.ts |
 | Database backups / PITR | 35 days | RDS `backupRetentionPeriod` |
 
-## Personal data endpoints (session required)
+## Tenancy (../docs/tenancy.md)
+- Every session has an active tenant (Better Auth organization): the host's tenant (`metadata.host`), else LifeMap Direct (`lifemap-direct`). Plan, consents and notices are per user per tenant.
+- `GET /api/tenant` (public): branding, resolved feature flags and rates for the request host. `PATCH /api/admin/organizations/:id/config`: platform admins (`user.role = 'admin'`) only.
+- First platform admin: `update "user" set role = 'admin' where email = '<staff email>';`
+
+## Personal data endpoints (session required; scoped to the active tenant)
 - `GET /api/me/export`: JSON attachment of the account, consent history, notice acknowledgements, saved plan, and session and passkey metadata.
 - `GET /api/consents` (current state: latest event per kind, latest notice acknowledged) and `POST /api/consents` with `{ notice?: "<notice version>", marketing?: { granted, version } }`. Consent events are append-only; `granted: false` is a withdrawal. The notice acknowledgement is the contract-basis "I have read the notice" record, not consent.
-- `DELETE /api/me`: Better Auth `deleteUser` (also at `POST /api/auth/delete-user`). Needs a session under a day old, else 400 `SESSION_EXPIRED` (sign in again). Writes an `erased_user` marker (sha256 of the lower-cased email + time, no PII), deletes the email's OTP `verification` rows and OTP counter, then the `user` row, which cascades to sessions, accounts, passkeys, consent events, notice acknowledgements and the plan.
+- `DELETE /api/me`: if the user is also in another tenant, removes only this tenant's membership (cascading to its plan, consents, notices), same one-day freshness rule. Otherwise Better Auth `deleteUser` (also at `POST /api/auth/delete-user`). Needs a session under a day old, else 400 `SESSION_EXPIRED` (sign in again). Writes an `erased_user` marker (sha256 of the lower-cased email + time, no PII), deletes the email's OTP `verification` rows and OTP counter, then the `user` row, which cascades to sessions, accounts, passkeys, consent events, notice acknowledgements and the plan.
 
 ## Auth origins and rate limits
 - `BETTER_AUTH_URL` (public https origin of app + API) is required in production: the app throws at cold start without it. Its origin is trusted; add more with `BETTER_AUTH_TRUSTED_ORIGINS` (comma list).

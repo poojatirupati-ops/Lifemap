@@ -1,5 +1,7 @@
 // Report page 7: what could change the answer.
 import type { ReportContext } from './context.ts'
+import { band } from '../../domain/planning/bands.ts'
+import { bandTone } from './text.ts'
 import type { ScenarioRow, Scenarios } from './scenarios.ts'
 
 const PAGE_IDS: Record<string, string> = {
@@ -32,8 +34,6 @@ const yearsLater = (years: number) => {
   return `${words[0].toUpperCase()}${words.slice(1)} years later`
 }
 
-const tone = (percent: number) => (percent >= 95 ? 'good' : percent >= 70 ? 'gold' : 'coral')
-
 const pageRow = (row: ScenarioRow) => ({
   id: PAGE_IDS[row.id] ?? row.id,
   title: row.title,
@@ -42,15 +42,15 @@ const pageRow = (row: ScenarioRow) => ({
   gapStartsAge: row.gapStartsAt,
 })
 
-export function scenariosPage({ figures, settings }: ReportContext, scenarios: Scenarios) {
+export function scenariosPage(context: ReportContext, scenarios: Scenarios) {
+  const { figures, settings, fullStatePension } = context
   const { today, rows, combined, allOnTrack } = scenarios
   const share = figures.statePensionShare
-  const counted =
-    share >= 0.999
-      ? 'full State Pension counted'
-      : share > 0
-        ? 'part of the State Pension counted'
-        : 'no State Pension counted'
+  const counted = fullStatePension
+    ? 'full State Pension counted'
+    : share > 0
+      ? 'part of the State Pension counted'
+      : 'no State Pension counted'
   const todayRow = {
     id: 'today',
     title: 'Today’s plan',
@@ -76,15 +76,13 @@ export function scenariosPage({ figures, settings }: ReportContext, scenarios: S
   return {
     fromPct: today.covered,
     toPct,
-    fromTone: tone(today.covered),
-    toTone: tone(toPct),
-    eyebrow: 'WHAT COULD CHANGE THE ANSWER',
+    fromTone: bandTone(band(today.covered)),
+    toTone: bandTone(band(toPct)),
     title: allOnTrack
       ? 'Your plan is on track'
       : (scenarios.helpsMost?.text ?? 'Small changes can help'),
-    columns: { what: 'WHAT IF YOU…', covered: 'COVERED', gap: 'GAP STARTS AT' },
     groups,
-    explore: { title: 'A path to explore', text: explore },
+    explore: { text: explore },
     footnote,
   }
 }

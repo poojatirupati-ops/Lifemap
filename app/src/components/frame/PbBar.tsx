@@ -1,19 +1,11 @@
+import { clsx } from 'clsx'
 import { useStore } from '../../state/store.ts'
-import { PLAN_BUILDER_STEPS, planBuilderStep } from './planBuilderSteps.ts'
+import { PLAN_BUILDER_STEPS, planBuilderStep } from '../../domain/journey/planBuilderSteps.ts'
 
-const SECURE_STEP = 5
-
-/** The plan builder's progress ticks. Hook-free so a screen's Head can call it. */
+/** The plan builder's progress ticks; the optional step shows as skipped once the account is verified. */
 export default function PbBar() {
-  const { plan, screen } = useStore.getState()
-  const current = planBuilderStep(screen)
-  const verified = plan.acct.ev
-
-  const tickClass = (step: number) => {
-    const progress = step < current ? 'done' : step === current ? 'on' : ''
-    const skipped = step === SECURE_STEP && verified && current !== SECURE_STEP
-    return progress + (skipped ? ' skip' : '')
-  }
+  const current = useStore((s) => planBuilderStep(s.screen))
+  const verified = useStore((s) => s.plan.account.emailVerified)
 
   return (
     <div
@@ -21,9 +13,13 @@ export default function PbBar() {
       role="img"
       aria-label={`Plan builder, step ${current} of 8: ${PLAN_BUILDER_STEPS[current - 1].label}`}
     >
-      {PLAN_BUILDER_STEPS.map((step, index) => (
-        <i key={step.label} className={tickClass(index + 1)}></i>
-      ))}
+      {PLAN_BUILDER_STEPS.map(({ label, optional }, index) => {
+        const step = index + 1
+        const skip = optional && verified && step !== current
+        return (
+          <i key={label} className={clsx({ done: step < current, on: step === current, skip })}></i>
+        )
+      })}
     </div>
   )
 }

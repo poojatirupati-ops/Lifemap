@@ -1,9 +1,7 @@
 // Irish income tax and the household tax total (USC and PRSI live in levies.ts). Pure.
 import { uscAndPrsi, type Person } from './levies'
-import { sum } from './loans'
+import { sum } from '../../lib/format'
 import type { Rules } from './rates'
-
-export type { Person }
 
 export interface TaxOptions {
   married?: boolean
@@ -37,8 +35,8 @@ const taxable = (p: Person) =>
 const payeCredit = (rules: Rules, p: Person) =>
   Math.min(rules.it.paye, rules.it.payeCapPct * (p.pay + p.drawdown + p.statePension))
 
-const isOld = (rules: Rules, p: Person) => p.age >= rules.it.ageCreditAge
-const ageCredit = (rules: Rules, p: Person) => (isOld(rules, p) ? rules.it.ageCredit : 0)
+const getsAgeCredit = (rules: Rules, p: Person) => p.age >= rules.it.ageCreditAge
+const ageCredit = (rules: Rules, p: Person) => (getsAgeCredit(rules, p) ? rules.it.ageCredit : 0)
 
 // over the age-exemption limit, tax is capped by marginal relief
 const ageExempt = (rules: Rules, income: number, limit: number, due: number) =>
@@ -64,7 +62,7 @@ function jointIncomeTax(rules: Rules, first: Person, second: Person, options: Ta
     const withCarer = taxAtBands(rules, joint, tax.bandMarried) - credits - carerCredit
     due = Math.min(due, Math.max(0, withCarer))
   }
-  const eitherOld = isOld(rules, first) || isOld(rules, second)
+  const eitherOld = getsAgeCredit(rules, first) || getsAgeCredit(rules, second)
   return eitherOld ? ageExempt(rules, joint, tax.ageExemptMarried, due) : due
 }
 
@@ -81,7 +79,7 @@ function singleIncomeTax(rules: Rules, p: Person, isFirst: boolean, options: Tax
     (options.renting && (isFirst || income > 0) ? tax.rent : 0)
   const band = singleParent ? tax.bandSPCCC : tax.band
   const due = Math.max(0, taxAtBands(rules, income, band) - credits)
-  return isOld(rules, p) ? ageExempt(rules, income, tax.ageExempt, due) : due
+  return getsAgeCredit(rules, p) ? ageExempt(rules, income, tax.ageExempt, due) : due
 }
 
 /** Household income tax, USC and PRSI for one year; joint assessment applies when married. */

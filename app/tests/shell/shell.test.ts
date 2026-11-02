@@ -22,8 +22,8 @@ vi.mock('../../src/shell/screens.tsx', async (importOriginal) => {
   const { createElement } = await import('react')
   const discoverQuestion: Screen = {
     key: 'DQ',
-    id: (plan) => `D${plan.di + 2}`,
-    note: (plan) => `Discover question ${plan.di + 1} of 6`,
+    id: (plan) => `D${plan.discoverStep + 2}`,
+    note: (plan) => `Discover question ${plan.discoverStep + 1} of 6`,
     kind: 'quiz',
     Body: () => createElement('h2', { tabIndex: -1 }, 'q'),
   }
@@ -50,9 +50,9 @@ describe('wall', () => {
   })
   it('sendToSignIn shows P1, which then passes the wall, and remembers the picked target in rt', () => {
     const cases: [string, Partial<Snapshot>][] = [
-      ['F2', { shell: true, tab: 'plan', pb: true, scr: 'F2' }],
-      ['HOME', { app: true, tab: 'home' }],
-      ['SET', { admin: true }], // the wall clears admin too, or SET would keep showing
+      ['F2', { inShell: true, tab: 'plan', planBuilder: true, screen: 'F2' }],
+      ['HOME', { hasResults: true, tab: 'home' }],
+      ['SET', { adminView: true }], // the wall clears admin too, or SET would keep showing
     ]
     cases.forEach(([want, patch]) => {
       useStore.getState().load({ ...fresh(), ...patch })
@@ -61,7 +61,7 @@ describe('wall', () => {
       const after = useStore.getState()
       expect(pickScreen(after.plan, after.screen).key).toBe('P1')
       expect(isWalled('P1', false)).toBe(false)
-      expect(after.plan.rt).toBe(want)
+      expect(after.plan.returnTo).toBe(want)
     })
   })
 })
@@ -95,86 +95,86 @@ describe('pickScreen', () => {
   const pick = (f: (s: Snapshot) => void) => {
     const s: Snapshot = fresh()
     f(s)
-    return pickScreen(s, s.scr ?? 'D0')
+    return pickScreen(s, s.screen ?? 'D0')
   }
   it('follows the original current()', () => {
     expect(pick(() => {}).key).toBe('D0')
     expect(
       pick((s) => {
-        s.scr = 'D4'
+        s.screen = 'D4'
       }).key,
     ).toBe('DQ')
     expect(
       pick((s) => {
-        s.scr = 'DR'
+        s.screen = 'DR'
       }).key,
     ).toBe('DR')
     expect(
       pick((s) => {
-        s.admin = true
+        s.adminView = true
       }).key,
     ).toBe('SET')
     expect(
       pick((s) => {
-        s.shell = true
+        s.inShell = true
         s.tab = 'home'
       }).key,
     ).toBe('HOME0')
     expect(
       pick((s) => {
-        s.shell = true
+        s.inShell = true
         s.tab = 'plan'
       }).key,
     ).toBe('PLAN0')
     expect(
       pick((s) => {
-        s.shell = true
+        s.inShell = true
         s.tab = 'plan'
-        s.pb = true
-        s.scr = 'D0'
+        s.planBuilder = true
+        s.screen = 'D0'
       }).key,
     ).toBe('B1')
     expect(
       pick((s) => {
-        s.shell = true
+        s.inShell = true
         s.tab = 'plan'
-        s.pb = true
-        s.scr = 'F2'
+        s.planBuilder = true
+        s.screen = 'F2'
       }).key,
     ).toBe('F2')
     expect(
       pick((s) => {
-        s.shell = true
+        s.inShell = true
         s.tab = 'explore'
       }).key,
     ).toBe('XPL')
     expect(
       pick((s) => {
-        s.app = true
+        s.hasResults = true
         s.tab = 'explore'
-        s.xs = [{ v: 'CALC', p: 'retirement' }]
+        s.explorePages = [{ page: 'CALC', param: 'retirement' }]
       }),
     ).toEqual({ key: 'CALC', param: 'retirement' })
     expect(
       pick((s) => {
-        s.app = true
+        s.hasResults = true
         s.tab = 'plan'
-        s.planSeg = 'add'
+        s.planSegment = 'add'
       }).key,
     ).toBe('GOALS')
     expect(
       pick((s) => {
-        s.app = true
+        s.hasResults = true
         s.tab = 'me'
-        s.me = 'fin'
-        s.fsec = 2
+        s.mePage = 'fin'
+        s.financeSection = 2
       }).key,
     ).toBe('P3')
     expect(
       pick((s) => {
-        s.app = true
+        s.hasResults = true
         s.tab = 'exp'
-        s.exp = 'fin'
+        s.expertsPage = 'fin'
       }).key,
     ).toBe('P2')
   })
@@ -216,7 +216,7 @@ describe('jumps', () => {
 })
 
 describe('ScreenHost', () => {
-  it('a state-derived id (DQ: D + (di + 2)) is a new screen: enter replays, #curid follows; same id keeps it', () => {
+  it('a state-derived id (DQ: D + (di + 2)) is a new screen: its page remounts (enter replays), #curid follows; same id keeps it', () => {
     const set = (f: (s: any) => void, screen?: string) =>
       act(() => {
         if (screen) useStore.getState().go(screen)
@@ -227,17 +227,18 @@ describe('ScreenHost', () => {
     }, 'D2')
     const { container } = render(h(ScreenHost)),
       el = container.querySelector('#screen')!
+    // #screen keeps .enter; a new screen remounts its keyed child, so the rise animation replays.
+    const page = () => el.firstElementChild
     expect(useShell.getState().screenId).toBe('D2')
-    expect(el.classList.contains('enter')).toBe(true)
-    el.classList.remove('enter')
+    const first = page()
     set((s) => {
       s.whyNote = 'x'
     })
-    expect(el.classList.contains('enter')).toBe(false) // same id: no replay
+    expect(page()).toBe(first) // same id: no replay
     set((s) => {
       s.di = 1
     }, 'D3')
-    expect(el.classList.contains('enter')).toBe(true)
+    expect(page()).not.toBe(first)
     expect(useShell.getState()).toMatchObject({
       screenId: 'D3',
       screenNote: 'Discover question 2 of 6',

@@ -5,8 +5,10 @@ import { fresh } from '../../src/state/fresh.ts'
 import { useStore } from '../../src/state/store.ts'
 import * as Videos from '../../src/screens/Videos.screen.tsx'
 import * as VideoPlayer from '../../src/screens/VideoPlayer.screen.tsx'
+import { goalForVideo } from '../../src/domain/planning/goalForVideo.ts'
+import type { Goal } from '../../src/state/types.ts'
 
-beforeEach(() => useStore.getState().load({ ...fresh(), tab: 'explore', xs: [{ v: 'VIDS' }] }))
+beforeEach(() => useStore.getState().load({ ...fresh(), tab: 'explore', explorePages: [{ page: 'VIDS' }] }))
 
 test('VID-00: a topic chip filters the featured video and the grid', () => {
   const { container } = render(<Videos.Body />)
@@ -35,4 +37,12 @@ test('VID-01: a filmed video that cannot load shows Try again', () => {
   fireEvent.error(video)
   expect(video.hidden).toBe(true)
   expect((container.querySelector('#vid-fail') as HTMLElement).hidden).toBe(false)
+})
+
+test('goalForVideo: a pension video falls back to the retirement goal', () => {
+  const retire = { kind: 'retire', spec: 'pension' } as Goal
+  const home = { kind: 'home', spec: 'mortgage' } as Goal
+  expect(goalForVideo([retire, home], 'mortgage')).toBe(home)
+  expect(goalForVideo([retire, home], 'pension')).toBe(retire)
+  expect(goalForVideo([home], 'protection')).toBeUndefined()
 })

@@ -4,10 +4,12 @@ import { plain } from '../golden/origProfile'
 import fresh from '../fixtures/fresh.json'
 import complete from '../fixtures/finances-complete.json'
 import sample from '../../src/state/sample-plan.json'
-import { calculatorFor, allInputs } from '../../src/components/calc/calculators'
-import { calcContext, type CalcPlan } from '../../src/components/calc/context'
-import type { Figures } from '../../src/components/calc/types'
+import { calculatorFor, allInputs } from '../../src/domain/calc/calculators'
+import { calcContext, toolPlan } from '../../src/domain/calc/context'
+import type { Plan } from '../../src/state/types'
+import type { Figures, Handoff } from '../../src/domain/calc/types'
 import { localToday } from '../../src/lib/today'
+import { fromOriginal } from '../../src/state/migrate'
 
 export const original = runOriginal(
   'C, CALCS, applyAssume, calcVals, calcPre, calcMissing, calcIsExample, calcStd, calcGuide, stdTag, DOCT, pstConfirm, pstRemove, pstStart',
@@ -56,17 +58,27 @@ export const rounded = (value: unknown) =>
     JSON.stringify(plain(value), (_, v) => (typeof v === 'number' ? +v.toPrecision(10) : v)),
   )
 
-export function runBoth(plan: CalcPlan, id: string, figures: Figures) {
+/** Our hand-off in the original's field names (em, k, msg). */
+const originalHandoff = (goal: Handoff | null) => {
+  if (!goal) return null
+  const { emoji, goalKind, message, ...rest } = goal
+  return { ...rest, em: emoji, k: goalKind, msg: message }
+}
+
+export function runBoth(plan: Plan, id: string, figures: Figures) {
   original.setState(structuredClone(plan))
   original.applyAssume()
   const theirs = rounded(original.C(id).run(structuredClone(figures)))
-  const result = calculatorFor(id).run(figures, calcContext(plan, id, localToday(TODAY)))
+  const result = calculatorFor(id).run(
+    figures,
+    calcContext(toolPlan(fromOriginal(plan), id), id, localToday(TODAY)),
+  )
   const ours = rounded({
     lbl: result.label,
     val: result.value,
     line: result.line,
     rows: result.rows,
-    goal: result.goal,
+    goal: originalHandoff(result.goal),
     num: result.numbers,
   })
   return { theirs: { ...theirs, rows: theirs.rows.filter(Boolean) }, ours }

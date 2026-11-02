@@ -463,5 +463,5 @@ describe('cashflow engine', () => {
           const mine = structuredClone(original.getState())
           sameFigures(mine, y, `${f} ${y} ${vn}`)
         }
-  })
+  }, 30_000)
 })

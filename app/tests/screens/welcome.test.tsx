@@ -17,13 +17,14 @@ test('Welcome starts the journey and opens its sheets', () => {
 })
 
 test('What brought you here toggles reasons and starts the questions', () => {
+  // TODO(Q-01): plan.why -> plan.reasons, plan.di -> plan.discoveryStep
   render(<WhyHere.Body />)
-  const continueButton = screen.getByText('Continue') as HTMLButtonElement
-  expect(continueButton.disabled).toBe(true)
+  const continueButton = screen.getByRole('button', { name: 'Continue' })
+  expect(continueButton).toHaveProperty('disabled', true)
 
-  const home = screen.getByText('Home & mortgage').closest('button')!
+  const home = screen.getByRole('button', { name: /Home & mortgage/ })
   fireEvent.click(home)
-  fireEvent.click(screen.getByText('Just exploring'))
+  fireEvent.click(screen.getByRole('button', { name: /Just exploring/ }))
   expect(useStore.getState().plan.why).toEqual(['home', 'curious'])
   expect(home.getAttribute('aria-pressed')).toBe('true')
   expect(home.className).toBe('chip wtile sel')
@@ -32,9 +33,9 @@ test('What brought you here toggles reasons and starts the questions', () => {
   expect(useStore.getState().plan.why).toEqual(['curious'])
 
   useStore.getState().update((plan) => {
-    plan.di = 3
+    plan.discoverStep = 3
   })
   fireEvent.click(continueButton)
   expect(useStore.getState().screen).toBe('D2')
-  expect(useStore.getState().plan.di).toBe(0)
+  expect(useStore.getState().plan.discoverStep).toBe(0)
 })

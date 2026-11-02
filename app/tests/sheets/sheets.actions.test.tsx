@@ -39,12 +39,12 @@ describe('simple sheets', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: /email|save my/i }))
     expect(state().plan.save).toEqual({ email: 'a@b.ie', comms: true, done: true, asked: true })
-    expect(state().plan.acct.email).toBe('a@b.ie')
+    expect(state().plan.account.email).toBe('a@b.ie')
     expect(state().sheet).toBeNull()
   })
 
   it('something else adds an idea or a named goal', () => {
-    open('other', { about: { age: 30, partner: false, deps: 0, married: null } })
+    open('other', { about: { age: 30, partner: false, dependants: 0, married: null } })
     fireEvent.click(screen.getByText('📚 Fund a course'))
     expect(state().plan.goals.at(-1)).toMatchObject({
       k: 'other',
@@ -61,7 +61,7 @@ describe('simple sheets', () => {
   })
 
   it('talking to an expert opens the Experts tab with that kind picked', () => {
-    open('xpert|pension', { app: true })
+    open('xpert|pension', { hasResults: true })
     fireEvent.click(screen.getByText('Book a video call'))
     expect(state().plan).toMatchObject({
       tab: 'exp',

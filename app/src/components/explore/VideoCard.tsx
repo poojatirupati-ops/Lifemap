@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react'
-import { VIDEO_KIND_LABEL, type Video } from './videos.data.ts'
-import { openVideo } from './exploreActions.ts'
+import { VIDEO_KIND_LABEL, splitWho, videoLength, type Video } from './videos.data.ts'
+import { openVideo } from '../../state/explore.ts'
 
 /** A video card with the picture on top; `grid` for the video library's grid. */
 export default function VideoCard({ video, grid }: { video: Video; grid?: boolean }) {
-  const role = video.who.split(' · ')[1]
+  const { role } = splitWho(video)
   return (
     <button
       className={grid ? 'vcard grid' : 'vcard'}
@@ -13,7 +13,7 @@ export default function VideoCard({ video, grid }: { video: Video; grid?: boolea
       onClick={() => openVideo(video.id)}
     >
       <span className="vc-img" style={{ '--vart': `var(--art-${video.art})` } as CSSProperties}>
-        <span className="len">{video.duration ?? `${video.mins} min`}</span>
+        <span className="len">{videoLength(video)}</span>
         <span className="play" aria-hidden="true">
           ▶
         </span>

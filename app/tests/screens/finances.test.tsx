@@ -6,6 +6,7 @@ import type { Snapshot } from '../../src/state/types.ts'
 import partial from '../fixtures/finances-partial.json'
 import * as Overview from '../../src/screens/FinanceOverview.screen.tsx'
 import * as Check from '../../src/screens/FinanceCheck.screen.tsx'
+import ChoiceNumberBox from '../../src/components/finance/ChoiceNumberBox.tsx'
 
 beforeEach(() => {
   useStore.getState().load(structuredClone(partial) as unknown as Snapshot)
@@ -25,7 +26,7 @@ test('Check your details: choices gate the results, then Building opens the resu
   vi.useFakeTimers()
   useStore.getState().update((plan) => {
     plan.retireSet = false
-    plan.infl = null
+    plan.inflation = null
   })
   render(<Check.Foot />)
   const see = screen.getByText('See my results') as HTMLButtonElement
@@ -35,9 +36,9 @@ test('Check your details: choices gate the results, then Building opens the resu
   act(() =>
     useStore.getState().update((plan) => {
       plan.retireSet = true
-      plan.infl = 0.02
-      plan.asm.planEnd = 90
-      plan.pRetSet = true
+      plan.inflation = 0.02
+      plan.assumptions.planEnd = 90
+      plan.partnerRetireSet = true
     }),
   )
   fireEvent.click(screen.getByText('See my results'))
@@ -56,5 +57,27 @@ test('Leave for my adviser marks a flagged figure', () => {
   render(<Check.Body />)
   const leave = screen.getAllByText('Leave for my adviser')[0]
   fireEvent.click(leave)
-  expect(Object.values(useStore.getState().plan.ack)).toContain(true)
+  expect(Object.values(useStore.getState().plan.acknowledged)).toContain(true)
+})
+
+test('A typed choice is kept within its limits and the hint says why', () => {
+  const committed: number[] = []
+  const hints: string[] = []
+  render(
+    <ChoiceNumberBox
+      name="ret|a"
+      value={65}
+      unit="age"
+      labelledBy="x"
+      min={50}
+      max={89}
+      whole
+      onCommit={(age) => committed.push(age)}
+      onHint={(hint) => hints.push(hint)}
+    />,
+  )
+  const box = document.querySelector<HTMLInputElement>('[data-nb="ret|a"]')!
+  for (const typed of ['95', '40', '66.5', '70']) fireEvent.input(box, { target: { value: typed } })
+  expect(committed).toEqual([89, 50, 67, 70])
+  expect(hints).toEqual(['Max 89', 'Min 50', 'Whole numbers only', ''])
 })

@@ -5,47 +5,50 @@ import { assumption } from '../../domain/planning/assumptions.ts'
 import { localToday } from '../../lib/today.ts'
 import { useStore } from '../../state/store.ts'
 import type { Dob } from '../../state/types.ts'
-import { setDobPart, type Who } from './aboutActions.ts'
+import { dobKey, setDobPart, type Who } from './aboutActions.ts'
 import SourceTag from './SourceTag.tsx'
 
-const PARTS: { part: keyof Dob; placeholder: string; width: number; label: string }[] = [
-  { part: 'd', placeholder: 'DD', width: 64, label: 'Day of birth' },
-  { part: 'm', placeholder: 'MM', width: 64, label: 'Month of birth' },
-  { part: 'y', placeholder: 'YYYY', width: 92, label: 'Year of birth' },
+const PARTS: {
+  part: keyof Dob
+  placeholder: string
+  width: number
+  label: string
+  autofill: string
+}[] = [
+  { part: 'day', placeholder: 'DD', width: 64, label: 'Day of birth', autofill: 'bday-day' },
+  { part: 'month', placeholder: 'MM', width: 64, label: 'Month of birth', autofill: 'bday-month' },
+  { part: 'year', placeholder: 'YYYY', width: 92, label: 'Year of birth', autofill: 'bday-year' },
 ]
-const AUTOFILL = { d: 'bday-day', m: 'bday-month', y: 'bday-year' }
-// tools/view-equal.mjs pins the browser's today with window.__TODAY
-const today = () => localToday((globalThis as { __TODAY?: string }).__TODAY)
 
 /** Day, month and year boxes; a full day or month moves on to the next box. */
 export default function DobField({ who }: { who: Who }) {
   const you = who === 'you'
-  const id = you ? 'dob' : 'pdob'
+  const id = dobKey(who)
+  const today = localToday()
   const { dob, partnerName, ageSource, startYear } = useStore(
     useShallow(({ plan }) => ({
-      dob: you ? plan.about.dob : plan.about.pdob,
+      dob: plan.about[id],
       partnerName: plan.partner.name,
-      ageSource: plan.src.pAge,
-      startYear: assumption(plan, 'startYear', today()),
+      ageSource: plan.sources.pAge,
+      startYear: assumption(plan, 'startYear', today),
     })),
   )
-  const check = checkDob(dob, who, { today: today(), name: partnerName, startYear })
+  const check = checkDob(dob, who, { today, name: partnerName, startYear })
 
   const onInput = (part: keyof Dob) => (event: FormEvent<HTMLInputElement>) => {
     const input = event.currentTarget
-    const digits = input.value.replace(/\D/g, '').slice(0, part === 'y' ? 4 : 2)
+    const digits = input.value.replace(/\D/g, '').slice(0, part === 'year' ? 4 : 2)
     if (digits !== input.value) input.value = digits
     setDobPart(who, part, digits)
-    if (part !== 'y' && digits.length === 2) {
-      document.getElementById(`${id}-${part === 'd' ? 'm' : 'y'}`)?.focus()
-    }
+    if (part !== 'year' && digits.length === 2)
+      (input.nextElementSibling as HTMLInputElement | null)?.focus()
   }
 
   return (
     <div className="field">
       <span className="flabel" id={`lab-${id}`}>
         {you ? 'Your date of birth' : 'Their date of birth'}{' '}
-        <span id={`tag-${id}`}>{!you && <SourceTag source={ageSource} />}</span>
+        <span id={`tag-${id}`}>{you ? null : <SourceTag source={ageSource} />}</span>
       </span>
       <div
         className="dobrow"
@@ -53,14 +56,14 @@ export default function DobField({ who }: { who: Who }) {
         aria-labelledby={`lab-${id}`}
         style={{ display: 'flex', gap: 8, alignItems: 'center' }}
       >
-        {PARTS.map(({ part, placeholder, width, label }) => (
+        {PARTS.map(({ part, placeholder, width, label, autofill }) => (
           <input
             key={part}
             className="in dob"
             id={`${id}-${part}`}
             inputMode="numeric"
-            autoComplete={you ? AUTOFILL[part] : 'off'}
-            maxLength={part === 'y' ? 4 : 2}
+            autoComplete={you ? autofill : 'off'}
+            maxLength={part === 'year' ? 4 : 2}
             placeholder={placeholder}
             aria-label={label}
             data-dob={`${who}|${part}`}
@@ -86,7 +89,7 @@ export default function DobField({ who }: { who: Who }) {
       <p className="small dobnote" style={{ margin: '2px 0 0' }}>
         🔒 Used for your ages only. Stays on your device.
       </p>
-      {!you && (
+      {you ? null : (
         <div className="fhelp">
           <button
             className="link"

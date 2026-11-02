@@ -1,12 +1,12 @@
 import { useState } from 'react'
+import { EXTRA_MAX, EXTRA_MIN } from '../../domain/planning/saving.ts'
 import { euro } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
 import type { Goal } from '../../state/types.ts'
 import Emo from '../ui/Emo.tsx'
 import MoneyBox from './MoneyBox.tsx'
-import { STEP } from './saving.ts'
+import StepRow from './StepRow.tsx'
 import WhatIfLive from './WhatIfLive.tsx'
-import { pickWhatIfGoal, setExtra, setLumpSum, stepExtra } from './planActions.ts'
 
 function extraHint(extra: number, goal: Goal | undefined) {
   if (extra < 0) return 'Saving less each month (affects your whole plan)'
@@ -18,11 +18,14 @@ function extraHint(extra: number, goal: Goal | undefined) {
 /** "Try an extra amount": the goal, an extra each month, a one-off amount and the live total. */
 export default function WhatIfExtra({ saving, spare }: { saving: number; spare: number }) {
   const goals = useStore((store) => store.plan.goals)
-  const { g: goalId, m: extra, l: lumpSum } = useStore((store) => store.plan.wi)
-  const [hints, setHints] = useState({ m: '', l: '' })
+  const { goalId: goalId, monthlyExtra: extra, lumpSum: lumpSum } = useStore((store) => store.plan.whatIf)
+  const pickWhatIfGoal = useStore((store) => store.pickWhatIfGoal)
+  const stepExtra = useStore((store) => store.stepExtra)
+  const setExtra = useStore((store) => store.setExtra)
+  const setLumpSum = useStore((store) => store.setLumpSum)
+  const [monthlyHint, setMonthlyHint] = useState('')
+  const [lumpHint, setLumpHint] = useState('')
   const goal = goals.find((each) => each.id === goalId)
-  const hintFor = (key: 'm' | 'l') => (hint: string) =>
-    setHints((shown) => ({ ...shown, [key]: hint }))
 
   return (
     <div className="wisec" id="wi-extra">
@@ -47,7 +50,7 @@ export default function WhatIfExtra({ saving, spare }: { saving: number; spare: 
               data-p={each.id}
               onClick={() => pickWhatIfGoal(each.id)}
             >
-              <Emo>{`${each.e} ${each.name}`}</Emo>
+              <Emo>{`${each.emoji} ${each.name}`}</Emo>
             </button>
           ))}
       </div>
@@ -55,39 +58,19 @@ export default function WhatIfExtra({ saving, spare }: { saving: number; spare: 
         <span className="flabel" id="wim-l">
           Extra each month
         </span>
-        <div className="wi-row">
-          <button
-            className="rb"
-            data-a="wim"
-            data-p={-STEP}
-            aria-label="25 euro less"
-            onClick={() => stepExtra(-STEP)}
-          >
-            −
-          </button>
-          <div className="wi-val">
-            <MoneyBox
-              name="wi|m"
-              id="wim-v"
-              labelledBy="wim-l"
-              value={extra}
-              min={-5000}
-              max={10000}
-              signed
-              onValue={setExtra}
-              onHint={hintFor('m')}
-            />
-          </div>
-          <button
-            className="rb"
-            data-a="wim"
-            data-p={STEP}
-            aria-label="25 euro more"
-            onClick={() => stepExtra(STEP)}
-          >
-            +
-          </button>
-        </div>
+        <StepRow action="wim" lessLabel="25 euro less" moreLabel="25 euro more" onStep={stepExtra}>
+          <MoneyBox
+            name="wi|m"
+            id="wim-v"
+            labelledBy="wim-l"
+            value={extra}
+            min={EXTRA_MIN}
+            max={EXTRA_MAX}
+            signed
+            onValue={setExtra}
+            onHint={setMonthlyHint}
+          />
+        </StepRow>
         <input
           type="range"
           min={Math.min(-500, extra)}
@@ -100,7 +83,7 @@ export default function WhatIfExtra({ saving, spare }: { saving: number; spare: 
           onChange={(event) => setExtra(+event.currentTarget.value)}
         />
         <span className="nbhint" id="nh-wi-m" role="status" aria-live="polite">
-          {hints.m}
+          {monthlyHint}
         </span>
         <span className="small" id="wim-h">
           {extraHint(extra, goal)}
@@ -117,7 +100,7 @@ export default function WhatIfExtra({ saving, spare }: { saving: number; spare: 
             min={0}
             max={2000000}
             onValue={setLumpSum}
-            onHint={hintFor('l')}
+            onHint={setLumpHint}
           />
         </div>
         <input
@@ -132,7 +115,7 @@ export default function WhatIfExtra({ saving, spare }: { saving: number; spare: 
           onChange={(event) => setLumpSum(+event.currentTarget.value)}
         />
         <span className="nbhint" id="nh-wi-l" role="status" aria-live="polite">
-          {hints.l}
+          {lumpHint}
         </span>
         <span className="small">Once, e.g. from savings or a bonus</span>
       </div>

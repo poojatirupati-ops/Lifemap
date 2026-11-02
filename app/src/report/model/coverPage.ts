@@ -1,10 +1,10 @@
-// Report page 1 and what every page carries: meta, footer, the road and the cover.
+// Report page 1 and what every page carries: the header, the road and the cover.
+import { format } from 'date-fns/format'
 import type { ReportContext } from './context.ts'
-import { band, isPassed } from './context.ts'
+import { isPassed } from './context.ts'
+import { band } from '../../domain/planning/bands.ts'
 import type { GoalSummary } from './goals.ts'
 import { bandTone } from './text.ts'
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 /** The road's coloured stretches: working, living on savings, then a gap. */
 function roadSegments({ startAge, endAge, retirement, retired, retireAge, gap }: ReportContext) {
@@ -45,34 +45,13 @@ function milestones(context: ReportContext) {
 }
 
 export function coverPages(context: ReportContext, goals: GoalSummary[]) {
-  const { plan, today, figures, startAge, endAge, gap } = context
-  const name = (plan.acct.name || plan.fin.name || '').trim()
+  const { plan, today, startAge, endAge, gap } = context
+  const name = (plan.account.name || plan.figures.name || '').trim()
   const possessive = name ? `${name}’s` : 'Your'
-  const dateText = `${today.getDate()} ${MONTHS[today.getMonth()]} ${today.getFullYear()}`
+  const date = format(today, 'd MMM yyyy')
   const ageToday = plan.about.ageToday ?? startAge
   const onTrack = goals.filter((goal) => goal.onTrack).length
   const allOnTrack = onTrack === goals.length
-  const meta = {
-    customerName: name,
-    possessiveName: possessive,
-    dateText,
-    dateUpper: dateText.toUpperCase(),
-    version: 1,
-    currentAge: ageToday,
-    currentYear: today.getFullYear(),
-    planEndAge: endAge,
-    retireAge: context.retirement ? context.retireAge : endAge,
-    statePensionAge: context.statePensionAge,
-    hasPartner: figures.partner,
-    alreadyRetired: context.retired,
-    hasMortgage: plan.fin.home === 'Own with mortgage' && figures.mortgageBalance > 0,
-    headerRight: `${possessive} plan · ${dateText}`,
-  }
-  const footer = {
-    line: 'Preliminary guidance, not financial advice. Illustrative, not guaranteed.',
-    coverLine:
-      'Version 1 · Preliminary guidance, not financial advice. An indicative guide: an expert can confirm the details.',
-  }
   const road = {
     startAge,
     endAge,
@@ -82,10 +61,8 @@ export function coverPages(context: ReportContext, goals: GoalSummary[]) {
     endLabel: `Plan to age ${endAge}`,
   }
   const cover = {
-    eyebrow: `PREPARED FOR ${name ? name.toUpperCase() : 'YOU'} · ${meta.dateUpper}`,
+    eyebrow: `PREPARED FOR ${name ? name.toUpperCase() : 'YOU'} · ${date.toUpperCase()}`,
     title: `${possessive} road ahead`,
-    lead: 'A clear, indicative guide to where you are, where you’re heading, and who can help you get there.',
-    badge: 'YOUR PERSONAL PLAN',
     tiles: [
       {
         icon: allOnTrack ? 'sun' : onTrack ? 'partly' : 'storm',
@@ -104,5 +81,5 @@ export function coverPages(context: ReportContext, goals: GoalSummary[]) {
       { icon: 'storm', tone: 'blue', big: 'Next step', small: 'share your plan with an expert' },
     ],
   }
-  return { meta, footer, road, cover }
+  return { meta: { headerRight: `${possessive} plan · ${date}` }, road, cover }
 }

@@ -1,12 +1,10 @@
 import type { ComponentType } from 'react'
 import { useStore } from '../state/store.ts'
-import { closeSheet } from '../hooks/useFocusReturn.ts'
 import SheetFrame from '../components/ui/SheetFrame.tsx'
 
 /**
  * What a src/sheets/*.sheet.tsx exports. The plan's `sheet` is 'key' or 'key|param'; the param is
  * passed to Body as `param`. Body's first h2 carries id="sheet-t" and tabIndex={-1}.
- * Focus and Escape are handled by ScreenHost's useFocusReturn and useGlobalKeys.
  */
 export interface Sheet {
   key: string
@@ -22,11 +20,13 @@ const sheets = new Map(Object.values(modules).map((sheet) => [sheet.key, sheet])
 
 export default function SheetHost() {
   const sheet = useStore((store) => store.sheet)
+  const closeSheet = useStore((store) => store.closeSheet)
   if (!sheet) return null
 
   // 'ask' and 'elig' are whole keys; the rest are 'key|param'.
   const [key, param] = sheet.split('|')
   const found = sheets.get(sheet) ?? sheets.get(key)
+
   // Not converted yet: the original's empty dialog.
   if (!found) return <SheetFrame aria={{ 'aria-label': 'Dialog' }} onClose={closeSheet} />
 

@@ -1,6 +1,8 @@
-import type { HTMLAttributes } from 'react'
-import { latestRetirement } from './goalActions.ts'
-import { calendarYear, inYears, isPassed, useTiming, yearsAway } from './goalText.ts'
+import type { HTMLAttributes, Ref } from 'react'
+import clsx from 'clsx'
+import { ageLimits } from '../../domain/goals/goals.ts'
+import { calendarYear, inYears, isPassed, yearsAway } from '../../domain/goals/goalTiming.ts'
+import { useTiming } from '../../hooks/useTiming.ts'
 import type { Goal } from '../../state/types.ts'
 
 type Props = {
@@ -8,37 +10,29 @@ type Props = {
   highlighted: boolean
   dragging: boolean
   position?: { left: number; top: number }
+  ref: Ref<HTMLDivElement>
 } & HTMLAttributes<HTMLDivElement>
 
 /** One goal on the timeline: a slider for its age. */
-export default function TimelineChip({
-  goal,
-  highlighted,
-  dragging,
-  position,
-  ...handlers
-}: Props) {
+export default function TimelineChip({ goal, highlighted, dragging, position, ...props }: Props) {
   const plan = useTiming()
   const retire = goal.kind === 'retire'
-  const ageNow = plan.about.age ?? 0
-  const className = ['tl-chip', retire && 'ret', highlighted && 'hl', dragging && 'drag']
-    .filter(Boolean)
-    .join(' ')
+  const { earliest, latest } = ageLimits(plan, goal)
 
   return (
     <div
-      className={className}
+      className={clsx('tl-chip', { ret: retire, hl: highlighted, drag: dragging })}
       data-g={goal.id}
       title={goal.name}
       tabIndex={0}
       role="slider"
       aria-label={goal.name}
-      aria-valuemin={ageNow + 1}
-      aria-valuemax={retire ? latestRetirement(plan) : 90}
+      aria-valuemin={earliest}
+      aria-valuemax={latest}
       aria-valuenow={goal.age}
       aria-valuetext={`${goal.name}, age ${goal.age}, ${calendarYear(plan, goal.age)}`}
       style={position}
-      {...handlers}
+      {...props}
     >
       {retire ? (
         <>
@@ -47,7 +41,7 @@ export default function TimelineChip({
         </>
       ) : (
         <>
-          <span aria-hidden="true">{goal.e}</span>
+          <span aria-hidden="true">{goal.emoji}</span>
           <span className="nm">{goal.name}</span>
           <span className="yr">
             {isPassed(plan, goal) ? 'date passed' : inYears(yearsAway(plan, goal))}

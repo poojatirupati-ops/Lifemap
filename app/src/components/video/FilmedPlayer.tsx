@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ComponentProps } from 'react'
 import { flushSync } from 'react-dom'
 import type { Video } from '../explore/videos.data.ts'
 
@@ -6,24 +6,30 @@ const CANT_PLAY =
   "This video can't play right now. Check your connection, or that the media folder is next to this page, then try again."
 
 /** A real video file with native controls; if it cannot play, a message with Try again replaces it. */
-export default function FilmedPlayer({ video }: { video: Video }) {
-  const [failedId, setFailedId] = useState<string>()
-  const failed = failedId === video.id
+export default function FilmedPlayer({
+  video,
+  className = 'player real',
+  ...videoEvents
+}: {
+  video: Video
+  className?: string
+} & Pick<ComponentProps<'video'>, 'onLoadedMetadata' | 'onTimeUpdate' | 'onEnded'>) {
+  const [failed, setFailed] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const retryRef = useRef<HTMLButtonElement>(null)
 
   const onError = () => {
     const hadFocus = document.activeElement === videoRef.current
-    flushSync(() => setFailedId(video.id))
+    flushSync(() => setFailed(true))
     if (hadFocus) retryRef.current?.focus()
   }
   const retry = () => {
-    setFailedId(undefined)
+    setFailed(false)
     videoRef.current?.load()
   }
 
   return (
-    <div className="player real" data-vwrap={video.id}>
+    <div className={className} data-vwrap={video.id}>
       <video
         ref={videoRef}
         id="vid-el"
@@ -37,6 +43,7 @@ export default function FilmedPlayer({ video }: { video: Video }) {
         aria-describedby="vid-cap"
         hidden={failed}
         onError={onError}
+        {...videoEvents}
       >
         {video.captions ? (
           <track kind="captions" srcLang="en" label="English" src={video.captions} default />

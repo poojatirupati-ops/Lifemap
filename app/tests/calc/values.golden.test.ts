@@ -1,9 +1,13 @@
 // A tool's starting figures, what still gates its result and the example label equal the original's.
 import { describe, expect, it } from 'vitest'
-import { TOOLS } from '../../src/components/explore/explore.data'
-import { missingFigures, showsExample, toolFigures } from '../../src/components/calc/values'
+import { TOOLS } from '../../src/components/explore/tools.data'
+import { calculatorFor } from '../../src/domain/calc/calculators'
+import { toolPlan } from '../../src/domain/calc/context'
+import { missingFigures, showsExample, toolFigures } from '../../src/domain/calc/values'
 import { normalize } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
+import { fromOriginal } from '../../src/state/migrate'
+import type { Plan } from '../../src/state/types'
 import { TODAY } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
 import { original, rounded } from './golden'
@@ -30,10 +34,12 @@ describe.each(plans)('%s', (_, state) => {
     const theirMissing = original.calcMissing(calculator)
     const theirExample = original.calcIsExample(calculator)
 
-    const plan = structuredClone(state)
+    const plan = fromOriginal<Plan>(structuredClone(state))
     normalize(plan, localToday(TODAY))
-    expect(rounded(toolFigures(plan, id).figures)).toEqual(theirs)
-    expect(missingFigures(plan, id)).toEqual(theirMissing)
-    expect(showsExample(plan, id)).toBe(theirExample)
+    const ours = calculatorFor(id)
+    const figures = toolFigures(ours, toolPlan(plan, ours.id))
+    expect(rounded(figures.figures)).toEqual(theirs)
+    expect(missingFigures(ours, figures, plan.assumptions)).toEqual(theirMissing)
+    expect(showsExample(ours, figures, plan.hasResults)).toBe(theirExample)
   })
 })

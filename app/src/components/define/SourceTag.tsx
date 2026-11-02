@@ -10,7 +10,8 @@ const TAGS: Record<Provenance | 'none', [className: string, text: string]> = {
 
 /**
  * Where a figure came from.
- * TODO(R-19): the finance fields' tag also shows "Needs a look" and the reading confidence; use theirs then.
+ * TODO(R-19): the finance fields' tag also shows "Needs a look" and the reading confidence;
+ * use theirs then.
  */
 export default function SourceTag({ source }: { source?: Provenance }) {
   const [className, text] = TAGS[source ?? 'none']

@@ -1,28 +1,29 @@
 // Translates between the original's state and names and our small typed profile inputs.
-import { suggestedHorizon, type ProfileAnswers } from '../../src/domain/discovery/profile'
+import {
+  profileAnswers as ourProfileAnswers,
+  suggestedHorizon,
+} from '../../src/domain/discovery/profile'
 import type { RiskRead } from '../../src/domain/discovery/riskRead'
 import type { Cushion } from '../../src/domain/discovery/riskMismatch'
 
-export const profileAnswers = (s: any): ProfileAnswers => ({
-  discover: s.ans,
-  money: s.um.a,
-  products: s.um.chips ?? [],
-})
+// the original's plan can lack um.chips
+export const profileAnswers = (plan: any) =>
+  ourProfileAnswers({ ...plan, moneyProfile: { ...plan.um, chips: plan.um.chips ?? [] } })
 
 /** The original's cushionM() result. */
-export const cushion = (c: any): Cushion => ({
-  hasFigures: c.fig,
-  months: c.m,
-  targetMonths: c.T,
-  shortfall: c.need,
-  level: c.level,
-  answer: c.ans,
+export const cushion = (originalCushion: any): Cushion => ({
+  hasFigures: originalCushion.fig,
+  months: originalCushion.m,
+  targetMonths: originalCushion.T,
+  shortfall: originalCushion.need,
+  level: originalCushion.level,
+  answer: originalCushion.ans,
 })
 
-export const riskContext = (s: any, complete: boolean, originalCushion: any) => ({
+export const riskContext = (plan: any, complete: boolean, originalCushion: any) => ({
   complete,
   cushion: cushion(originalCushion),
-  suggestedHorizon: suggestedHorizon(s.goals, s.about.age, s.retireAge),
+  suggestedHorizon: suggestedHorizon(plan.goals, plan.about.age, plan.retireAge),
 })
 
 /** Our risk read under the original's field names. */

@@ -23,10 +23,7 @@ function retirementDetail(years: Retirement, percent: number) {
     photo: 'retired-reading',
     bars: {
       type: 'retire',
-      costLabel: 'Retirement costs',
       costValue: `about ${shortEuro(years.costToday)}`,
-      costPct: 100,
-      coverLabel: 'Your plan covers',
       coverValue: `about ${shortEuro(years.costToday - years.gapToday)}`,
       coverPct: costToday
         ? Math.max(0, Math.min(100, Math.round((1000 * coveredToday) / costToday) / 10))
@@ -38,7 +35,6 @@ function retirementDetail(years: Retirement, percent: number) {
           : 'There is no gap.'),
     },
     years: {
-      title: 'Your retirement years',
       summary: `${years.fundedYears} funded · ${years.gapYears} with a gap`,
       cells: years.strip.flatMap((run) =>
         Array.from({ length: run.to - run.from + 1 }, (_, index) => ({
@@ -57,10 +53,7 @@ function savingDetail({ needsM, puttingInM }: { needsM: number; puttingInM: numb
   return {
     bars: {
       type: 'saving',
-      needLabel: 'Needs a month',
       needValue: euro(needsM),
-      needPct: 100,
-      putLabel: 'You’re putting in',
       putValue: euro(puttingInM),
       putPct: needsM > 0 ? Math.min(100, Math.round((1000 * puttingInM) / needsM) / 10) : 100,
     },
@@ -84,14 +77,12 @@ export function goalsPage(context: ReportContext, goals: GoalSummary[]) {
         ? 'retirement covered'
         : 'lowest goal covered',
     bigTone: bandTone(retirement ? retirement.band : worstBand(goals)),
-    eyebrow: 'YOUR GOALS IN DETAIL',
     title:
       needAttention === 0
         ? `All ${goals.length}${plural(goals.length, ' goal', ' goals')} on track`
         : `${onTrack} of ${goals.length} on track, ${needAttention}${plural(needAttention, ' needs', ' need')} attention`,
     goals: byAge.map((goal) => ({
       name: goal.name,
-      kind: goal.key,
       icon: goal.key,
       pct: goal.pct,
       band: bandKey(goal.band),
@@ -107,7 +98,5 @@ export function goalsPage(context: ReportContext, goals: GoalSummary[]) {
             ...savingDetail(goal.monthly),
           }),
     })),
-    howToRead:
-      'How to read this page. Today’s money shows what things cost now; future euros add price rises. Covered is how much of a goal’s cost your income and savings meet: 100% is fully covered, 5% leaves about 95% to plan for.',
   }
 }

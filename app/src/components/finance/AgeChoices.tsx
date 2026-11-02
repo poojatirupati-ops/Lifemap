@@ -1,8 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import type { ReactNode } from 'react'
 import { chosenAssumption } from '../../domain/planning/assumptions.ts'
-import { rules2026 } from '../../domain/planning/rates.ts'
-import { guideSource } from '../../domain/planning/rates.ts'
+import { guideSource, rules2026 } from '../../domain/planning/rates.ts'
 import { GUIDANCE_FIGURES } from '../../domain/planning/settings.data.ts'
 import { standardValue } from '../../domain/planning/settings.ts'
 import { useStore } from '../../state/store.ts'
@@ -13,9 +12,9 @@ import {
   chooseRetireAge,
   partnerRetirementRange,
   planEndRange,
-  retirementRange,
 } from './choiceActions.ts'
-import { partnerEarns } from './requiredChoices.ts'
+import { retirementRange } from '../../domain/goals/retirement.ts'
+import { partnerEarns } from '../../domain/finances/fields.data.ts'
 
 const { sp, pen, guide } = rules2026
 const { lifeMen65, lifeWomen65 } = GUIDANCE_FIGURES
@@ -47,29 +46,29 @@ export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
     useShallow(({ plan }) => ({
       retireSet: plan.retireSet,
       retireAge: plan.retireAge,
-      pRetSet: plan.pRetSet,
-      pRet: plan.pRet,
-      asm: plan.asm,
+      partnerRetireSet: plan.partnerRetireSet,
+      partnerRetireAge: plan.partnerRetireAge,
+      assumptions: plan.assumptions,
       about: plan.about,
-      fin: plan.fin,
+      figures: plan.figures,
     })),
   )
   const retirement = retirementRange(plan)
-  const planEnd = chosenAssumption(plan.asm, 'planEnd')
-  const accessAge = Number(chosenAssumption(plan.asm, 'accessAge') ?? standardValue('accessAge'))
+  const planEnd = chosenAssumption(plan.assumptions, 'planEnd')
+  const accessAge = Number(chosenAssumption(plan.assumptions, 'accessAge') ?? standardValue('accessAge'))
 
-  const partnerChoice = partnerEarns(plan) && (
+  const partnerChoice = partnerEarns(plan) ? (
     <AgeChoice
       choice="pRetireAge"
       box="pret|a"
       label="Your partner's retirement age"
-      age={plan.pRetSet ? (plan.pRet ?? null) : null}
+      age={plan.partnerRetireSet ? (plan.partnerRetireAge ?? null) : null}
       range={partnerRetirementRange(plan)}
       help="We count their pay until this age, then only their State Pension. Only you can choose it, so we never fill it in for you."
-      note={plan.pRetSet ? { id: 'pret-note', text: partnerRetirementNote(plan.pRet!) } : undefined}
+      note={plan.partnerRetireSet ? { id: 'pret-note', text: partnerRetirementNote(plan.partnerRetireAge!) } : undefined}
       onChoose={choosePartnerRetireAge}
     />
-  )
+  ) : null
 
   return (
     <>
@@ -87,7 +86,7 @@ export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
         }
         onChoose={chooseRetireAge}
       />
-      {partnerFirst && partnerChoice}
+      {partnerFirst ? partnerChoice : null}
       <AgeChoice
         choice="planEnd"
         box="asm|planEnd"
@@ -99,7 +98,7 @@ export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
         onChoose={choosePlanEnd}
       />
       {inflation}
-      {!partnerFirst && partnerChoice}
+      {partnerFirst ? null : partnerChoice}
     </>
   )
 }

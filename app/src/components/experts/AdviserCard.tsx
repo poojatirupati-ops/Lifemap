@@ -1,8 +1,8 @@
 import type { Adviser } from '../../domain/identity/advisers.data.ts'
 import { EXPERTS } from '../../domain/identity/advisers.data.ts'
-import type { Specialist } from './booking.ts'
+import type { Specialist } from '../../domain/identity/booking.ts'
 
-function MatchReason({ specialist }: { specialist: Specialist }) {
+function matchReason(specialist: Specialist) {
   const title = EXPERTS[specialist.kind].title.toLowerCase()
   if (specialist.picked)
     return (
@@ -49,7 +49,7 @@ export default function AdviserCard({
       </div>
       <p className="av2-why">
         <span aria-hidden="true">✨</span>
-        <MatchReason specialist={specialist} />
+        {matchReason(specialist)}
       </p>
     </div>
   )

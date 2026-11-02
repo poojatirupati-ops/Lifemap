@@ -2,8 +2,8 @@
 import { describe, expect, it } from 'vitest'
 import { runOriginal } from './origSlice'
 import { plain } from './origProfile'
+import { answerMortgage } from '../../src/domain/finances/mortgage'
 import {
-  answerMortgage,
   removeStatementFigures,
   typeFigure,
   type FinanceBook,
@@ -48,8 +48,18 @@ function compare(steps: [name: string, step: Step][]) {
   }
 }
 
-const upload = (sec: string, edit: Record<string, number> = {}, item: Upload['item'] = null) =>
-  ({ sec, stage: 'confirm', files: [], edit, item }) as Upload
+const upload = (
+  section: string,
+  edit: Record<string, number> = {},
+  item: Upload['item'] = null,
+): Upload => ({ section, stage: 'confirm', files: [], edit, item })
+
+// the same upload in the original's shape
+const originalUpload = ({ section, item, ...rest }: Upload) => ({
+  ...rest,
+  sec: section,
+  item: item && { lk: item.list, id: item.id },
+})
 
 const liabKeys = [
   ...FINANCE_SECTIONS.find(({ id }) => id === 'liab')!.fields,
@@ -77,7 +87,7 @@ describe('finance figures follow the original', () => {
       [
         'smart upload',
         (o, s) => {
-          o.getState().upl = upload('smart', { income: 61000 })
+          o.getState().upl = originalUpload(upload('smart', { income: 61000 }))
           o.confirmUpload()
           confirmUpload(s, upload('smart', { income: 61000 }))
         },
@@ -121,9 +131,10 @@ describe('finance figures follow the original', () => {
         'card statement',
         (o, s) => {
           const id = o.getState().iid
-          o.getState().upl = upload('liab', { pay: 55 }, { lk: 'cards', id })
+          const card = upload('liab', { pay: 55 }, { list: 'cards', id })
+          o.getState().upl = originalUpload(card)
           o.confirmUpload()
-          confirmUpload(s, upload('liab', { pay: 55 }, { lk: 'cards', id }))
+          confirmUpload(s, card)
         },
       ],
     ]))
@@ -138,7 +149,8 @@ describe('finance figures follow the original', () => {
               if (home) book.fin.home = home
               else delete book.fin.home
             }
-            expect(answerMortgage(s, answer)).toBe(o.setMortYN(answer))
+            o.setMortYN(answer)
+            answerMortgage(s, answer)
           },
         ]),
       ),

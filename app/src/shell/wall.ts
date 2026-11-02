@@ -12,7 +12,7 @@ export const isWalled = (key: string, authed: boolean) =>
 
 /** Leave the app and shell, show sign-in, and remember in `rt` the screen the visitor wanted. */
 export const sendToSignIn = (rt: string) =>
-  useStore.getState().wallVisitor({ rt, app: false, shell: false, admin: false })
+  useStore.getState().wallVisitor({ returnTo: rt, hasResults: false, inShell: false, adminView: false })
 
 /** Tabs (and the plan builder) the wall can catch a visitor on; any other key is a screen of its own. */
 const TAB_OF: Record<string, { tab: string; pb?: boolean }> = {
@@ -40,16 +40,16 @@ export function returnTo(rt: string) {
   const target = TAB_OF[rt]
   if (!target) {
     store.update((plan) => {
-      plan.rt = undefined
-      plan.shell = false
-      plan.app = false
+      plan.returnTo = undefined
+      plan.inShell = false
+      plan.hasResults = false
     })
     return store.go(rt)
   }
   store.update((plan) => {
-    plan.rt = undefined
-    plan.shell = !plan.app
-    plan.pb = !!target.pb
+    plan.returnTo = undefined
+    plan.inShell = !plan.hasResults
+    plan.planBuilder = !!target.pb
   })
   store.switchTab(target.tab)
   if (target.pb) store.go(rt)

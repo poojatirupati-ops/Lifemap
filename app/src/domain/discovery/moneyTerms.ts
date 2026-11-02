@@ -1,23 +1,26 @@
 // The customer's own money terms, grouped by profile section (reveal, Me profile, report).
 import type { ProfileAnswers } from './profile.ts'
-import { discoverQuestion, moneyQuestion } from './questions.data.ts'
+import {
+  APPETITE_QUESTION,
+  SURPRISE_QUESTION,
+  discoverQuestion,
+  moneyQuestion,
+} from './questions.data.ts'
+import type { ProfileSection } from './terms.data.ts'
 
 export interface TermGroup {
-  /** a key of PROFILE_SECTIONS */
-  section: string
+  section: ProfileSection
   terms: string[]
 }
 
-const SECTIONS: [section: string, discoverIds: string[]][] = [
-  ['mindset', ['2', '12']],
-  ['behaviour', ['4', '9']],
-  ['appetite', ['8']],
-  ['safety', ['7']],
-  ['capacity', ['6']],
+/** Each section's Discover answer tags, then its money-profile traits. */
+const SECTIONS: [section: ProfileSection, discoverIds: string[], traitIds: string[]][] = [
+  ['mindset', ['2', '12'], []],
+  ['behaviour', ['4', '9'], ['u4', 'u11']],
+  ['appetite', [APPETITE_QUESTION], []],
+  ['safety', [SURPRISE_QUESTION], []],
+  ['capacity', ['6'], []],
 ]
-
-/** Behavioural traits from the money profile, shown with investor behaviour. */
-const TRAIT_QUESTIONS = ['u4', 'u11']
 
 export const answerTag = (answers: ProfileAnswers['discover'], id: string) => {
   const index = answers[id]
@@ -30,11 +33,11 @@ const trait = (answers: ProfileAnswers['money'], id: string) => {
 }
 
 export function moneyTerms({ discover, money }: ProfileAnswers): TermGroup[] {
-  return SECTIONS.map(([section, ids]) => ({
+  return SECTIONS.map(([section, discoverIds, traitIds]) => ({
     section,
     terms: [
-      ...ids.map((id) => answerTag(discover, id)),
-      ...(section === 'behaviour' ? TRAIT_QUESTIONS.map((id) => trait(money, id)) : []),
+      ...discoverIds.map((id) => answerTag(discover, id)),
+      ...traitIds.map((id) => trait(money, id)),
     ].filter((term): term is string => !!term),
   })).filter((group) => group.terms.length > 0)
 }

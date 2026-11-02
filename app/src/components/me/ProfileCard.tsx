@@ -1,28 +1,26 @@
 import { useShallow } from 'zustand/react/shallow'
-import { personality } from '../../domain/discovery/profile.ts'
+import { useStore } from '../../state/store.ts'
+import { personality, profileAnswers, profilePercent } from '../../domain/discovery/profile.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { localToday } from '../../lib/today.ts'
-import { openMe } from '../plan/planActions.ts'
 import Avatar from './Avatar.tsx'
-import { profilePercent, useMePlan } from './mePlan.ts'
-
-const today = () => localToday((globalThis as { __TODAY?: string }).__TODAY)
 
 /** The hub's header card: photo, name, age, money personality and three stats. */
 export default function ProfileCard() {
-  const plan = useMePlan(
-    useShallow((plan) => ({
-      name: plan.acct.name || plan.fin.name || 'You',
+  const openMe = useStore((store) => store.openMe)
+  const plan = useStore(
+    useShallow(({ plan }) => ({
+      name: plan.account.name || plan.figures.name || 'You',
       age: plan.about.age,
       retireSet: plan.retireSet,
       retireAge: plan.retireAge,
       goals: plan.goals.length,
       percent: profilePercent(plan),
-      type: personality({ discover: plan.ans, money: plan.um.a, products: plan.um.chips }),
-      startYear: assumption(plan, 'startYear', today()),
+      type: personality(profileAnswers(plan)),
+      startYear: assumption(plan, 'startYear', localToday()),
     })),
   )
-  const startsLater = plan.startYear > today().getFullYear()
+  const startsLater = plan.startYear > localToday().getFullYear()
 
   return (
     <div className="card mepro">

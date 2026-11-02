@@ -12,19 +12,20 @@ export interface Option {
   trait?: string
 }
 
-export interface DiscoverQuestion {
+interface QuestionBase {
   id: string
   /** shown above it when the money profile asks it again */
   section: [title: string, plain: string]
   chapter: number
   title: string
   subtitle: string
-  type: 'cards' | 'ride' | 'scenario'
-  /** a 'scenario' investment falling from this amount to that */
-  from?: number
-  to?: number
   options: Option[]
 }
+
+/** A 'scenario' shows an investment falling from one amount to another above the answers. */
+export type DiscoverQuestion =
+  | (QuestionBase & { type: 'cards' | 'ride' })
+  | (QuestionBase & { type: 'scenario'; from: number; to: number })
 
 export interface MoneyQuestion {
   id: string
@@ -56,6 +57,20 @@ export const CHAPTERS: Record<number, string> = {
   4: 'Your risk appetite',
   5: 'Your next chapter',
 }
+
+/** The picture behind each chapter's questions (a CSS custom property). */
+export const CHAPTER_ART: Record<number, string> = {
+  1: 'art-savings',
+  2: 'art-investing',
+  3: 'art-rain',
+  4: 'art-map',
+  5: 'art-pension',
+}
+
+/** The €1,000 surprise: how the customer would cover it. */
+export const SURPRISE_QUESTION = '7'
+/** The road they would enjoy: their risk appetite. */
+export const APPETITE_QUESTION = '8'
 
 export const DISCOVER_QUESTIONS: DiscoverQuestion[] = [
   {

@@ -8,7 +8,13 @@ import { plain } from '../golden/origProfile'
 import type { ListItem, Plan } from '../../src/state/types'
 
 test('fresh() deep-equals the original (same key order)', () => {
-  const { scr: _screen, sheet: _sheet, ...original } = origSlice().fresh()
+  const { scr: _screen, sheet: _sheet, ...proto } = origSlice().fresh()
+  // The app stores whether the saving was capped (saveNote's only non-empty value), not the copy.
+  const original = Object.fromEntries(
+    Object.entries(proto).map(([key, value]) =>
+      key === 'saveNote' ? ['savingCapped', value !== ''] : [key, value],
+    ),
+  )
   const mine = fresh()
   expect(mine).toEqual(original)
   expect(JSON.stringify(mine)).toBe(JSON.stringify(original))
@@ -17,21 +23,21 @@ test('fresh() deep-equals the original (same key order)', () => {
 
 function item(
   id: number,
-  fields: ListItem['f'],
-  { source = 'typed', conf = {}, fix = {} }: { source?: 'typed' | 'doc' } & Partial<ListItem> = {},
+  fields: ListItem['fields'],
+  { source = 'typed', confidence: conf = {}, fixed: fix = {} }: { source?: 'typed' | 'doc' } & Partial<ListItem> = {},
 ): ListItem {
   return {
     id,
-    f: fields,
-    src: Object.fromEntries(Object.keys(fields).map((key) => [key, source])),
-    conf,
-    man: {},
-    fix,
+    fields: fields,
+    sources: Object.fromEntries(Object.keys(fields).map((key) => [key, source])),
+    confidence: conf,
+    manual: {},
+    fixed: fix,
     docFrom: null,
   }
 }
 
-function makeState(fin: Partial<Plan['fin']> = {}, asm: Partial<Plan['asm']> = {}): Plan {
+function makeState(fin: Partial<Plan['figures']> = {}, asm: Partial<Plan['assumptions']> = {}): Plan {
   const state = fresh()
   state.lists = {
     // doc-sourced cards with differing conf and one fix flag: min(conf) and the fix branch are exercised
@@ -39,13 +45,13 @@ function makeState(fin: Partial<Plan['fin']> = {}, asm: Partial<Plan['asm']> = {
       item(
         1,
         { owed: 400, pay: 40, rate: 20 },
-        { source: 'doc', conf: { owed: 0.9, pay: 0.6, rate: 0.5 }, fix: { owed: true } },
+        { source: 'doc', confidence: { owed: 0.9, pay: 0.6, rate: 0.5 }, fixed: { owed: true } },
       ),
-      item(2, { owed: 100, pay: 10 }, { source: 'doc', conf: { owed: 0.7, pay: 0.8 } }),
+      item(2, { owed: 100, pay: 10 }, { source: 'doc', confidence: { owed: 0.7, pay: 0.8 } }),
     ],
     // three rated loans: unequal owed, plus one with owed blank (weight-1 fallback) -> weighted mean with long decimals
     loans: [
-      item(5, { owed: 3000, pay: 90, rate: 7 }, { source: 'doc', conf: { owed: 0.8, pay: 0.8 } }),
+      item(5, { owed: 3000, pay: 90, rate: 7 }, { source: 'doc', confidence: { owed: 0.8, pay: 0.8 } }),
       item(6, { owed: 1000, pay: 30, rate: 3 }),
       item(8, { pay: 5, rate: 5 }),
     ],
@@ -53,9 +59,9 @@ function makeState(fin: Partial<Plan['fin']> = {}, asm: Partial<Plan['asm']> = {
     pens: [item(3, { value: 5000, monthly: 200, own: 80 }), item(4, { value: 100, monthly: 100 })],
   }
   state.listsFedTotals = {}
-  state.fin.mort2Bal = 9
-  Object.assign(state.fin, fin)
-  Object.assign(state.asm, asm)
+  state.figures.mort2Bal = 9
+  Object.assign(state.figures, fin)
+  Object.assign(state.assumptions, asm)
   return state
 }
 
@@ -81,9 +87,9 @@ test.each([
 ])('syncLists matches the original: %s', (_name, fin, asm, ownShare) => {
   const state = makeState(fin, asm)
   compareWithOriginal(state)
-  expect(state.fin.pensionOwnM).toBe(80 + 100 * ownShare)
-  expect(state.conf.cardBal).toBe(0.7)
-  expect(state.fix.cardBal).toBe(true)
+  expect(state.figures.pensionOwnM).toBe(80 + 100 * ownShare)
+  expect(state.confidence.cardBal).toBe(0.7)
+  expect(state.fixed.cardBal).toBe(true)
 })
 
 // cleanup and conf branches the first scenario does not reach
@@ -92,25 +98,25 @@ test('syncLists matches the original: emptied list, stale typed rate, partial co
   const base = makeState().lists
   state.lists.cards = []
   state.listsFedTotals = { cards: true }
-  Object.assign(state.fin, { cardBal: 50, cardPayM: 5, cardRate: 9 })
-  Object.assign(state.src, { cardBal: 'doc', cardRate: 'typed' })
-  Object.assign(state.conf, { cardBal: 0.5 })
-  Object.assign(state.fix, { cardBal: true })
-  state.lists.loans = [{ ...base.loans[0], f: { owed: 3000, pay: 90 } }]
-  state.fin.loanRate = 9
-  state.src.loanRate = 'typed'
+  Object.assign(state.figures, { cardBal: 50, cardPayM: 5, cardRate: 9 })
+  Object.assign(state.sources, { cardBal: 'doc', cardRate: 'typed' })
+  Object.assign(state.confidence, { cardBal: 0.5 })
+  Object.assign(state.fixed, { cardBal: true })
+  state.lists.loans = [{ ...base.loans[0], fields: { owed: 3000, pay: 90 } }]
+  state.figures.loanRate = 9
+  state.sources.loanRate = 'typed'
   const docOwedAndPay = { src: { owed: 'doc', pay: 'doc' }, f: { owed: 10, pay: 1 } }
   state.lists.mort2 = [
-    { ...base.mort2[0], ...docOwedAndPay, conf: { owed: 0.9 } },
-    { ...base.mort2[0], ...docOwedAndPay, id: 9, conf: { owed: 0.8, pay: 0.7 } },
+    { ...base.mort2[0], ...docOwedAndPay, confidence: { owed: 0.9 } },
+    { ...base.mort2[0], ...docOwedAndPay, id: 9, confidence: { owed: 0.8, pay: 0.7 } },
   ]
   compareWithOriginal(state)
-  expect(state.fin.cardBal).toBeUndefined()
+  expect(state.figures.cardBal).toBeUndefined()
   expect(state.listsFedTotals.cards).toBe(false)
-  expect(state.fin.loanRate).toBeUndefined()
-  expect(state.src.loanRate).toBeUndefined()
-  expect(state.conf.mort2Bal).toBe(0.8)
-  expect(state.conf.mort2PayM).toBeUndefined()
+  expect(state.figures.loanRate).toBeUndefined()
+  expect(state.sources.loanRate).toBeUndefined()
+  expect(state.confidence.mort2Bal).toBe(0.8)
+  expect(state.confidence.mort2PayM).toBeUndefined()
 })
 
 // leftovers from a doc-sourced total meet typed or blank items; a doc rate with no rated item survives
@@ -123,24 +129,24 @@ test('syncLists matches the original: leftover conf/fix, doc rate kept, zero and
     item(1, { value: 1, monthly: 100 }),
   ]
   for (const key of ['cardBal', 'cardPayM', 'loanBal']) {
-    state.fin[key] = 7
-    state.src[key] = 'doc'
-    state.conf[key] = 0.5
-    state.fix[key] = true
+    state.figures[key] = 7
+    state.sources[key] = 'doc'
+    state.confidence[key] = 0.5
+    state.fixed[key] = true
   }
-  state.fin.loanRate = 6
-  state.src.loanRate = 'doc'
+  state.figures.loanRate = 6
+  state.sources.loanRate = 'doc'
   compareWithOriginal(state)
-  expect(state.src.cardBal).toBe('typed')
-  expect(state.conf.cardBal).toBeUndefined()
-  expect(state.fix.cardBal).toBeUndefined()
+  expect(state.sources.cardBal).toBe('typed')
+  expect(state.confidence.cardBal).toBeUndefined()
+  expect(state.fixed.cardBal).toBeUndefined()
   for (const key of ['cardPayM', 'loanBal']) {
-    expect(state.fin[key]).toBeUndefined()
-    expect(state.conf[key]).toBeUndefined()
-    expect(state.fix[key]).toBeUndefined()
+    expect(state.figures[key]).toBeUndefined()
+    expect(state.confidence[key]).toBeUndefined()
+    expect(state.fixed[key]).toBeUndefined()
   }
-  expect(state.fin.loanRate).toBe(6)
-  expect(state.fin.pensionOwnM).toBeUndefined()
+  expect(state.figures.loanRate).toBe(6)
+  expect(state.figures.pensionOwnM).toBeUndefined()
 })
 
 test.each([
@@ -162,7 +168,7 @@ test.each([
     src: {},
   }))
   compareWithOriginal(state)
-  expect(state.fin.pensionOwnM).toBe(own)
+  expect(state.figures.pensionOwnM).toBe(own)
 })
 
 test('store update runs normalize and keeps state immutable', () => {
@@ -171,15 +177,15 @@ test('store update runs normalize and keeps state immutable', () => {
     plan.lists.cards = [item(1, { owed: 50 })]
   })
   const after = useStore.getState().plan
-  expect(after.fin.cardBal).toBe(50)
-  expect(before.fin.cardBal).toBeUndefined()
+  expect(after.figures.cardBal).toBe(50)
+  expect(before.figures.cardBal).toBeUndefined()
   expect(after).not.toBe(before)
 })
 
 test('named actions: switchTab, openAsk, wallVisitor', () => {
   const { switchTab, openAsk, wallVisitor } = useStore.getState()
   useStore.getState().update((plan) => {
-    plan.fsec = 2
+    plan.financeSection = 2
   })
   openAsk()
   expect(useStore.getState()).toMatchObject({ sheet: 'ask', plan: { ask: { log: [] } } })
@@ -188,6 +194,6 @@ test('named actions: switchTab, openAsk, wallVisitor', () => {
     sheet: null,
     plan: { tab: 'plan', planGo: 'timeline', fsec: null },
   })
-  wallVisitor({ from: 'F2' })
+  wallVisitor({ cameFrom: 'F2' })
   expect(useStore.getState()).toMatchObject({ screen: 'P1', plan: { from: 'F2' } })
 })

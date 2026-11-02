@@ -1,5 +1,5 @@
 import { euro } from '../../lib/format.ts'
-import { whatIfTotal } from './saving.ts'
+import { whatIfTotal } from '../../domain/planning/saving.ts'
 
 interface Props {
   saving: number

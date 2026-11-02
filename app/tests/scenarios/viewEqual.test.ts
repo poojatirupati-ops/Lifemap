@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { execFile } from 'node:child_process'
 import { resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { testHookOn } from '../../src/lib/lmTestHook.ts'
+import { testAuthOn } from '../../src/lib/lmTestHook.ts'
 import { diffObj } from '../../tools/normalise.mjs'
 
 const appRoot = resolve(__dirname, '../..')
@@ -15,7 +15,7 @@ let baseUrl = ''
 
 beforeAll(async () => {
   server = createServer((request, response) => {
-    const file = request.url!.slice(1).split('?')[0]
+    const file = new URL(request.url!, baseUrl).pathname.slice(1)
     if (!file.endsWith('.html')) {
       response.writeHead(404).end() // favicon
       return
@@ -60,9 +60,9 @@ describe('view-equal', () => {
   })
 
   it('exposes the hook only on a local host with lm-test-auth', () => {
-    expect(testHookOn('localhost', '1')).toBe(true)
-    expect(testHookOn('127.0.0.1', '1')).toBe(true)
-    expect(testHookOn('localhost', null)).toBe(false)
-    expect(testHookOn('lifemap.ie', '1')).toBe(false)
+    expect(testAuthOn('localhost', '1')).toBe(true)
+    expect(testAuthOn('127.0.0.1', '1')).toBe(true)
+    expect(testAuthOn('localhost', null)).toBe(false)
+    expect(testAuthOn('lifemap.ie', '1')).toBe(false)
   })
 })

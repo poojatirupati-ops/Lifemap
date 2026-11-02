@@ -3,9 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { runOriginal } from '../golden/origSlice'
 import { fixtures } from '../golden/origProfile'
 import { project } from '../../src/domain/planning/project'
-import { planMissing } from '../../src/report/model/readiness'
-import { toolsForYou, videosForYou, weakestGoal } from '../../src/components/explore/picks'
-import { CATEGORIES, TOOLS, TOPICS } from '../../src/components/explore/explore.data'
+import { planMissing } from '../../src/domain/plan/readiness'
+import {
+  toolsForYou,
+  videosForYou,
+  weakestGoal,
+  whyThisVideo,
+} from '../../src/domain/explore/picks'
+import { TOPICS } from '../../src/components/explore/explore.data'
+import { CATEGORIES, TOOLS } from '../../src/components/explore/tools.data'
 import { VIDEOS } from '../../src/components/explore/videos.data'
 
 const original = runOriginal(
@@ -25,9 +31,18 @@ describe('Explore picks', () => {
 
     expect(toolsForYou(specs)).toEqual(original.toolsForYou())
     expect(weakest?.id ?? null).toEqual(original.xWorst()?.id ?? null)
-    expect(videosForYou(specs, weakest?.spec).map((v) => v.id)).toEqual(
+    expect(videosForYou(VIDEOS, specs, weakest?.spec).map((v) => v.id)).toEqual(
       original.videosForYou().map((v: { id: string }) => v.id),
     )
+  })
+
+  it('says why a video was picked only once the plan is ready', () => {
+    const goals = [{ id: 1, name: 'Retirement', kind: 'retire', spec: 'pension' }] as never
+    expect(whyThisVideo(goals, { 1: 62 }, true, 'pension')).toBe(
+      'Your retirement goal is 62% covered.',
+    )
+    expect(whyThisVideo(goals, { 1: 62 }, false, 'pension')).toBeNull()
+    expect(whyThisVideo(goals, { 1: 62 }, true, 'mortgage')).toBeNull()
   })
 
   it('lists the same calculators, groups, topics and videos', () => {

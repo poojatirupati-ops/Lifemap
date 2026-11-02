@@ -5,7 +5,7 @@ const chapters = Object.keys(CHAPTERS).map(Number)
 
 /** One bar per chapter, filled by the share of its questions answered. */
 export default function ChapterBar() {
-  const answers = useStore((store) => store.plan.ans)
+  const answers = useStore((store) => store.plan.answers)
   return (
     <div className="chaps" aria-hidden="true">
       {chapters.map((chapter) => {

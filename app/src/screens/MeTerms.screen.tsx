@@ -1,5 +1,5 @@
 import { meHead } from '../components/me/meHead.ts'
-import { useProfileAnswers } from '../components/discover/useProfileAnswers.ts'
+import { useProfileAnswers } from '../hooks/useProfileAnswers.ts'
 import { backToMe } from '../components/finance/financeActions.ts'
 import TermsList from '../components/me/TermsList.tsx'
 import { moneyTerms } from '../domain/discovery/moneyTerms.ts'
@@ -18,12 +18,12 @@ export const Head = () =>
   })
 
 export function Body() {
-  const hasTerms = moneyTerms(useProfileAnswers()).length > 0
+  const terms = moneyTerms(useProfileAnswers())
   return (
     <>
       <div className="card">
-        {hasTerms ? (
-          <TermsList />
+        {terms.length ? (
+          <TermsList terms={terms} />
         ) : (
           <p className="small">Answer your first questions to see your terms.</p>
         )}

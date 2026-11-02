@@ -13,7 +13,7 @@ export function planScenarios(context: ReportContext) {
   const { percent } = projection
   const target = [...plan.goals].sort((a, b) => percent[a.id] - percent[b.id] || a.age - b.age)[0]
   const today = { covered: target ? percent[target.id] : 100, gapStartsAt: firstGapAge(rows) }
-  const fullStatePension = f.statePensionShare >= 0.999
+  const { fullStatePension } = context
   const base = { today, fullStatePension, allOnTrack: today.covered >= 95 }
   if (!target || today.covered >= 95) return { ...base, rows: [], combined: [], ...closeTheGap() }
 

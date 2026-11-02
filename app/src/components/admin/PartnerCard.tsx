@@ -1,4 +1,4 @@
-import { useSettings } from './settingsStore.ts'
+import { useSettings } from '../../state/settings.ts'
 
 /** The partner's name, and a way back to LifeMap's own standards once anything is changed. */
 export default function PartnerCard() {

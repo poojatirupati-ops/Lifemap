@@ -1,10 +1,13 @@
-import { useMemo } from 'react'
-import { project } from '../../domain/planning/project.ts'
+import { useShallow } from 'zustand/react/shallow'
+import { specialistFor } from '../../domain/identity/booking.ts'
+import { useProjection } from '../../hooks/useProjection.ts'
 import { useStore } from '../../state/store.ts'
-import { specialistFor } from './booking.ts'
 
-/** The kind of expert to match; the plan is only projected once it exists. */
+/** The kind of expert to match: the picked one, else the one for the least covered goal. */
 export function useSpecialist() {
-  const plan = useStore((store) => store.plan)
-  return useMemo(() => specialistFor(plan, plan.app ? project(plan).percent : {}), [plan])
+  const plan = useStore(
+    useShallow(({ plan }) => ({ booking: plan.booking, goals: plan.goals, hasResults: plan.hasResults })),
+  )
+  const { base } = useProjection()
+  return specialistFor(plan, plan.hasResults ? base.percent : {})
 }

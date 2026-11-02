@@ -1,4 +1,4 @@
-import { useMortgagePage } from '../../state/mortgage.ts'
+import { pageKey, useMortgagePage } from '../../state/mortgage.ts'
 
 /** A free live session with a mortgage broker, and a button to save a seat. */
 export default function SeatCard({
@@ -10,7 +10,8 @@ export default function SeatCard({
   when: string
   title: string
 }) {
-  const seat = useMortgagePage((page) => `${page.situation}-${index}`)
+  const situation = useMortgagePage((page) => page.situation)
+  const seat = pageKey(situation, index)
   const saved = useMortgagePage((page) => !!page.seats[seat])
   const toggleSeat = useMortgagePage((page) => page.toggleSeat)
   const [day, ...time] = when.split(' ')

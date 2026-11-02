@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { runOriginal } from '../golden/origSlice'
 import { fixtures, plain } from '../golden/origProfile'
 import { project } from '../../src/domain/planning/project'
-import { foundations, type Check } from '../../src/components/home/foundations'
-import { monthsToClear } from '../../src/components/home/protection'
+import type { Check } from '../../src/domain/planning/foundationCheck'
+import { foundations } from '../../src/domain/planning/foundations'
+import { monthsToClear } from '../../src/domain/planning/protection'
 import { homeSummary } from '../../src/components/home/useHome'
+import { fromOriginal } from '../../src/state/migrate'
 
 const original = runOriginal('applyAssume, syncLists, autoSafety, foundations, fndNext, nextStep')
 
@@ -20,7 +22,8 @@ function prepared(state: any) {
 const asCheck = ({ status, text, tool, section }: Check) =>
   ({ st: status, s: text, a: tool, sec: section }) as Record<string, unknown>
 
-function ours(plan: any) {
+function ours(state: any) {
+  const plan: any = fromOriginal(state)
   const levels = foundations(plan, project(plan))
   const asOriginal = levels.map(({ level, emoji, name, months, makePlan, checks, ...check }) => ({
     n: level,

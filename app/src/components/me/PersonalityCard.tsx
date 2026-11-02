@@ -1,14 +1,15 @@
-import { hasEnoughForPersonality } from '../../domain/discovery/profile.ts'
+import { useStore } from '../../state/store.ts'
+import { PROFILE_QUESTIONS, profilePercent } from '../../domain/discovery/profile.ts'
 import { riskLabelText } from '../../domain/discovery/riskRead.ts'
-import { openMe } from '../plan/planActions.ts'
-import { PROFILE_QUESTIONS } from './mePlan.ts'
 import { useProfileRead } from './useProfileRead.ts'
 
 /** The hub's money personality and indicative risk profile, or a prompt to answer more first. */
 export default function PersonalityCard() {
-  const { answers, type, read, answered, complete } = useProfileRead()
+  const { type, read, answered, complete } = useProfileRead()
+  const percent = useStore(({ plan }) => profilePercent(plan))
+  const openMe = useStore((store) => store.openMe)
 
-  if (!hasEnoughForPersonality(answers.discover) || !type)
+  if (!type)
     return (
       <div className="card">
         <div className="eyebrow">Your profile</div>
@@ -38,14 +39,16 @@ export default function PersonalityCard() {
       <div className="mepr-risk">
         <div className="mepr-rl">
           <small>Indicative risk profile</small>
-          <b>{riskLabelText(read).replace(/\s*\(first read\)/i, '')}</b>
+          <b>{riskLabelText({ ...read, provisional: false })}</b>
         </div>
-        <div className="mepr-meter" aria-label={`${answered} of 13 answers`}>
+        <div className="mepr-meter" aria-label={`${answered} of ${PROFILE_QUESTIONS} answers`}>
           <span>
-            <i style={{ width: `${Math.round((answered / PROFILE_QUESTIONS) * 100)}%` }}></i>
+            <i style={{ width: `${percent}%` }}></i>
           </span>
           <small>
-            {complete ? 'Confirmed · all 13 answers' : `${answered} of 13 answers · first read`}
+            {complete
+              ? `Confirmed · all ${PROFILE_QUESTIONS} answers`
+              : `${answered} of ${PROFILE_QUESTIONS} answers · first read`}
           </small>
         </div>
       </div>

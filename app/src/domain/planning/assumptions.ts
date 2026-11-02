@@ -5,9 +5,9 @@ import { standardValue, type StandardKey } from './settings'
 type Amount = number | string | null
 
 export interface AssumptionInputs {
-  asm: Record<string, Amount | undefined>
+  assumptions: Record<string, Amount | undefined>
   about: { partner: boolean | null }
-  fin: { work?: string; income?: Amount; pIncome?: Amount; sp?: string; pSp?: string }
+  figures: { work?: string; income?: Amount; pIncome?: Amount; sp?: string; pSp?: string }
 }
 
 // from October most of this year has passed, so plans start next year
@@ -26,16 +26,16 @@ const FROM_STANDARD: Record<string, [StandardKey, number?]> = {
   penChg: ['fundChg', 0.01],
 }
 
-export function chosenAssumption(asm: AssumptionInputs['asm'], key: string) {
+export function chosenAssumption(asm: AssumptionInputs['assumptions'], key: string) {
   const value = asm[key]
   return value == null || value === '' ? null : value
 }
 
-export const isChosen = (asm: AssumptionInputs['asm'], key: string) =>
+export const isChosen = (asm: AssumptionInputs['assumptions'], key: string) =>
   chosenAssumption(asm, key) != null
 
 // two incomes, both employed: a smaller emergency fund is enough
-const twoSecureIncomes = ({ about, fin }: AssumptionInputs) =>
+const twoSecureIncomes = ({ about, figures: fin }: AssumptionInputs) =>
   !!about.partner && Number(fin.income) > 0 && Number(fin.pIncome) > 0 && fin.work === 'Employed'
 
 // a State Pension a week: a share of the full rate, smaller when only partly earned
@@ -43,7 +43,7 @@ const weeklyStatePension = (inputs: AssumptionInputs, today: Date, partly: boole
   rulesFor(assumption(inputs, 'startYear', today)).sp.week * (partly ? 0.6 : 0.8)
 
 function fallback(key: string, inputs: AssumptionInputs, today: Date) {
-  const { fin, about } = inputs
+  const { figures: fin, about } = inputs
   switch (key) {
     case 'startYear':
       return today > START_2027_FROM ? 2027 : 2026
@@ -64,4 +64,4 @@ function fallback(key: string, inputs: AssumptionInputs, today: Date) {
 }
 
 export const assumption = (inputs: AssumptionInputs, key: string, today = new Date()): number =>
-  Number(chosenAssumption(inputs.asm, key) ?? fallback(key, inputs, today))
+  Number(chosenAssumption(inputs.assumptions, key) ?? fallback(key, inputs, today))

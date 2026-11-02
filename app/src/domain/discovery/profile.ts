@@ -1,7 +1,8 @@
-// Money personality and the horizon suggestion (FP review round 1 §2).
+// Money personality and the horizon suggestion.
 import { PERSONALITY_TYPES } from '../identity/personality.data.ts'
-import type { Goal } from '../../state/types.ts'
-import { DISCOVER_SIX, MONEY_PROFILE, type Option } from './questions.data.ts'
+import type { Goal, Plan } from '../../state/types.ts'
+import type { Option } from './questions.data.ts'
+import { discoverAnswered, type AnswerInputs } from './profileQuestions.ts'
 import { PERSONALITY_TIE_ORDER, PERSONALITY_WEIGHTS, type PersonalityCode } from './profile.data.ts'
 
 /** Answers are option indexes by question id. */
@@ -23,16 +24,15 @@ export const optionScore = (
 
 const MIN_DISCOVER_ANSWERS = 4
 
-export const discoverAnswered = (answers: Answers) =>
-  DISCOVER_SIX.filter((q) => answers[q.id] != null).length
-
 export const hasEnoughForPersonality = (answers: Answers) =>
   discoverAnswered(answers) >= MIN_DISCOVER_ANSWERS
 
-export const moneyProfileAnswered = ({ discover, money }: ProfileAnswers) =>
-  MONEY_PROFILE.flatMap((step) => step.questions).filter((q) =>
-    typeof q === 'string' ? discover[q] != null : money[q.id] != null,
-  ).length
+/** The money profile's answers as the plan keeps them. */
+export const profileAnswers = (plan: AnswerInputs): ProfileAnswers => ({
+  discover: plan.answers,
+  money: plan.moneyProfile.answers,
+  products: plan.moneyProfile.chips,
+})
 
 const chosenWeights = (answers: ProfileAnswers, id: string) => {
   const index = (id === 'u4' ? answers.money : answers.discover)[id]
@@ -63,7 +63,10 @@ function breakTie(answers: ProfileAnswers, tied: PersonalityCode[]) {
   return fromQuestion4.length === 1 ? fromQuestion4[0] : tied[0]
 }
 
-/** The horizon (u9 option 0 to 3) the goals suggest; pension money is used for decades after retiring. */
+/**
+ * The horizon (u9 option 0 to 3) the goals suggest; pension money is used for decades after
+ * retiring.
+ */
 export function suggestedHorizon(
   goals: Pick<Goal, 'kind' | 'age' | 'saved'>[],
   age: number,
@@ -78,3 +81,17 @@ export function suggestedHorizon(
   if (years <= 10) return 2
   return 3
 }
+
+export const suggestedHorizonFor = (plan: Pick<Plan, 'goals' | 'about' | 'retireAge'>) =>
+  suggestedHorizon(plan.goals, plan.about.age ?? 0, plan.retireAge)
+
+// TODO: drop once callers outside src/domain import these from profileQuestions.ts
+export {
+  PROFILE_QUESTIONS,
+  deeperAnswered,
+  discoverAnswered,
+  isProfileComplete,
+  profileAnswered,
+  profilePercent,
+  type AnswerInputs,
+} from './profileQuestions.ts'

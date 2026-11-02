@@ -10,18 +10,18 @@ export default function RequiredChoices() {
   const plan = useStore(
     useShallow(({ plan }) => ({
       retireSet: plan.retireSet,
-      asm: plan.asm,
-      infl: plan.infl,
+      assumptions: plan.assumptions,
+      inflation: plan.inflation,
       about: plan.about,
-      fin: plan.fin,
-      pRetSet: plan.pRetSet,
+      figures: plan.figures,
+      partnerRetireSet: plan.partnerRetireSet,
     })),
   )
   const needed = requiredChoices(plan).length
   const chosen = needed - missingChoices(plan).length
   const allChosen = chosen === needed
-  const changed = Object.keys(plan.asm).filter(
-    (key) => key !== 'planEnd' && isChosen(plan.asm, key),
+  const changed = Object.keys(plan.assumptions).filter(
+    (key) => key !== 'planEnd' && isChosen(plan.assumptions, key),
   ).length
 
   return (
@@ -62,7 +62,7 @@ export default function RequiredChoices() {
           Everything else is set from the start, so nothing else blocks your results. Figures that
           are the same for everyone are tagged <b>Set by LifeMap</b>; a rate we don't know is tagged{' '}
           <b>Assumed: add yours</b>. Change any one and it reads <b>Your choice</b>.
-          {changed > 0 && ` You have changed ${changed}.`}
+          {changed > 0 ? ` You have changed ${changed}.` : null}
         </p>
         {/* TODO(R-26): every other Your assumptions field goes here once R-26 builds them */}
         <div style={{ marginTop: 10 }}></div>

@@ -1,9 +1,14 @@
+import clsx from 'clsx'
 import { useMortgagePage } from '../../state/mortgage.ts'
-import { READING_PHOTOS, photo, type Reading } from './mortgages.data.ts'
+import { READING_PHOTOS, photoAt, type Reading } from './mortgages.data.ts'
+
+// TODO(R-29): the original shows this placeholder until docs/content/mortgage/ has the body text.
+const PLACEHOLDER = 'TODO: content to come from docs/content/mortgage/ (not added yet).'
 
 /** Articles, FAQs and links; opening one shows it below the cards. */
 export default function ReadingCards({ reading }: { reading: Reading[] }) {
-  const { openReading, toggleReading } = useMortgagePage()
+  const openReading = useMortgagePage((p) => p.openReading)
+  const toggleReading = useMortgagePage((p) => p.toggleReading)
   const open = openReading === null ? undefined : reading[openReading]
 
   return (
@@ -17,7 +22,7 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
           return (
             <button
               key={item.title}
-              className={isOpen ? 'rd-c on' : 'rd-c'}
+              className={clsx('rd-c', { on: isOpen })}
               data-a="mprd"
               data-p={i}
               aria-expanded={isOpen}
@@ -25,9 +30,7 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
             >
               <span
                 className="rd-ic rd-ph"
-                style={{
-                  backgroundImage: `url(${photo(READING_PHOTOS[i % READING_PHOTOS.length])})`,
-                }}
+                style={{ backgroundImage: `url(${photoAt(READING_PHOTOS, i)})` }}
                 aria-hidden="true"
               >
                 <i>{item.emoji}</i>
@@ -43,12 +46,12 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
           )
         })}
       </div>
-      {open && (
+      {open ? (
         <div className="rd-panel" role="region" aria-label={open.kind}>
           <b>{open.title}</b>
-          <p>TODO: content to come from docs/content/mortgage/ (not added yet).</p>
+          <p>{PLACEHOLDER}</p>
         </div>
-      )}
+      ) : null}
     </>
   )
 }

@@ -1,5 +1,5 @@
 import { categoryById, toolById } from './tools.data.ts'
-import { openCalculator } from './exploreActions.ts'
+import { openCalculator } from '../../state/explore.ts'
 
 /** A product-style card for one calculator, in a horizontal strip. */
 export default function ToolCard({ id }: { id: string }) {

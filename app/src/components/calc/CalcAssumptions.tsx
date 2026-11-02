@@ -1,24 +1,16 @@
-import { chosenAssumption } from '../../domain/planning/assumptions.ts'
 import AssumptionField from '../me/AssumptionField.tsx'
 import { rememberOpenGroup } from '../me/assumptionActions.ts'
-import { useMePlan } from '../me/mePlan.ts'
-import { fieldOf, kindOf } from './assumptions.data.ts'
-import { TOOL_ASSUMPTIONS } from './bindings.data.ts'
+import { useStore } from '../../state/store.ts'
+import type { MePlan } from '../me/mePlan.ts'
+import { TOOL_ASSUMPTIONS } from '../../domain/calc/bindings.data.ts'
+import { assumptionsToChoose } from '../../domain/calc/values.ts'
 
 /** "Assumptions this tool uses": the plan-wide choices behind the result, open while some are still to choose. */
 export default function CalcAssumptions({ toolId }: { toolId: string }) {
   const keys = TOOL_ASSUMPTIONS[toolId]
   const group = `c-${toolId}`
-  const toChoose = useMePlan(
-    (plan) =>
-      (keys ?? []).filter(
-        (key) =>
-          chosenAssumption(plan.asm, key) == null &&
-          !fieldOf(key).optional &&
-          kindOf(key) !== 'standard',
-      ).length,
-  )
-  const remembered = useMePlan((plan) => plan.asmOpen === group)
+  const toChoose = useStore(({ plan }) => assumptionsToChoose(plan.assumptions, toolId).length)
+  const remembered = useStore(({ plan }) => (plan as MePlan).asmOpen === group)
   if (!keys) return null
   const open = toChoose > 0 || remembered
   return (
@@ -33,7 +25,7 @@ export default function CalcAssumptions({ toolId }: { toolId: string }) {
       }}
     >
       <summary style={{ cursor: 'pointer', fontWeight: 800, minHeight: 44 }}>
-        Assumptions this tool uses{toChoose > 0 && ` · ${toChoose} to choose`}
+        Assumptions this tool uses{toChoose > 0 ? ` · ${toChoose} to choose` : null}
       </summary>
       <div style={{ marginTop: 10 }}>
         {/* TODO(R-26): planEnd has no AssumptionField yet */}

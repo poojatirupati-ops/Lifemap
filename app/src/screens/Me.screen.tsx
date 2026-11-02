@@ -25,7 +25,7 @@ const PAGES: Record<string, Screen> = {
   umr: ProfileResult,
 }
 
-const pageOf = (plan: Plan) => PAGES[plan.me] ?? Hub
+const pageOf = (plan: Plan) => PAGES[plan.mePage] ?? Hub
 
 export const key = 'ME'
 export const id = (plan: Plan) => resolve(pageOf(plan).id, plan)

@@ -1,33 +1,27 @@
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useEffect, useRef } from 'react'
 import { useStore } from '../../state/store.ts'
 import Emo from '../ui/Emo.tsx'
-import { TOPICS } from './explore.data.ts'
-import { focusAreaOf, openTopic, showFocusArea } from './exploreActions.ts'
-import { useCardSwipe } from './useCardSwipe.ts'
-import { VIDEOS } from './videos.data.ts'
+import { TOPICS, topicPhotoStyle } from './explore.data.ts'
+import { openTopic, showFocusArea } from '../../state/explore.ts'
+import { useCardSwipe, wrap } from './useCardSwipe.ts'
+import { videosBy } from './videos.data.ts'
 
 const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 /** Focus on one area: chips, a swipeable photo card for the chosen area, and arrows with dots. */
 export default function FocusArea() {
-  const index = useStore((store) => focusAreaOf(store.plan))
-  const { swipe, card, back, cardHandlers, onKeyDown } = useCardSwipe(
-    TOPICS.length,
-    index,
-    showFocusArea,
-  )
+  const index = useStore((store) => store.plan.focusArea ?? 0)
+  const { swipe, card, back, bind, onKeyDown } = useCardSwipe(TOPICS.length, index, showFocusArea)
   const chips = useRef<HTMLDivElement>(null)
   const topic = TOPICS[index]
-  const next = TOPICS[(index + 1) % TOPICS.length]
-  const videoCount = VIDEOS.filter((video) => video.kind === topic.expert).length
-  const cardStyle = {
-    '--art': `var(--art-${topic.art})`,
-    '--pos': topic.photoPosition,
-  } as CSSProperties
+  const next = TOPICS[wrap(index + 1, TOPICS.length)]
+  const videoCount = videosBy(topic.expert).length
 
   useEffect(() => {
-    const chip = chips.current?.querySelector<HTMLElement>('.sel')
-    if (chip && index) chips.current!.scrollTo({ left: chip.offsetLeft - 18, behavior: 'smooth' })
+    const strip = chips.current
+    const chip = strip?.querySelector<HTMLElement>('.sel')
+    // scrollTo is optional only for jsdom, which has none
+    if (strip && chip) strip.scrollTo?.({ left: chip.offsetLeft - 18, behavior: 'smooth' })
   }, [index])
 
   return (
@@ -57,10 +51,10 @@ export default function FocusArea() {
           className="xh-card"
           data-a="topic"
           data-p={topic.name}
-          style={cardStyle}
+          style={topicPhotoStyle(topic)}
           ref={card}
           onClick={() => openTopic(topic.name)}
-          {...cardHandlers}
+          {...bind()}
         >
           <span className="art" aria-hidden="true"></span>
           <span className="scrim" aria-hidden="true"></span>

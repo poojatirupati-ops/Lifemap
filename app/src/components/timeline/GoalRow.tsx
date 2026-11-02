@@ -5,41 +5,34 @@ import Stepper from './Stepper.tsx'
 import SafetyMonths from './SafetyMonths.tsx'
 import GoalDetails from './GoalDetails.tsx'
 import TrashIcon from './TrashIcon.tsx'
-import { useTiming, whenText } from './goalText.ts'
-import {
-  moveGoal,
-  removeGoal,
-  renameGoal,
-  setGoalAmount,
-  setGoalSaved,
-  toggleDetails,
-} from './goalActions.ts'
+import { commitOnBlur } from './commitOnBlur.ts'
+import { whenText } from '../../domain/goals/goalTiming.ts'
+import { useTiming } from '../../hooks/useTiming.ts'
 import type { Goal } from '../../state/types.ts'
 
-/** Commit a typed figure when the field is left, as the original's change event did. */
-const onCommit =
-  (save: (typed: string) => void) => (event: { currentTarget: HTMLInputElement }) => {
-    const input = event.currentTarget
-    if (input.value !== input.defaultValue) save(input.value)
-  }
+const AMOUNT_LABEL: Record<string, string> = {
+  retire: 'Income a year €',
+  mfree: 'Mortgage left €',
+}
 
 /** One goal's editable row under the timeline. */
 export default function GoalRow({ goal }: { goal: Goal }) {
   const timing = useTiming()
-  const highlighted = useStore((store) => store.plan.tlHl === goal.id)
-  const open = useStore((store) => !!store.plan.tlOpen[goal.id])
-  const fromLiabilities = useStore((store) => goal.kind === 'mfree' && !!store.plan.fin.mortBal)
+  const highlighted = useStore((store) => store.plan.highlightedGoal === goal.id)
+  const open = useStore((store) => !!store.plan.timelineOpen[goal.id])
+  const fromLiabilities = useStore((store) => goal.kind === 'mfree' && !!store.plan.figures.mortBal)
+  const moveGoal = useStore((store) => store.moveGoal)
+  const removeGoal = useStore((store) => store.removeGoal)
+  const renameGoal = useStore((store) => store.renameGoal)
+  const setGoalAmount = useStore((store) => store.setGoalAmount)
+  const setGoalSaved = useStore((store) => store.setGoalSaved)
+  const toggleDetails = useStore((store) => store.toggleDetails)
   const retire = goal.kind === 'retire'
-  const amountLabel = retire
-    ? 'Income a year €'
-    : goal.kind === 'mfree'
-      ? 'Mortgage left €'
-      : 'Amount €'
 
   return (
     <div className={highlighted ? 'grow hl' : 'grow'} id={`row-${goal.id}`}>
       <div className="hd">
-        <GIcon className="e" emoji={goal.e} aria-hidden="true" />
+        <GIcon className="e" emoji={goal.emoji} aria-hidden="true" />
         <input
           defaultValue={goal.name}
           aria-label="Goal name"
@@ -65,13 +58,13 @@ export default function GoalRow({ goal }: { goal: Goal }) {
           </Stepper>
         </div>
         <label>
-          <span className="fl">{amountLabel}</span>
+          <span className="fl">{AMOUNT_LABEL[goal.kind] ?? 'Amount €'}</span>
           <input
             key={goal.amount}
             className="in"
             inputMode="numeric"
             defaultValue={Math.round(goal.amount)}
-            onBlur={onCommit((typed) => setGoalAmount(goal.id, typed))}
+            onBlur={commitOnBlur((typed) => setGoalAmount(goal.id, typed))}
           />
         </label>
         {retire ? (
@@ -87,11 +80,11 @@ export default function GoalRow({ goal }: { goal: Goal }) {
               className="in"
               inputMode="numeric"
               defaultValue={Math.round(goal.saved || 0)}
-              onBlur={onCommit((typed) => setGoalSaved(goal.id, typed))}
+              onBlur={commitOnBlur((typed) => setGoalSaved(goal.id, typed))}
             />
           </label>
         )}
-        {goal.k === 'safety' && <SafetyMonths goal={goal} />}
+        {goal.key === 'safety' && <SafetyMonths goal={goal} />}
       </div>
       <div className="gr-foot">
         <span className="gr-tm">

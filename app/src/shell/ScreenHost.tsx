@@ -2,10 +2,11 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useStore } from '../state/store.ts'
 import { showCurrentScreen, useShell } from '../state/shell.ts'
 import { useViewport } from '../hooks/useViewport.ts'
-import { useScreenEnter } from '../hooks/useScreenEnter.ts'
 import { useCountUp } from '../hooks/useCountUp.ts'
 import { useFndWatch } from '../hooks/useFndWatch.ts'
 import { useOrbit } from '../hooks/useOrbit.ts'
+import { useRipple } from '../hooks/useRipple.ts'
+import { useTilt } from '../hooks/useTilt.ts'
 import { useScrollKeep } from '../hooks/useScrollKeep.ts'
 import { useFocusReturn } from '../hooks/useFocusReturn.ts'
 import TabBar from '../components/frame/TabBar.tsx'
@@ -16,7 +17,7 @@ import { isWalled, sendToSignIn } from './wall.ts'
 import SheetHost from './SheetHost.tsx'
 
 export default function ScreenHost() {
-  // Subscribes to the whole plan on purpose: screen heads read it without subscribing themselves.
+  // TODO(R-06): whole-plan subscription goes when screens become TanStack Router routes (REACT-PLAN.md).
   const plan = useStore((store) => store.plan)
   const current = useStore((store) => store.screen)
   const authed = useShell((shell) => shell.authed)
@@ -37,23 +38,27 @@ export default function ScreenHost() {
     if (walled) sendToSignIn(picked.key)
   }, [walled, picked.key])
 
-  useScreenEnter(ref, renderKey)
   useCountUp(ref, renderKey)
   useFndWatch(ref, renderKey)
   useOrbit(ref, renderKey)
+  useRipple(ref)
+  useTilt(ref)
   useScrollKeep(ref, renderKey)
   useFocusReturn(ref, renderKey)
 
   useLayoutEffect(() => showCurrentScreen(id, note), [id, note])
 
+  // Called, not rendered: splitHead must see Head's own children to pin the logo bar.
+  // TODO(R-06): goes with the TanStack Router layouts, where each route renders its pinned bar itself.
   const head = screen.Head?.({ param }) ?? null
   const [pinnedHead, pageHead] = landscape ? [head, null] : splitHead(head)
   const Foot = screen.footFor ? screen.footFor(plan) : screen.Foot
   const body = <screen.Body param={param} />
   const sky = <header className="sky">{pinnedHead}</header>
 
+  // .enter stays on: a new screen remounts the keyed child below, which replays the rise animation.
   return (
-    <div id="screen" ref={ref}>
+    <div id="screen" className="enter" ref={ref}>
       {screen.kind === 'quiz' ? (
         <div className="quiz" key={renderKey}>
           {body}

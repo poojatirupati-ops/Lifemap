@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react'
 import { LIVE_SESSIONS } from './explore.data.ts'
-import { openVideo, openVideos } from './exploreActions.ts'
+import { openVideo, openVideos } from '../../state/explore.ts'
 import LiveCard from './LiveCard.tsx'
 import Strip from './Strip.tsx'
 import VideoCard from './VideoCard.tsx'
-import type { Video } from './videos.data.ts'
+import { videoLength, type Video } from './videos.data.ts'
 
 const EYEBROW: CSSProperties = {
   margin: '0 0 4px',
@@ -45,7 +45,7 @@ export default function WatchPicks({ videos: [featured, ...more], nudgeGoal }: P
         <span className="play" aria-hidden="true">
           ▶
         </span>
-        <span className="len">{featured.duration ?? `${featured.mins} min`}</span>
+        <span className="len">{videoLength(featured)}</span>
         <small style={EYEBROW}>
           {nudgeGoal ? `Because ${nudgeGoal.toLowerCase()} needs a nudge` : 'A good place to start'}
         </small>

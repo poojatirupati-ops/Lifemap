@@ -16,7 +16,8 @@ export function viewLines(selector) {
   const attributesOf = (element) => {
     const attributes = {}
     for (const { name, value } of element.attributes) {
-      if (name.startsWith('on')) continue
+      // data-a / data-p drove the original's click dispatcher; React handlers replace them
+      if (name.startsWith('on') || name === 'data-a' || name === 'data-p') continue
       attributes[name] = value
     }
     if (attributes.class !== undefined) {
@@ -30,8 +31,7 @@ export function viewLines(selector) {
         .join('; ')
     }
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) attributes.value = element.value
-    if (element.type === 'checkbox' || element.type === 'radio')
-      attributes.checked = element.checked
+    if (['checkbox', 'radio'].includes(element.type)) attributes.checked = element.checked
     return Object.keys(attributes)
       .sort()
       .map((name) => ` ${name}=${JSON.stringify(attributes[name])}`)
@@ -96,7 +96,10 @@ export function diffObj(proto, app, path = 'S') {
   )
 }
 
-/** Percent of differing pixels between two PNGs, over their common top-left area, plus the diff image. */
+/**
+ * Percent of differing pixels between two PNGs, plus the diff image of their common top-left area.
+ * Different sizes count as 100%: a taller or shorter view is a real difference.
+ */
 export function pixelDiff(a, b) {
   const width = Math.min(a.width, b.width)
   const height = Math.min(a.height, b.height)
@@ -107,5 +110,6 @@ export function pixelDiff(a, b) {
   }
   const diff = new PNG({ width, height })
   const changed = pixelmatch(crop(a), crop(b), diff.data, width, height, { threshold: 0.1 })
-  return { percent: (changed / (width * height)) * 100, diff }
+  const sameSize = a.width === b.width && a.height === b.height
+  return { percent: sameSize ? (changed / (width * height)) * 100 : 100, diff }
 }

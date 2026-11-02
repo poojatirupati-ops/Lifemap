@@ -1,20 +1,26 @@
+import { useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../state/store.ts'
-import type { CheckPlan } from './checkList.ts'
+import { withLooks, type CheckPlan } from './checkList.ts'
 
-/** The parts of the plan that Your finances and Check your details read. */
-export const useFinancePlan = (): CheckPlan =>
-  useStore(
+/**
+ * The parts of the plan that Your finances and Check your details read, with repayments too low
+ * to clear the debt flagged for a look.
+ */
+export function useFinancePlan(): CheckPlan {
+  const plan = useStore(
     useShallow(({ plan }) => ({
-      fin: plan.fin,
-      src: plan.src,
-      look: plan.look,
-      ack: plan.ack,
-      asm: plan.asm,
-      saved: plan.saved,
+      figures: plan.figures,
+      sources: plan.sources,
+      warnings: plan.warnings,
+      acknowledged: plan.acknowledged,
+      assumptions: plan.assumptions,
+      savedSections: plan.savedSections,
       about: plan.about,
       partner: plan.partner,
       lists: plan.lists,
       retireAge: plan.retireAge,
     })),
   )
+  return useMemo(() => withLooks(plan), [plan])
+}

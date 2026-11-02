@@ -1,5 +1,5 @@
 // Aoife and Cian, the sample customers behind the "Not sure? See an example" cards.
-import { ITEM_DOCUMENTS } from './lists.data.ts'
+import { ITEM_DOCUMENTS } from './itemDocuments.data.ts'
 
 export type SampleFigure = readonly [value: string | number, source: string, confidence?: number]
 

@@ -3,23 +3,15 @@ import type { Goal, Plan } from '../../state/types.ts'
 import { planSettings } from '../../domain/planning/planSettings.ts'
 import { project, livingShort, type YearRow } from '../../domain/planning/project.ts'
 
-/** Teal, gold or coral by covered percent. */
-export type Band = 'good' | 'nudge' | 'alert'
-export const band = (percent: number): Band =>
-  percent >= 95 ? 'good' : percent >= 70 ? 'nudge' : 'alert'
-
 /** A year with a shortfall the charts colour coral. */
 export const hasShortfall = (row: YearRow) => row.shortfall > 0.5
-
-/** A year short of living costs, or of a goal falling due. */
-export const isShortYear = (row: YearRow) => livingShort(row) || row.goalShort
 
 /** The first year everyday costs are no longer covered (a goal falling short is a separate note). */
 export const firstGapAge = (rows: YearRow[]) => rows.find(livingShort)?.age ?? null
 
 /** A figure the customer gave (typed or from a document), not left blank. */
 export const hasFigure = (plan: Plan, key: string) =>
-  !!plan.src[key] && plan.fin[key] != null && plan.fin[key] !== ''
+  !!plan.sources[key] && plan.figures[key] != null && plan.figures[key] !== ''
 
 /** A goal whose age is already behind the customer. */
 export const isPassed = (goal: Goal, age: number | null) =>
@@ -53,6 +45,7 @@ export function reportContext(plan: Plan, today: Date) {
     prices,
     statePensionAge: settings.rules.sp.age,
     statePensionYear: Math.round(settings.statePension),
+    fullStatePension: figures.statePensionShare >= 0.999,
     gap: {
       rows: gapRows,
       runOut: gapRows[0] ?? null,

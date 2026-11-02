@@ -1,51 +1,39 @@
-import type { ComponentProps } from 'react'
 import FlowHead from '../components/frame/FlowHead.tsx'
 import UploadReview from '../components/finance/UploadReview.tsx'
-import { FINANCE_FIELDS } from '../components/finance/fields.data.ts'
-import {
-  addReadValues,
-  cancelUpload,
-  typeInstead,
-  uploadOf,
-} from '../components/finance/uploadActions.ts'
-import { ITEM_DOCUMENTS, LIST_FIELDS, LISTS } from '../domain/finances/lists.data.ts'
-import { FINANCE_SECTIONS, SECTION_UPLOADS } from '../domain/finances/sections.data.ts'
-import { uploadSections, type Upload } from '../domain/finances/upload.ts'
+import { LISTS } from '../domain/finances/lists.data.ts'
+import { readValuesToConfirm } from '../domain/finances/upload.ts'
 import { useStore } from '../state/store.ts'
 import type { Plan } from '../state/types.ts'
 
 export const key = 'PU'
-export const id = (plan: Plan) => `PU-${uploadOf(plan)?.stage ?? 'scan'}`
-export const note = (plan: Plan) => {
-  const upload = uploadOf(plan)
+export const id = (plan: Plan) => `PU-${plan.upload?.stage ?? 'scan'}`
+export const note = ({ upload: upload }: Plan) => {
   if (upload?.stage === 'fail')
     return 'Upload failed → Type it; missing doc stays on the checklist (CJ D10).'
   if (upload?.stage !== 'confirm') return 'Reading documents (mock IDP).'
   if (upload.item) {
-    return `"We read these values, please confirm" for ONE ${LISTS[upload.item.lk].singular} (journey-spec §19). Under 80% confidence = Check this.`
+    return `"We read these values, please confirm" for ONE ${LISTS[upload.item.list].singular} (journey-spec §19). Under 80% confidence = Check this.`
   }
   return '"We read these values — please confirm". Under 80% confidence = Check this.'
 }
 
-const useUpload = () => useStore(({ plan }) => uploadOf(plan))
+const HEADS = {
+  fail: {
+    title: "We couldn't read that one",
+    sub: "No problem. You can type the figures instead. We'll keep the document on your checklist.",
+  },
+  confirm: {
+    title: 'We read these values',
+    sub: 'Please confirm. Change anything that looks wrong.',
+  },
+}
 
-export const Head = () => {
-  const upload = uploadOf(useStore.getState().plan)
-  if (upload?.stage === 'fail') {
-    return FlowHead({
-      eye: 'Your finances',
-      title: "We couldn't read that one",
-      sub: "No problem. You can type the figures instead. We'll keep the document on your checklist.",
-      back: cancelUpload,
-    })
-  }
-  if (upload?.stage === 'confirm') {
-    return FlowHead({
-      eye: 'Your finances',
-      title: 'We read these values',
-      sub: 'Please confirm. Change anything that looks wrong.',
-      back: cancelUpload,
-    })
+// ScreenHost calls Head as a plain function (no hooks), so it reads the store directly.
+export function Head() {
+  const { plan, cancelUpload } = useStore.getState()
+  const upload = plan.upload
+  if (upload && upload.stage !== 'scan') {
+    return FlowHead({ eye: 'Your finances', ...HEADS[upload.stage], back: cancelUpload })
   }
   return FlowHead({
     eye: 'Your finances',
@@ -54,57 +42,9 @@ export const Head = () => {
   })
 }
 
-type ItemDocument = {
-  title: string
-  figures: [string, number, number][]
-  texts?: [string, string][]
-}
-
-// what "We read these values" shows: one card for a list item's statement, else one per section
-function reviews(upload: Upload): ComponentProps<typeof UploadReview>[] {
-  if (upload.item) {
-    const list = upload.item.lk
-    const document: ItemDocument = ITEM_DOCUMENTS[list]
-    const label = (field: string) => LIST_FIELDS[`${list}.${field}`].label
-    return [
-      {
-        title: document.title,
-        edit: upload.edit,
-        figures: document.figures.map(([field, value, confidence]) => ({
-          field,
-          label: label(field),
-          value,
-          confidence,
-        })),
-        texts: (document.texts ?? []).map(([field, text]) => [
-          label(field).replace(' (optional)', ''),
-          text,
-        ]),
-      },
-    ]
-  }
-  return uploadSections(upload.sec).map((sectionId) => {
-    const read = SECTION_UPLOADS[sectionId]
-    const section = FINANCE_SECTIONS.find(({ id }) => id === sectionId)!
-    return {
-      title: `${section.emoji} ${section.title}`,
-      documents: read.documents.join(' · '),
-      edit: upload.edit,
-      figures: Object.entries(read.values).map(([field, [value, confidence]]) => ({
-        field,
-        label: FINANCE_FIELDS[field].label,
-        value,
-        confidence,
-        stale: read.staleNotes?.[field],
-      })),
-    }
-  })
-}
-
 export function Body() {
-  const upload = useUpload()
+  const upload = useStore(({ plan }) => plan.upload)
   if (!upload) return null
-  const files = upload.files.join(', ')
   if (upload.stage === 'scan') {
     return (
       <>
@@ -123,15 +63,18 @@ export function Body() {
         <div style={{ fontSize: 44 }} aria-hidden="true">
           📄❓
         </div>
-        <p className="small">{files}</p>
+        <p className="small">{upload.files.join(', ')}</p>
       </div>
     )
   }
-  return reviews(upload).map((review) => <UploadReview key={review.title} {...review} />)
+  return readValuesToConfirm(upload).map((document) => (
+    <UploadReview key={document.title} {...document} edit={upload.edit} />
+  ))
 }
 
 export function Foot() {
-  const stage = useUpload()?.stage
+  const stage = useStore(({ plan }) => plan.upload?.stage)
+  const { typeInstead, addReadValues, cancelUpload } = useStore.getState()
   if (stage === 'fail') {
     return (
       <button className="btn" data-a="uplfail" onClick={typeInstead}>

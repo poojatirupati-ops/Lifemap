@@ -2,25 +2,19 @@
 // TODO(Q-01): move into a planning slice in src/state once the store has per-context slices.
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { retirementGoal } from '../../domain/goals/goals.ts'
+import { retirementRange } from '../../domain/goals/retirement.ts'
 import { percent, toNumber } from '../../lib/format.ts'
 import { toast } from '../../state/shell.ts'
 import { useStore } from '../../state/store.ts'
 import type { Plan } from '../../state/types.ts'
+import { addVersion } from '../../state/versions.ts'
 
-const update = (recipe: (plan: Plan) => void) => useStore.getState().update(recipe)
-
-type AgeInputs = Pick<Plan, 'about' | 'asm' | 'fin'>
+type AgeInputs = Pick<Plan, 'about' | 'assumptions' | 'figures'>
 const planEnd = (plan: AgeInputs) => assumption(plan, 'planEnd')
-
-/** The ages a retirement can be chosen between. */
-export function retirementRange(plan: AgeInputs) {
-  const min = (plan.about.age || 0) + 1
-  return { min, max: Math.max(min, planEnd(plan) - 1) }
-}
 
 export function partnerRetirementRange(plan: AgeInputs) {
   const age = plan.about.age || 0
-  const min = (toNumber(plan.fin.pAge) || age) + 1
+  const min = (toNumber(plan.figures.pAge) || age) + 1
   return { min, max: Math.max(min, min - 1 + (planEnd(plan) - age) - 1) }
 }
 
@@ -34,55 +28,55 @@ function setRetireAge(plan: Plan, age: number) {
   plan.retireSet = true
   const goal = retirementGoal(plan.goals)
   if (goal) goal.age = age
-  plan.fin.retireAge = age
+  plan.figures.retireAge = age
 }
 
 export const chooseRetireAge = (age: number) =>
-  update((plan) => {
+  useStore.getState().update((plan) => {
     setRetireAge(plan, age)
-    plan.src.retireAge = 'typed'
+    plan.sources.retireAge = 'typed'
   })
 
 export const choosePartnerRetireAge = (age: number) =>
-  update((plan) => {
-    plan.pRet = age
-    plan.pRetSet = true
+  useStore.getState().update((plan) => {
+    plan.partnerRetireAge = age
+    plan.partnerRetireSet = true
   })
 
 /** A retirement age past the new plan-until age moves back before it. */
 export function choosePlanEnd(age: number) {
-  update((plan) => {
-    plan.asm.planEnd = age
+  useStore.getState().update((plan) => {
+    plan.assumptions.planEnd = age
   })
   const { plan } = useStore.getState()
   const latest = retirementRange(plan).max
   if (!plan.retireSet || plan.retireAge <= latest) return
-  update((draft) => {
+  useStore.getState().update((draft) => {
     setRetireAge(draft, latest)
-    draft.src.retireAge ||= 'pre'
+    draft.sources.retireAge ||= 'pre'
   })
   toast(`We moved your retirement age to ${latest} so it stays before your plan-until age`)
 }
 
 /** One of the inflation chips. */
 export const chooseInflation = (rate: number) =>
-  update((plan) => {
-    plan.infl = rate
+  useStore.getState().update((plan) => {
+    plan.inflation = rate
     plan.inflOther = false
-    plan.inflEdit = false
+    plan.editingInflation = false
     // TODO(R-17): the version history slice; the original keeps a fixed date
-    plan.versions.push({ note: `Inflation: ${percent(rate)}`, date: '29 Sep 2026' })
+    addVersion(plan, `Inflation: ${percent(rate)}`)
   })
 
 export const chooseOwnInflation = () =>
-  update((plan) => {
+  useStore.getState().update((plan) => {
     plan.inflOther = true
-    plan.inflEdit = true
+    plan.editingInflation = true
   })
 
 /** A rate typed as a percentage. */
 export const typeInflation = (percentage: number) =>
-  update((plan) => {
-    plan.infl = +(percentage / 100).toFixed(4)
+  useStore.getState().update((plan) => {
+    plan.inflation = +(percentage / 100).toFixed(4)
     plan.inflOther = true
   })

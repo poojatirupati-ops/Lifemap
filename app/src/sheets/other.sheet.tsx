@@ -4,15 +4,15 @@ import { newGoal } from '../domain/goals/goals.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import SheetTitle from './SheetTitle.tsx'
+import { addVersion } from '../state/versions.ts'
 
 export const key = 'other'
 
 function addGoal(other: OtherGoal) {
   const { update, closeSheet } = useStore.getState()
   update((plan) => {
-    plan.goals.push(newGoal(plan, plan.gid++, 'other', other))
-    // TODO(R-31): share the version note with goalActions' saveVersion
-    if (plan.app) plan.versions.push({ note: 'Goals changed', date: '29 Sep 2026' })
+    plan.goals.push(newGoal(plan, plan.nextGoalId++, 'other', other))
+    if (plan.hasResults) addVersion(plan, 'Goals changed')
   })
   closeSheet()
   toast(`${other.name} added`)

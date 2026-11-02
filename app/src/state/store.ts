@@ -1,10 +1,30 @@
 import { create } from 'zustand'
 import { produce } from 'immer'
 import { fresh } from './fresh.ts'
+import { fromOriginal, toOriginal } from './migrate.ts'
 import { normalize } from '../domain/plan/normalize.ts'
 import type { Plan, Snapshot } from './types.ts'
+import { createDiscoverySlice, type DiscoveryActions } from './discovery.ts'
+import { createGoalsSlice, type GoalsActions } from './goals.ts'
+import { createHomeSlice, type HomeActions } from './home.ts'
+import { createPlanSlice, type PlanActions } from './plan.ts'
+import { createFinancesSlice, type FinancesActions } from './finances.ts'
+import { createListsSlice, type ListActions } from './financeLists.ts'
+import { createUploadsSlice, type UploadActions } from './uploads.ts'
+import { createBookingSlice, type BookingActions } from './booking.ts'
+import { createCalcSlice, type CalcActions } from './calc.ts'
 
-interface Store {
+interface Store
+  extends
+    DiscoveryActions,
+    GoalsActions,
+    PlanActions,
+    HomeActions,
+    FinancesActions,
+    ListActions,
+    UploadActions,
+    CalcActions,
+    BookingActions {
   plan: Plan
   screen: string
   sheet: string | null
@@ -37,12 +57,23 @@ export const useStore = create<Store>()((set, get) => {
     }))
 
   return {
+    ...createDiscoverySlice(get),
+    ...createGoalsSlice(get),
+    ...createPlanSlice(get),
+    ...createFinancesSlice(get),
+    ...createListsSlice(get),
+    ...createUploadsSlice(get),
+    ...createCalcSlice(get),
+    ...createHomeSlice(get),
+    ...createBookingSlice(get),
     plan: fresh(),
     screen: 'D0',
     sheet: null,
 
-    load: ({ scr = 'D0', sheet = null, ...plan }) =>
-      set({ plan: produce(plan, normalize), screen: scr, sheet }),
+    load: (saved) => {
+      const { screen = 'D0', sheet = null, ...plan } = fromOriginal<Snapshot>(saved)
+      set({ plan: produce(plan, normalize), screen, sheet })
+    },
     update,
 
     go: (screen) => set({ screen, sheet: null }),
@@ -52,37 +83,32 @@ export const useStore = create<Store>()((set, get) => {
     switchTab: (tab) => {
       update((plan) => {
         if (tab === 'explore' || plan.tab === 'explore') {
-          plan.xs = []
-          plan.play = false
+          plan.explorePages = []
+          plan.playing = false
         }
         plan.tab = tab
-        if (plan.app || !plan.pb) {
-          plan.fsec = null
-          plan.upl = null
+        if (plan.hasResults || !plan.planBuilder) {
+          plan.financeSection = null
+          plan.upload = null
         }
-        if (tab === 'me') plan.me = 'home'
-        if (tab === 'exp' && !['c1', 'c2', 'c3'].includes(plan.exp)) plan.exp = 'home'
+        if (tab === 'me') plan.mePage = 'home'
+        if (tab === 'exp' && !['c1', 'c2', 'c3'].includes(plan.expertsPage)) plan.expertsPage = 'home'
         if (tab === 'plan') {
-          plan.planSeg = 'main'
-          plan.planGo = 'timeline'
+          plan.planSegment = 'main'
+          plan.planScrollTo = 'timeline'
         }
       })
       get().closeSheet()
     },
-    openAsk: () => {
-      update((plan) => {
-        plan.ask = { open: null, q: '', a: null, log: [], more: false }
-      })
-      get().openSheet('ask')
-    },
+    openAsk: () => get().openSheet('ask'),
     leavePlanBuilder: () =>
       update((plan) => {
-        plan.pb = false
+        plan.planBuilder = false
       }),
     showMoneyLooks: () => {
       update((plan) => {
         plan.tab = 'me'
-        plan.me = 'money'
+        plan.mePage = 'money'
       })
       get().closeSheet()
     },
@@ -93,5 +119,5 @@ export const useStore = create<Store>()((set, get) => {
 
 /** The plan in the original's saved shape, for view-equal and golden comparisons. */
 export function toSnapshot({ plan, screen, sheet }: Pick<Store, 'plan' | 'screen' | 'sheet'>) {
-  return { scr: screen, ...plan, sheet }
+  return toOriginal({ screen, ...plan, sheet })
 }

@@ -1,9 +1,7 @@
 import { useStore } from '../state/store.ts'
-import type { Plan } from '../state/types.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
 import SectionRow from '../components/finance/SectionRow.tsx'
 import { backToMe } from '../components/finance/financeActions.ts'
-import { startUpload } from '../components/finance/uploadActions.ts'
 import { hasMinimumFinances, sectionStatus, sectionSummary } from '../components/finance/status.ts'
 import { useFinancePlan } from '../components/finance/useFinancePlan.ts'
 import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
@@ -18,16 +16,12 @@ export const Head = () =>
     eye: 'Step 3 · Prepare',
     title: 'Your finances',
     sub: 'Add your money once. Rough figures are fine.',
-    back: useStore.getState().plan.app ? backToMe : undefined,
+    back: useStore.getState().plan.hasResults ? backToMe : undefined,
   })
-
-// TODO(R-19): R-19 adds missingDocs to the plan type when a failed upload records them
-const selectMissingDocs = ({ plan }: { plan: Plan & { missingDocs?: string[] } }) =>
-  plan.missingDocs
 
 export function Body() {
   const plan = useFinancePlan()
-  const missingDocs = useStore(selectMissingDocs)
+  const missingDocs = useStore(({ plan }) => plan.missingDocs)
   const statuses = FINANCE_SECTIONS.map((section) => sectionStatus(section, plan))
   const done = statuses.filter((status) => status === 'done').length
 
@@ -47,13 +41,15 @@ export function Body() {
           className="btn sm"
           data-a="upl"
           data-p="smart"
-          onClick={() => startUpload('smart', ['Sample document.pdf'])}
+          onClick={() => useStore.getState().startUpload('smart', ['Sample document.pdf'])}
         >
           Upload
         </button>
       </div>
       <div className="row" style={{ margin: '16px 0 8px', justifyContent: 'space-between' }}>
-        <b>{done} of 6 done</b>
+        <b>
+          {done} of {FINANCE_SECTIONS.length} done
+        </b>
         <span className="small">Skip any you like</span>
       </div>
       {FINANCE_SECTIONS.map((section, index) => (
@@ -65,8 +61,8 @@ export function Body() {
           summary={sectionSummary(section, plan)}
         />
       ))}
-      {!!missingDocs?.length && <p className="note">Still to add: {missingDocs.join(', ')}</p>}
-      {!hasMinimumFinances(plan) && (
+      {missingDocs?.length ? <p className="note">Still to add: {missingDocs.join(', ')}</p> : null}
+      {hasMinimumFinances(plan) ? null : (
         <p className="small" style={{ marginTop: 6 }}>
           To see results we need: <b>About you</b>, <b>Income and expenses</b>, and <b>Assets</b> or{' '}
           <b>Pension</b>.
@@ -77,7 +73,7 @@ export function Body() {
 }
 
 export function Foot() {
-  const inApp = useStore(({ plan }) => plan.app)
+  const inApp = useStore(({ plan }) => plan.hasResults)
   const ready = hasMinimumFinances(useFinancePlan())
   if (inApp) return null
   return (

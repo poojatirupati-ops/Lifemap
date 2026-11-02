@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 import { beforeEach, expect, test } from 'vitest'
 import { runOriginal } from '../golden/origSlice.ts'
 import { Body } from '../../src/screens/AdminSettings.screen.tsx'
-import { useSettings } from '../../src/components/admin/settingsStore.ts'
+import { useSettings } from '../../src/state/settings.ts'
 import type { StandardKey } from '../../src/domain/planning/settings.ts'
 
 const original = runOriginal('settingsHTML, SETTINGS, applyAssume, fresh')

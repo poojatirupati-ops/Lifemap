@@ -1,5 +1,5 @@
 import { fieldExamples } from '../../domain/finances/examples.ts'
-import { openExample } from './sectionActions.ts'
+import { useStore } from '../../state/store.ts'
 
 // which fields have an example; the sentences themselves are built when the sheet opens
 const WITH_EXAMPLE = new Set(
@@ -16,7 +16,7 @@ export default function ExampleLink({ field }: { field: string }) {
         data-a="fex"
         data-p={field}
         aria-haspopup="dialog"
-        onClick={() => openExample(field)}
+        onClick={() => useStore.getState().openSheet(`ex|${field}`)}
       >
         Not sure? See an example
       </button>

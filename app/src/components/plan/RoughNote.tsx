@@ -1,11 +1,12 @@
 import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
+import { useCheckPlan } from '../../hooks/useCheckPlan.ts'
+import { useStore } from '../../state/store.ts'
 import { checkItems, needsAttention, type CheckPlan } from '../finance/checkList.ts'
-import { FINANCE_FIELDS } from '../finance/fields.data.ts'
+import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
 import { fieldSource, skippedSections, visibleFields } from '../finance/status.ts'
-import { openMe } from './planActions.ts'
 
 /** Required figures nobody has entered yet. */
-const blankFigures = (plan: CheckPlan) =>
+const blankFigureCount = (plan: CheckPlan) =>
   FINANCE_SECTIONS.flatMap((section) => visibleFields(section, plan)).filter(
     (key) => !FINANCE_FIELDS[key].optional && !fieldSource(key, plan),
   ).length
@@ -13,23 +14,25 @@ const blankFigures = (plan: CheckPlan) =>
 const listed = (names: string[]) =>
   names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]
 
-/** Rough picture: skipped sections or more than two blank figures count as €0. */
-export default function RoughNote({ plan }: { plan: CheckPlan }) {
-  const skipped = skippedSections(plan)
-  // one banner, not two: the missing-details banner already says the picture is rough
-  if (!skipped.length && blankFigures(plan) <= 2) return null
-  if (checkItems(plan).some(needsAttention)) return null
-
+/** What is missing, one sentence each. */
+function missingSentences(skipped: { id: string; title: string }[]) {
+  if (!skipped.length) return ['Some figures are missing, so they count as €0.']
   const money = skipped.filter((section) => section.id !== 'prot').map((section) => section.title)
-  const many = money.length > 1
-  const message =
-    (money.length
-      ? `${listed(money)}${many ? ' are' : ' is'} missing, so ${many ? 'they count' : 'it counts'} as €0. `
-      : '') +
-    (skipped.some((section) => section.id === 'prot')
-      ? "Your protection cover isn't added yet. "
-      : '') +
-    (skipped.length ? '' : 'Some figures are missing, so they count as €0. ')
+  const sentences = []
+  if (money.length === 1) sentences.push(`${money[0]} is missing, so it counts as €0.`)
+  if (money.length > 1) sentences.push(`${listed(money)} are missing, so they count as €0.`)
+  if (money.length < skipped.length) sentences.push("Your protection cover isn't added yet.")
+  return sentences
+}
+
+/** Rough picture: skipped sections or more than two blank figures count as €0. */
+export default function RoughNote() {
+  const plan = useCheckPlan()
+  const openMe = useStore((store) => store.openMe)
+  const skipped = skippedSections(plan)
+  if (!skipped.length && blankFigureCount(plan) <= 2) return null
+  // one banner, not two: the missing-details banner already says the picture is rough
+  if (checkItems(plan).some(needsAttention)) return null
 
   return (
     <div
@@ -41,7 +44,7 @@ export default function RoughNote({ plan }: { plan: CheckPlan }) {
         🧩
       </span>
       <span>
-        <b>Rough picture.</b> {message}
+        <b>Rough picture.</b> {missingSentences(skipped).join(' ')}{' '}
         {skipped.length === 1 ? 'Add it' : 'Add them'} to sharpen your plan.
       </span>
       <button className="link" data-a="me" data-p="money" onClick={() => openMe('money')}>

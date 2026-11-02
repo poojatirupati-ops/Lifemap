@@ -1,14 +1,19 @@
 // Confirming and removing an Explore statement changes the plan as the original does.
-import { describe, expect, it } from 'vitest'
-import { calcContext } from '../../src/components/calc/context'
-import { confirmStatement, removeStatement } from '../../src/components/calc/statements'
+import { describe, expect, it, vi } from 'vitest'
+import { assumption } from '../../src/domain/planning/assumptions'
+import { rulesFor } from '../../src/domain/planning/rates'
+import { confirmStatement, removeStatement } from '../../src/domain/calc/statements'
 import { normalize } from '../../src/domain/plan/normalize'
 import { localToday } from '../../src/lib/today'
+import { fromOriginal, toOriginal } from '../../src/state/migrate'
 import { TODAY } from '../golden/origSlice'
 import fresh from '../fixtures/fresh.json'
 import complete from '../fixtures/finances-complete.json'
 import sample from '../../src/state/sample-plan.json'
 import { original, rounded } from './golden'
+
+// slow when the machine is busy: the original runs in node:vm
+vi.setConfig({ testTimeout: 30000 })
 
 const KEYS = [
   'fin',
@@ -46,16 +51,16 @@ describe.each([
     original.pstConfirm()
     const theirs = original.getState()
 
-    const plan: any = structuredClone(state)
+    const plan: any = fromOriginal(structuredClone(state))
     normalize(plan, localToday(TODAY))
-    const rules = calcContext(plan, 'retirement', localToday(TODAY)).rules
+    const rules = rulesFor(assumption(plan, 'startYear', localToday(TODAY)))
     confirmStatement(plan, upload, rules)
     normalize(plan, localToday(TODAY))
-    expect(picked(plan)).toEqual(picked(theirs))
+    expect(picked(toOriginal(plan))).toEqual(picked(theirs))
 
     original.pstRemove(cat)
     removeStatement(plan, cat, rules)
     normalize(plan, localToday(TODAY))
-    expect(picked(plan)).toEqual(picked(original.getState()))
+    expect(picked(toOriginal(plan))).toEqual(picked(original.getState()))
   })
 })

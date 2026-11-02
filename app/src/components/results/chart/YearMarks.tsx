@@ -10,12 +10,12 @@ interface Props {
 export default function YearMarks({ age, centre, baseline, retiring, statePension }: Props) {
   return (
     <>
-      {retiring && (
+      {retiring ? (
         <path d={`M${(centre - 5).toFixed(1)} 2 h10 l-5 8 z`} fill="var(--ink)">
           <title>{`Retirement starts, age ${age}`}</title>
         </path>
-      )}
-      {statePension && (
+      ) : null}
+      {statePension ? (
         <>
           <line
             x1={centre.toFixed(1)}
@@ -36,7 +36,7 @@ export default function YearMarks({ age, centre, baseline, retiring, statePensio
             SP<title>{`State Pension starts, age ${age}`}</title>
           </text>
         </>
-      )}
+      ) : null}
     </>
   )
 }

@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useStore } from '../state/store.ts'
 import FlowHead from '../components/frame/FlowHead.tsx'
 import CheckRow from '../components/finance/CheckRow.tsx'
@@ -7,16 +6,16 @@ import RequiredChoices from '../components/finance/RequiredChoices.tsx'
 import SkippedSectionRow from '../components/finance/SkippedSectionRow.tsx'
 import {
   checkItems,
-  missingNote,
+  isSectionLeftForAdviser,
+  itemNote,
   needsAttention,
+  withLooks,
   workedOutNote,
-  type CheckItem,
-  type CheckPlan,
 } from '../components/finance/checkList.ts'
-import { FINANCE_FIELDS } from '../components/finance/fields.data.ts'
-import { flagLowRepayments, seeResults } from '../components/finance/financeActions.ts'
-import { chooseText, missingChoices } from '../components/finance/requiredChoices.ts'
-import { formatField, skippedSections, visibleFields } from '../components/finance/status.ts'
+import { FINANCE_FIELDS } from '../domain/finances/fields.data.ts'
+import { seeResults, skipResults } from '../components/finance/financeActions.ts'
+import { missingChoices } from '../components/finance/requiredChoices.ts'
+import { formatField, skippedSections } from '../components/finance/status.ts'
 import { useFinancePlan } from '../components/finance/useFinancePlan.ts'
 import { FINANCE_SECTIONS } from '../domain/finances/sections.data.ts'
 
@@ -25,8 +24,10 @@ export const id = 'P4'
 export const note =
   'Data-gap review: one row per skipped section; single rows only for ❓ / ⚠️ items in partly filled sections. Step 7 is skippable (§22): choose 3 things, optional standards for the rest, then See my results or Skip.'
 
+// Head is hook-free (called as a function); ScreenHost re-renders it on every plan change.
 export const Head = () => {
-  const anyFlagged = checkItems(useStore.getState().plan).some(needsAttention)
+  const { plan } = useStore.getState()
+  const anyFlagged = checkItems(withLooks(plan)).some(needsAttention)
   return FlowHead({
     eye: 'Step 3 · Prepare',
     title: 'Check your details',
@@ -37,16 +38,8 @@ export const Head = () => {
   })
 }
 
-function itemStatus(item: CheckItem, plan: CheckPlan) {
-  if (item.state === 'look') return `Needs a look: ${plan.look[item.key]}`
-  return missingNote(item.key, plan)
-}
-
 export function Body() {
   const plan = useFinancePlan()
-  // the original re-checks repayments on every render of this screen
-  useEffect(flagLowRepayments, [plan.fin, plan.asm, plan.lists])
-
   const items = checkItems(plan)
   const flagged = items.filter(needsAttention)
   const good = items.filter((item) => !needsAttention(item))
@@ -56,29 +49,28 @@ export function Body() {
   return (
     <>
       <RequiredChoices />
-      {flagged.length > 0 && (
+      {flagged.length > 0 ? (
         <div className="card" style={{ marginTop: 12 }}>
           {skipped.map((section) => (
             <SkippedSectionRow
               key={section.id}
               section={section}
               index={FINANCE_SECTIONS.indexOf(section)}
-              leftForAdviser={visibleFields(section, plan)
-                .filter((key) => !FINANCE_FIELDS[key].optional)
-                .every((key) => plan.ack[key])}
+              leftForAdviser={isSectionLeftForAdviser(section, plan)}
             />
           ))}
           {single.map((item) => (
             <CheckRow
               key={item.key}
               item={item}
-              status={itemStatus(item, plan)}
+              index={FINANCE_SECTIONS.indexOf(item.section)}
+              status={itemNote(item, plan)}
               workedOut={workedOutNote(item.key, plan)}
-              leftForAdviser={!!plan.ack[item.key]}
+              leftForAdviser={!!plan.acknowledged[item.key]}
             />
           ))}
         </div>
-      )}
+      ) : null}
       <details className="card" style={{ marginTop: 12 }}>
         <summary style={{ cursor: 'pointer', fontWeight: 800, minHeight: 44 }}>
           ✅ {good.length} details look good
@@ -100,17 +92,17 @@ export function Foot() {
   const nextChoice = useStore(({ plan }) => missingChoices(plan)[0]?.name)
   return (
     <>
-      {nextChoice && (
+      {nextChoice ? (
         <p className="small" style={{ margin: 0, textAlign: 'center' }} id="p4-need">
-          {chooseText(nextChoice)} above to see your results.
+          Choose your {nextChoice} above to see your results.
         </p>
-      )}
+      ) : null}
       <button
         className="btn"
         data-a="toresults"
         id="seeres"
         disabled={!!nextChoice}
-        onClick={() => seeResults(true)}
+        onClick={seeResults}
       >
         See my results
       </button>
@@ -119,7 +111,7 @@ export function Foot() {
         data-a="skipres"
         id="skipres"
         disabled={!!nextChoice}
-        onClick={() => seeResults(false)}
+        onClick={skipResults}
       >
         Skip this step
       </button>

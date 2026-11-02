@@ -8,12 +8,15 @@ import { fixtures } from '../golden/origProfile'
 import { project } from '../../src/domain/planning/project'
 import { whatIfFrom } from '../../src/domain/planning/wi'
 import { useStore } from '../../src/state/store'
+import { fromOriginal } from '../../src/state/migrate'
 import Chapters from '../../src/components/results/Chapters'
 import Glance from '../../src/components/results/Glance'
 import Findings from '../../src/components/results/Findings'
 import GoalLine from '../../src/components/results/GoalLine'
 import JourneySvg from '../../src/components/results/JourneySvg'
+import MilestoneList from '../../src/components/results/MilestoneList'
 import WhyNote from '../../src/components/results/WhyNote'
+import { isShortYear } from '../../src/domain/planning/bands'
 
 // a portrait phone; the hook needs a browser
 vi.mock('../../src/hooks/useViewport', () => ({ useViewport: () => ({ landscape: false }) }))
@@ -84,12 +87,14 @@ function both(state: any) {
   original.applyAssume()
   original.syncLists()
   original.autoSafety()
-  const plan = structuredClone(original.getState())
-  const whatIf = whatIfFrom(plan.wi)
+  const theirPlan = structuredClone(original.getState())
+  const plan: any = fromOriginal(theirPlan)
+  const whatIf = whatIfFrom(plan.whatIf)
   return {
     plan,
+    theirPlan,
     whatIf,
-    theirs: original.project(plan.wi),
+    theirs: original.project(theirPlan.wi),
     theirsBase: original.project(),
     ours: project(plan, whatIf),
     oursBase: project(plan),
@@ -104,15 +109,30 @@ describe.each(cases)('%s', (_, state) => {
     [780, true],
   ])('journey at width %i (landscape %s)', (width, landscape) => {
     const { plan, theirs, ours, hasRetireGoal } = both(state)
-    const props = { rows: ours.rows, goals: plan.goals, percent: ours.percent, hasRetireGoal }
-    const ourSvg = markup(<JourneySvg {...props} width={width} landscape={landscape} />)
+    const milestones = plan.goals
+      .filter((goal: any) => goal.kind !== 'retire')
+      .toSorted((a: any, b: any) => a.age - b.age || a.id - b.id)
+    const hasShortYear = ours.rows.some(isShortYear)
+    const props = {
+      rows: ours.rows,
+      milestones,
+      percent: ours.percent,
+      hasRetireGoal,
+      hasShortYear,
+    }
+    const ourSvg = markup(
+      <>
+        <JourneySvg {...props} width={width} landscape={landscape} />
+        {width > 500 ? null : <MilestoneList goals={milestones} percent={ours.percent} />}
+      </>,
+    )
     expect(firstDifference(ourSvg, original.journeySVG(theirs, width, landscape))).toBeNull()
   })
 
   it('chapters, closed and with one open', () => {
     const { plan, theirs, ours, hasRetireGoal } = both(state)
     for (const open of [null, 1]) {
-      useStore.getState().load({ ...plan, chapOpen: open, scr: 'PLAN' })
+      useStore.getState().load({ ...plan, openChapter: open, screen: 'PLAN' })
       // server rendering reads the store's first state
       Object.assign(useStore.getInitialState(), useStore.getState())
       original.getState().chapOpen = open
@@ -125,7 +145,7 @@ describe.each(cases)('%s', (_, state) => {
   it('glance, journey and chapters views', () => {
     const { plan, theirs, ours } = both(state)
     for (const view of ['journey', 'chapters']) {
-      useStore.getState().load({ ...plan, view, scr: 'PLAN' })
+      useStore.getState().load({ ...plan, resultsView: view, screen: 'PLAN' })
       Object.assign(useStore.getInitialState(), useStore.getState())
       original.getState().view = view
       const ourGlance = withoutEmojiSpans(markup(<Glance projection={ours} />))
@@ -134,17 +154,19 @@ describe.each(cases)('%s', (_, state) => {
   })
 
   it('findings and goal lines', () => {
-    const { plan, whatIf, theirs, theirsBase, ours, oursBase } = both(state)
+    const { plan, theirPlan, whatIf, theirs, theirsBase, ours, oursBase } = both(state)
     if (!plan.goals.length) return
     const found = original.findings(theirsBase)
     const cards = markup(<Findings plan={plan} projection={oursBase} />).match(/<b>.*?<\/b>/g)!
     expect(cards.map(text)).toEqual([found.sT, found.gT, found.dT])
-    for (const goal of plan.goals) {
+    for (const [index, goal] of plan.goals.entries()) {
       const props = { plan, projection: ours, goal }
+      const theirGoal = theirPlan.goals[index]
       expect(text(markup(<GoalLine {...props} whatIf={whatIf} />))).toBe(
-        original.goalLine(theirs, goal),
+        original.goalLine(theirs, theirGoal),
       )
-      expect(text(markup(<WhyNote {...props} />))).toBe(original.goalWhy(theirs, goal))
+      // the original starts with a space when nothing is saved yet; a div collapses it
+      expect(text(markup(<WhyNote {...props} />))).toBe(original.goalWhy(theirs, theirGoal).trim())
     }
   })
 })

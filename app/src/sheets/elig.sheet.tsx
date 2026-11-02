@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ELIGIBILITY_QUESTIONS } from './eligibility.ts'
+import { ELIGIBILITY_QUESTIONS } from '../domain/finances/eligibility.ts'
 import EligibilityQuestion from './EligibilityQuestion.tsx'
 import EligibilityResult from './EligibilityResult.tsx'
 

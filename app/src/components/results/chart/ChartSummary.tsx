@@ -31,16 +31,18 @@ export default function ChartSummary({ rows }: { rows: YearRow[] }) {
   const total = short.reduce((sum, row) => sum + row.shortfall, 0)
   const goals = [...new Set(short.flatMap(unpaidGoals))]
   const livingShort = short.filter((row) => row.livingShortfall > 0.5)
+  const gapYears = short.length > 1 ? `are ${short.length} years` : 'is 1 year'
+  const goalsNote = goals.length ? `. Goals involved: ${goals.join(', ').toLowerCase()}` : ''
+  const livingNote = livingShort.length
+    ? `. Everyday costs run short in ${years(livingShort.length)}, from age ${livingShort[0].age}`
+    : ''
   return (
     <p className="pnote">
       <b>In plain English:</b> the first shortfall is at <b>age {first.age}</b>, about{' '}
       <b>{euro(first.shortfall)}</b>
-      {`${firstGoals}. Across your plan there ${short.length > 1 ? `are ${short.length} years` : 'is 1 year'} with a gap, about ${euro(total)} in total`}
-      {goals.length ? `. Goals involved: ${goals.join(', ').toLowerCase()}` : ''}
-      {livingShort.length
-        ? `. Everyday costs run short in ${years(livingShort.length)}, from age ${livingShort[0].age}`
-        : ''}
-      . Saving more, changing timing or rethinking a goal closes it.
+      {`${firstGoals}. Across your plan there ${gapYears} with a gap, about ${euro(total)} in total`}
+      {goalsNote}
+      {livingNote}. Saving more, changing timing or rethinking a goal closes it.
     </p>
   )
 }

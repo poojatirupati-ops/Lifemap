@@ -1,19 +1,23 @@
 import { useShallow } from 'zustand/react/shallow'
 import { euro } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
-import ProfileOption from './ProfileOption.tsx'
+import { suggestedHorizonFor } from '../../domain/discovery/profile.ts'
 import {
   answerOf,
   editKey,
-  pickProfileAnswer,
-  suggestedHorizonFor,
-  toggleProduct,
+  extras,
+  lossPanel,
   type ProfileQuestion,
-} from './profileActions.ts'
+} from '../../domain/discovery/profileQuestions.ts'
+import ProfileOption from './ProfileOption.tsx'
+import { pickProfileAnswer, toggleProduct } from './profileActions.ts'
 
 const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
 
-/** One money-profile question to answer, labelled "New" or "To answer" unless `label` says otherwise. */
+/**
+ * One money-profile question to answer, labelled "New" or "To answer" unless `label` says
+ * otherwise.
+ */
 export default function ProfileQuestionCard({
   entry,
   label,
@@ -25,16 +29,15 @@ export default function ProfileQuestionCard({
   const { answer, suggestion, products } = useStore(
     useShallow(({ plan }) => ({
       answer: answerOf(plan, entry),
-      suggestion: suggestedHorizonFor(plan),
-      products: plan.um.chips,
+      suggestion: question.id === 'u9' ? suggestedHorizonFor(plan) : null,
+      products: plan.moneyProfile.chips,
     })),
   )
   const suggested = question.id === 'u9' && answer == null
   const selected = suggested ? suggestion : answer
   const [section, plain] = question.section
-  const help = discover ? undefined : question.help
-  const panel = discover ? question.from && [question.from, question.to!] : question.panel
-  const chips = discover ? undefined : question.chips
+  const { help, chips } = extras(entry)
+  const panel = lossPanel(entry)
 
   return (
     <div className="card umq">
@@ -44,12 +47,12 @@ export default function ProfileQuestionCard({
       </div>
       <p className="umq-what">{capitalise(plain)}</p>
       <h3 className="h umq-q">{question.title}</h3>
-      {help && (
+      {help ? (
         <p className="small" style={{ margin: '0 0 8px' }}>
           {help}
         </p>
-      )}
-      {panel && (
+      ) : null}
+      {panel ? (
         <div className="umq-fall">
           <div>
             <small>You put in</small>
@@ -64,12 +67,12 @@ export default function ProfileQuestionCard({
             <i style={{ width: `${Math.round((panel[1] / panel[0]) * 100)}%` }}></i>
           </div>
         </div>
-      )}
-      {suggested && (
+      ) : null}
+      {suggested ? (
         <span className="pill sunny" style={{ marginBottom: 8 }}>
           Suggested from your timeline — confirm or change
         </span>
-      )}
+      ) : null}
       <div className="opts" role="group" aria-label={question.title}>
         {question.options.map((option, index) => (
           <ProfileOption
@@ -82,7 +85,7 @@ export default function ProfileQuestionCard({
           />
         ))}
       </div>
-      {chips && (
+      {chips ? (
         <>
           <div className="small" style={{ fontWeight: 800, margin: '12px 0 6px' }}>
             Which have you had? (optional)
@@ -102,7 +105,7 @@ export default function ProfileQuestionCard({
             ))}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   )
 }

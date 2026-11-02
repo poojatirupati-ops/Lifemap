@@ -1,14 +1,14 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent, type RefObject } from 'react'
 import { useStore } from '../state/store.ts'
-import { LAST_AGE } from '../components/timeline/layout.ts'
-import { finishMove, highlightGoal, moveGoal } from '../components/timeline/goalActions.ts'
+import { ageLimits } from '../domain/goals/goals.ts'
+import { LAST_AGE } from '../domain/goals/timelineLayout.ts'
+import { prefersReducedMotion } from './reducedMotion.ts'
 import type { Goal } from '../state/types.ts'
 
-// a press that moves less than this is a tap
+/** A press that moves less than this many pixels is a tap. */
 const TAP_SLOP = 5
 
 interface Press {
-  id: number
   startX: number
   startAge: number
   moved: boolean
@@ -18,11 +18,11 @@ const ageOf = (id: number) => useStore.getState().plan.goals.find((goal) => goal
 
 /** Tap or Enter: highlight the goal and bring its row into view. */
 function showRow(id: number, smooth: boolean) {
-  highlightGoal(id)
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-  document
-    .getElementById(`row-${id}`)
-    ?.scrollIntoView({ block: 'nearest', behavior: smooth && !reduced ? 'smooth' : 'auto' })
+  useStore.getState().highlightGoal(id)
+  document.getElementById(`row-${id}`)?.scrollIntoView({
+    block: 'nearest',
+    behavior: smooth && !prefersReducedMotion() ? 'smooth' : 'auto',
+  })
 }
 
 /**
@@ -31,16 +31,21 @@ function showRow(id: number, smooth: boolean) {
  * page from scrolling under a touch drag.
  */
 export function useTimelineDrag(trackRef: RefObject<HTMLDivElement | null>, ageNow: number) {
+  // transient pointer values; the state below is only what the board renders
   const press = useRef<Press | null>(null)
-  const [drag, setDrag] = useState<{ id: number; moved: boolean } | null>(null)
+  const [draggingId, setDraggingId] = useState<number | null>(null)
+  const [moved, setMoved] = useState(false)
+  const moveGoal = useStore((store) => store.moveGoal)
+  const finishMove = useStore((store) => store.finishMove)
 
-  const end = () => {
+  const end = (id: number) => {
     const done = press.current
     if (!done) return
     press.current = null
-    setDrag(null)
-    if (done.moved) finishMove(done.id)
-    else showRow(done.id, true)
+    setDraggingId(null)
+    setMoved(false)
+    if (done.moved) finishMove(id)
+    else showRow(id, true)
   }
 
   const chipHandlers = (goal: Goal) => ({
@@ -49,8 +54,8 @@ export function useTimelineDrag(trackRef: RefObject<HTMLDivElement | null>, ageN
       // no text selection or focus ring from the press itself
       event.preventDefault()
       event.currentTarget.setPointerCapture?.(event.pointerId)
-      press.current = { id: goal.id, startX: event.clientX, startAge: goal.age, moved: false }
-      setDrag({ id: goal.id, moved: false })
+      press.current = { startX: event.clientX, startAge: goal.age, moved: false }
+      setDraggingId(goal.id)
     },
     onPointerMove(event: PointerEvent<HTMLDivElement>) {
       const current = press.current
@@ -60,37 +65,39 @@ export function useTimelineDrag(trackRef: RefObject<HTMLDivElement | null>, ageN
       if (!current.moved) {
         if (Math.abs(dx) < TAP_SLOP) return
         current.moved = true
-        setDrag({ id: current.id, moved: true })
+        setMoved(true)
       }
       // the rect, not clientWidth: the phone frame may be scaled on a desktop screen
       const width = track.getBoundingClientRect().width
       const age = Math.round(current.startAge + (dx / width) * (LAST_AGE - ageNow))
-      const before = ageOf(current.id)
-      moveGoal(current.id, age)
-      if (ageOf(current.id) !== before) navigator.vibrate?.(4)
+      const before = ageOf(goal.id)
+      moveGoal(goal.id, age)
+      if (ageOf(goal.id) !== before) navigator.vibrate?.(4)
     },
-    onPointerUp: end,
-    onPointerCancel: end,
-    onLostPointerCapture: end,
+    onPointerUp: () => end(goal.id),
+    onPointerCancel: () => end(goal.id),
+    onLostPointerCapture: () => end(goal.id),
     onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        showRow(goal.id, false)
+        return
+      }
       const step = event.shiftKey ? 5 : 1
+      const { earliest, latest } = ageLimits(useStore.getState().plan, goal)
       const target = {
         ArrowRight: goal.age + step,
         ArrowUp: goal.age + step,
         ArrowLeft: goal.age - step,
         ArrowDown: goal.age - step,
-        Home: 0,
-        End: 99,
+        Home: earliest,
+        End: latest,
       }[event.key]
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        showRow(goal.id, false)
-      } else if (target != null) {
-        event.preventDefault()
-        moveGoal(goal.id, target)
-      }
+      if (target == null) return
+      event.preventDefault()
+      moveGoal(goal.id, target)
     },
   })
 
-  return { drag, chipHandlers }
+  return { draggingId, moved, chipHandlers }
 }
