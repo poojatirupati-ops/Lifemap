@@ -7249,10 +7249,10 @@ async function buildPlanPdf(){ const {jsPDF, h2c} = await pdfLibs(), rep = repBu
     return {blob:pdf.output('blob'), pages:els.length}; }
   finally { host.remove(); } }
 function reportDocHTML(){ const rep = repBuild(); if (!rep) return ''; return LifeMapReport.reportDocument(rep.data, {photoSrc:repPhotoSrc}); }
-function repMsg(t, bad){ const e = document.getElementById('rep-msg'); if (e){ e.textContent = t; e.style.color = bad ? '#FFD2CF' : '#C9F2DD'; } toast(t); }
+function repMsg(t, bad){ const e = document.getElementById('rep-msg'); if (e){ e.textContent = t; e.style.color = bad ? '#B23A1F' : '#086A74'; } toast(t); }
 let saving = false;
 async function saveReport(btn){ if (saving) return;
-  if (!(await dlGet())){ repMsg('Opening the print window. Choose "Save as PDF" as the printer.');
+  if (!(await dlGet())){
     // A sandboxed viewer can ignore print() without an error. The browser's beforeprint event tells us whether a print window really opened.
     let opened = false; const mark = () => { opened = true; }; addEventListener('beforeprint', mark);
     try { window.print(); } catch (e) { removeEventListener('beforeprint', mark); repMsg('Printing is blocked here. Open this page in your browser to save the PDF.', true); return; }
