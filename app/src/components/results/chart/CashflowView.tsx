@@ -205,7 +205,7 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
             Savings left
           </span>
         ) : null}
-        {retiringAge != null ? (
+        {retirementGoal(goals) ? (
           <span>
             <b className="lgm">▼</b>Retirement starts
           </span>
