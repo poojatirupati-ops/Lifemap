@@ -47,7 +47,6 @@ function rateMissing({ figures }: Plan, key: string, balances: string[]) {
 
 /** M4: an unknown card or loan rate is never a dead end: the legal cap, or a planning rate left for the adviser. */
 function UnknownRateChips({ rate, field }: { rate: string; field: AdviserRateField }) {
-  useFigures()
   const { leftForAdviser, mine, missing, value } = useStore(
     useShallow(({ plan }) => ({
       leftForAdviser: !!plan.ratesForAdviser?.[rate] && plan.assumptions[rate] != null,

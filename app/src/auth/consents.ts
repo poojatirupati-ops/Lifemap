@@ -36,9 +36,10 @@ export async function postConsents({ terms, marketing, analytics }: Choices) {
   return false
 }
 
-/** Whether this account has acknowledged the privacy notice in this tenant: no means it is new here. */
+/** Whether this account has acknowledged the privacy notice in this tenant (no means it is new here); null when the API could not say. */
 export async function hasAcknowledgedNotice() {
   const response = await send('GET', '/api/consents').catch(() => null)
-  const state: { notice?: unknown } | null = response?.ok ? await response.json() : null
-  return !!state?.notice
+  if (!response?.ok) return null
+  const state: { notice?: unknown } = await response.json()
+  return !!state.notice
 }

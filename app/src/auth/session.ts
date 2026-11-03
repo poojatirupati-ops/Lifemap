@@ -21,9 +21,11 @@ function onboardingPath(plan: Plan) {
   return open < 0 ? '/personality' : questionPath(open)
 }
 
-/** Brings back the user's saved plan; with none, keeps this browser's and fills in the account. */
+/** Brings back the user's saved plan (with none, keeps this browser's and fills in the account); false when it could not be read. */
 async function restoreSavedPlan(user: User) {
-  const saved = (await loadPlan().catch(() => null))?.plan
+  const loaded = await loadPlan().catch(() => null)
+  if (!loaded) return false
+  const saved = loaded.plan
   const store = useStore.getState()
   if (!saved?.goals) {
     store.update((plan) => {
@@ -31,12 +33,13 @@ async function restoreSavedPlan(user: User) {
       plan.account.email = user.email
       plan.account.emailVerified = true
     })
-    return
+    return true
   }
   store.load({
     ...saved,
     account: { ...saved.account, emailVerified: true },
   })
+  return true
 }
 
 /** Onboarding and sign-in pages: no place to return to after signing in (Welcome is where every fresh visit starts). */
@@ -78,19 +81,52 @@ async function acceptInvitation(rt = '/') {
   return url.pathname + url.search
 }
 
+/** The email the app was entered with; cleared when this browser forgets the user. */
+let enteredAs: string | undefined
+
+/** Not entered with this email yet: a session found on load, or one that came back after an offline reload. */
+export const needsEntering = (email: string) => enteredAs !== email
+
 /**
  * After any sign-in (code, passkey, organisation SSO, or a session found on load):
  * join an invited tenant, restore the plan, then ask a new account for its details or land.
  */
 export async function enterApp(user: User) {
+  enteredAs = user.email
   useShell.setState({ authed: true }) // signed in now; the session hook catches up after
   rememberSignedIn(true)
   const rt = await acceptInvitation(redirectTarget())
   // the session (and maybe its tenant) changed: GET /api/tenant again for branding, flags and SSO
   void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
-  const [known] = await Promise.all([hasAcknowledgedNotice(), restoreSavedPlan(user)])
-  if (!known) return goTo(`/account/details${keepRedirect(rt)}`)
-  return land(rt)
+  await finishEntering(user, rt)
+}
+
+/** Entering that waits for the connection: re-run when the browser is online again or the session is fetched again. */
+let waiting: (() => void) | null = null
+
+export function retryEntering() {
+  const run = waiting
+  waiting = null
+  run?.()
+}
+
+/**
+ * Asks whether the account is new here and restores its plan, then lands. Offline, the user stays where they are and plan sync stays
+ * paused (no server version), so this browser's plan never saves over the server's; the rest runs once the connection is back.
+ * Only a confirmed "not agreed" asks for the account's details.
+ */
+async function finishEntering(user: User, rt: string | undefined, restored = false, retry = false) {
+  const [known, nowRestored] = await Promise.all([
+    hasAcknowledgedNotice(),
+    restored || restoreSavedPlan(user),
+  ])
+  if (known === false) return goTo(`/account/details${keepRedirect(rt)}`)
+  if (known === null || !nowRestored) {
+    window.addEventListener('online', retryEntering, { once: true })
+    waiting = () => void finishEntering(user, rt, nowRestored, true)
+    return
+  }
+  if (!retry) return land(rt) // back online, the user is already where they were
 }
 
 const SIGNED_IN = 'lm-signed-in'
@@ -115,6 +151,9 @@ export function wasSignedIn() {
 
 /** Forgets everything this browser holds for the user: query cache, plan, topic pages, wall pass. */
 function clearLocal() {
+  enteredAs = undefined
+  waiting = null
+  window.removeEventListener('online', retryEntering)
   rememberSignedIn(false)
   queryClient.removeQueries({ queryKey: PLAN_KEY })
   useShell.setState({ authed: testAuthOn() })

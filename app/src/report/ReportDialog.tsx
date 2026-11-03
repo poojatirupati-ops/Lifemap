@@ -5,6 +5,7 @@ import { useDialogFocus } from '../hooks/useDialogFocus.ts'
 import { closeReport } from '../shell/router.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
+import { useFigures } from '../hooks/useFigures.ts'
 import { localToday } from '../lib/today.ts'
 import { reportData } from './model/reportData.ts'
 import { reportPages } from '../components/report/reportPages.tsx'
@@ -33,7 +34,8 @@ function useFitScale() {
 
 export default function ReportDialog() {
   const plan = useStore((state) => state.plan)
-  const data = useMemo(() => reportData(plan, localToday()), [plan])
+  const figures = useFigures()
+  const data = useMemo(() => reportData(plan, localToday()), [plan, figures])
   const [message, setMessage] = useState<{ text: string; bad?: boolean } | null>(null)
   const [saving, setSaving] = useState(false)
   const focus = useDialogFocus(downloadButton)

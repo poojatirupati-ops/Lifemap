@@ -58,7 +58,7 @@ async function putPlan(plan: object) {
 /**
  * Saves the plan 1.5s after it last changed, and at once when the page is hidden.
  * Offline saves wait and go out when the browser is online again; a failed save is retried on the next change.
- * Nothing is saved once signed out, so a reset plan never goes back. Returns the stop function.
+ * Nothing is saved once signed out, so a reset plan never goes back, nor before the saved plan is restored. Returns the stop function.
  */
 export function startPlanSync() {
   queryClient.mount() // resumes paused saves when the browser comes back online
@@ -69,6 +69,8 @@ export function startPlanSync() {
   const save = () => {
     clearTimeout(timer)
     if (!useShell.getState().authed) return
+    // no server version until the saved plan is restored (session.ts): this browser's plan never saves blind over the server's
+    if (!queryClient.getQueryData(PLAN_KEY)) return
     const fields = savedFields(useStore.getState().plan)
     const json = JSON.stringify(fields)
     if (json === lastSent) return

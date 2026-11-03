@@ -7,7 +7,6 @@ import { useStore } from '../../state/store.ts'
 import type { Dob, Provenance } from '../../state/types.ts'
 import { dobKey, setDobPart, type Who } from '../../state/about.ts'
 import Emo from '../ui/Emo.tsx'
-import { useFigures } from '../../hooks/useFigures.ts'
 
 /** Where the partner's age came from. */
 const TAGS: Record<Provenance | 'none', [className: string, text: string]> = {
@@ -31,7 +30,6 @@ const PARTS: {
 
 /** Day, month and year boxes; a full day or month moves on to the next box. */
 export default function DobField({ who }: { who: Who }) {
-  useFigures()
   const you = who === 'you'
   const id = dobKey(who)
   const today = localToday()

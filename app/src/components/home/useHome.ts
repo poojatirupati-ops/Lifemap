@@ -4,6 +4,7 @@ import { FINANCE_SECTIONS } from '../../domain/finances/sections.data.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { project } from '../../domain/planning/project.ts'
 import { useStore } from '../../state/store.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 import type { Plan } from '../../state/types.ts'
 import { checkItems, withRepaymentLooks, type CheckPlan } from '../finance/checkList.ts'
 import { FINANCE_FIELDS } from '../../domain/finances/fields.data.ts'
@@ -60,8 +61,9 @@ export function homeSummary(plan: Plan) {
   }
 }
 
-/** Home's figures, recomputed only when the plan changes. */
+/** Home's figures, recomputed only when the plan or the standards in use change. */
 export function useHome() {
   const plan = useStore((store) => store.plan)
-  return useMemo(() => homeSummary(plan), [plan])
+  const figures = useFigures()
+  return useMemo(() => homeSummary(plan), [plan, figures])
 }

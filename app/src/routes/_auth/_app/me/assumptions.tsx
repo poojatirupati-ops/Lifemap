@@ -12,12 +12,10 @@ import {
 import { governmentRules } from '../../../../domain/planning/governmentRules.ts'
 import { assumption } from '../../../../domain/planning/assumptions.ts'
 import { rulesFor, rulesVersion } from '../../../../domain/planning/rates.ts'
-import { useFigures } from '../../../../hooks/useFigures.ts'
 
 export const Route = createFileRoute('/_auth/_app/me/assumptions')({ component: MeAssumptions })
 
 function MeAssumptions() {
-  useFigures()
   const left = useStore(({ plan }) => missingChoices(plan).length)
   const lawOpen = useStore(({ openAssumption }) => openAssumption === 'law')
   const year = useStore(({ plan }) => assumption(plan, 'startYear'))

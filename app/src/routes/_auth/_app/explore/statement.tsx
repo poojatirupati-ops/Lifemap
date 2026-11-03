@@ -16,7 +16,6 @@ import {
 import { isExample } from '../../../../domain/finances/upload.ts'
 import { prefersReducedMotion } from '../../../../hooks/reducedMotion.ts'
 import { useStore } from '../../../../state/store.ts'
-import { useFigures } from '../../../../hooks/useFigures.ts'
 
 // a statement being read or confirmed; without one (a reload) there is nothing to show here
 export const Route = createFileRoute('/_auth/_app/explore/statement')({
@@ -27,7 +26,6 @@ export const Route = createFileRoute('/_auth/_app/explore/statement')({
 })
 
 function ExploreUpload() {
-  useFigures()
   const upload = useStore((store) => store.statement)
   const startYear = useStore((store) => assumption(store.plan, 'startYear'))
   const { statementRead, confirmUpload } = useStore.getState()

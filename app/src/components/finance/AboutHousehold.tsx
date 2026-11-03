@@ -4,13 +4,11 @@ import { assumption } from '../../domain/planning/assumptions.ts'
 import { useStore } from '../../state/store.ts'
 import { setDependants, setPlanningWithPartner } from '../../state/about.ts'
 import PartnerBlock from '../define/PartnerBlock.tsx'
-import { useFigures } from '../../hooks/useFigures.ts'
 
 const DEPENDANTS = ['0', '1', '2', '3+']
 
 /** The tax credits that need a Yes, as chips; each shows only when it can apply. */
 function CredChips() {
-  useFigures()
   const household = useStore(
     useShallow(({ plan }): Household => ({
       startYear: assumption(plan, 'startYear'),

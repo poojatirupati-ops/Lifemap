@@ -5,7 +5,6 @@ import { assumption } from '../domain/planning/assumptions.ts'
 import { rules2026 } from '../domain/planning/rates.ts'
 import { useStore } from '../state/store.ts'
 import CloseButton from './CloseButton.tsx'
-import { useFigures } from '../hooks/useFigures.ts'
 
 export const key = 'ex'
 export const aria = { 'aria-labelledby': 'ex-t', 'aria-describedby': 'ex-s' }
@@ -14,7 +13,6 @@ const NOTE = { margin: '0 0 8px' }
 
 /** "Not sure? See an example": how the sample customers fill in this field, and where to find yours. */
 export function Body({ param: field = '' }: { param?: string }) {
-  useFigures()
   const startYear = useStore((store) => assumption(store.plan, 'startYear'))
   const definition = FINANCE_FIELDS[field] ?? LIST_FIELDS[field]
   const example = fieldExamples({
