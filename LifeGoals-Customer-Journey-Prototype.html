@@ -3146,6 +3146,13 @@ html body #screen .cdet{background:rgba(255,255,255,.92);border:1px solid rgba(2
 .lg2 .lgp{width:12px;height:12px;border-radius:50%;border:1.4px solid #079E98;background:#fff;display:inline-block;min-width:12px}
 html body #screen .pnote{background:linear-gradient(135deg,#E4F6F3,#EEF8F8);border:1px solid rgba(8,217,184,.3);border-radius:20px;padding:14px 16px;font-size:14px;line-height:1.55;color:#182A54}
 html body #screen .pnote .pn-l{display:block;font-weight:800;font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#086A74;margin-bottom:4px}
+/* v165 Future-at-a-glance segmented tabs */
+html body #screen .vt{display:grid!important;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px!important;background:rgba(7,158,152,.08)!important;border:1px solid rgba(8,217,184,.22);border-radius:18px!important;box-shadow:none}
+html body #screen .vt button{min-height:44px;padding:0 6px!important;border-radius:14px!important;font-size:13.5px!important;font-weight:700;color:#51627a;background:transparent!important;box-shadow:none!important;white-space:nowrap;transition:background .2s,color .2s}
+html body #screen .vt button svg{width:17px;height:17px;opacity:.85}
+html body #screen .vt button.on{background:#079E98!important;color:#fff!important;box-shadow:0 6px 14px -6px rgba(7,158,152,.6)!important}
+html body #screen .vt button.on svg{opacity:1}
+html body #screen .vt button:not(.on):hover{background:rgba(255,255,255,.7)!important;color:#086A74}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
