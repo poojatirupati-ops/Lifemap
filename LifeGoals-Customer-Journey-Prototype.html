@@ -3106,6 +3106,16 @@ body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 .rep-bar button[data-r="print"]{background:#079E98!important;color:#fff!important}
 .rep-bar button[data-r="close"]{background:#fff!important;color:#182A54!important;border:1px solid rgba(24,42,84,.18)!important}
 .rep-bar #rep-msg{color:#51627a}
+/* v160 Your money terms: one glass card per section */
+.tm2{display:flex;flex-direction:column;gap:12px}
+html body #screen .tm2-c{background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.95);border-radius:22px;box-shadow:0 8px 22px rgba(24,42,84,.07);padding:16px 16px 10px}
+.tm2-h{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.tm2-ic{width:42px;height:42px;flex:none;border-radius:14px;background:linear-gradient(145deg,#DDF8F2,#fff);color:#079E98;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(8,217,184,.18)}
+.tm2-h b{display:block;font-family:var(--fh);font-size:16px;color:#182A54}
+.tm2-h small{display:block;font-size:13px;color:#51627a;margin-top:1px}
+.tm2-t{padding:10px 0 12px;border-top:1px solid rgba(8,217,184,.2)}
+.tm2-n{display:inline-block;font-size:13px;font-weight:800;color:#086A74;background:#E4F6F3;border-radius:99px;padding:3px 12px}
+.tm2-t p{margin:6px 0 0;font-size:14.5px;line-height:1.45;color:#182A54}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -3387,6 +3397,8 @@ function myTerms(){ const g = [['mindset', ['2', '12']], ['behaviour', ['4', '9'
   return r.filter(x => x.tags.length); }
 const SECT_IC = {safety:'🪂', mindset:'🧠', behaviour:'🔍', appetite:'🌦️', capacity:'🛟', horizon:'⏳', experience:'🎓'};
 function termsHTML(ic){ return myTerms().map(x => '<div class="tsec">' + (ic ? '<div class="tsec-h"><span class="tsec-ic" aria-hidden="true">' + (SECT_IC[x.k] || '◆') + '</span><span class="small" style="color:var(--ink)">' + sectLbl(x.k) + '</span></div>' : '<div class="small" style="color:var(--ink)">' + sectLbl(x.k) + '</div>') + x.tags.map(termRow).join('') + '</div>').join(''); }
+const TM_IC = {mindset:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>', behaviour:'<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>', appetite:'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>', safety:'<path d="M12 3l7 3v6c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6z"/>', capacity:'<rect x="3" y="8" width="15" height="8" rx="2"/><path d="M21 11v2M6 11h6"/>', horizon:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>', experience:'<path d="M3 9l9-5 9 5-9 5z"/><path d="M7 12v4c2.5 2 7.5 2 10 0v-4"/>'};
+function termsPage(){ return '<div class="tm2">' + myTerms().map(x => '<div class="tm2-c"><div class="tm2-h"><span class="tm2-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (TM_IC[x.k] || TM_IC.mindset) + '</svg></span><div><b>' + SECT[x.k][0] + '</b><small>' + SECT[x.k][1] + '</small></div></div>' + x.tags.map(t => '<div class="tm2-t"><span class="tm2-n">' + esc(t) + '</span><p>' + esc(TERMS[t] || '') + '</p></div>').join('') + '</div>').join('') + '</div>'; }
 const TYPES = {A:{name:'Achiever', e:'🎯', strap:'In control, goal-driven, disciplined with money.', str:['Clear about what you want','You stick to a plan'], watch:'Being too hard on yourself when life changes the plan.'},
   B:{name:'Balancer', e:'⚖️', strap:'Value-seeking, vigilant, careful with risk.', str:['Careful with money','You weigh things up'], watch:'Playing so safe that cash quietly loses value to rising prices.'},
   E:{name:'Explorer', e:'🧭', strap:'Curious, open to new ideas, comfortable with risk.', str:['Open to new ideas','Comfortable with change'], watch:'Jumping in before your emergency fund is in place.'},
@@ -6138,7 +6150,7 @@ V.ME = () => { const m = S.me;
   if (m === 'recheck') return {id:'ME-CHK', note:'Re-check of the 6 Discover answers, pre-filled. Confirm or change (Pooja Q5).', head:appHead('Your first answers', 'From when you started. Do they still fit you?', 'meback'),
     html:umSummary(DISC6.map(q => ({d:q.id}))) + DISC6.filter(q => typeof S.ans[q.id] !== 'number').map(q => umQCard({d:q.id}, 'Not answered yet')).join(''), foot:'<button class="btn" data-a="recheckok">These still look right</button>'};
   if (m === 'terms') return {id:'ME-TERMS', note:'Your money terms: the Lifecast financial / behavioural terms from your answers, each with a plain-English meaning (§12).', head:appHead('Your money terms', 'The words an adviser would use, and what they mean for you.', 'meback'),
-    html:'<div class="card">' + (myTerms().length ? termsHTML() : '<p class="small">Answer your first questions to see your terms.</p>') + '</div><p class="disc">These describe how you answered. They are not advice. ' + DISC_FORMAL + '</p>'};
+    html:(myTerms().length ? termsPage() : '<div class="card"><p class="small">Answer your first questions to see your terms.</p></div>') + '<p class="disc">These describe how you answered. They are not advice. ' + DISC_FORMAL + '</p>'};
   if (m === 'um') return {id:'ME-UM', note:'Understand Me = your money profile: 13 questions in 3 sections, each named with the term + a plain label (§12). 6 pre-filled from Discover, 7 to answer.', head:appHead('Your money profile', umLeftTxt() + '.', 'meback'),
       html:'<div class="card ump-hero"><div class="ump-top"><div><small>Your progress</small><b>' + umCount() + '<span> of 13 answered</span></b></div><span class="ump-pct">' + Math.round(umCount() / 13 * 100) + '%</span></div><div class="ump-bar"><i style="width:' + Math.round(umCount() / 13 * 100) + '%"></i></div><p>' + discCount() + ' came from your first answers. Three short sections make up your risk profile.</p></div>' +
         UM.map(s => { const tot = s.qs.length, got = s.qs.filter(q => q.d ? typeof S.ans[q.d] === 'number' : typeof S.um.a[q.u] === 'number').length, st = S.um.done[s.n] ? 'done' : got ? 'part' : 'none';
