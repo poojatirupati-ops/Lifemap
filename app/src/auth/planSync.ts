@@ -1,5 +1,5 @@
-import { MutationObserver, QueryClient } from '@tanstack/react-query'
-import { useShell } from '../state/shell.ts'
+import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-query'
+import { toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { savedPlan } from '../state/migrate.ts'
 import type { Plan } from '../state/types.ts'
@@ -38,6 +38,30 @@ async function fetchPlan(): Promise<SavedPlan> {
 /** The signed-in user's saved plan and its version (the version is what a save compares against). */
 export const loadPlan = () =>
   queryClient.fetchQuery({ queryKey: PLAN_KEY, queryFn: fetchPlan, staleTime: 0 })
+
+/**
+ * The saved plan, read until it is: offline it waits for the connection, an API that is down is retried, and after that it is tried
+ * again on the next focus or reconnect, saying meanwhile that changes aren't saved (saving waits for the version it brings).
+ * Removing PLAN_KEY (sign-out, another account) stops it.
+ */
+export function readSavedPlan() {
+  const observer = new QueryObserver(queryClient, {
+    queryKey: PLAN_KEY,
+    queryFn: fetchPlan,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  })
+  return new Promise<SavedPlan>((resolve) => {
+    const stop = observer.subscribe(({ status, fetchStatus, data }) => {
+      if (status === 'success') {
+        stop()
+        resolve(data)
+      } else if (status === 'error' && fetchStatus === 'idle')
+        toast("Your changes aren't saved yet")
+    })
+  })
+}
 
 /** Saves against the last version read; on 409 (changed elsewhere) refetches and retries once, last writer wins. */
 async function putPlan(plan: object) {

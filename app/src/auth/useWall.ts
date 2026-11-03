@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { authClient } from './client.ts'
 import { startPlanSync } from './planSync.ts'
-import { enterApp, needsEntering, retryEntering } from './session.ts'
+import { enterApp } from './session.ts'
 import { testAuthOn } from '../lib/lmTestHook.ts'
 import { useShell } from '../state/shell.ts'
 
@@ -14,15 +14,10 @@ export function useWall() {
     if (!isPending) useShell.setState({ authed: !!userId || testAuthOn() })
   }, [userId, isPending])
 
-  // A session found on load (or back from SSO, or back online after an offline reload) enters here; an in-app sign-in has entered already.
+  // A session found on load (or back from SSO, or back online after an offline reload) enters here; enterApp skips an account already entered (an in-app sign-in).
   useEffect(() => {
-    if (email && needsEntering(email)) void enterApp({ name: name ?? '', email })
+    if (email) void enterApp({ name: name ?? '', email })
   }, [name, email])
-
-  // entering that failed offline (consents, saved plan) is tried again whenever the session is fetched again
-  useEffect(() => {
-    if (data) retryEntering()
-  }, [data])
 
   useEffect(() => {
     if (userId) return startPlanSync()

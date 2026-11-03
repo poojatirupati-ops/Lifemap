@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { renderHook } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
+import { onlineManager } from '@tanstack/react-query'
 import { queryClient } from '../../src/auth/planSync.ts'
 import { rememberSignedIn, wasSignedIn } from '../../src/auth/session.ts'
 import { useWall } from '../../src/auth/useWall.ts'
@@ -38,7 +39,11 @@ async function openWhileOffline(href: string) {
   await act(() => router.navigate({ href }))
 }
 
-afterEach(() => localStorage.clear())
+afterEach(() => {
+  localStorage.clear()
+  onlineManager.setOnline(true)
+  vi.unstubAllGlobals()
+})
 
 test('offline after a session on this browser (even a reload): the page opens', async () => {
   session.get = () => Promise.reject(new TypeError('Failed to fetch'))
@@ -96,37 +101,41 @@ test('offline reload, then back online: the saved plan comes back and the empty 
   vi.unstubAllGlobals()
 })
 
-test('a restore that fails offline pauses saving until it succeeds once back online', async () => {
-  const saved = { ...fresh(), whyNote: 'saved on the server' }
-  let reachable = false
+/** The API's answers; `plan` and `notice` as the server holds them. */
+function stubApi(saved: unknown, notice: string | null) {
   const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input)
-    if (!reachable && url === '/api/plan') throw new TypeError('Failed to fetch')
     if (init?.method === 'PUT') return Response.json({ version: 4 })
     if (url === '/api/plan') return Response.json({ version: 3, plan: saved })
-    if (url === '/api/consents') return Response.json({ consents: {}, notice: '2026-10' })
+    if (url === '/api/consents') return Response.json({ consents: {}, notice })
     return Response.json({})
   })
   vi.stubGlobal('fetch', fetch)
+  return fetch
+}
+
+/** Through the wall offline on the remembered session, then the session shows while still offline. */
+async function enterOffline(email: string) {
   session.get = () => Promise.reject(new TypeError('Failed to fetch'))
   rememberSignedIn(true)
   queryClient.clear()
   useStore.getState().load(fresh())
   await openWhileOffline('/me/privacy')
-  session.user = { id: 'u2', name: 'Aoife', email: 'aoife2@example.ie' }
-  const wall = renderHook(() => useWall())
-  await vi.waitFor(() =>
-    expect(fetch.mock.calls.some(([url]) => String(url) === '/api/plan')).toBe(true),
-  )
+  onlineManager.setOnline(false)
+  session.user = { id: email, name: 'Aoife', email }
+  return renderHook(() => useWall())
+}
 
-  // edited while the saved plan could not be read: nothing is saved
+const wait = (ms: number) => act(() => new Promise((done) => setTimeout(done, ms)))
+
+test('offline, saving waits for the saved plan; back online it comes back and only it is saved', async () => {
+  const fetch = stubApi({ ...fresh(), whyNote: 'saved on the server' }, '2026-10')
+  const wall = await enterOffline('aoife2@example.ie')
   act(() => useStore.getState().update((plan) => void (plan.whyNote = 'edited offline')))
-  await new Promise((done) => setTimeout(done, 2000))
+  await wait(2000)
   expect(fetch.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(false)
 
-  // back online: the saved plan comes back, and only it is saved
-  reachable = true
-  act(() => void window.dispatchEvent(new Event('online')))
+  act(() => onlineManager.setOnline(true))
   await vi.waitFor(() => expect(useStore.getState().plan.whyNote).toBe('saved on the server'))
   await vi.waitFor(
     () => expect(fetch.mock.calls.some(([, init]) => init?.method === 'PUT')).toBe(true),
@@ -137,36 +146,15 @@ test('a restore that fails offline pauses saving until it succeeds once back onl
     .map(([, init]) => JSON.parse(String(init!.body)).plan.whyNote)
   expect(sent).not.toContain('edited offline')
   wall.unmount()
-  vi.unstubAllGlobals()
 }, 10000)
 
-test('a consents check that fails offline keeps the user where they are; only a real "not agreed" asks for details', async () => {
-  let reachable = false
-  const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = String(input)
-    if (!reachable && url === '/api/consents') throw new TypeError('Failed to fetch')
-    if (init?.method === 'PUT') return Response.json({ version: 4 })
-    if (url === '/api/plan') return Response.json({ version: 3, plan: null })
-    if (url === '/api/consents') return Response.json({ consents: {}, notice: null })
-    return Response.json({})
-  })
-  vi.stubGlobal('fetch', fetch)
-  session.get = () => Promise.reject(new TypeError('Failed to fetch'))
-  rememberSignedIn(true)
-  queryClient.clear()
-  await openWhileOffline('/me/privacy')
-  session.user = { id: 'u3', name: 'Aoife', email: 'aoife3@example.ie' }
-  const wall = renderHook(() => useWall())
-  await vi.waitFor(() =>
-    expect(fetch.mock.calls.some(([url]) => String(url) === '/api/consents')).toBe(true),
-  )
-  await new Promise((done) => setTimeout(done, 50))
+test('offline, the consents check waits where the user is; only a real "not agreed" asks for details', async () => {
+  stubApi(null, null)
+  const wall = await enterOffline('aoife3@example.ie')
+  await wait(50)
   expect(path()).toBe('/me/privacy')
 
-  // back online, the server says this account has not agreed yet
-  reachable = true
-  act(() => void window.dispatchEvent(new Event('online')))
+  act(() => onlineManager.setOnline(true))
   await vi.waitFor(() => expect(path()).toBe('/account/details'))
   wall.unmount()
-  vi.unstubAllGlobals()
 })

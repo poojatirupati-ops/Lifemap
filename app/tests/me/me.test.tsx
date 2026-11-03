@@ -17,7 +17,10 @@ const auth = vi.hoisted(() => ({
   role: 'member',
 }))
 vi.mock('../../src/auth/session.ts', () => ({ signOut: auth.signOut }))
-vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
+vi.mock('../../src/auth/consents.ts', async (original) => ({
+  ...(await original<typeof import('../../src/auth/consents.ts')>()),
+  postConsents: auth.postConsents,
+}))
 vi.mock('../../src/auth/client.ts', () => ({
   authClient: {
     useSession: () => ({ data: auth.user && { user: auth.user } }),

@@ -28,7 +28,7 @@ export async function postConsents({ terms, marketing, analytics }: Choices) {
     if (wait) await new Promise((resolve) => setTimeout(resolve, wait))
     const response = await send('POST', '/api/consents', body).catch(() => null)
     if (response?.ok) {
-      void queryClient.invalidateQueries({ queryKey: ['consents'] }) // read by the analytics provider
+      void queryClient.invalidateQueries({ queryKey: CONSENTS_KEY }) // read by the analytics provider
       return true
     }
   }
@@ -36,10 +36,26 @@ export async function postConsents({ terms, marketing, analytics }: Choices) {
   return false
 }
 
-/** Whether this account has acknowledged the privacy notice in this tenant (no means it is new here); null when the API could not say. */
-export async function hasAcknowledgedNotice() {
-  const response = await send('GET', '/api/consents').catch(() => null)
-  if (!response?.ok) return null
-  const state: { notice?: unknown } = await response.json()
-  return !!state.notice
+/** GET /api/consents: the account's consent records in this tenant, and the privacy notice version it acknowledged (none when new). */
+export interface ConsentState {
+  consents: Partial<Record<string, { granted: boolean; version: string }>>
+  notice?: string | null
 }
+
+export const CONSENTS_KEY = ['consents']
+export const consentsQuery = {
+  queryKey: CONSENTS_KEY,
+  queryFn: async (): Promise<ConsentState> => {
+    const response = await send('GET', '/api/consents')
+    if (!response.ok) throw new Error(`consents ${response.status}`)
+    return response.json()
+  },
+  staleTime: Infinity, // changes only by setAnalyticsConsent and postConsents (which invalidates it)
+}
+
+/**
+ * Whether this account has acknowledged the privacy notice in this tenant (no means it is new here), read afresh. Offline it waits
+ * for the connection; an API that is down is retried; rejects if it never answers.
+ */
+export const hasAcknowledgedNotice = async () =>
+  !!(await queryClient.fetchQuery({ ...consentsQuery, staleTime: 0, retry: 3 })).notice

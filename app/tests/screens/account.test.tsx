@@ -19,7 +19,10 @@ vi.mock('../../src/auth/client.ts', () => ({
   signInWithCode: auth.signInWithCode,
   authClient: { passkey: { addPasskey: auth.addPasskey }, updateUser: auth.updateUser },
 }))
-vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
+vi.mock('../../src/auth/consents.ts', async (original) => ({
+  ...(await original<typeof import('../../src/auth/consents.ts')>()),
+  postConsents: auth.postConsents,
+}))
 vi.mock('../../src/auth/session.ts', async (original) => ({
   ...(await original<object>()),
   enterApp: auth.enterApp,

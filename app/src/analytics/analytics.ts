@@ -1,7 +1,12 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { authClient } from '../auth/client.ts'
-import { ANALYTICS_VERSION } from '../auth/consents.ts'
+import {
+  ANALYTICS_VERSION,
+  CONSENTS_KEY,
+  consentsQuery,
+  type ConsentState,
+} from '../auth/consents.ts'
 import { queryClient, send } from '../auth/planSync.ts'
 import { tenantQuery } from '../shell/tenant.ts'
 import { toast } from '../state/shell.ts'
@@ -18,21 +23,6 @@ export const ANALYTICS_LABEL =
   'Help improve LifeMap: anonymous usage analytics and session recordings'
 
 const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
-
-interface ConsentState {
-  consents: Partial<Record<string, { granted: boolean; version: string }>>
-}
-
-const CONSENTS_KEY = ['consents']
-const consentsQuery = {
-  queryKey: CONSENTS_KEY,
-  queryFn: async (): Promise<ConsentState> => {
-    const response = await send('GET', '/api/consents')
-    if (!response.ok) throw new Error(`consents ${response.status}`)
-    return response.json()
-  },
-  staleTime: Infinity, // changes only by setAnalyticsConsent and postConsents (which invalidates it)
-}
 
 let posthog: Promise<typeof import('./posthog.ts')> | undefined
 
