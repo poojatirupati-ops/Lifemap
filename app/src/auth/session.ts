@@ -98,14 +98,13 @@ export async function enterApp(user: User) {
   const stillEntering = () => enteredAs === email
   useShell.setState({ authed: true }) // signed in now; the session hook catches up after
   rememberSignedIn(true)
-  // the last account's plan version and consents must not carry over
-  queryClient.removeQueries({ queryKey: PLAN_KEY })
-  queryClient.removeQueries({ queryKey: CONSENTS_KEY })
+  forgetAccountQueries() // the last account's plan version and consents must not carry over
+  // an invitation switches the active tenant, and the plan and consents belong to the tenant: read them after it
+  const rt = await acceptInvitation(redirectTarget())
+  if (!stillEntering()) return
   // both reject only when cancelled (sign-out)
   const reading = readSavedPlan().catch(() => null)
   const agreed = hasAcknowledgedNotice(email).catch(() => null)
-  const rt = await acceptInvitation(redirectTarget())
-  if (!stillEntering()) return
   // the session (and maybe its tenant) changed: GET /api/tenant again for branding, flags and SSO
   void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
   await land(rt)
@@ -140,13 +139,18 @@ export function wasSignedIn() {
   }
 }
 
+/** The plan version and consents cached for the last account. */
+function forgetAccountQueries() {
+  queryClient.removeQueries({ queryKey: PLAN_KEY })
+  queryClient.removeQueries({ queryKey: CONSENTS_KEY })
+}
+
 /** Forgets everything this browser holds for the user: query cache, plan, topic pages, wall pass. */
 function clearLocal() {
   enteredAs = undefined
   rememberSignedIn(false)
   void queryClient.cancelQueries()
-  queryClient.removeQueries({ queryKey: PLAN_KEY })
-  queryClient.removeQueries({ queryKey: CONSENTS_KEY })
+  forgetAccountQueries()
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())
   resetJourneyPages()

@@ -16,15 +16,18 @@ interface Choices {
 
 /**
  * Records the notice acknowledgement (`terms`, contract basis) and the optional consents, granted or withdrawn.
- * Tries 3 times; returns whether it was saved and tells the user when it was not.
+ * Returns whether it was saved.
  */
-export async function postConsents({ terms, marketing, analytics }: Choices) {
-  const body = {
+export const postConsents = ({ terms, marketing, analytics }: Choices) =>
+  saveConsents({
     notice: terms ? NOTICE_VERSION : undefined,
     marketing: { granted: marketing, version: MARKETING_VERSION },
     analytics:
       analytics === undefined ? undefined : { granted: analytics, version: ANALYTICS_VERSION },
-  }
+  })
+
+/** POST /api/consents, tried 3 times; re-reads the consents when saved and tells the user when not. */
+export async function saveConsents(body: object) {
   const saving = new MutationObserver(queryClient, {
     mutationFn: async () => {
       const response = await send('POST', '/api/consents', body)

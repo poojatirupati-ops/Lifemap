@@ -6,10 +6,10 @@ import {
   CONSENTS_KEY,
   consentsQuery,
   type ConsentState,
+  saveConsents,
 } from '../auth/consents.ts'
-import { queryClient, send } from '../auth/planSync.ts'
+import { queryClient } from '../auth/planSync.ts'
 import { tenantQuery } from '../shell/tenant.ts'
-import { toast } from '../state/shell.ts'
 
 /**
  * PostHog product analytics and session recording, only with the user's consent (GDPR + ePrivacy).
@@ -45,14 +45,8 @@ export async function setAnalyticsConsent(granted: boolean) {
       consents: { ...state.consents, analytics: { granted, version: ANALYTICS_VERSION } },
     }
   const previous = queryClient.setQueriesData<ConsentState>({ queryKey: CONSENTS_KEY }, choose)
-  const body = { analytics: { granted, version: ANALYTICS_VERSION } }
-  const response = await send('POST', '/api/consents', body).catch(() => null)
-  if (response?.ok) {
-    const saved: ConsentState = await response.json()
-    return void queryClient.setQueriesData<ConsentState>({ queryKey: CONSENTS_KEY }, () => saved)
-  }
+  if (await saveConsents({ analytics: { granted, version: ANALYTICS_VERSION } })) return
   for (const [key, state] of previous) queryClient.setQueryData(key, state)
-  toast("Your privacy choice couldn't be saved. Please try again.")
 }
 
 /** The signed-in user's analytics consent; null while loading or when the tenant has analytics off. */

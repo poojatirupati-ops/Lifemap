@@ -46,8 +46,11 @@ test('invite link: kept through sign-in, accepted, made active, then a new accou
   await enterApp(user)
   expect(authClient.organization.acceptInvitation).toHaveBeenCalledWith({ invitationId: 'inv-1' })
   expect(authClient.organization.setActive).toHaveBeenCalledWith({ organizationId: 'org-a' })
+  // the plan and consents belong to the tenant: read only once the invited one is active
+  const active = vi.mocked(authClient.organization.setActive).mock.invocationCallOrder[0]
+  for (const order of vi.mocked(fetch).mock.invocationCallOrder) expect(order).toBeGreaterThan(active)
   expect(location.search).toBe('')
-  expect(router.state.location.pathname).toBe('/account/details')
+  await vi.waitFor(() => expect(router.state.location.pathname).toBe('/account/details'))
 })
 
 test('returning user with an unfinished onboarding resumes at the next open question', async () => {
