@@ -72,5 +72,9 @@ export const consentsQuery = (email: string) => ({
  * for the connection, and it keeps asking (backing off, paused while the page is hidden) until the API answers; it rejects only when
  * cancelled (sign-out).
  */
-export const hasAcknowledgedNotice = async (email: string) =>
-  !!(await queryClient.fetchQuery({ ...consentsQuery(email), staleTime: 0, retry: true })).notice
+export async function hasAcknowledgedNotice(email: string) {
+  const query = consentsQuery(email)
+  // a read already in flight (analytics, before an invitation switched the tenant) may be the old tenant's: don't join it
+  await queryClient.cancelQueries({ queryKey: query.queryKey })
+  return !!(await queryClient.fetchQuery({ ...query, staleTime: 0, retry: true })).notice
+}
