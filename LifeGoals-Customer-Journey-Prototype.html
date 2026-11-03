@@ -246,7 +246,7 @@ input[type=range]{width:100%;accent-color:var(--sea-d);height:32px}
 .chapgrid{display:grid;grid-template-columns:1fr;gap:10px}
 .rep .chapgrid{grid-template-columns:1fr 1fr}
 .chap{border:1.5px solid var(--line);border-radius:20px;padding:14px;background:#fff;cursor:pointer;text-align:left;display:flex;gap:12px;align-items:flex-start;width:100%;font-size:inherit}
-.chap .cb{flex:1;min-width:0}
+.chap .cbd{flex:1;min-width:0}
 .chap.ok{border-color:#A9DDD5;background:#F1FAF8}.chap.warn{border-color:#F3D58E;background:#FFF9EC}.chap.bad{border-color:#F2B7A6;background:#FEF3EF}
 .chap.open{grid-column:1/-1}
 .chap .w{font-size:34px;line-height:1;flex-shrink:0;width:40px;text-align:center}.chap .tt{font-family:var(--fh);font-weight:800;font-size:16px}.chap .ag{font-size:11.5px;color:var(--muted);margin-bottom:6px}
@@ -4777,7 +4777,7 @@ function chaptersHTML(P){ const a0 = P.rows[0].a;
     const ev = []; if (retireGoal() && c.rows.some(r => r.rmark)) ev.push('🏁 <b>You retire</b>');
     S.goals.filter(g => g.kind !== 'retire' && g.age >= c.from && g.age <= c.to).forEach(g => ev.push(g.e + ' ' + esc(g.name) + ' <b style="color:var(--' + band(P.pct[g.id]) + '-t)">' + P.pct[g.id] + '%</b>'));
     const open = S.chapOpen === ci;
-    return '<button class="chap ' + cls + (open ? ' open' : '') + '" data-a="chap" data-p="' + ci + '" aria-expanded="' + open + '"><div class="w" aria-hidden="true">' + wx + '</div><div class="cb"><div class="tt">Your ' + c.dec + 's</div><div class="ag">age ' + c.from + '–' + c.to + (allRet ? (retireGoal() ? ' · retired' : ' · after work') : '') + '</div><div class="st">' + story + '</div>' + (ev.length ? '<div class="ev">' + ev.map(e => '<div>' + e + '</div>').join('') + '</div>' : '') +
+    return '<button class="chap ' + cls + (open ? ' open' : '') + '" data-a="chap" data-p="' + ci + '" aria-expanded="' + open + '"><div class="w" aria-hidden="true">' + wx + '</div><div class="cbd"><div class="tt">Your ' + c.dec + 's</div><div class="ag">age ' + c.from + '–' + c.to + (allRet ? (retireGoal() ? ' · retired' : ' · after work') : '') + '</div><div class="st">' + story + '</div>' + (ev.length ? '<div class="ev">' + ev.map(e => '<div>' + e + '</div>').join('') + '</div>' : '') +
       '<div class="mo">' + (open ? '▲ Hide the years' : '▼ See it year by year') + '</div>' + (open ? '<div class="ev">' + c.rows.map(r => { const m = isShort(r), d = r.used > 1 && !m; return '<div class="cy"><b style="width:26px">' + r.a + '</b><span class="d" style="background:' + (m ? 'var(--alert)' : d ? 'var(--nudge)' : 'var(--good)') + '"></span>' + (m ? '<b>Gap to plan for</b>: short ' + eur(r.short) : d ? 'Using savings' : 'Comfortable') + '</div>'; }).join('') + '</div>' : '') + '</div></button>'; }).join('') + '</div>'; }
 /* REPORT DATA */
 /* Journey-spec §28: ONE function, reportData(), returns every number, text and chart series for the plan report. Pure: no DOM, no lasting change to S.
