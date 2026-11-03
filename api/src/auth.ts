@@ -65,7 +65,9 @@ let ses: SESv2Client | undefined;
 export const sendMail: SendMail = (to, subject, body, tenant) =>
   process.env.OTP_SENDER === "ses"
     ? sesMail((ses ??= new SESv2Client({ region: "eu-west-1" })), process.env.OTP_FROM ?? "")(to, subject, body, tenant)
-    : Promise.resolve(console.log(`[mail] ${mask(to)}: ${subject}`));
+    : process.env.NODE_ENV === "production"
+      ? Promise.reject(new Error("mail sender not configured: set OTP_SENDER=ses and OTP_FROM")) // fail closed
+      : Promise.resolve(console.log(`[mail] ${mask(to)}: ${subject}`));
 
 /** Production OTP sender, through sendMail. From LifeMap: a code is asked for before any tenant is known. */
 export const mailOtp: SendOtp = (email, otp) =>
@@ -141,7 +143,7 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) => {
     user: {
       // An adviser's own Cal.com link (`<user>/<event>`) and card, set with updateUser; listed only for members with role adviser.
       additionalFields: {
-        calLink: { type: "string", required: false, input: true, validator: { input: z.string().regex(/^[\w-]+(\/[\w-]+)*$/).max(200) } },
+        calLink: { type: "string", required: false, input: true, validator: { input: z.string().regex(/^[\w-]+\/[\w-]+$/).max(200) } },
         adviserProfile: { type: "json", required: false, input: true, validator: { input: adviserProfile } },
       },
       deleteUser: { enabled: true, beforeDelete: (user) => eraseTraces(db, files, user) },

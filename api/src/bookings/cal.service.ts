@@ -1,12 +1,13 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { CloudEvent } from 'cloudevents';
-import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { DB, type Db } from '../db';
-import { type BookingStatus, booking, bookingEvent, consentEvent, user } from '../db/schema';
+import { type BookingStatus, booking, bookingEvent, user } from '../db/schema';
 import { EVENT_BUS, type EventBus } from '../events/bus';
 import { logger } from '../observe';
+import { withdrawShare } from './bookings.service';
 
 /**
  * The Cal.com triggers a tenant's team webhook sends (docs/runbook.md): the status each sets and the statuses it may replace, so a late or repeated
@@ -24,7 +25,7 @@ const MOVES: Record<string, [BookingStatus, BookingStatus[]]> = {
   AFTER_HOSTS_CAL_VIDEO_NO_SHOW: ['no_show', ['booked', 'ended']],
   AFTER_GUESTS_CAL_VIDEO_NO_SHOW: ['no_show', ['booked', 'ended']],
 };
-// The triggers that carry the Cal.com booking itself (its uid and time); the first two must come from the booking's adviser.
+// The triggers that carry the Cal.com booking itself (its uid and time); each must come from the booking's adviser.
 const BOOKS = new Set(['BOOKING_REQUESTED', 'BOOKING_CREATED', 'BOOKING_RESCHEDULED']);
 
 /** The parts of a Cal.com webhook we read. Booking triggers carry `uid` (and our id in metadata.bookingId, set by the embed); no-show triggers carry `bookingUid`. */
@@ -48,8 +49,12 @@ type CalWebhook = z.infer<typeof calWebhook>;
 
 /**
  * What handle did with a delivery: applied (or a retry of an applied one: published again), rejected (recorded, nothing changed or published),
- * ignored (not a trigger or booking we track: 200) or missing (ours, by metadata.bookingId, but not in this tenant yet: the route answers 409 so Cal.com retries).
+ * ignored (not a trigger or booking we track: 200) or missing (the route answers 409 so Cal.com retries): a metadata.bookingId no tenant has yet, or a
+ * reschedule that arrived before the one it follows.
  */
+/** Thrown inside the transaction to roll it back: the delivery is retried later. */
+class NotYet extends Error {}
+
 export type CalOutcome = 'applied' | 'rejected' | 'ignored' | 'missing';
 
 /**
@@ -93,7 +98,7 @@ export class CalService {
         const [prior] = await tx.select({ status: bookingEvent.status }).from(bookingEvent).where(and(eq(bookingEvent.calUid, uid), eq(bookingEvent.trigger, key)));
         return { b, status: prior?.status ?? null };
       }
-      if (trigger === 'BOOKING_REQUESTED' || trigger === 'BOOKING_CREATED') {
+      if (BOOKS.has(trigger)) {
         const [adviser] = await tx.select({ calLink: user.calLink }).from(user).where(eq(user.id, b.adviserId));
         if (!p.organizer?.username || adviser?.calLink?.split('/')[0] !== p.organizer.username) {
           logger.warn('cal organizer is not the booking\'s adviser', { booking: b.id, trigger });
@@ -110,21 +115,20 @@ export class CalService {
         : { status: to, ...(to === 'cancelled' && { cancelledAt: new Date() }) };
       const [changed] = await tx.update(booking).set(set)
         .where(and(eq(booking.id, b.id), inArray(booking.status, from), or(isNull(booking.calUid), eq(booking.calUid, current)))).returning({ id: booking.id });
+      // A reschedule (or create) whose status would apply but whose Cal.com booking is not the current one yet: an earlier reschedule has not
+      // landed. Roll back (no rejection recorded) and answer 409, so Cal.com retries it after that one.
+      if (!changed && BOOKS.has(trigger) && from.includes(b.status)) throw new NotYet();
       if (!changed) return { b, status: null };
       await tx.update(bookingEvent).set({ status: to }).where(eq(bookingEvent.id, isNew.id));
-      if (to === 'cancelled') {
-        // the share is withdrawn, under the wording version it was last granted with
-        const [granted] = await tx.select({ version: consentEvent.version }).from(consentEvent)
-          .where(and(eq(consentEvent.userId, b.userId), eq(consentEvent.organizationId, tenant), eq(consentEvent.kind, 'adviser_share'), sql`${consentEvent.detail}->>'bookingId' = ${b.id}`))
-          .orderBy(desc(consentEvent.id)).limit(1);
-        await tx.insert(consentEvent).values({
-          userId: b.userId, organizationId: tenant, kind: 'adviser_share', granted: false, version: granted?.version ?? 'unknown',
-          detail: { bookingId: b.id, adviserId: b.adviserId, items: b.share },
-        });
-      }
+      if (to === 'cancelled') await withdrawShare(tx, b);
       return { b, status: to };
-    });
-    if (!done) return p.metadata?.bookingId ? 'missing' : 'ignored';
+    }).catch((e: unknown) => { if (e instanceof NotYet) return 'later' as const; throw e; });
+    if (done === 'later') return 'missing';
+    if (!done) {
+      // ours (by metadata.bookingId) but not stored yet: Cal.com retries. Another tenant's, or erased: nothing will ever match.
+      const id = p.metadata?.bookingId;
+      return id && !(await this.db.select({ id: booking.id }).from(booking).where(eq(booking.id, id))).length ? 'missing' : 'ignored';
+    }
     if (!done.status) return 'rejected';
     const id = `${uid}:${key}`; // the idempotency key: consumers dedupe on it
     await this.bus.publish([new CloudEvent({

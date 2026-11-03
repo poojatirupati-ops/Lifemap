@@ -97,7 +97,7 @@ Adviser bookings (card C-CAL) are confirmed, moved and cancelled by Cal.com, whi
    `npx sst secret set CalWebhookSecrets '{"lifemap-direct":"<secret>","<org id>":"<secret>"}' --stage <stage>`
 4. Check: Cal.com's "Ping test" must not get 401 (that means the secret or the organization id is wrong). A booking made through the app shows `booked` in `GET /api/bookings`.
 
-The Api answers 401 to a bad signature, 200 to a delivery it recorded or does not track, 409 when the payload names one of our bookings (`metadata.bookingId`) it cannot find in that tenant yet, and 500 when publishing to the `Bookings` bus failed; Cal.com retries the last two (a retry never adds a second `booking_event` row, and publishes again only if the first delivery applied). The organizer of a requested or created booking must be the adviser whose `calLink` the booking was made with; otherwise the delivery is logged and not applied. Details: api/README.md. Rotate a secret: add it in Cal.com, set it in `CalWebhookSecrets`, redeploy.
+The Api answers 401 to a bad signature, 200 to a delivery it recorded or does not track, 409 when the payload names a booking (`metadata.bookingId`) no tenant has yet, or a reschedule arrives before the one it follows, and 500 when publishing to the `Bookings` bus failed; Cal.com retries the last two (a retry never adds a second `booking_event` row, and publishes again only if the first delivery applied). The organizer of a requested, created or rescheduled booking must be the adviser whose `calLink` the booking was made with; otherwise the delivery is logged and not applied. Details: api/README.md. Rotate a secret: add it in Cal.com, set it in `CalWebhookSecrets`, redeploy.
 
 ## Personal data breach (GDPR Art. 33-34)
 

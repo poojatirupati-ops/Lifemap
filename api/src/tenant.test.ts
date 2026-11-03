@@ -23,12 +23,16 @@ const tenants = async () => {
   return { ...t, activeOrg, roleIn };
 };
 
-test("sign-in lands in LifeMap Direct; GET /api/tenant serves the session's active tenant, Direct without one (Host is ignored)", async () => {
-  const { req, login, activeOrg, roleIn } = await tenants();
+test("sign-in lands in LifeMap Direct; GET /api/tenant serves the session's active tenant, Direct without one or once removed from it (Host is ignored)", async () => {
+  const { req, login, activeOrg, roleIn, db } = await tenants();
   expect(await activeOrg(await login("indie@example.com"))).toBe("lifemap-direct");
   expect(await roleIn("indie@example.com", "lifemap-direct")).toBe("customer");
   expect(await (await req("/api/tenant", { headers: { "x-forwarded-host": "app.cu-a.example" } })).json()).toMatchObject({ id: "lifemap-direct", colors: {}, features: FEATURE_DEFAULTS });
-  expect(await (await req("/api/tenant", {}, await login("cust@example.com", "org-a"))).json()).toMatchObject({ id: "org-a", name: "Credit Union A", slug: "cu-a" });
+  const cust = await login("cust@example.com", "org-a");
+  expect(await (await req("/api/tenant", {}, cust)).json()).toMatchObject({ id: "org-a", name: "Credit Union A", slug: "cu-a" });
+  // removed from org-a: the session still names it, but its branding is no longer served
+  await db.delete(member).where(eq(member.organizationId, "org-a"));
+  expect(await (await req("/api/tenant", {}, cust)).json()).toMatchObject({ id: "lifemap-direct" });
 });
 
 test("isolation: plans and consents per tenant and per user; no switching into a tenant you are not in", async () => {

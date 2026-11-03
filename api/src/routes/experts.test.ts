@@ -20,7 +20,8 @@ async function setUp() {
   groups["lifemap-direct"] = { adviserBooking: true };
   const t = await testApp();
   const adviser = await t.login("niamh@example.com");
-  expect((await t.req("/api/auth/update-user", { method: "POST", body: { calLink: "../evil" } }, adviser)).status).toBe(400);
+  for (const calLink of ["../evil", "team/acme/30min"]) // only `<user>/<event>`: a team link's organizer would never match
+    expect((await t.req("/api/auth/update-user", { method: "POST", body: { calLink } }, adviser)).status).toBe(400);
   expect((await t.req("/api/auth/update-user", { method: "POST", body: { calLink: "niamh/45min", adviserProfile: profile } }, adviser)).status).toBe(200);
   const [{ id: adviserId }] = await t.db.select({ id: user.id }).from(user).where(eq(user.email, "niamh@example.com"));
   await t.db.update(member).set({ role: "adviser" }).where(eq(member.userId, adviserId));
@@ -83,7 +84,8 @@ test("Cal.com webhook: signed per tenant; confirms, ends, marks no-shows, cancel
   const created = { uid: "cal-1", startTime: "2026-11-10T10:00:00.000Z", endTime: "2026-11-10T10:45:00.000Z", metadata: { bookingId: booking.id }, organizer: { username: "niamh" } };
 
   expect((await send("BOOKING_CREATED", created, "wrong")).status).toBe(401);
-  expect((await send("BOOKING_CREATED", created, "whsec-a", "org-a")).status).toBe(409); // ours by metadata, but not in that tenant: Cal.com retries
+  expect(await (await send("BOOKING_CREATED", created, "whsec-a", "org-a")).json()).toEqual({ ok: false }); // another tenant's booking: ignored
+  expect((await send("BOOKING_CREATED", { ...created, metadata: { bookingId: "not-yet" } })).status).toBe(409); // no tenant has it yet: Cal.com retries
   expect(await (await send("BOOKING_CREATED", { ...created, metadata: null })).json()).toEqual({ ok: false }); // no metadata, unknown uid: a foreign booking
   expect((await send("BOOKING_CREATED", created)).status).toBe(200);
   expect((await send("BOOKING_CREATED", created)).status).toBe(200); // a retry
@@ -147,16 +149,20 @@ test("Cal.com webhook state machine: confirmation, adviser check, reschedules by
   expect(await ok("BOOKING_CREATED", by(x.id, "r1"))).toBe(true);
   expect(await get(x.id)).toMatchObject({ status: "booked", calUid: "r1" });
 
-  // a reschedule applies only from the current uid; a stale one never rolls back cal_uid or starts_at
-  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r2", { rescheduleUid: "r1", startTime: "2026-11-11T10:00:00.000Z" }))).toBe(true);
-  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r3", { rescheduleUid: "r1", startTime: "2026-11-12T10:00:00.000Z" }))).toBe(false);
-  expect(await ok("BOOKING_CANCELLED", { uid: "r1", metadata: { bookingId: x.id } })).toBe(false); // the old Cal.com booking
-  expect(await get(x.id)).toMatchObject({ status: "booked", calUid: "r2", startsAt: "2026-11-11T10:00:00.000Z" });
+  // reschedules out of order: the later one answers 409 (nothing recorded) and applies on Cal.com's retry, once the one it follows has landed
+  const day = (d: number) => `2026-11-1${d}T10:00:00.000Z`;
+  expect((await send("BOOKING_RESCHEDULED", by(x.id, "r3", { rescheduleUid: "r2", startTime: day(2) }))).status).toBe(409);
+  expect(await db.select().from(bookingEvent).where(eq(bookingEvent.calUid, "r3"))).toEqual([]);
+  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r2", { rescheduleUid: "r1", startTime: day(1) }))).toBe(true);
+  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r3", { rescheduleUid: "r2", startTime: day(2) }))).toBe(true);
+  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r4", { rescheduleUid: "r3", organizer: { username: "mallory" } }))).toBe(false); // not the adviser
+  expect(await ok("BOOKING_CANCELLED", { uid: "r1", metadata: { bookingId: x.id } })).toBe(false); // an old Cal.com booking
+  expect(await get(x.id)).toMatchObject({ status: "booked", calUid: "r3", startsAt: day(2) });
   // cancelled stays cancelled: a late create or reschedule does not revive it
-  expect(await ok("BOOKING_CANCELLED", { uid: "r2", metadata: { bookingId: x.id } })).toBe(true);
-  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r4", { rescheduleUid: "r2" }))).toBe(false);
-  expect(await ok("BOOKING_CREATED", by(x.id, "r2"))).toBe(false);
-  expect(await get(x.id)).toMatchObject({ status: "cancelled", calUid: "r2" });
+  expect(await ok("BOOKING_CANCELLED", { uid: "r3", metadata: { bookingId: x.id } })).toBe(true);
+  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r5", { rescheduleUid: "r3" }))).toBe(false);
+  expect(await ok("BOOKING_CREATED", by(x.id, "r3"))).toBe(false);
+  expect(await get(x.id)).toMatchObject({ status: "cancelled", calUid: "r3" });
 
   // the organizer must be the booking's adviser (their Cal.com username)
   const y = await create();
@@ -193,11 +199,29 @@ test("Cal.com webhook state machine: confirmation, adviser check, reschedules by
   // only applied transitions (and the retry of one) are published, each with the status it set
   const events = eventBridge.commandCalls(PutEventsCommand).map((c) => JSON.parse(c.args[0].input.Entries![0].Detail!) as { id: string; data: { status: string } });
   expect(events.map((e) => [e.id, e.data.status])).toEqual([
-    ["r1:BOOKING_REQUESTED", "pending"], ["r1:BOOKING_CREATED", "booked"], ["r2:BOOKING_RESCHEDULED", "booked"], ["r2:BOOKING_CANCELLED", "cancelled"],
+    ["r1:BOOKING_REQUESTED", "pending"], ["r1:BOOKING_CREATED", "booked"], ["r2:BOOKING_RESCHEDULED", "booked"], ["r3:BOOKING_RESCHEDULED", "booked"], ["r3:BOOKING_CANCELLED", "cancelled"],
     ["y2:BOOKING_CREATED", "booked"], [`y2:BOOKING_NO_SHOW_UPDATED:true:${t(1)}`, "no_show"], [`y2:BOOKING_NO_SHOW_UPDATED:false:${t(2)}`, "booked"],
     [`y2:BOOKING_NO_SHOW_UPDATED:false:${t(2)}`, "booked"], [`y2:BOOKING_NO_SHOW_UPDATED:true:${t(3)}`, "no_show"],
     ["z1:BOOKING_REQUESTED", "pending"], ["z1:BOOKING_REJECTED", "cancelled"],
   ]);
   eventBridge.restore();
   vi.unstubAllEnvs();
+});
+
+test("a booking with another adviser cancels the caller's other open pending bookings and withdraws their shares", async () => {
+  const { db, req, login, a, adviserId } = await setUp();
+  const sean = await login("sean@example.com");
+  await req("/api/auth/update-user", { method: "POST", body: { calLink: "sean/30min" } }, sean);
+  const [{ id: seanId }] = await db.select({ id: user.id }).from(user).where(eq(user.email, "sean@example.com"));
+  await db.update(member).set({ role: "adviser" }).where(eq(member.userId, seanId));
+  const book = async (adviser: string) => ((await (await req("/api/bookings", { method: "POST", body: { adviserId: adviser, share, shareVersion: "share-v1" } }, a)).json()) as B).booking;
+
+  const first = await book(adviserId);
+  const second = await book(seanId);
+  expect(second.id).not.toBe(first.id);
+  expect((await book(seanId)).id).toBe(second.id); // same adviser: reused
+  const bookings = ((await (await req("/api/bookings", {}, a)).json()) as { bookings: B["booking"][] }).bookings;
+  expect(Object.fromEntries(bookings.map((b) => [b.id, b.status]))).toEqual({ [first.id]: "cancelled", [second.id]: "pending" });
+  const shares = await db.select({ granted: consentEvent.granted, detail: consentEvent.detail }).from(consentEvent).orderBy(consentEvent.id);
+  expect(shares.map((c) => [(c.detail as { bookingId: string }).bookingId, c.granted])).toEqual([[first.id, true], [first.id, false], [second.id, true]]);
 });
