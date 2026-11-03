@@ -47,15 +47,15 @@ export const calWebhook = z.object({
 });
 type CalWebhook = z.infer<typeof calWebhook>;
 
-/**
- * What handle did with a delivery: applied (or a retry of an applied one: published again), rejected (recorded, nothing changed or published),
- * ignored (not a trigger or booking we track: 200) or missing (the route answers 409 so Cal.com retries): a metadata.bookingId no tenant has yet, or a
- * reschedule that arrived before the one it follows.
- */
 /** Thrown inside the transaction to roll it back: the delivery is retried later. */
 class NotYet extends Error {}
 
-export type CalOutcome = 'applied' | 'rejected' | 'ignored' | 'missing';
+/**
+ * What handle did with a delivery: applied (or a retry of an applied one: published again), rejected (recorded, nothing changed or published),
+ * ignored (not a trigger or booking we track; bookings are stored before the embed opens, so an unmatched one is never ours later) or later
+ * (a reschedule that arrived before the one it follows: the route answers 409 so Cal.com retries).
+ */
+type CalOutcome = 'applied' | 'rejected' | 'ignored' | 'later';
 
 /**
  * Cal.com webhooks, the source of truth for a booking: each delivery adds a booking_event row (once per uid and trigger) and, when the transition
@@ -115,20 +115,19 @@ export class CalService {
         : { status: to, ...(to === 'cancelled' && { cancelledAt: new Date() }) };
       const [changed] = await tx.update(booking).set(set)
         .where(and(eq(booking.id, b.id), inArray(booking.status, from), or(isNull(booking.calUid), eq(booking.calUid, current)))).returning({ id: booking.id });
-      // A reschedule (or create) whose status would apply but whose Cal.com booking is not the current one yet: an earlier reschedule has not
-      // landed. Roll back (no rejection recorded) and answer 409, so Cal.com retries it after that one.
-      if (!changed && BOOKS.has(trigger) && from.includes(b.status)) throw new NotYet();
-      if (!changed) return { b, status: null };
+      if (!changed) {
+        // A reschedule of a Cal.com booking we have no delivery for yet: the reschedule it follows has not landed. Roll back (nothing recorded) and
+        // answer 409, so Cal.com retries it after that one. Every other mismatch is stale and recorded as rejected.
+        if (trigger === 'BOOKING_RESCHEDULED' && p.rescheduleUid && from.includes(b.status)
+          && !(await tx.select({ id: bookingEvent.id }).from(bookingEvent).where(eq(bookingEvent.calUid, p.rescheduleUid)).limit(1)).length) throw new NotYet();
+        return { b, status: null };
+      }
       await tx.update(bookingEvent).set({ status: to }).where(eq(bookingEvent.id, isNew.id));
       if (to === 'cancelled') await withdrawShare(tx, b);
       return { b, status: to };
     }).catch((e: unknown) => { if (e instanceof NotYet) return 'later' as const; throw e; });
-    if (done === 'later') return 'missing';
-    if (!done) {
-      // ours (by metadata.bookingId) but not stored yet: Cal.com retries. Another tenant's, or erased: nothing will ever match.
-      const id = p.metadata?.bookingId;
-      return id && !(await this.db.select({ id: booking.id }).from(booking).where(eq(booking.id, id))).length ? 'missing' : 'ignored';
-    }
+    if (done === 'later') return 'later';
+    if (!done) return 'ignored';
     if (!done.status) return 'rejected';
     const id = `${uid}:${key}`; // the idempotency key: consumers dedupe on it
     await this.bus.publish([new CloudEvent({

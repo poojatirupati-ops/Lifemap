@@ -85,7 +85,7 @@ test("Cal.com webhook: signed per tenant; confirms, ends, marks no-shows, cancel
 
   expect((await send("BOOKING_CREATED", created, "wrong")).status).toBe(401);
   expect(await (await send("BOOKING_CREATED", created, "whsec-a", "org-a")).json()).toEqual({ ok: false }); // another tenant's booking: ignored
-  expect((await send("BOOKING_CREATED", { ...created, metadata: { bookingId: "not-yet" } })).status).toBe(409); // no tenant has it yet: Cal.com retries
+  expect(await (await send("BOOKING_CREATED", { ...created, metadata: { bookingId: "invented" } })).json()).toEqual({ ok: false }); // unknown id: ignored, no retries
   expect(await (await send("BOOKING_CREATED", { ...created, metadata: null })).json()).toEqual({ ok: false }); // no metadata, unknown uid: a foreign booking
   expect((await send("BOOKING_CREATED", created)).status).toBe(200);
   expect((await send("BOOKING_CREATED", created)).status).toBe(200); // a retry
@@ -157,6 +157,8 @@ test("Cal.com webhook state machine: confirmation, adviser check, reschedules by
   expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r3", { rescheduleUid: "r2", startTime: day(2) }))).toBe(true);
   expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r4", { rescheduleUid: "r3", organizer: { username: "mallory" } }))).toBe(false); // not the adviser
   expect(await ok("BOOKING_CANCELLED", { uid: "r1", metadata: { bookingId: x.id } })).toBe(false); // an old Cal.com booking
+  expect(await ok("BOOKING_RESCHEDULED", by(x.id, "r6", { rescheduleUid: "r1" }))).toBe(false); // an older reschedule: rejected, not retried
+  expect(await ok("BOOKING_CREATED", by(x.id, "other"))).toBe(false); // a second Cal.com booking on the same id: rejected
   expect(await get(x.id)).toMatchObject({ status: "booked", calUid: "r3", startsAt: day(2) });
   // cancelled stays cancelled: a late create or reschedule does not revive it
   expect(await ok("BOOKING_CANCELLED", { uid: "r3", metadata: { bookingId: x.id } })).toBe(true);

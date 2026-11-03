@@ -45,7 +45,7 @@ export const expertRoutes = (nest: INestApplicationContext) => {
     description: "Signed with the tenant's secret (x-cal-signature-256, HMAC SHA-256 of the raw body). Updates the booking, records the delivery and publishes a CloudEvent; 500 when publishing fails, so Cal.com retries. Setup: docs/runbook.md.",
     responses: {
       200: { description: "`{ ok }`: false when the trigger or booking is not one we track, or the transition was rejected (recorded, not applied)" },
-      400: errors[400], 401: { description: "Bad signature" }, 409: { description: "Our booking (metadata.bookingId) is not in this tenant yet: Cal.com retries" },
+      400: errors[400], 401: { description: "Bad signature" }, 409: { description: "A reschedule that arrived before the one it follows: Cal.com retries" },
     },
   }), async (c) => {
     const tenant = c.req.param("tenant");
@@ -53,7 +53,7 @@ export const expertRoutes = (nest: INestApplicationContext) => {
     const hook = calWebhook.safeParse(await c.req.json().catch(() => null));
     if (!hook.success) return c.json({ error: "invalid webhook" }, 400);
     const outcome = await cal.handle(tenant, hook.data);
-    return outcome === "missing" ? c.json({ error: "booking not found yet" }, 409) : c.json({ ok: outcome === "applied" });
+    return outcome === "later" ? c.json({ error: "the reschedule this follows has not arrived yet" }, 409) : c.json({ ok: outcome === "applied" });
   });
 
   return r;
