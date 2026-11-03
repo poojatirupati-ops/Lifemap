@@ -362,6 +362,37 @@
     '.lmr-gcard .lmx-rr2{padding:4px 0 0 10px}',
     '.lmr-bar .lmr-track{height:12px;background:#e6f0f2}',
     '.lmr-gcard .lmx-ph{border-radius:18px}',
+    '.lmr-gcard.gc2{display:block;padding:22px 26px 20px;min-height:0;justify-content:flex-start}',
+    '.gc2 .gc2-tab{position:absolute;left:26px;top:0;width:54px;height:5px;border-radius:0 0 6px 6px}',
+    '.gc2 .gc2-top{display:flex;align-items:center;gap:14px}',
+    '.gc2 .gc2-t{flex:1;min-width:0}',
+    '.gc2 .lmx-gn{font-size:21px;line-height:1.15}',
+    '.gc2 .lmx-gm{font-size:12.5px;font-weight:600;color:' + COL.muted + ';margin-top:3px}',
+    '.gc2 .gc2-p{flex:none;text-align:right}',
+    '.gc2 .gc2-p .lmx-pc{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:44px;line-height:1;letter-spacing:-.02em}',
+    '.gc2 .gc2-chip{display:inline-block;margin-top:5px;font-size:11.5px;font-weight:800;border-radius:99px;padding:3px 10px}',
+    '.gc2 .lmx-gs{font-size:13.5px;line-height:1.45;margin-top:12px;color:' + COL.navy + '}',
+    '.gc2 .gc2-mid{display:flex;gap:20px;align-items:stretch;margin-top:6px}',
+    '.gc2 .gc2-bars{flex:1;min-width:0}',
+    '.gc2 .lmx-ph{flex:0 0 170px;height:auto;min-height:118px;border-radius:20px;margin-top:14px;overflow:hidden}',
+    '.gc2 .lmr-yrs{margin-top:16px;padding-top:14px;border-top:1px solid rgba(8,217,184,.25)}',
+    '.gc2 .lmr-note{font-size:11.5px;color:' + COL.muted + ';margin-top:10px}',
+    '.lmr-tb{border-bottom:1px solid rgba(8,217,184,.4)}',
+    '.lmr-led-t,.lmr-nw,.lmr-sc .lmx-hd{border-color:rgba(8,217,184,.4)}',
+    '.lmr-ap th{border-bottom-color:rgba(8,217,184,.45)}',
+    '.lmr-plant,.lmr-n9{background:linear-gradient(135deg,#0A7A85,#086A74)!important}',
+    '.lmr-gap,.lmr-tile.navy,.lmr-explore{background:linear-gradient(135deg,#0A7A85,#086A74)!important;border-radius:26px;box-shadow:0 14px 30px rgba(8,106,116,.22)}',
+    '.lmr-tile.white{border:1px solid rgba(255,255,255,.95);background:rgba(255,255,255,.9);box-shadow:0 8px 22px rgba(24,42,84,.07)}',
+    '.lmr-tile.teal{background:#079E98}',
+    '.lmr-card,.lmr-sc,.lmr-how,.lmr-pers,.lmr-nb,.lmr-qs div,.lmr-roadcard{background:rgba(255,255,255,.9)!important;border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 26px rgba(24,42,84,.07);border-radius:24px}',
+    '.lmr-nb,.lmr-qs div{border-radius:18px}',
+    '.lmr-roadcard{background:rgba(255,255,255,.9)!important}',
+    '.lmr-cols3>div{border-top:5px solid;border-radius:20px;background:rgba(255,255,255,.9);box-shadow:0 8px 22px rgba(24,42,84,.07);padding:14px 16px 16px}',
+    '.lmr-steps>div{border-top:5px solid ' + COL.tealMid + ';border-radius:20px;background:rgba(255,255,255,.9);box-shadow:0 8px 22px rgba(24,42,84,.07);padding:14px 14px 16px}',
+    '.lmr-steps .lmx-n{background:#079E98}',
+    '.lmr-ck i{border-color:#079E98}',
+    '.lmr-plant,.lmr-prot{border-radius:24px}',
+    '.lmr-scale div{background:rgba(255,255,255,.95)}',
   ].join('\n');
 
   // ---------- page frame ----------
@@ -575,26 +606,26 @@
 
   // ---------- page 5 (goal cards, repeats) ----------
   function goalCard(g, o, weight) {
-    var tn = bandTone(g.band), col = tn === 'good' ? COL.tealMid : fillOf(tn), b = g.bars || {}, pc = clamp(num(g.pct), 0, 100);
-    var h = '<div class="lmr-gcard" style="flex:' + weight + ' 1 0"><div class="lmx-rl" style="background:' + col + '"></div><div class="lmx-l">' + circleIcon(goalIcon(g), tn, 46, 24) +
-      '<div class="lmx-pc" style="color:' + textOf(tn) + '">' + pc + '%</div><span class="lmr-chip" style="color:' + textOf(tn) + '">' + circleIcon(tn === 'good' ? 'sun' : (tn === 'gold' ? 'partly' : 'storm'), tn, 22, 14) + esc(g.bandText) + '</span></div>' +
-      '<div class="lmx-rr2"><div class="lmx-top"><div><div class="lmx-gn lmr-clamp2">' + esc(g.name) + '</div><div class="lmx-gm">' + esc(g.meta) + '</div><div class="lmx-gs">' + esc(g.sentence) + '</div></div>' +
-      (g.photo ? '<div class="lmx-ph">' + photo(o, g.photo, ALT[g.photo]) + '</div>' : '') + '</div>';
+    var tn = bandTone(g.band), col = tn === 'good' ? COL.tealMid : fillOf(tn), b = g.bars || {}, pc = clamp(num(g.pct), 0, 100), fillC = col === COL.tealMid ? COL.teal : col;
     function bar(l, v, p, c) {
       return '<div class="lmr-bar"><div class="lmx-t"><span>' + esc(l) + '</span><b>' + esc(v) + '</b></div><div class="lmr-track"><div class="lmr-fill" style="width:' + clamp(num(p), 0, 100) + '%;background:' + c + '"></div></div></div>'; }
-    if (b.type === 'retire') {
-      h += bar(b.costLabel, b.costValue, b.costPct, '#9fd9d1') + bar(b.coverLabel, b.coverValue, b.coverPct, col === COL.tealMid ? COL.teal : col);
-    } else if (b.type === 'saving') {
-      h += bar(b.needLabel, b.needValue, b.needPct, '#9fd9d1') + bar(b.putLabel, b.putValue, b.putPct, col === COL.tealMid ? COL.teal : col);
-    }
-    if (has(b.note)) h += '<div class="lmr-note">' + esc(b.note) + '</div>';
+    var bars = '';
+    if (b.type === 'retire') bars = bar(b.costLabel, b.costValue, b.costPct, '#9fd9d1') + bar(b.coverLabel, b.coverValue, b.coverPct, fillC);
+    else if (b.type === 'saving') bars = bar(b.needLabel, b.needValue, b.needPct, '#9fd9d1') + bar(b.putLabel, b.putValue, b.putPct, fillC);
+    if (has(b.note)) bars += '<div class="lmr-note">' + esc(b.note) + '</div>';
+    var h = '<div class="lmr-gcard gc2" style="flex:' + weight + ' 1 0"><i class="gc2-tab" style="background:' + col + '"></i>' +
+      '<div class="gc2-top">' + circleIcon(goalIcon(g), tn, 52, 26) +
+      '<div class="gc2-t"><div class="lmx-gn lmr-clamp2">' + esc(g.name) + '</div><div class="lmx-gm">' + esc(g.meta) + '</div></div>' +
+      '<div class="gc2-p"><div class="lmx-pc" style="color:' + textOf(tn) + '">' + pc + '%</div><span class="gc2-chip" style="background:' + tintOf(tn) + ';color:' + textOf(tn) + '">' + esc(g.bandText) + '</span></div></div>' +
+      '<div class="lmx-gs">' + esc(g.sentence) + '</div>';
+    if (bars || g.photo) h += '<div class="gc2-mid"><div class="gc2-bars">' + bars + '</div>' + (g.photo ? '<div class="lmx-ph">' + photo(o, g.photo, ALT[g.photo]) + '</div>' : '') + '</div>';
     var y = g.years;
     if (y && arr(y.cells).length) {
       h += '<div class="lmr-yrs"><div class="lmx-t"><span>' + esc(y.title) + '</span><span>' + esc(y.summary) + '</span></div><div class="lmr-cells" role="img" aria-label="' + esc(y.title + ': ' + y.summary) + '">' +
         y.cells.map(function (c) { return '<i style="background:' + ({ pension: COL.tealMid, savings: COL.gold, gap: COL.coral, none: '#e3e8ed' }[c.state] || '#e3e8ed') + '"></i>'; }).join('') + '</div>' +
         '<div class="lmx-lb"><span style="color:' + COL.goldText + '">' + esc(y.leftLabel) + '</span><span style="color:' + COL.coralText + '">' + esc(y.rightLabel) + '</span></div></div>';
     }
-    return h + '</div></div>';
+    return h + '</div>';
   }
   function goalPages(d, o) {
     var g = arr(d.goalsDetail.goals), pages = [], cur = [], units = 0;
