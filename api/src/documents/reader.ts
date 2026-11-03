@@ -1,15 +1,13 @@
 import { z } from "zod";
 
 /** What a reader found in one document: each figure under its LifeMap key, with how sure the reader is (0..1). */
-export const readResult = z.object({
-  status: z.enum(["done", "failed"]),
-  fields: z.array(z.object({ key: z.string(), value: z.union([z.number(), z.string()]), confidence: z.number().min(0).max(1) })),
-  provider: z.string(),
-  raw: z.unknown().optional(),
-});
-export type ReadResult = z.infer<typeof readResult>;
+export type ReadResult = {
+  status: "done" | "failed";
+  fields: { key: string; value: number | string; confidence: number }[];
+  provider: string;
+};
 
-export type ReadInput = {
+type ReadInput = {
   documentId: string;
   /** What the document is for: a finance section (income, assets, liab, prot, pension) or an Explore statement (retire, home, invest). */
   kind: string;
@@ -30,7 +28,7 @@ export interface DocumentReader {
  * Provider field name -> LifeMap key, per kind. The one place the provider's vocabulary meets ours (contract: api/README.md).
  * Names the provider sends that are not here are dropped.
  */
-export const PROVIDER_KEYS: Record<string, Record<string, string>> = {
+const PROVIDER_KEYS: Record<string, Record<string, string>> = {
   income: { employment_status: "work", gross_annual_income: "income", monthly_spending: "costsM", yearly_one_off_costs: "oneOffY" },
   assets: { cash_savings: "cash", investments_value: "invest" },
   liab: {
@@ -88,11 +86,10 @@ export const httpReader = (url: string, apiKey: string, timeoutMs = 12_000): Doc
       signal: AbortSignal.timeout(timeoutMs), // under the app's 15 s request timeout
     });
     if (!res.ok) throw new Error(`document reader ${res.status}`);
-    const raw: unknown = await res.json();
-    const reply = providerReply.parse(raw);
+    const reply = providerReply.parse(await res.json());
     const keys = PROVIDER_KEYS[kind] ?? {};
     const fields = reply.fields.flatMap(({ name, value, confidence }) => (keys[name] ? [{ key: keys[name], value, confidence }] : []));
-    return { status: reply.status, fields, provider: "http", raw };
+    return { status: reply.status, fields, provider: "http" };
   },
 });
 
@@ -112,7 +109,7 @@ const EXAMPLES: Record<string, Record<string, [number | string, number]>> = {
 };
 
 /** Dev and tests: the example figures for the kind, whatever the file says. */
-export const exampleReader: DocumentReader = {
+const exampleReader: DocumentReader = {
   read: async ({ kind }) => ({
     status: "done",
     fields: Object.entries(EXAMPLES[kind] ?? {}).map(([key, [value, confidence]]) => ({ key, value, confidence })),

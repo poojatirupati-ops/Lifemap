@@ -11,7 +11,7 @@ import {
   type TaskConfig,
 } from 'payload'
 
-export type VimeoStatus = 'uploading' | 'transcoding' | 'ready' | 'failed'
+type VimeoStatus = 'uploading' | 'transcoding' | 'ready' | 'failed'
 
 /** "1:14" from seconds. */
 export const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`

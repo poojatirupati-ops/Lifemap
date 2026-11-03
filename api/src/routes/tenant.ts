@@ -24,7 +24,7 @@ export const tenantRoutes = (nest: INestApplicationContext) => {
     // docs only: the handler validates through mergeTenantConfig
     requestBody: { required: true, content: { "application/json": { schema: resolver(z.object({ logo: logo.optional(), metadata: tenantMetadata.optional() })) } } },
     responses: { 200: { description: "The tenant's public config, as GET /api/tenant" }, 400: errors[400], 404: errors[404] },
-  }), platformAdmin(nest), async (c) => {
+  }), platformAdmin, async (c) => {
     const body = (await c.req.json().catch(() => null)) as { logo?: string | null; metadata?: unknown } | null;
     try {
       const config = await tenants.update(c.req.param("id"), body ?? {});

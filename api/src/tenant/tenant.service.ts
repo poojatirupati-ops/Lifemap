@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { AUTH, type Auth } from "../auth";
 import { DB, type Db } from "../db";
-import { organization, user } from "../db/schema";
+import { organization } from "../db/schema";
 import { DIRECT_ORG_ID, mergeTenantConfig, publicConfig, tenantById } from "../tenant";
 
 /** White-label config of the active tenant, and platform-admin config changes. Flags and config validation: src/tenant.ts. */
@@ -26,6 +26,4 @@ export class TenantService {
     }).where(eq(organization.id, id));
     return publicConfig(this.db, await tenantById(this.db, id));
   }
-
-  isPlatformAdmin = async (userId: string) => (await this.db.select({ role: user.role }).from(user).where(eq(user.id, userId)))[0]?.role === "admin";
 }

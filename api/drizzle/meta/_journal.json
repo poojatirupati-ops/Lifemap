@@ -85,6 +85,13 @@
       "when": 1793643672280,
       "tag": "0011_booking_status_check",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793703578450,
+      "tag": "0012_booking_event_status",
+      "breakpoints": true
     }
   ]
 }
