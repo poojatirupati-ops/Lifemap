@@ -362,6 +362,27 @@
     '.lmr-gcard .lmx-rr2{padding:4px 0 0 10px}',
     '.lmr-bar .lmr-track{height:12px;background:#e6f0f2}',
     '.lmr-gcard .lmx-ph{border-radius:18px}',
+    '.lmr-as{gap:18px;margin-top:22px}',
+    '.lmr-as>div{background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.95);border-radius:24px;box-shadow:0 10px 26px rgba(24,42,84,.07);padding:8px 22px}',
+    '.lmr-ar{border-bottom:1px solid rgba(8,217,184,.22);align-items:center}',
+    '.lmr-as>div .lmr-ar:last-child{border-bottom:0}',
+    '.lmr-ar .lmx-k{font-weight:600;color:' + COL.muted + ';font-size:13.5px;flex:0 0 38%;width:auto;max-width:none}',
+    '.lmr-ar.lg .lmx-k{width:auto;max-width:none;flex:0 0 38%}',
+    '.lmr-ar .lmx-v{font-weight:800;color:' + COL.navy + ';font-size:14px;text-align:right}',
+    '.lmr-ar.lg .lmx-v{text-align:right;margin-left:auto}',
+    '.lmr-two10{gap:18px;margin-top:20px}',
+    '.lmr-two10>div{border-radius:24px;padding:20px 22px;background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.95);box-shadow:0 10px 26px rgba(24,42,84,.07)}',
+    '.lmr-two10>div:last-child{background:linear-gradient(135deg,#dff5f1,#eaf8f6);border-color:rgba(8,217,184,.3)}',
+    '.lmr-two10 .lmr-h3{font-size:17px;color:#086A74}',
+    '.lmr-two10 ul{list-style:none;padding-left:0;margin-top:12px}',
+    '.lmr-two10 li{position:relative;padding-left:20px;margin-bottom:9px;font-size:13.5px}',
+    '.lmr-two10 li:before{content:"";position:absolute;left:2px;top:.55em;width:8px;height:8px;border-radius:50%;background:#08D9B8}',
+    '.lmr-gl{gap:8px;margin-top:8px}',
+    '.lmr-as{margin-top:14px;gap:16px}.lmr-as>div{padding:4px 20px}.lmr-ar,.lmr-ar.lg{min-height:40px;padding:5px 0}',
+    '.lmr-two10{margin-top:14px;gap:16px}.lmr-two10>div{padding:14px 20px 12px}.lmr-two10 li{margin-bottom:5px;font-size:13px;line-height:1.4}.lmr-two10 p{font-size:13px}.lmr-two10 ul{margin-top:8px}',
+    '.lmr-src{margin-top:10px}',
+    '.lmr-as~div.lmr-h3{margin-top:12px!important}',
+    '.lmr-gl div{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.95);border-top:1px solid rgba(255,255,255,.95);border-radius:16px;padding:7px 12px 8px;min-height:0;box-shadow:0 6px 16px rgba(24,42,84,.05)}',
     '.lmr-gcard.gc2{display:block;padding:22px 26px 20px;min-height:0;justify-content:flex-start}',
     '.gc2 .gc2-tab{position:absolute;left:26px;top:0;width:54px;height:5px;border-radius:0 0 6px 6px}',
     '.gc2 .gc2-top{display:flex;align-items:center;gap:14px}',
@@ -419,7 +440,7 @@
     'car-and-calculator': 'A toy car, calculator and insurance papers',
     'house-for-sale': 'A house with a for-sale sign',
     'team-with-charts': 'A team of advisers around a table of charts',
-    'magnifier-map': 'A hand holding a magnifying glass over a map'
+    'magnifier-map': 'Feet up on a car dashboard with a road map, looking out over a bright coastline'
   };
 
   // ---------- road (cover + page 4) ----------
