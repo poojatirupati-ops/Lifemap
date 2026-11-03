@@ -5,7 +5,10 @@ import { renderHook } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { onlineManager } from '@tanstack/react-query'
 import { queryClient } from '../../src/auth/planSync.ts'
-import { rememberSignedIn, wasSignedIn } from '../../src/auth/session.ts'
+import { enterApp, rememberSignedIn, wasSignedIn } from '../../src/auth/session.ts'
+import { consentsQuery } from '../../src/auth/consents.ts'
+import { useAnalyticsConsent } from '../../src/analytics/analytics.ts'
+import { TENANT_KEY } from '../../src/shell/tenant.ts'
 import { useWall } from '../../src/auth/useWall.ts'
 import { fresh } from '../../src/state/fresh.ts'
 import { useStore } from '../../src/state/store.ts'
@@ -40,6 +43,7 @@ async function openWhileOffline(href: string) {
 }
 
 afterEach(() => {
+  session.user = null
   localStorage.clear()
   onlineManager.setOnline(true)
   vi.unstubAllGlobals()
@@ -148,13 +152,64 @@ test('offline, saving waits for the saved plan; back online it comes back and on
   wall.unmount()
 }, 10000)
 
-test('offline, the consents check waits where the user is; only a real "not agreed" asks for details', async () => {
+test('offline, the user lands; only a real "not agreed" asks for details, once back online', async () => {
   stubApi(null, null)
   const wall = await enterOffline('aoife3@example.ie')
   await wait(50)
-  expect(path()).toBe('/me/privacy')
+  expect(path()).not.toBe('/account/details')
+  expect(useShell.getState().authed).toBe(true)
 
   act(() => onlineManager.setOnline(true))
   await vi.waitFor(() => expect(path()).toBe('/account/details'))
   wall.unmount()
+})
+
+test('a session that ended elsewhere: the next code sign-in as the same account enters and lands again', async () => {
+  stubApi(null, '2026-10')
+  await renderAt('/me')
+  session.user = { id: 'u5', name: 'Aoife', email: 'aoife5@example.ie' }
+  await act(() => enterApp({ name: '', email: 'aoife5@example.ie' }))
+  // signed out in another tab: the session hook settles with no user
+  session.user = null
+  const wall = renderHook(() => useWall())
+  await act(() => router.navigate({ href: '/me/privacy' }))
+  await act(() => enterApp({ name: '', email: 'aoife5@example.ie' }))
+  expect(path()).not.toBe('/me/privacy')
+  wall.unmount()
+})
+
+test('an online consents check that fails still lands, then asks again until the API answers', async () => {
+  const fetch = stubApi(null, null)
+  const answer = fetch.getMockImplementation()!
+  let down = true // the first ask fails
+  fetch.mockImplementation(async (input, init) => {
+    if (String(input) !== '/api/consents' || !down) return answer(input, init)
+    down = false
+    return Response.json({}, { status: 503 })
+  })
+  await renderAt('/me/privacy')
+  await act(() => enterApp({ name: '', email: 'aoife6@example.ie' }))
+  expect(path()).not.toBe('/account/details') // landed without the answer
+  await vi.waitFor(() => expect(path()).toBe('/account/details'), { timeout: 5000 })
+}, 10000)
+
+test("A then B on one browser: B's analytics never runs on A's consent", async () => {
+  stubApi(null, '2026-10') // B has not granted analytics
+  queryClient.setQueryData(TENANT_KEY, { features: { analytics: true }, rates: {} })
+  queryClient.setQueryData(consentsQuery('a@example.ie').queryKey, {
+    consents: { analytics: { granted: true, version: '2026-11' } },
+    notice: '2026-10',
+  })
+  await renderAt('/me')
+  session.user = { id: 'b', name: 'B', email: 'b@example.ie' }
+  await act(() => enterApp({ name: '', email: 'b@example.ie' }))
+  const seen: (boolean | null)[] = []
+  const { result } = renderHook(() => {
+    const granted = useAnalyticsConsent()
+    seen.push(granted)
+    return granted
+  })
+  await vi.waitFor(() => expect(result.current).toBe(false))
+  expect(seen).not.toContain(true)
+  expect(queryClient.getQueryData(consentsQuery('a@example.ie').queryKey)).toBeUndefined()
 })

@@ -1,4 +1,4 @@
-import { MutationObserver, QueryClient, QueryObserver } from '@tanstack/react-query'
+import { MutationObserver, QueryClient } from '@tanstack/react-query'
 import { toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { savedPlan } from '../state/migrate.ts'
@@ -40,35 +40,27 @@ export const loadPlan = () =>
   queryClient.fetchQuery({ queryKey: PLAN_KEY, queryFn: fetchPlan, staleTime: 0 })
 
 /**
- * The saved plan, read until it is: offline it waits for the connection, an API that is down is retried, and after that it is tried
- * again on the next focus or reconnect, saying meanwhile that changes aren't saved (saving waits for the version it brings).
- * Removing PLAN_KEY (sign-out, another account) stops it.
+ * The saved plan, read until it is: offline it waits for the connection, and it keeps asking (backing off, paused while the page is
+ * hidden), saying after a few tries that changes aren't saved yet (saving waits for the version it brings). Cancelled on sign-out.
  */
-export function readSavedPlan() {
-  const observer = new QueryObserver(queryClient, {
+export const readSavedPlan = () =>
+  queryClient.fetchQuery({
     queryKey: PLAN_KEY,
     queryFn: fetchPlan,
     staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    retry: (failures) => (failures === 3 && toast("Your changes aren't saved yet"), true),
   })
-  return new Promise<SavedPlan>((resolve) => {
-    const stop = observer.subscribe(({ status, fetchStatus, data }) => {
-      if (status === 'success') {
-        stop()
-        resolve(data)
-      } else if (status === 'error' && fetchStatus === 'idle')
-        toast("Your changes aren't saved yet")
-    })
-  })
-}
 
 /** Saves against the last version read; on 409 (changed elsewhere) refetches and retries once, last writer wins. */
 async function putPlan(plan: object) {
   const snapshot = takeSnapshot() // kept across the 409 retry
+  // signing out or another account entering removes PLAN_KEY: a save that finishes after that must not leave its version behind
+  const plans = queryClient.getQueryCache()
+  const read = plans.find({ queryKey: PLAN_KEY })
   for (const attempt of [1, 2]) {
     const version = queryClient.getQueryData<SavedPlan>(PLAN_KEY)?.version ?? 0
     const response = await send('PUT', '/api/plan', { version, plan, snapshot })
+    if (plans.find({ queryKey: PLAN_KEY }) !== read) return
     if (response.ok) {
       const saved: { version: number } = await response.json()
       queryClient.setQueryData(PLAN_KEY, { version: saved.version, plan })

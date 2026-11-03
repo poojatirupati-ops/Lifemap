@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { authClient } from './client.ts'
 import { startPlanSync } from './planSync.ts'
-import { enterApp } from './session.ts'
+import { enterApp, forgetEntered } from './session.ts'
 import { testAuthOn } from '../lib/lmTestHook.ts'
 import { useShell } from '../state/shell.ts'
 
@@ -11,7 +11,9 @@ export function useWall() {
   const { id: userId, name, email } = data?.user ?? {}
 
   useEffect(() => {
-    if (!isPending) useShell.setState({ authed: !!userId || testAuthOn() })
+    if (isPending) return
+    useShell.setState({ authed: !!userId || testAuthOn() })
+    if (!userId) forgetEntered() // ended elsewhere: the next sign-in enters again
   }, [userId, isPending])
 
   // A session found on load (or back from SSO, or back online after an offline reload) enters here; enterApp skips an account already entered (an in-app sign-in).

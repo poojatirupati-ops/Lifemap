@@ -54,8 +54,9 @@ test('returning user with an unfinished onboarding resumes at the next open ques
   const saved = { ...fresh(), answers: { 2: 0, 4: 1 }, why: ['track'] }
   stubApi('2026-10', saved)
   await enterApp({ name: '', email: 'b@c.ie' })
-  expect(router.state.location.pathname).toBe('/discover/3')
-  expect(useStore.getState().plan.discoverStep).toBe(2)
+  // landed at once, then again where the restored plan resumes
+  await vi.waitFor(() => expect(router.state.location.pathname).toBe('/discover/3'))
+  await vi.waitFor(() => expect(useStore.getState().plan.discoverStep).toBe(2))
 })
 
 test("sign-out forgets the topic pages' picks, watched videos and seats", async () => {
@@ -91,7 +92,7 @@ test("another account entering drops the last one's plan version, so nothing sav
   queryClient.mount() // plan sync's client: resumes paused reads
   onlineManager.setOnline(true)
   await entering
+  await vi.waitFor(() => expect(useStore.getState().plan.whyNote).toBe('theirs'))
   expect(queryClient.getQueryData(PLAN_KEY)).toMatchObject({ version: 1 })
-  expect(useStore.getState().plan.whyNote).toBe('theirs')
   queryClient.unmount()
 })

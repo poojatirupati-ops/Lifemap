@@ -39,20 +39,26 @@ export function captureException(error: unknown) {
 /** Records the analytics consent (grant or withdrawal) for the signed-in user; capture follows the saved state. */
 export async function setAnalyticsConsent(granted: boolean) {
   void queryClient.cancelQueries({ queryKey: CONSENTS_KEY }) // a read in flight must not undo this choice
-  const previous = queryClient.getQueryData<ConsentState>(CONSENTS_KEY)
-  queryClient.setQueryData<ConsentState>(CONSENTS_KEY, {
-    consents: { ...previous?.consents, analytics: { granted, version: ANALYTICS_VERSION } },
-  })
+  const choose = (state?: ConsentState) =>
+    state && {
+      ...state,
+      consents: { ...state.consents, analytics: { granted, version: ANALYTICS_VERSION } },
+    }
+  const previous = queryClient.setQueriesData<ConsentState>({ queryKey: CONSENTS_KEY }, choose)
   const body = { analytics: { granted, version: ANALYTICS_VERSION } }
   const response = await send('POST', '/api/consents', body).catch(() => null)
-  if (response?.ok) return queryClient.setQueryData(CONSENTS_KEY, await response.json())
-  queryClient.setQueryData(CONSENTS_KEY, previous)
+  if (response?.ok) {
+    const saved: ConsentState = await response.json()
+    return void queryClient.setQueriesData<ConsentState>({ queryKey: CONSENTS_KEY }, () => saved)
+  }
+  for (const [key, state] of previous) queryClient.setQueryData(key, state)
   toast("Your privacy choice couldn't be saved. Please try again.")
 }
 
 /** The signed-in user's analytics consent; null while loading or when the tenant has analytics off. */
 export function useAnalyticsConsent() {
-  const consent = useQuery(consentsQuery, queryClient).data
+  const email = authClient.useSession().data?.user.email ?? ''
+  const consent = useQuery({ ...consentsQuery(email), enabled: !!email }, queryClient).data
   const tenant = useQuery(tenantQuery, queryClient).data
   if (!consent || !tenant?.features.analytics) return null
   return consent.consents.analytics?.granted === true
@@ -65,7 +71,8 @@ export function useAnalytics() {
   // the tenant the API scopes this session to (organization plugin field, not in the client's inferred type)
   const orgId = (session?.session as { activeOrganizationId?: string | null } | undefined)
     ?.activeOrganizationId
-  const consent = useQuery({ ...consentsQuery, enabled: !!userId }, queryClient).data
+  const email = session?.user.email ?? ''
+  const consent = useQuery({ ...consentsQuery(email), enabled: !!userId }, queryClient).data
   const tenantAllows = useQuery(tenantQuery, queryClient).data?.features.analytics === true
   const granted = consent?.consents.analytics?.granted === true && tenantAllows
 
