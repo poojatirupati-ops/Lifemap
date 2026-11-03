@@ -26,19 +26,6 @@ function ExploreHome() {
       sub="Tools, calculators and short videos. Try anything, no plan needed."
       bell
     >
-      {slipping.length > 0 ? <Sec title="What-ifs for your goals" /> : null}
-      {slipping.map((goal) => (
-        <ExploreRow
-          key={goal.id}
-          emoji={goal.emoji}
-          iconStyle={{ background: `var(--${band(percent[goal.id])}-l)` }}
-          title={`Try a what-if for ${goal.name.toLowerCase()}`}
-          sub={`${percent[goal.id]}% covered now`}
-          onClick={() => useStore.getState().tryWhatIf(goal.id)}
-          data-a="gowi"
-          data-p={goal.id}
-        />
-      ))}
       <Sec title="Focus on one area" />
       <FocusArea />
       <Sec title="Tools for you" />
@@ -58,6 +45,19 @@ function ExploreHome() {
           onClick={() => openCategory(category.id)}
           data-a="cat"
           data-p={category.id}
+        />
+      ))}
+      {slipping.length > 0 ? <Sec title="What-ifs for your goals" /> : null}
+      {slipping.map((goal) => (
+        <ExploreRow
+          key={goal.id}
+          emoji={goal.emoji}
+          iconStyle={{ background: `var(--${band(percent[goal.id])}-l)` }}
+          title={`Try a what-if for ${goal.name.toLowerCase()}`}
+          sub={`${percent[goal.id]}% covered now`}
+          onClick={() => useStore.getState().tryWhatIf(goal.id)}
+          data-a="gowi"
+          data-p={goal.id}
         />
       ))}
       <p className="disc">

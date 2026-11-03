@@ -56,7 +56,7 @@ export default function Chapters({ rows, goals, percent, hasRetireGoal }: Props)
             <div className="w" aria-hidden="true">
               {WEATHER_ICON[kind]}
             </div>
-            <div className="cb">
+            <div className="cbd">
               <div className="tt">{`Your ${chapter.decade}s`}</div>
               <div className="ag">{`age ${chapter.from}–${chapter.to}${after}`}</div>
               <div className="st">{story(forecast)}</div>

@@ -4,8 +4,8 @@
 import type { ReportData } from '../../report/model/reportData.ts'
 import { clamp } from '../../lib/clamp.ts'
 import { goalIconName } from './Icon.tsx'
-import { BandChip, CircleIcon, PageFrame, Photo, TitleBlock, type PageProps } from './PageFrame.tsx'
-import { COLOURS, fillOf, textOf } from './tones.ts'
+import { CircleIcon, PageFrame, Photo, TitleBlock, type PageProps } from './PageFrame.tsx'
+import { COLOURS, fillOf, textOf, tintOf } from './tones.ts'
 
 export type ReportGoal = ReportData['goalsDetail']['goals'][number]
 export interface PlacedGoal {
@@ -44,27 +44,71 @@ const CELL_COLOURS: Record<string, string> = {
   gap: COLOURS.coral,
 }
 
+// the need, behind what goes in
+const NEED = '#9fd9d1'
+
 function GoalCard({ goal, weight }: { goal: ReportGoal; weight: number }) {
   const tone = goal.band
   const rail = fillOf(tone)
   const covered = tone === 'good' ? COLOURS.teal : rail
   const { bars } = goal
+  const retire = bars.type === 'retire' && 'costValue' in bars ? bars : null
+  const saving = bars.type === 'saving' && 'needValue' in bars ? bars : null
   return (
-    <div className="lmr-gcard" style={{ flex: `${weight} 1 0` }}>
-      <div className="lmx-rl" style={{ background: rail }}></div>
-      <div className="lmx-l">
-        <CircleIcon name={goalIconName(goal)} tone={tone} size={46} iconSize={24} />
-        <div className="lmx-pc" style={{ color: textOf(tone) }}>
-          {clamp(goal.pct, 0, 100)}%
+    <div className="lmr-gcard gc2" style={{ flex: `${weight} 1 0` }}>
+      <i className="gc2-tab" style={{ background: rail }}></i>
+      <div className="gc2-top">
+        <CircleIcon name={goalIconName(goal)} tone={tone} size={52} iconSize={26} />
+        <div className="gc2-t">
+          <div className="lmx-gn lmr-clamp2">{goal.name}</div>
+          <div className="lmx-gm">{goal.meta}</div>
         </div>
-        <BandChip tone={tone} text={goal.bandText} />
+        <div className="gc2-p">
+          <div className="lmx-pc" style={{ color: textOf(tone) }}>
+            {clamp(goal.pct, 0, 100)}%
+          </div>
+          <span className="gc2-chip" style={{ background: tintOf(tone), color: textOf(tone) }}>
+            {goal.bandText}
+          </span>
+        </div>
       </div>
-      <div className="lmx-rr2">
-        <div className="lmx-top">
-          <div>
-            <div className="lmx-gn lmr-clamp2">{goal.name}</div>
-            <div className="lmx-gm">{goal.meta}</div>
-            <div className="lmx-gs">{goal.sentence}</div>
+      <div className="lmx-gs">{goal.sentence}</div>
+      {retire || saving || 'photo' in goal ? (
+        <div className="gc2-mid">
+          <div className="gc2-bars">
+            {retire ? (
+              <>
+                <GoalBar
+                  label="Retirement costs"
+                  value={retire.costValue}
+                  percent={100}
+                  colour={NEED}
+                />
+                <GoalBar
+                  label="Your plan covers"
+                  value={retire.coverValue}
+                  percent={retire.coverPct}
+                  colour={covered}
+                />
+                <div className="lmr-note">{retire.note}</div>
+              </>
+            ) : null}
+            {saving ? (
+              <>
+                <GoalBar
+                  label="Needs a month"
+                  value={saving.needValue}
+                  percent={100}
+                  colour={NEED}
+                />
+                <GoalBar
+                  label="You’re putting in"
+                  value={saving.putValue}
+                  percent={saving.putPct}
+                  colour={covered}
+                />
+              </>
+            ) : null}
           </div>
           {'photo' in goal ? (
             <div className="lmx-ph">
@@ -72,61 +116,28 @@ function GoalCard({ goal, weight }: { goal: ReportGoal; weight: number }) {
             </div>
           ) : null}
         </div>
-        {bars.type === 'retire' && 'costValue' in bars ? (
-          <>
-            <GoalBar
-              label="Retirement costs"
-              value={bars.costValue}
-              percent={100}
-              colour={COLOURS.navy}
-            />
-            <GoalBar
-              label="Your plan covers"
-              value={bars.coverValue}
-              percent={bars.coverPct}
-              colour={covered}
-            />
-            <div className="lmr-note">{bars.note}</div>
-          </>
-        ) : null}
-        {bars.type === 'saving' && 'needValue' in bars ? (
-          <>
-            <GoalBar
-              label="Needs a month"
-              value={bars.needValue}
-              percent={100}
-              colour={COLOURS.navy}
-            />
-            <GoalBar
-              label="You’re putting in"
-              value={bars.putValue}
-              percent={bars.putPct}
-              colour={covered}
-            />
-          </>
-        ) : null}
-        {'years' in goal && goal.years.cells.length ? (
-          <div className="lmr-yrs">
-            <div className="lmx-t">
-              <span>Your retirement years</span>
-              <span>{goal.years.summary}</span>
-            </div>
-            <div
-              className="lmr-cells"
-              role="img"
-              aria-label={`Your retirement years: ${goal.years.summary}`}
-            >
-              {goal.years.cells.map((cell) => (
-                <i key={cell.age} style={{ background: CELL_COLOURS[cell.state] ?? '#e3e8ed' }}></i>
-              ))}
-            </div>
-            <div className="lmx-lb">
-              <span style={{ color: COLOURS.goldText }}>{goal.years.leftLabel}</span>
-              <span style={{ color: COLOURS.coralText }}>{goal.years.rightLabel}</span>
-            </div>
+      ) : null}
+      {'years' in goal && goal.years.cells.length ? (
+        <div className="lmr-yrs">
+          <div className="lmx-t">
+            <span>Your retirement years</span>
+            <span>{goal.years.summary}</span>
           </div>
-        ) : null}
-      </div>
+          <div
+            className="lmr-cells"
+            role="img"
+            aria-label={`Your retirement years: ${goal.years.summary}`}
+          >
+            {goal.years.cells.map((cell) => (
+              <i key={cell.age} style={{ background: CELL_COLOURS[cell.state] ?? '#e3e8ed' }}></i>
+            ))}
+          </div>
+          <div className="lmx-lb">
+            <span style={{ color: COLOURS.goldText }}>{goal.years.leftLabel}</span>
+            <span style={{ color: COLOURS.coralText }}>{goal.years.rightLabel}</span>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }

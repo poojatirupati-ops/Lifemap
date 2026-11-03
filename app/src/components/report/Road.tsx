@@ -36,20 +36,51 @@ function waveHeight(along: number) {
   )
 }
 
-/** Milestones in age order; a label flips side when it would sit within 120px of the last one. */
-function placeMilestones(milestones: Milestone[], x: (age: number) => number) {
-  let lastSide = ''
-  let lastX = -999
+type Side = 'above' | 'below'
+type Extent = [number, number]
+
+/**
+ * Milestones in age order, each label on the side and level with room: the preferred side alternates,
+ * then the other side, then one level further out on either. No two labels overlap.
+ */
+function placeMilestones(milestones: Milestone[], x: (age: number) => number, labels: boolean) {
+  const placed: Record<Side, [Extent[], Extent[]]> = { above: [[], []], below: [[], []] }
+  const extent = (milestone: Milestone): Extent => {
+    const half = labels
+      ? Math.max(
+          String(milestone.label).length * 7.6,
+          String(milestone.sub || '').length * 6.4,
+          34,
+        ) /
+          2 +
+        7
+      : 20
+    const mx = x(milestone.age)
+    return [mx - half, mx + half]
+  }
+  const free = (list: Extent[], [from, to]: Extent) =>
+    list.every(([left, right]) => to < left || from > right)
   return milestones
     .toSorted((a, b) => a.age - b.age)
-    .map((milestone) => {
-      let side = milestone.side === 'below' ? 'below' : 'above'
+    .map((milestone, index) => {
+      const own = extent(milestone)
       const mx = x(milestone.age)
-      if (side === lastSide && Math.abs(mx - lastX) < 120)
-        side = side === 'above' ? 'below' : 'above'
-      lastSide = side
-      lastX = mx
-      return { ...milestone, above: side === 'above' }
+      const preferred: Side = index % 2 ? 'below' : 'above'
+      const other: Side = preferred === 'above' ? 'below' : 'above'
+      const choices: [Side, 0 | 1][] = [
+        [preferred, 0],
+        [other, 0],
+        [preferred, 1],
+        [other, 1],
+      ]
+      // the outer level only where the inner one leaves room for its stem
+      const [side, level] = choices.find(
+        ([side, level]) =>
+          (level === 0 || free(placed[side][0], [mx - 8, mx + 8])) &&
+          free(placed[side][level], own),
+      ) ?? [preferred, 1]
+      placed[side][level].push(own)
+      return { ...milestone, above: side === 'above', level }
     })
 }
 
@@ -75,10 +106,15 @@ export interface RoadLayout {
   endColor: string
   /** milestones show their label and age under the badge */
   labels: boolean
+  /** the start dot's fill and ring */
+  dot: string
+  dotStroke: string
+  /** the picture crops to what is drawn (viewBox from the top label to the bottom one) */
+  fit: boolean
 }
 
 export default function Road({ road, layout }: { road: RoadData; layout: RoadLayout }) {
-  const { width, height, startX, endX, middleY, swing, stem, labelColor } = layout
+  const { width, startX, endX, middleY, swing, stem, labelColor, labels } = layout
   const span = Math.max(1, road.endAge - road.startAge)
   const along = (age: number) => (age - road.startAge) / span
   const x = (age: number) => startX + along(age) * (endX - startX)
@@ -93,12 +129,35 @@ export default function Road({ road, layout }: { road: RoadData; layout: RoadLay
   }
   const { segments } = road
   const last = segments.at(-1)
+  // a milestone's badge sits a stem away from the road, one level further out when it must
+  const milestones = placeMilestones(road.milestones, x, labels).map((milestone) => {
+    const roadY = y(milestone.age)
+    const distance = stem + milestone.level * (labels ? 76 : 36)
+    const badgeY = milestone.above ? roadY - distance : roadY + distance
+    return { ...milestone, roadY, badgeY, labelY: milestone.above ? badgeY - 38 : badgeY + 33 }
+  })
+  const top = Math.min(
+    1e9,
+    ...milestones.map((m) => (labels && m.above ? m.labelY - 14 : m.badgeY - 15)),
+  )
+  const bottom = Math.max(
+    -1e9,
+    ...milestones.map((m) => (labels && !m.above ? m.labelY + 20 : m.badgeY + 15)),
+  )
+  const viewTop = Math.min(top, middleY - 20) - 10
+  const viewBottom = Math.max(bottom, middleY + 60) + 34
+  const height = layout.fit ? viewBottom : layout.height
 
   return (
     <svg
       width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      height={layout.height}
+      viewBox={
+        layout.fit
+          ? `0 ${viewTop.toFixed(0)} ${width} ${(viewBottom - viewTop).toFixed(0)}`
+          : `0 0 ${width} ${layout.height}`
+      }
+      preserveAspectRatio={layout.fit ? 'xMidYMid meet' : undefined}
       role="img"
       aria-label={`Your road from age ${road.startAge} to ${road.endAge}`}
     >
@@ -127,13 +186,17 @@ export default function Road({ road, layout }: { road: RoadData; layout: RoadLay
           <circle {...at(last.toAge)} r="5" fill={fillOf(last.tone)} />
         </>
       ) : null}
-      <circle {...at(road.startAge)} r="8.5" fill="#fff" stroke={COLOURS.navy} strokeWidth="3" />
-      {placeMilestones(road.milestones, x).map((milestone, index) => {
+      <circle
+        {...at(road.startAge)}
+        r="8.5"
+        fill={layout.dot}
+        stroke={layout.dotStroke}
+        strokeWidth="3"
+      />
+      {milestones.map((milestone, index) => {
         // a dot on the road, a dashed stem, a badge and (optionally) its label
         const mx = x(milestone.age).toFixed(1)
-        const roadY = y(milestone.age)
-        const badgeY = milestone.above ? roadY - stem : roadY + stem
-        const labelY = milestone.above ? badgeY - 38 : badgeY + 33
+        const { roadY, badgeY, labelY } = milestone
         const colour = fillOf(milestone.tone)
         return (
           <Fragment key={index}>
@@ -172,7 +235,7 @@ export default function Road({ road, layout }: { road: RoadData; layout: RoadLay
             >
               {milestone.badge}
             </text>
-            {layout.labels ? (
+            {labels ? (
               <>
                 <text
                   x={mx}
@@ -199,12 +262,12 @@ export default function Road({ road, layout }: { road: RoadData; layout: RoadLay
           </Fragment>
         )
       })}
-      <text x={startX - 8} y={height - 6} {...ROAD_TEXT} fontSize="13" fill={labelColor}>
+      <text x={startX - 8} y={height - 12} {...ROAD_TEXT} fontSize="13" fill={labelColor}>
         {road.startLabel}
       </text>
       <text
         x={layout.endLabelX}
-        y={height - 6}
+        y={height - 12}
         textAnchor="end"
         {...ROAD_TEXT}
         fontSize="13"

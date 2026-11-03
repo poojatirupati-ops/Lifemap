@@ -167,88 +167,71 @@
 }
 .lmr-cover {
   padding: 0;
-  background: #fff;
-}
-.lmr-cv-dark {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 794px;
-  height: 766px;
-  background: linear-gradient(180deg, #0e2a52, #112d55 60%, #0f2a50);
-}
-.lmr-cv-bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 794px;
-  height: 7px;
-  display: flex;
-  z-index: 4;
+  background:
+    radial-gradient(520px 380px at 96% 4%, rgba(8, 217, 184, 0.3), rgba(8, 217, 184, 0) 70%),
+    radial-gradient(560px 420px at -6% 60%, rgba(11, 88, 128, 0.12), rgba(11, 88, 128, 0) 70%),
+    linear-gradient(180deg, #e9faf6 0%, #f3fbfb 55%, #f7fafc 100%);
 }
 .lmr-cv-photo {
   position: absolute;
-  right: 0;
-  top: 0;
-  width: 333px;
-  height: 341px;
-  border-bottom-left-radius: 200px;
+  left: 470px;
+  top: 112px;
+  width: 268px;
+  height: 318px;
+  border-radius: 30px;
   overflow: hidden;
+  border: 6px solid #fff;
+  box-shadow: 0 18px 40px rgba(24, 42, 84, 0.16);
 }
 .lmr-cv-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: saturate(0.9) brightness(0.82);
-}
-.lmr-cv-photo:after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, rgba(11, 37, 69, 0.55), rgba(11, 37, 69, 0) 55%);
 }
 .lmr-cv-badge {
   position: absolute;
-  right: 57px;
-  top: 50px;
-  background: #0e2a4f;
-  color: #fff;
+  right: 56px;
+  top: 46px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #086a74;
+  border: 1px solid rgba(8, 217, 184, 0.45);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   padding: 7px 14px;
-  border-radius: 10px;
+  border-radius: 99px;
   z-index: 3;
 }
 .lmr-cv-logo {
   position: absolute;
   left: 56px;
-  top: 50px;
-  color: #fff;
+  top: 46px;
+  color: #182a54;
   z-index: 3;
 }
 .lmr-cv-ey {
   position: absolute;
   left: 56px;
-  top: 136px;
-  color: #6be3d3;
+  top: 122px;
+  color: #079e98;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   z-index: 3;
+  width: 400px;
 }
 .lmr-cv-title {
   position: absolute;
   left: 54px;
-  top: 166px;
-  width: 430px;
-  color: #fff;
+  top: 170px;
+  width: 400px;
+  color: #182a54;
   font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
   font-weight: 800;
-  font-size: 80px;
-  line-height: 0.98;
+  font-size: 64px;
+  line-height: 1;
   letter-spacing: -0.025em;
   z-index: 3;
   font-variation-settings: 'opsz' 96;
@@ -256,30 +239,43 @@
 .lmr-cv-lead {
   position: absolute;
   left: 56px;
-  top: 338px;
-  width: 440px;
-  color: #e3eaf4;
-  font-size: 16.8px;
-  line-height: 1.42;
+  top: 328px;
+  width: 390px;
+  color: #51627a;
+  font-size: 16px;
+  line-height: 1.45;
   z-index: 3;
 }
 .lmr-cv-road {
   position: absolute;
-  left: 0;
-  top: 380px;
+  left: 40px;
+  top: 452px;
+  width: 714px;
+  height: 372px;
   z-index: 2;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 28px;
+  box-shadow: 0 14px 36px rgba(24, 42, 84, 0.09);
+  overflow: hidden;
+}
+.lmr-cv-road svg {
+  width: 100%;
+  height: 100%;
 }
 .lmr-cv-tiles {
   position: absolute;
   left: 56px;
   right: 56px;
-  top: 796px;
+  top: 852px;
   display: flex;
-  gap: 20px;
+  gap: 16px;
 }
 .lmr-cv-tile {
   flex: 1;
-  background: #f3f7f9;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 22px rgba(24, 42, 84, 0.07);
   border-radius: 22px;
   padding: 16px 18px;
   display: flex;
@@ -295,7 +291,7 @@
 }
 .lmr-cv-tile .lmx-s {
   font-size: 13px;
-  color: #0b2545;
+  color: #51627a;
   line-height: 1.3;
   margin-top: 2px;
 }
@@ -1808,4 +1804,347 @@
 @page {
   size: A4;
   margin: 0;
+}
+.lmr-pg {
+  background:
+    radial-gradient(520px 340px at 100% 0%, rgba(8, 217, 184, 0.16), rgba(8, 217, 184, 0) 70%),
+    linear-gradient(180deg, #f1fbf9 0%, #f7fbfc 60%);
+}
+.lmr-rf {
+  background: transparent;
+}
+.lmr-gcards {
+  gap: 18px;
+}
+.lmr-gcard {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 26px;
+  box-shadow: 0 10px 28px rgba(24, 42, 84, 0.08);
+  padding: 20px 26px 22px 12px;
+  overflow: hidden;
+}
+.lmr-gcard .lmx-rl {
+  position: absolute;
+  left: 34px;
+  top: 0;
+  width: 54px;
+  height: 5px;
+  flex: none;
+  margin: 0;
+  border-radius: 0 0 6px 6px;
+}
+.lmr-gcard .lmx-l {
+  flex: 0 0 156px;
+  padding: 6px 0 0 18px;
+}
+.lmr-gcard .lmx-l .lmr-chip {
+  padding: 5px 10px;
+  margin-top: 8px;
+  background: rgba(24, 42, 84, 0.05);
+}
+.lmr-gcard .lmx-l .lmr-chip .lmr-circ {
+  background: none !important;
+}
+.lmr-gcard .lmx-rr2 {
+  padding: 4px 0 0 10px;
+}
+.lmr-bar .lmr-track {
+  height: 12px;
+  background: #e6f0f2;
+}
+.lmr-gcard .lmx-ph {
+  border-radius: 18px;
+}
+.lmr-as {
+  gap: 18px;
+  margin-top: 22px;
+}
+.lmr-as > div {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 10px 26px rgba(24, 42, 84, 0.07);
+  padding: 8px 22px;
+}
+.lmr-ar {
+  border-bottom: 1px solid rgba(8, 217, 184, 0.22);
+  align-items: center;
+}
+.lmr-as > div .lmr-ar:last-child {
+  border-bottom: 0;
+}
+.lmr-ar .lmx-k {
+  font-weight: 600;
+  color: #51627a;
+  font-size: 13.5px;
+  flex: 0 0 38%;
+  width: auto;
+  max-width: none;
+}
+.lmr-ar.lg .lmx-k {
+  width: auto;
+  max-width: none;
+  flex: 0 0 38%;
+}
+.lmr-ar .lmx-v {
+  font-weight: 800;
+  color: #0b2545;
+  font-size: 14px;
+  text-align: right;
+}
+.lmr-ar.lg .lmx-v {
+  text-align: right;
+  margin-left: auto;
+}
+.lmr-two10 {
+  gap: 18px;
+  margin-top: 20px;
+}
+.lmr-two10 > div {
+  border-radius: 24px;
+  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 26px rgba(24, 42, 84, 0.07);
+}
+.lmr-two10 > div:last-child {
+  background: linear-gradient(135deg, #dff5f1, #eaf8f6);
+  border-color: rgba(8, 217, 184, 0.3);
+}
+.lmr-two10 .lmr-h3 {
+  font-size: 17px;
+  color: #086a74;
+}
+.lmr-two10 ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 12px;
+}
+.lmr-two10 li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 9px;
+  font-size: 13.5px;
+}
+.lmr-two10 li:before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #08d9b8;
+}
+.lmr-gl {
+  gap: 8px;
+  margin-top: 8px;
+}
+.lmr-as {
+  margin-top: 14px;
+  gap: 16px;
+}
+.lmr-as > div {
+  padding: 4px 20px;
+}
+.lmr-ar,
+.lmr-ar.lg {
+  min-height: 40px;
+  padding: 5px 0;
+}
+.lmr-two10 {
+  margin-top: 14px;
+  gap: 16px;
+}
+.lmr-two10 > div {
+  padding: 14px 20px 12px;
+}
+.lmr-two10 li {
+  margin-bottom: 5px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.lmr-two10 p {
+  font-size: 13px;
+}
+.lmr-two10 ul {
+  margin-top: 8px;
+}
+.lmr-src {
+  margin-top: 10px;
+}
+.lmr-as ~ div.lmr-h3 {
+  margin-top: 12px !important;
+}
+.lmr-gl div {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 7px 12px 8px;
+  min-height: 0;
+  box-shadow: 0 6px 16px rgba(24, 42, 84, 0.05);
+}
+.lmr-gcard.gc2 {
+  display: block;
+  padding: 22px 26px 20px;
+  min-height: 0;
+  justify-content: flex-start;
+}
+.gc2 .gc2-tab {
+  position: absolute;
+  left: 26px;
+  top: 0;
+  width: 54px;
+  height: 5px;
+  border-radius: 0 0 6px 6px;
+}
+.gc2 .gc2-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.gc2 .gc2-t {
+  flex: 1;
+  min-width: 0;
+}
+.gc2 .lmx-gn {
+  font-size: 21px;
+  line-height: 1.15;
+}
+.gc2 .lmx-gm {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #51627a;
+  margin-top: 3px;
+}
+.gc2 .gc2-p {
+  flex: none;
+  text-align: right;
+}
+.gc2 .gc2-p .lmx-pc {
+  font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
+  font-weight: 800;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.gc2 .gc2-chip {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  font-weight: 800;
+  border-radius: 99px;
+  padding: 3px 10px;
+}
+.gc2 .lmx-gs {
+  font-size: 13.5px;
+  line-height: 1.45;
+  margin-top: 12px;
+  color: #0b2545;
+}
+.gc2 .gc2-mid {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  margin-top: 6px;
+}
+.gc2 .gc2-bars {
+  flex: 1;
+  min-width: 0;
+}
+.gc2 .lmx-ph {
+  flex: 0 0 170px;
+  height: auto;
+  min-height: 118px;
+  border-radius: 20px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+.gc2 .lmr-yrs {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(8, 217, 184, 0.25);
+}
+.gc2 .lmr-note {
+  font-size: 11.5px;
+  color: #51627a;
+  margin-top: 10px;
+}
+.lmr-tb {
+  border-bottom: 1px solid rgba(8, 217, 184, 0.4);
+}
+.lmr-led-t,
+.lmr-nw,
+.lmr-sc .lmx-hd {
+  border-color: rgba(8, 217, 184, 0.4);
+}
+.lmr-ap th {
+  border-bottom-color: rgba(8, 217, 184, 0.45);
+}
+.lmr-plant,
+.lmr-n9 {
+  background: linear-gradient(135deg, #0a7a85, #086a74) !important;
+}
+.lmr-gap,
+.lmr-tile.navy,
+.lmr-explore {
+  background: linear-gradient(135deg, #0a7a85, #086a74) !important;
+  border-radius: 26px;
+  box-shadow: 0 14px 30px rgba(8, 106, 116, 0.22);
+}
+.lmr-tile.white {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(24, 42, 84, 0.07);
+}
+.lmr-tile.teal {
+  background: #079e98;
+}
+.lmr-card,
+.lmr-sc,
+.lmr-how,
+.lmr-pers,
+.lmr-nb,
+.lmr-qs div,
+.lmr-roadcard {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 26px rgba(24, 42, 84, 0.07);
+  border-radius: 24px;
+}
+.lmr-nb,
+.lmr-qs div {
+  border-radius: 18px;
+}
+.lmr-roadcard {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+.lmr-cols3 > div {
+  border-top: 5px solid;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(24, 42, 84, 0.07);
+  padding: 14px 16px 16px;
+}
+.lmr-steps > div {
+  border-top: 5px solid #0f9d8f;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px rgba(24, 42, 84, 0.07);
+  padding: 14px 14px 16px;
+}
+.lmr-steps .lmx-n {
+  background: #079e98;
+}
+.lmr-ck i {
+  border-color: #079e98;
+}
+.lmr-plant,
+.lmr-prot {
+  border-radius: 24px;
+}
+.lmr-scale div {
+  background: rgba(255, 255, 255, 0.95);
 }

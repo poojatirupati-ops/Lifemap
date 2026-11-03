@@ -234,7 +234,7 @@ input[type=range]{width:100%;accent-color:var(--sea-d);height:32px}
 .chapgrid{display:grid;grid-template-columns:1fr;gap:10px}
 .rep .chapgrid{grid-template-columns:1fr 1fr}
 .chap{border:1.5px solid var(--line);border-radius:20px;padding:14px;background:#fff;cursor:pointer;text-align:left;display:flex;gap:12px;align-items:flex-start;width:100%;font-size:inherit}
-.chap .cb{flex:1;min-width:0}
+.chap .cbd{flex:1;min-width:0}
 .chap.ok{border-color:#A9DDD5;background:#F1FAF8}.chap.warn{border-color:#F3D58E;background:#FFF9EC}.chap.bad{border-color:#F2B7A6;background:#FEF3EF}
 .chap.open{grid-column:1/-1}
 .chap .w{font-size:34px;line-height:1;flex-shrink:0;width:40px;text-align:center}.chap .tt{font-family:var(--fh);font-weight:800;font-size:16px}.chap .ag{font-size:11.5px;color:var(--muted);margin-bottom:6px}
@@ -1316,7 +1316,7 @@ h2.t,.qbody h2,.cover2 h2{letter-spacing:-.035em}
 .tabs .center .fab,.tabs .center.on .fab{width:auto;height:auto;margin:0;border:0;border-radius:0;background:none;color:inherit;box-shadow:none}
 /* ---- v30 photos (11 Oct 2026): free-licence Unsplash photos in media/ (see media/CREDITS.md). These override the original art slots. ---- */
 :root{
-  --art-mortgage:url("/media/home-keys.jpg");--art-pension:url("/media/retire-couple.jpg");--art-investing:url("/media/invest-charts.jpg");--art-savings:url("/media/savings-jar.jpg");
+  --art-mortgage:url("/media/home-keys.jpg");--art-pension:url("/media/retire-couple.jpg");--art-investing:url("/media/invest-charts.jpg");--art-savings:url("/media/savings-jar.jpg");--art-roadtrip:url("/media/road-trip.jpg");
   --art-protection:url("/media/family-couch.jpg");--art-travel:url("/media/travel-suitcase.jpg");--art-edu:url("/media/graduation.jpg");--art-family:url("/media/family-baby.jpg");
   --art-wedding:url("/media/wedding-rings.jpg");--art-car:url("/media/car-key.jpg");--art-adviser:url("/media/adviser-meeting.jpg");--art-planning:url("/media/couple-planning.jpg");
   --art-rain:url("/media/umbrella.jpg");--art-map:url("/media/map-woman.jpg");
@@ -3086,6 +3086,29 @@ body.desk #screen .mp-grid .mp-gc{flex-basis:180px!important}
 .p4-skip{display:block;margin:6px auto 0;font-size:13.5px!important;color:#086A74!important}
 #p4-3 .asmf .nbox{height:34px;align-items:center!important;padding:0 12px!important}
 #p4-3 .asmf .nbox input{line-height:1!important;height:auto!important}
+/* v159 report top bar: light glass, flat teal download button */
+#report{background:linear-gradient(180deg,#e6f7f3,#eef5f7)!important}
+.rep-bar{background:rgba(255,255,255,.82)!important;color:#182A54!important;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid rgba(8,217,184,.25);box-shadow:0 6px 20px rgba(24,42,84,.07);padding:10px 20px!important}
+.rep-bar b{font-size:17px;color:#182A54}
+.rep-bar button{min-height:44px;border-radius:99px!important;font-size:14px}
+.rep-bar button[data-r="print"]{background:#079E98!important;color:#fff!important}
+.rep-bar button[data-r="close"]{background:#fff!important;color:#182A54!important;border:1px solid rgba(24,42,84,.18)!important}
+.rep-bar #rep-msg{color:#51627a}
+/* v160 Your money terms: one glass card per section */
+.tm2{display:flex;flex-direction:column;gap:12px}
+html body #screen .tm2-c{background:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.95);border-radius:22px;box-shadow:0 8px 22px rgba(24,42,84,.07);padding:16px 16px 10px}
+.tm2-h{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.tm2-ic{width:42px;height:42px;flex:none;border-radius:14px;background:linear-gradient(145deg,#DDF8F2,#fff);color:#079E98;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(8,217,184,.18)}
+.tm2-h b{display:block;font-family:var(--fh);font-size:16px;color:#182A54}
+.tm2-h small{display:block;font-size:13px;color:#51627a;margin-top:1px}
+.tm2-t{padding:10px 0 12px;border-top:1px solid rgba(8,217,184,.2)}
+.tm2-n{display:inline-block;font-size:13px;font-weight:800;color:#086A74;background:#E4F6F3;border-radius:99px;padding:3px 12px}
+.tm2-t p{margin:6px 0 0;font-size:14.5px;line-height:1.45;color:#182A54}
+/* v161 What brings you: breathing room under the back button */
+html body #screen .qbody.dpage:has(.wgrid) .qeye{margin-top:28px!important}
+html body #screen .qbody.dpage:has(.wgrid) h2{margin-top:12px!important}
+html body #screen .qbody.dpage:has(.wgrid) .qsub{margin-top:12px!important}
+html body #screen .qbody.dpage:has(.wgrid) .wgrid{margin-top:26px!important}
 
 /* production: the reviewer sidebar is not shown (kept in the DOM so tests/e2e/screens.spec.ts can use its jump list) */
 .side{display:none!important}

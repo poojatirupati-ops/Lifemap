@@ -19,6 +19,9 @@ const ROAD = {
   stemColor: '#9aa8b8',
   endColor: COLOURS.muted,
   labels: false,
+  dot: '#fff',
+  dotStroke: COLOURS.navy,
+  fit: true,
 }
 
 export default function RoadmapPage(props: PageProps) {
