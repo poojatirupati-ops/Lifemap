@@ -3121,6 +3121,16 @@ html body #screen .qbody.dpage:has(.wgrid) .qeye{margin-top:28px!important}
 html body #screen .qbody.dpage:has(.wgrid) h2{margin-top:12px!important}
 html body #screen .qbody.dpage:has(.wgrid) .qsub{margin-top:12px!important}
 html body #screen .qbody.dpage:has(.wgrid) .wgrid{margin-top:26px!important}
+/* v163 Future-at-a-glance tabs and Detail intro row */
+html body #screen .vt button{display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:14px}
+html body #screen .vt button svg{flex:none}
+html body #screen .vt button.on{color:#086A74}
+html body #screen .chead{align-items:center!important;margin-top:4px}
+html body #screen .chead p.small{font-size:13.5px;line-height:1.4;color:#51627a}
+html body #screen .chead .chip.sm{height:36px;min-height:36px;padding:0 14px 0 12px;font-size:13px;font-weight:700;border-radius:99px;background:#fff;border:1px solid rgba(24,42,84,.14);color:#182A54;display:inline-flex;align-items:center;gap:7px;box-shadow:none}
+html body #screen .chead .chip.sm::before{content:"";width:14px;height:14px;border-radius:50%;border:1.6px solid #079E98;box-sizing:border-box}
+html body #screen .chead .chip.sm.sel{background:#E4F6F3;border-color:#079E98;color:#086A74}
+html body #screen .chead .chip.sm.sel::before{background:#079E98;box-shadow:inset 0 0 0 2.5px #E4F6F3}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4691,13 +4701,13 @@ function wiText(P0, P1){ const ch = S.goals.map(g => ({g, a:P0.pct[g.id], b:P1.p
   if (!ch.length) return 'No change to your goals. Everything that could be covered already is.';
   return ch.map(x => '<b>' + esc(x.g.name) + '</b> goes from ' + x.a + '% to <b>' + x.b + '%</b>').join('<br>'); }
 function glanceHTML(P){ const v = S.view;
-  const tabs = '<div class="vt" role="tablist" aria-label="Your future views">' + [['journey','🛤️ Journey'],['chapters','📖 Life chapters'],['detail','📊 Detail']].map(([k, l]) => '<button role="tab" aria-selected="' + (v === k) + '" class="' + (v === k ? 'on' : '') + '" data-a="view" data-p="' + k + '">' + l + '</button>').join('') + '</div>';
+  const tabs = '<div class="vt" role="tablist" aria-label="Your future views">' + [['journey','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20c0-6 12-4 12-10"/><circle cx="6" cy="20" r="1.5"/><circle cx="18" cy="6" r="2"/></svg> Journey'],['chapters','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7"/></svg> Life chapters'],['detail','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg> Detail']].map(([k, l]) => '<button role="tab" aria-selected="' + (v === k) + '" class="' + (v === k ? 'on' : '') + '" data-a="view" data-p="' + k + '">' + l + '</button>').join('') + '</div>';
   let body = '';
   const land = phoneLandscape();
   if (v === 'journey') body = '<p class="small">Your life as one road, from today to age 90. The milestones are the goals you chose.</p>' +
         journeySVG(P, land ? Math.max(322, Math.min(780, innerWidth - 72)) : 322, land) + journeyNote(P);
   else if (v === 'chapters') body = '<p class="small">Your future as chapters of your life. ☀️ comfortable · 🌤️ some years use savings · 🌦️ often using savings · ⛈️ a gap to plan for. Tap a chapter to see its years.</p>' + chaptersHTML(P);
-  else body = '<div class="row chead" style="justify-content:space-between;align-items:center;gap:8px"><p class="small" style="margin:0">Each bar is one year of spending: living costs, loans and goals. Tap a bar to see that year.</p><button class="chip sm' + (S.csave ? ' sel' : '') + '" aria-pressed="' + !!S.csave + '" data-a="csave" style="flex-shrink:0">Show savings</button></div>' +
+  else body = '<div class="row chead" style="justify-content:space-between;align-items:center;gap:8px"><p class="small" style="margin:0">One bar per year of spending. Tap a bar to see that year.</p><button class="chip sm' + (S.csave ? ' sel' : '') + '" aria-pressed="' + !!S.csave + '" data-a="csave" style="flex-shrink:0">Show savings</button></div>' +
       chartSVG(P.rows, land ? Math.max(322, Math.min(780, innerWidth - 72)) : 322, {live:true, land}) + chartLegend() + chartSummary(P);
   return tabs + '<div role="tabpanel">' + body + '</div>'; }
 function journeyNote(P){ const bad = P.rows.find(isShort); return '<div class="jkey"><span><i style="background:var(--good)"></i>Income covers it</span><span><i style="background:var(--nudge)"></i>Using savings</span><span><i style="background:var(--alert)"></i>Shortfall</span></div>' + (bad ? '<p class="pnote">⛈️ Around <b>age ' + bad.a + '</b>' + (bad.due && bad.due.length ? ', money for ' + esc(bad.due.join(' and ').toLowerCase()) + ' falls short.' : ', your money falls short.') + '</p>' : '<p class="pnote">☀️ Every year of your road is covered.</p>'); }
