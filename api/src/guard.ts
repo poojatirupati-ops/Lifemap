@@ -10,6 +10,10 @@ export type Env = { Variables: { userId: string; orgId: string; role?: string | 
 
 const DOCS = ["/api/docs", "/api/openapi.json"];
 
+/** Is the user (still) a member of the tenant? */
+export const isMember = async (db: Db, userId: string, orgId: string) =>
+  (await db.select({ id: member.id }).from(member).where(and(eq(member.userId, userId), eq(member.organizationId, orgId))).limit(1)).length > 0;
+
 // Deny by default: only GET /health, GET /api/tenant, /api/auth/* and the signed POST /api/webhooks/* are public (plus the API docs outside production); everything else needs a session in a tenant
 // the user is still a member of (a removed member's session keeps its activeOrganizationId, however the membership went).
 export const guard = (auth: Auth, db: Db): MiddlewareHandler<Env> => async (c, next) => {
@@ -21,8 +25,7 @@ export const guard = (auth: Auth, db: Db): MiddlewareHandler<Env> => async (c, n
   if (!s) return c.json({ error: "unauthorized" }, 401);
   const orgId = s.session.activeOrganizationId;
   if (!orgId) return c.json({ error: "no active organization" }, 403);
-  const [m] = await db.select({ id: member.id }).from(member).where(and(eq(member.userId, s.user.id), eq(member.organizationId, orgId))).limit(1);
-  if (!m) return c.json({ error: "not a member of the active organization" }, 403);
+  if (!(await isMember(db, s.user.id, orgId))) return c.json({ error: "not a member of the active organization" }, 403);
   c.set("userId", s.user.id);
   c.set("orgId", orgId);
   c.set("role", s.user.role); // admin plugin: "admin" = platform staff
