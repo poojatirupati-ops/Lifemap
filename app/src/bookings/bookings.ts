@@ -12,6 +12,7 @@ export const SHARE_VERSION = '2026-11'
 
 /** Cal.com (EU by default): the embed, its script and the cancel page. */
 export const CAL_ORIGIN = import.meta.env.VITE_CAL_ORIGIN ?? 'https://app.cal.eu'
+export const EMBED_JS = `${CAL_ORIGIN}/embed/embed.js`
 
 export interface Adviser {
   id: string
@@ -65,7 +66,7 @@ export function useAdviser(): Adviser | undefined {
 
 /**
  * The caller's bookings, newest first. Keeps plan.booking in step with the server (so Me sees it too): done and the time of the confirmed
- * booking; a booking cancelled on Cal.com clears the share picks.
+ * booking; once it is no longer booked (cancelled on Cal.com, ended or a no-show) the share picks and agreement clear.
  */
 export function useBookings(refetchInterval: number | false = false) {
   return (
@@ -75,10 +76,10 @@ export function useBookings(refetchInterval: number | false = false) {
         queryFn: async () => {
           const { bookings } = await call<{ bookings: Booking[] }>('GET', '/api/bookings')
           const active = bookings.find((b) => b.status === 'booked')
-          const { plan, update, bookingCancelled } = useStore.getState()
+          const { plan, update, bookingOver } = useStore.getState()
           const slot = active?.startsAt ? slotLabel(new Date(active.startsAt)) : plan.booking.slot
-          if (!active && plan.booking.done && bookings[0]?.status === 'cancelled')
-            bookingCancelled()
+          if (!active && plan.booking.done)
+            bookingOver(bookings.find((b) => b.status !== 'pending')?.status === 'cancelled')
           else if (plan.booking.done !== !!active || plan.booking.slot !== slot)
             update((p) => void Object.assign(p.booking, { done: !!active, slot }))
           return bookings
@@ -93,7 +94,7 @@ export function useBookings(refetchInterval: number | false = false) {
 /** The live (confirmed, not cancelled) booking, or null. */
 export const useActiveBooking = () => useBookings().find((b) => b.status === 'booked') ?? null
 
-/** Records the share picks as a pending booking, then opens the adviser's Cal.com calendar (c3) for it. */
+/** Records the share picks as the pending booking (the open one, if any), then opens the adviser's Cal.com calendar (c3) for it. */
 export const postBooking = ({ booking }: Pick<Plan, 'booking'>, adviserId: string) =>
   call<{ booking: Booking }>('POST', '/api/bookings', {
     adviserId,
@@ -110,8 +111,12 @@ export function useBook() {
   return useMutation(
     {
       mutationFn: (adviserId: string) => postBooking(useStore.getState().plan, adviserId),
+      // the server hands back the caller's open pending booking rather than a new one
       onSuccess: ({ booking }) => {
-        queryClient.setQueryData<Booking[]>(BOOKINGS, (bookings = []) => [booking, ...bookings])
+        queryClient.setQueryData<Booking[]>(BOOKINGS, (bookings = []) => [
+          booking,
+          ...bookings.filter((b) => b.id !== booking.id),
+        ])
         useStore.getState().showStage('c3')
       },
       onError: () => toast("We couldn't start the booking. Please try again."),

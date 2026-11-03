@@ -14,6 +14,7 @@ const auth = vi.hoisted(() => ({
   signOut: vi.fn(async () => {}),
   postConsents: vi.fn(async () => {}),
   user: null as { email: string } | null,
+  role: 'member',
 }))
 vi.mock('../../src/auth/session.ts', () => ({ signOut: auth.signOut }))
 vi.mock('../../src/auth/consents.ts', () => ({ postConsents: auth.postConsents }))
@@ -22,6 +23,7 @@ vi.mock('../../src/auth/client.ts', () => ({
     useSession: () => ({ data: auth.user && { user: auth.user } }),
     useListPasskeys: () => ({ data: [] }),
     useActiveMember: () => ({ data: null }),
+    organization: { getActiveMember: async () => ({ data: { role: auth.role } }) },
   },
 }))
 
@@ -31,6 +33,7 @@ const screenId = () => useShell.getState().screenId
 beforeEach(() => {
   vi.clearAllMocks()
   auth.user = null
+  auth.role = 'member'
   useStore.getState().load(structuredClone(sample) as unknown as Snapshot)
 })
 
@@ -96,4 +99,13 @@ test('assumption values read as words', () => {
   expect(formatAssumption('spWeek', 299.3)).toBe('€299.30 a week')
   expect(formatAssumption('drawRule', 'min')).toBe('Minimum only (4% / 5%)')
   expect(formatAssumption('cashYears', null)).toBe('Not chosen yet')
+})
+
+test('the adviser profile is for advisers only: anyone else goes back to Me', async () => {
+  await renderAt('/me/adviser')
+  expect(path()).toBe('/me')
+
+  auth.role = 'member,adviser'
+  await renderAt('/me/adviser')
+  expect([path(), screenId()]).toEqual(['/me/adviser', 'ME-ADV'])
 })

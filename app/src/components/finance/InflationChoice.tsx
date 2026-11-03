@@ -4,6 +4,7 @@ import { rules2026 } from '../../domain/planning/rates.ts'
 import { standardSource, standardValue } from '../../domain/planning/settings.ts'
 import { percent } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 import { chooseInflation, chooseOwnInflation, typeInflation } from '../../state/choices.ts'
 import ChoiceNumberBox from './ChoiceNumberBox.tsx'
 import ChoiceTag from './ChoiceTag.tsx'
@@ -14,6 +15,7 @@ export default function InflationChoice({ place }: { place: string }) {
     useShallow(({ plan }) => ({ rate: plan.inflation, own: plan.inflOther })),
   )
   const [hint, setHint] = useState('')
+  useFigures()
   const standard = Number(standardValue('infl'))
   const { ie: irelandNow, ieSrc: irelandSource } = rules2026.infl
   const isStandard = rate === standard && !own

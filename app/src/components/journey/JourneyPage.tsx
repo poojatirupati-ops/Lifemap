@@ -79,13 +79,17 @@ export function Body({ topic }: { topic: JourneyTopic }) {
 }
 
 function Content({ topic }: { topic: JourneyTopic }) {
-  const situation = useJourneyPage((p) => p.situation)
-  const video = useJourneyPage((p) => p.video)
+  const pickedSituation = useJourneyPage((p) => p.situation)
+  const pickedVideo = useJourneyPage((p) => p.video)
   const seats = useJourneyPage((p) => p.seats)
   const { actionPrefix, pickSituation, toggleSeat } = useJourneyActions()
   const journeys = useJourneys(topic)
+  // the content may have fewer situations or videos than the picks were made on
+  const situation = Math.min(pickedSituation, journeys.length - 1)
   const page = journeys[situation]
   if (!page) return null
+  const video = Math.min(pickedVideo, page.videos.length - 1)
+  const story = page.videos[video]
   const { eligibility, liveWith, comingSoonDetails } = PAGES[topic]
 
   return (
@@ -128,15 +132,17 @@ function Content({ topic }: { topic: JourneyTopic }) {
         </nav>
         {eligibility && situation === 0 ? <EligibilityCard /> : null}
         <CalculatorGrid calculators={page.calculators} />
-        <VideoRow videos={page.videos} />
+        <VideoRow videos={page.videos} situation={situation} current={video} />
         <div id="mp-player">
-          <StoryPlayer
-            key={pageKey(situation, video)}
-            story={page.videos[video]}
-            number={video + 1}
-            count={page.videos.length}
-            comingSoonDetails={comingSoonDetails}
-          />
+          {story ? (
+            <StoryPlayer
+              key={pageKey(situation, video)}
+              story={story}
+              number={video + 1}
+              count={page.videos.length}
+              comingSoonDetails={comingSoonDetails}
+            />
+          ) : null}
         </div>
         <ReadingCards reading={page.reading} />
         <div className="mp-sec" id="mp-live">

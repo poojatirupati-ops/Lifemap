@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { redirectSearch } from '../../lib/redirectSearch.ts'
+import { z } from 'zod'
 import { useStore } from '../../state/store.ts'
 import { toast } from '../../state/shell.ts'
 import { sendEmailCode } from '../../state/account.ts'
@@ -9,7 +9,7 @@ import { useCodeBoxes } from '../../hooks/useCodeBoxes.ts'
 import { CODE_LENGTH } from '../../domain/identity/signIn.ts'
 
 export const Route = createFileRoute('/sign-in/code')({
-  validateSearch: redirectSearch,
+  validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
   component: Code,
 })
 

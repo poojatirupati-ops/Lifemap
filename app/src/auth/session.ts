@@ -5,6 +5,7 @@ import { testAuthOn } from '../lib/lmTestHook.ts'
 import { goTo, router } from '../shell/router.ts'
 import { TENANT_KEY } from '../shell/tenant.ts'
 import { fresh } from '../state/fresh.ts'
+import { resetJourneyPages } from '../state/journeyPage.ts'
 import { startFrom, toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { DISCOVER_SIX } from '../domain/discovery/questions.data.ts'
@@ -91,11 +92,12 @@ export async function enterApp(user: User) {
   return land(rt)
 }
 
-/** Forgets everything this browser holds for the user: query cache, plan, wall pass. */
+/** Forgets everything this browser holds for the user: query cache, plan, topic pages, wall pass. */
 function clearLocal() {
   queryClient.removeQueries({ queryKey: PLAN_KEY })
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())
+  resetJourneyPages()
   void goTo('/') // the wall sends a signed-out visitor to sign-in
 }
 

@@ -15,6 +15,7 @@ import AppScreen from '../frame/AppScreen.tsx'
 import { makePlan } from '../../state/plan.ts'
 import AskBar from './AskBar.tsx'
 import { ServiceTile } from './Shortcuts.tsx'
+import Sec from '../ui/Sec.tsx'
 
 const SHOWN_TERMS = 3
 const METER_STEPS = [1, 2, 3, 4]
@@ -118,12 +119,11 @@ function ProfileCard() {
 
   return (
     <>
-      <div className="sec">
-        <h3>Your profile card</h3>
+      <Sec title="Your profile card">
         <button className="link" data-a="me" data-p="terms" onClick={() => openMe('terms')}>
           All terms
         </button>
-      </div>
+      </Sec>
       <div className="ecard ec3">
         <span className="ec3-ic" aria-hidden="true">
           {type.emoji}
@@ -176,12 +176,11 @@ export default function HomeStart() {
       <StartHero />
       <PlanCard />
       <AskBar />
-      <div className="sec">
-        <h3>Tools to try</h3>
+      <Sec title="Tools to try">
         <button className="link" data-a="tab" data-p="explore" onClick={() => switchTab('explore')}>
           Explore
         </button>
-      </div>
+      </Sec>
       <div className="svc2">
         {toolsForYou(specs).map((id) => {
           const tool = toolById(id)

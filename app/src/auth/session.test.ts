@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, expect, test, vi } from 'vitest'
 import { authClient } from './client.ts'
-import { enterApp } from './session.ts'
+import { enterApp, signOut } from './session.ts'
+import { JOURNEY_PAGES } from '../state/journeyPage.ts'
 import { useStore } from '../state/store.ts'
 import { fresh } from '../state/fresh.ts'
 import { startFrom, useShell } from '../state/shell.ts'
@@ -16,6 +17,7 @@ vi.mock('./client.ts', () => ({
       })),
       setActive: vi.fn(async () => ({ data: {}, error: null })),
     },
+    signOut: vi.fn(async () => ({ data: {}, error: null })),
   },
 }))
 
@@ -52,4 +54,20 @@ test('returning user with an unfinished onboarding resumes at the next open ques
   await enterApp(user)
   expect(router.state.location.pathname).toBe('/discover/3')
   expect(useStore.getState().plan.discoverStep).toBe(2)
+})
+
+test("sign-out forgets the topic pages' picks, watched videos and seats", async () => {
+  JOURNEY_PAGES.Mortgages.setState({
+    situation: 2,
+    video: 1,
+    watched: { '2-1': true },
+    seats: { '2-0': true },
+  })
+  await signOut()
+  expect(JOURNEY_PAGES.Mortgages.getState()).toMatchObject({
+    situation: 0,
+    video: 0,
+    watched: {},
+    seats: {},
+  })
 })

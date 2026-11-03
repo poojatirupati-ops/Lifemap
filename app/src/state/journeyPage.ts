@@ -56,6 +56,11 @@ const journeyPage = (actionPrefix: string) =>
 export const JOURNEY_PAGES = { Mortgages: journeyPage('mp'), Loans: journeyPage('lp') }
 export type JourneyTopic = keyof typeof JOURNEY_PAGES
 
+/** Every page back to its start (on sign-out: nothing of the last user stays). */
+export function resetJourneyPages() {
+  for (const page of Object.values(JOURNEY_PAGES)) page.setState(page.getInitialState(), true)
+}
+
 /** The page being shown; its parts read their page's state through it. */
 export const JourneyPageContext = createContext(JOURNEY_PAGES.Mortgages)
 

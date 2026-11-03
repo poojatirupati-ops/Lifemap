@@ -3,7 +3,8 @@ import CalBooking from './CalBooking.tsx'
 import ExpertsFoot from './ExpertsFoot.tsx'
 import SharePicks from './SharePicks.tsx'
 import { headOf, STAGES } from './stages.ts'
-import { useActiveBooking, useAdviser } from '../../bookings/bookings.ts'
+import { preload } from 'react-dom'
+import { EMBED_JS, useActiveBooking, useAdviser } from '../../bookings/bookings.ts'
 import { useLiveSessions } from '../../content/cms.tsx'
 import { discoverAnswered } from '../../domain/discovery/profileQuestions.ts'
 import { EXPERTS, type ExpertKind } from '../../domain/identity/advisers.data.ts'
@@ -22,6 +23,7 @@ import { makePlan } from '../../state/plan.ts'
 import { useStore } from '../../state/store.ts'
 import LiveCard from '../explore/LiveCard.tsx'
 import AppScreen from '../frame/AppScreen.tsx'
+import Sec from '../ui/Sec.tsx'
 
 const KINDS = Object.keys(EXPERTS) as ExpertKind[]
 const SPACED = { marginBottom: 8 }
@@ -60,14 +62,22 @@ const nextSteps = (
   </div>
 )
 
+/** The picked kind of expert, else the one for the least covered goal. */
+function useSpecialist() {
+  const booking = useStore((store) => store.plan.booking)
+  const goals = useStore((store) => store.plan.goals)
+  const hasResults = useStore((store) => store.plan.hasResults)
+  const { base } = useProjection()
+  return specialistFor({ booking, goals, hasResults }, base.percent)
+}
+
 /** The Experts tab: its home (before or after booking) or a booking step, from the URL (/experts or /experts/c0 to c4). */
 export default function ExpertsPage({ step }: { step?: Stage }) {
   const stage = useStore((store) => stageOf(step ?? 'home', store.plan.booking.done))
-  const head = headOf(
-    useStore((store) => store.plan),
-    stage,
-    useAdviser()?.name,
-  )
+  const { kind } = useSpecialist()
+  const hasResults = useStore((store) => store.plan.hasResults)
+  const adviserName = useAdviser()?.name
+  const head = headOf(stage, { kind, hasResults, adviserName })
   const showStage = useStore((store) => store.showStage)
   return (
     <AppScreen
@@ -113,9 +123,7 @@ function SpecialistBoxes({ selected }: { selected: ExpertKind }) {
   const toggleSpecialist = useStore((store) => store.toggleSpecialist)
   return (
     <>
-      <div className="sec">
-        <h3>Talk to a specialist</h3>
-      </div>
+      <Sec title="Talk to a specialist" />
       <div role="group" aria-label="Talk to a specialist">
         {KINDS.map((kind) => {
           const { title, blurb, icon } = EXPERTS[kind]
@@ -172,9 +180,7 @@ function LiveSessions() {
   const sessions = useLiveSessions()
   return (
     <>
-      <div className="sec">
-        <h3>What's on · live with experts</h3>
-      </div>
+      <Sec title="What's on · live with experts" />
       {sessions.map((session) => (
         <LiveCard key={session.title} session={session} style={SPACED} />
       ))}
@@ -189,12 +195,8 @@ export function Body({ stage }: { stage: Stage }) {
   const hasResults = useStore((store) => store.plan.hasResults)
   const profileNeeded = useStore(({ plan }) => needsProfile(plan))
   const answered = useStore((store) => discoverAnswered(store.plan.answers))
-  const booking = useStore((store) => store.plan.booking)
-  const goals = useStore((store) => store.plan.goals)
   const { nextAdviser, checkProfile } = useStore.getState()
-  const { base } = useProjection()
-  // the picked kind of expert, else the one for the least covered goal
-  const specialist = specialistFor({ booking, goals, hasResults }, base.percent)
+  const specialist = useSpecialist()
   const adviserFirstName = firstName(adviser?.name ?? '')
 
   const planNudge = hasResults ? null : (
@@ -283,6 +285,7 @@ export function Body({ stage }: { stage: Stage }) {
         </>
       )
     case 'c2':
+      preload(EMBED_JS, { as: 'script' }) // c3's calendar comes next
       return (
         <>
           {planNudge}

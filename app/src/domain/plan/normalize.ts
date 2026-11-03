@@ -18,7 +18,7 @@ export function syncSafety(plan: Plan, only?: Goal) {
 }
 
 /** The original's autoSafety, run before every projection: an emergency fund joins a plan whose cash is short (or that asked for one). */
-export function addEmergencyFund(plan: Plan) {
+function addEmergencyFund(plan: Plan) {
   const fund = emergencyFundToAdd(plan, plan.nextGoalId)
   if (!fund) return
   plan.goals.push(fund)

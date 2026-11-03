@@ -39,17 +39,24 @@ export function withPartnerFigures(partner: string, figures: PartnerFigures = {}
 }
 
 let current = { settings: defaultSettings, key: '' }
+const listeners = new Set<() => void>()
 
-/** The standards the planning maths uses: LifeMap's, with the active tenant's figures over them. */
+/** The standards the planning maths uses: LifeMap's, with the active tenant's figures over them (a new object once they change). */
 export const settingsInUse = () => current.settings
 
-/** Use the active tenant's figures from now on; false when they are the ones already in use. */
+/** Calls `listener` whenever the figures in use change; returns the unsubscribe (useSyncExternalStore's shape). */
+export function subscribeFigures(listener: () => void) {
+  listeners.add(listener)
+  return () => void listeners.delete(listener)
+}
+
+/** Use the active tenant's figures from now on. */
 export function applyTenantFigures(partner: string, figures: PartnerFigures = {}) {
   // the partner's name shows only beside its figures
   const key = Object.keys(figures).length ? JSON.stringify([partner, figures]) : ''
-  if (key === current.key) return false
+  if (key === current.key) return
   current = { settings: withPartnerFigures(partner, figures), key }
-  return true
+  for (const listener of listeners) listener()
 }
 
 const inUse = (standard?: Standard) => standard?.partnerValue ?? standard?.value

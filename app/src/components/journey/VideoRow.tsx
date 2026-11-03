@@ -8,9 +8,15 @@ const PHOTOS = ['home-keys', 'house-for-sale', 'money-plant', 'invest-charts', '
 const SHADE = 'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.45))'
 
 /** The situation's story videos as a scrollable row; picking one plays it below. */
-export default function VideoRow({ videos }: { videos: StoryVideo[] }) {
-  const situation = useJourneyPage((p) => p.situation)
-  const current = useJourneyPage((p) => p.video)
+export default function VideoRow({
+  videos,
+  situation,
+  current,
+}: {
+  videos: StoryVideo[]
+  situation: number
+  current: number
+}) {
   const watched = useJourneyPage((p) => p.watched)
   const { actionPrefix, playVideo } = useJourneyActions()
   const watchedCount = videos.filter((_, i) => watched[pageKey(situation, i)]).length

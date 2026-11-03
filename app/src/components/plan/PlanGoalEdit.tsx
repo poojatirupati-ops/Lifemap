@@ -1,5 +1,6 @@
 import { useStore } from '../../state/store.ts'
 import GoalRow from '../timeline/GoalRow.tsx'
+import Sec from '../ui/Sec.tsx'
 
 /** Under the timeline: every goal's row while editing, or the one goal tapped on the timeline. */
 export default function PlanGoalEdit() {
@@ -14,12 +15,11 @@ export default function PlanGoalEdit() {
   if (editAll)
     return (
       <>
-        <div className="sec">
-          <h3>Your goals</h3>
+        <Sec title="Your goals">
           <button className="link" data-a="planedit" onClick={toggleEditGoals}>
             Done
           </button>
-        </div>
+        </Sec>
         {goals
           .toSorted((a, b) => a.age - b.age)
           .map((goal) => (

@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { redirectSearch } from '../../../lib/redirectSearch.ts'
+import { z } from 'zod'
 import { addPasskey, finishAccount } from '../../../state/account.ts'
 import FlowScreen from '../../../components/frame/FlowScreen.tsx'
 
 // ?redirect: kept from sign-in, opened after this offer (auth/session.ts)
 export const Route = createFileRoute('/_auth/account/passkey')({
-  validateSearch: redirectSearch,
+  validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
   component: AccountPasskey,
 })
 

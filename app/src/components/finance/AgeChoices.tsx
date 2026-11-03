@@ -4,6 +4,7 @@ import { chosenAssumption } from '../../domain/planning/assumptions.ts'
 import { guideSource, rules2026 } from '../../domain/planning/rates.ts'
 import { standardValue } from '../../domain/planning/settings.ts'
 import { useStore } from '../../state/store.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 import AgeChoice from './AgeChoice.tsx'
 import PlanEndChoice from '../assumptions/PlanEndChoice.tsx'
 import { choosePartnerRetireAge, chooseRetireAge } from '../../state/choices.ts'
@@ -35,6 +36,7 @@ interface Props {
 
 /** Retirement age, plan-until age, the inflation slot, and the partner's retirement age. */
 export default function AgeChoices({ inflation, partnerFirst = false }: Props) {
+  useFigures()
   const ages = useStore(
     useShallow(({ plan }) => {
       const retirement = retirementRange(plan)

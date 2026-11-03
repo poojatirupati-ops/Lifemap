@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { redirectSearch } from '../../lib/redirectSearch.ts'
+import { z } from 'zod'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from '../../state/store.ts'
 import { sendEmailCode, setAccount, signInWithPasskey } from '../../state/account.ts'
@@ -11,7 +11,7 @@ import { CODE_LENGTH, looksLikeEmail } from '../../domain/identity/signIn.ts'
 
 // ?redirect: the page the login wall caught the visitor on, opened again after sign-in (auth/session.ts)
 export const Route = createFileRoute('/sign-in/')({
-  validateSearch: redirectSearch,
+  validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
   component: SignIn,
 })
 

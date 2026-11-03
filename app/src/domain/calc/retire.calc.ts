@@ -4,14 +4,14 @@ import { LAW_TEXT, type Rules } from '../planning/rates.ts'
 import { euro, percent } from '../../lib/format.ts'
 import { grownContributions, grownSaving, MAX_YEARS, reliefLimit, yearsLasting } from './maths.ts'
 import type { CalcContext, Calculator, Figures } from './types.ts'
-import { inflationLine, inflationText, NO_INFLATION, years } from './words.ts'
+import { inflationLine, inflationText, inTodaysMoney, NO_INFLATION, years } from './words.ts'
 
 const NO_RETIRE_AGE = 'Choose a retirement age after your age to see this'
 const TAX_NOTE =
   'Desired income and the State Pension are before tax: the State Pension is taxable (USC-exempt) and drawdown pays income tax and USC. '
 
 const todayOf = (future: number, term: number, { inflation }: CalcContext) =>
-  inflation == null ? null : future / (1 + inflation) ** term
+  inflation == null ? null : inTodaysMoney(future, term, inflation)
 
 /** Tax relief on contributions, within the age band and earnings cap, after what is paid in already. */
 function relief(figures: Figures, yearly: number, context: CalcContext) {

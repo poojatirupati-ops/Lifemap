@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { contentClient } from '../../src/content/cms.tsx'
 import { seedContent } from '../content/seed.ts'
@@ -8,6 +8,8 @@ import { useStore } from '../../src/state/store.ts'
 import { renderAt } from '../renderAt.tsx'
 import { goalForVideo } from '../../src/domain/planning/goalForVideo.ts'
 import type { Goal } from '../../src/state/types.ts'
+import { Body } from '../../src/components/journey/JourneyPage.tsx'
+import { JOURNEY_PAGES, resetJourneyPages } from '../../src/state/journeyPage.ts'
 
 beforeEach(() => {
   seedContent()
@@ -71,4 +73,17 @@ test('goalForVideo: a pension video falls back to the retirement goal', () => {
   expect(goalForVideo([retire, home], 'mortgage')).toBe(home)
   expect(goalForVideo([retire, home], 'pension')).toBe(retire)
   expect(goalForVideo([home], 'protection')).toBeUndefined()
+})
+
+test('a topic page picked past the content shows its last situation and video', async () => {
+  JOURNEY_PAGES.Loans.setState({ situation: 99, video: 99 })
+  const { container } = render(<Body topic="Loans" />)
+  await waitFor(() =>
+    expect(container.querySelector('.mp-sit [aria-pressed="true"]')).not.toBeNull(),
+  )
+  const situations = container.querySelectorAll('.mp-sit button')
+  expect(situations[situations.length - 1].getAttribute('aria-pressed')).toBe('true')
+  expect(container.querySelector('#mp-player')!.children.length).toBe(1)
+  resetJourneyPages()
+  expect(JOURNEY_PAGES.Loans.getState()).toMatchObject({ situation: 0, video: 0, seats: {} })
 })

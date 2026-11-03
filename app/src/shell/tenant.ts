@@ -49,17 +49,17 @@ export function useBranding() {
   }, [colors])
 }
 
-/** Puts the tenant's own figures over LifeMap's standards for the planning maths; `onChange` redraws once they change. */
-export function useTenantFigures(onChange: () => void) {
+/** Puts the tenant's own figures over LifeMap's standards for the planning maths (useFigures redraws what reads them). */
+export function useTenantFigures() {
   const tenant = useTenant()
   useEffect(() => {
-    if (tenant && applyTenantFigures(tenant.name, tenant.rates)) onChange()
-  }, [tenant, onChange])
+    if (tenant) applyTenantFigures(tenant.name, tenant.rates)
+  }, [tenant])
 }
 
 /**
  * A tenant admin's change to the active tenant, saved with Better Auth's organization update
- * (the API checks the rates). Shown at once and undone if the save fails; returns the error, if any.
+ * (the API checks the rates). Shown at once; if the save fails, the server's tenant is fetched again and used. Returns the error, if any.
  */
 async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
   const before = queryClient.getQueryData<Tenant>(TENANT_KEY)
@@ -75,8 +75,9 @@ async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
     },
   })
   if (!error) return null
-  applyTenantFigures(before.name, before.rates)
-  queryClient.setQueryData(TENANT_KEY, before)
+  const server = await queryClient.fetchQuery({ ...tenantQuery, staleTime: 0 }).catch(() => before)
+  queryClient.setQueryData(TENANT_KEY, server)
+  applyTenantFigures(server.name, server.rates)
   return error.message ?? 'it was not saved'
 }
 
