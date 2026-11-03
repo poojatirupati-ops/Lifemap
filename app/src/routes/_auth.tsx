@@ -6,7 +6,8 @@ import { useShell } from '../state/shell.ts'
 /** Signed in (a session, or in dev a reviewer jump / the localhost test flag). */
 async function signedIn() {
   if (useShell.getState().authed || testAuthOn()) return true
-  const { data } = await authClient.getSession()
+  // API unreachable (offline, or down): treat it as signed out, so the visitor lands on sign-in rather than an error.
+  const { data } = await authClient.getSession().catch(() => ({ data: null }))
   if (data) useShell.setState({ authed: true })
   return !!data
 }
