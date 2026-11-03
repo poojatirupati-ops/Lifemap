@@ -3153,6 +3153,11 @@ html body #screen .vt button svg{width:17px;height:17px;opacity:.85}
 html body #screen .vt button.on{background:#079E98!important;color:#fff!important;box-shadow:0 6px 14px -6px rgba(7,158,152,.6)!important}
 html body #screen .vt button.on svg{opacity:1}
 html body #screen .vt button:not(.on):hover{background:rgba(255,255,255,.7)!important;color:#086A74}
+/* v166 Life chapters intro + colour key */
+html body #screen .chl{font-size:14px;line-height:1.45;color:#51627a;margin:12px 0 0}
+.chkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 12px}
+.chkey span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#182A54}
+.chkey i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4728,7 +4733,7 @@ function glanceHTML(P){ const v = S.view;
   const land = phoneLandscape();
   if (v === 'journey') body = '<p class="small">Your life as one road, from today to age 90. The milestones are the goals you chose.</p>' +
         journeySVG(P, land ? Math.max(322, Math.min(780, innerWidth - 72)) : 322, land) + journeyNote(P);
-  else if (v === 'chapters') body = '<p class="small">Your future as chapters of your life. ☀️ comfortable · 🌤️ some years use savings · 🌦️ often using savings · ⛈️ a gap to plan for. Tap a chapter to see its years.</p>' + chaptersHTML(P);
+  else if (v === 'chapters') body = '<p class="small chl">Your future as chapters of your life. Tap a chapter to see its years.</p><div class="chkey" aria-label="Colour key"><span><i style="background:var(--good)"></i>Comfortable</span><span><i style="background:var(--nudge)"></i>Uses savings</span><span><i style="background:var(--alert)"></i>A gap to plan for</span></div>' + chaptersHTML(P);
   else body = '<div class="row chead" style="justify-content:space-between;align-items:center;gap:8px"><p class="small" style="margin:0">One bar per year of spending. Tap a bar to see that year.</p><button class="chip sm' + (S.csave ? ' sel' : '') + '" aria-pressed="' + !!S.csave + '" data-a="csave" style="flex-shrink:0">Show savings</button></div>' +
       chartSVG(P.rows, land ? Math.max(322, Math.min(780, innerWidth - 72)) : 322, {live:true, land}) + chartLegend() + chartSummary(P);
   return tabs + '<div role="tabpanel">' + body + '</div>'; }
