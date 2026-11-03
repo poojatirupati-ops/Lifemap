@@ -70,7 +70,7 @@ function ChartSummary({ rows }: { rows: YearRow[] }) {
       : ''
     return (
       <p className="pnote">
-        <b>In plain English:</b>
+        <span className="pn-l">In plain English</span>
         {` every year is covered by your income and savings${savingsNote}. No coral on the chart.`}
       </p>
     )
@@ -91,8 +91,8 @@ function ChartSummary({ rows }: { rows: YearRow[] }) {
     : ''
   return (
     <p className="pnote">
-      <b>In plain English:</b> the first shortfall is at <b>age {first.age}</b>, about{' '}
-      <b>{euro(first.shortfall)}</b>
+      <span className="pn-l">In plain English</span> the first shortfall is at{' '}
+      <b>age {first.age}</b>, about <b>{euro(first.shortfall)}</b>
       {`${firstGoals}. Across your plan there ${gapYears} with a gap, about ${euro(total)} in total`}
       {goalsNote}
       {livingNote}. Saving more, changing timing or rethinking a goal closes it.
@@ -112,7 +112,7 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
   const statePensionAge = rulesFor(rows[0].year).sp.age
   const row = rows[selected]
   const split = yearSplit(row)
-  const dueGoals = row.goalsDue.map((goal) => `${goal.e} ${goal.name}`).join(', ')
+  const dueGoals = row.goalsDue.map((goal) => goal.name).join(', ')
   const retiring = row.age === retiringAge
 
   return (
@@ -122,8 +122,7 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
         style={{ justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
       >
         <p className="small" style={{ margin: 0 }}>
-          Each bar is one year of spending: living costs, loans and goals. Tap a bar to see that
-          year.
+          One bar per year of spending. Tap a bar to see that year.
         </p>
         <button
           className={showSavings ? 'chip sm sel' : 'chip sm'}
@@ -158,9 +157,11 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
         />
       </div>
       <div className="cdet" id="r-cdet" aria-live="polite">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
-          <b style={{ fontSize: 15 }}>
-            {`Age ${row.age} (${row.year})${retiring ? ' · retirement starts' : ''}`}
+        <div className="cdh">
+          <b>
+            {`Age ${row.age} `}
+            <span>{`(${row.year})`}</span>
+            {retiring ? ' · retirement starts' : null}
           </b>
           <span className="small">Tap a bar or use ← →</span>
         </div>
@@ -178,25 +179,25 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
         <MiniLine label="Shortfall" amount={split.shortfall} colour="var(--alert)" />
         <MiniLine label="Savings left at year end" amount={row.liquid} />
       </div>
-      <div className="legend">
+      <div className="legend lg2">
         <span>
           <i className="sw" style={{ background: 'var(--good)' }} />
-          ☀️ Teal: paid from income
+          Paid from income
         </span>
         <span>
           <i
             className="sw"
             style={{ background: 'var(--nudge)', boxShadow: 'inset 0 0 0 1px var(--nudge-edge)' }}
           />
-          🌦️ Gold: paid from savings
+          Paid from savings
         </span>
         <span>
           <i className="sw" style={{ background: 'var(--alert)' }} />
-          ⛈️ Coral: shortfall, not covered
+          Shortfall
         </span>
         <span>
           <i className="sw" style={lineSwatch('2px dashed var(--ink)')} />
-          Your income each year
+          Your income
         </span>
         {showSavings ? (
           <span>
@@ -206,14 +207,16 @@ export default function CashflowView({ rows }: { rows: YearRow[] }) {
         ) : null}
         {retiringAge != null ? (
           <span>
-            <i className="sw" style={{ background: 'var(--ink)' }} />▼ Retirement starts
+            <b className="lgm">▼</b>Retirement starts
           </span>
         ) : null}
         <span>
-          <b style={{ fontSize: 10, marginRight: 4 }}>SP</b>
+          <b className="lgm">SP</b>
           {`State Pension from ${statePensionAge}`}
         </span>
-        <span>Emoji = a goal that year</span>
+        <span>
+          <b className="lgm">●</b>Top icon = a goal
+        </span>
       </div>
       <ChartSummary rows={rows} />
     </>

@@ -95,8 +95,7 @@ export default function Glance({ projection }: Props) {
         ) : view === 'chapters' ? (
           <>
             <p className="small">
-              Your future as chapters of your life. ☀️ comfortable · 🌤️ some years use savings · 🌦️
-              often using savings · ⛈️ a gap to plan for. Tap a chapter to see its years.
+              Your future as chapters of your life. Tap a chapter to see its years.
             </p>
             <Chapters rows={rows} goals={goals} percent={percent} hasRetireGoal={hasRetireGoal} />
           </>
