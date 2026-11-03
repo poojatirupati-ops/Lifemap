@@ -194,4 +194,34 @@ describe('booking with the server', () => {
     })
     expect(useStore.getState().plan.versions.at(-1)?.note).toBe('Adviser meeting ended')
   })
+
+  it('a booking Cal.com has booked but not yet confirmed is not offered again', async () => {
+    stubBookings(() => [{ ...pending, calUid: 'cal-1' }])
+    queryClient.setQueryData(ADVISERS, [adviser('ciaran', 'Ciarán Walsh')])
+    useStore.getState().load(structuredClone(sampleExp))
+    const { container, unmount } = await renderAt('/experts/c3')
+    await vi.waitFor(() => expect(container.textContent).toContain("We're confirming your booking"))
+    expect(container.querySelector('[data-cal-link]')).toBeNull()
+    unmount()
+
+    const home = await renderAt('/experts')
+    await vi.waitFor(() =>
+      expect(home.container.textContent).toContain("We're confirming your booking"),
+    )
+    expect(home.container.textContent).not.toContain('Book my adviser meeting')
+  })
+
+  it('with only pending bookings, done goes false and the picks stay', async () => {
+    useStore.getState().load(structuredClone(sampleExp))
+    useStore.getState().update((plan) => {
+      Object.assign(plan.booking, { done: true, agree: true })
+      plan.booking.share.report = true
+    })
+    const versions = useStore.getState().plan.versions.length
+    stubBookings(() => [pending])
+    renderHook(() => useBookings())
+    await vi.waitFor(() => expect(useStore.getState().plan.booking.done).toBe(false))
+    expect(useStore.getState().plan.booking).toMatchObject({ agree: true, share: { report: true } })
+    expect(useStore.getState().plan.versions.length).toBe(versions)
+  })
 })

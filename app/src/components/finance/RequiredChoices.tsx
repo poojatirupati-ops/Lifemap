@@ -7,12 +7,14 @@ import { missingChoices, requiredChoices } from '../../domain/planning/requiredC
 import AssumptionField from '../me/AssumptionField.tsx'
 import { rememberOpenGroup } from '../../state/assumptions.ts'
 import { ASSUMPTIONS } from '../../domain/planning/assumptionFields.data.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 // Everything on Your assumptions except the choices above, in the original's order.
 const REST = Object.keys(ASSUMPTIONS)
 
 /** Step 7: the choices only the customer makes, then everything LifeMap set for them. */
 export default function RequiredChoices() {
+  useFigures()
   const plan = useStore(
     useShallow(({ plan }) => ({
       retireSet: plan.retireSet,

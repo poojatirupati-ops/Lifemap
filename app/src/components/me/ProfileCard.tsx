@@ -5,9 +5,11 @@ import { profilePercent } from '../../domain/discovery/profileQuestions.ts'
 import { assumption } from '../../domain/planning/assumptions.ts'
 import { localToday } from '../../lib/today.ts'
 import Avatar from './Avatar.tsx'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 /** The hub's header card: photo, name, age, money personality and three stats. */
 export default function ProfileCard() {
+  useFigures()
   const openMe = useStore((store) => store.openMe)
   const plan = useStore(
     useShallow(({ plan }) => ({

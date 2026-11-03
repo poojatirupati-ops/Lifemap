@@ -10,6 +10,7 @@ import { useStore } from '../../state/store.ts'
 import type { Goal } from '../../state/types.ts'
 import Emo from '../ui/Emo.tsx'
 import GIcon from '../ui/GIcon.tsx'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const AMOUNT_LABEL: Record<string, string> = {
   retire: 'Income a year €',
@@ -161,6 +162,7 @@ export default function GoalRow({ goal }: { goal: Goal }) {
  * its amount covers, and why it was added.
  */
 function SafetyMonths({ goal }: { goal: Goal }) {
+  useFigures()
   const chosen = useStore((store) => chosenAssumption(store.plan.assumptions, 'safetyMonths'))
   const suggested = useStore((store) =>
     assumption({ ...store.plan, assumptions: {} }, 'safetyMonths'),

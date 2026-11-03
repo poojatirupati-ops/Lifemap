@@ -1,7 +1,9 @@
 import { missingText } from '../../domain/calc/values.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 /** No result until the customer's own figures and choices are in: what to add first, and what else. */
 export default function CalcGate({ missing }: { missing: string[] }) {
+  useFigures()
   const [first, ...rest] = missing
   return (
     <div className="card" id="cgate" style={{ background: 'var(--ink)', color: '#fff' }}>

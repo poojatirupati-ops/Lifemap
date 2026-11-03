@@ -5,6 +5,7 @@ import { standardChipText, type FieldInfo, type StandardTag } from '../../domain
 import { CHOICES } from '../../domain/calc/inputs.data.ts'
 import type { CalcInput } from '../../domain/calc/types.ts'
 import ValueBox from './ValueBox.tsx'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const SPOKEN: Partial<Record<CalcInput['unit'], (value: number) => string>> = {
   '€': euro,
@@ -51,6 +52,7 @@ function FigureHint({ inputKey, hint }: { inputKey: string; hint: string }) {
 
 /** A blank figure's one-tap standard (when there is one) and the line on how to choose it. */
 function StandardChip({ info, style }: { info: FieldInfo; style?: CSSProperties }) {
+  useFigures()
   const chooseStandard = useStore((store) => store.chooseStandard)
   const { toolId, input, standard } = info
   return (

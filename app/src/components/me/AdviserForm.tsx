@@ -6,16 +6,17 @@ import { queryClient } from '../../auth/planSync.ts'
 import { ADVISERS, CAL_ORIGIN, type Adviser } from '../../bookings/bookings.ts'
 import { toast } from '../../state/shell.ts'
 
-/** A member role is the tenant role adviser (Better Auth keeps several roles comma-separated). */
-export const isAdviser = (role = '') => role.split(',').includes('adviser')
-
-/** The session's member has the tenant role adviser. */
-export const useIsAdviser = () => isAdviser(authClient.useActiveMember().data?.role)
-
 const line = (max: number) => z.string().trim().max(max)
 /** A pasted Cal.com link or URL as its bare path: no origin, query, hash or slashes at either end. */
-const calPath = (link: string) =>
-  (URL.parse(link, CAL_ORIGIN)?.pathname ?? link).replace(/^\/+|\/+$/g, '')
+function calPath(link: string) {
+  let path = link
+  try {
+    path = new URL(link, CAL_ORIGIN).pathname
+  } catch {
+    // not a URL at all: the pattern below says what is expected
+  }
+  return path.replace(/^\/+|\/+$/g, '')
+}
 
 // the same limits as the API (api/src/auth.ts)
 const schema = z.object({

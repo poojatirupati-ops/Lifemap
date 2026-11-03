@@ -4,9 +4,11 @@ import { rememberOpenGroup } from '../../state/assumptions.ts'
 import { useStore } from '../../state/store.ts'
 import { TOOL_ASSUMPTIONS } from '../../domain/calc/bindings.data.ts'
 import { assumptionsToChoose } from '../../domain/calc/values.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 /** "Assumptions this tool uses": the plan-wide choices behind the result, open while some are still to choose. */
 export default function CalcAssumptions({ toolId }: { toolId: string }) {
+  useFigures()
   const keys = TOOL_ASSUMPTIONS[toolId]
   const group = `c-${toolId}`
   const toChoose = useStore(({ plan }) => assumptionsToChoose(plan.assumptions, toolId).length)

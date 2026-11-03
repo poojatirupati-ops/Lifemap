@@ -58,15 +58,14 @@ export function useTenantFigures() {
 }
 
 /**
- * A tenant admin's change to the active tenant, saved with Better Auth's organization update
- * (the API checks the rates). Shown at once; if the save fails, the server's tenant is fetched again and used. Returns the error, if any.
+ * A tenant admin's change to the active tenant, saved with Better Auth's organization update (the API checks the rates).
+ * Shown at once; once the save settles the tenant is fetched again, so the screen ends on what the server holds whatever order
+ * saves finish in (useTenantFigures applies its figures). Returns the error, if any.
  */
 async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
   const before = queryClient.getQueryData<Tenant>(TENANT_KEY)
   if (!before) return 'the tenant has not loaded'
-  const after = { ...before, ...change }
-  applyTenantFigures(after.name, after.rates)
-  queryClient.setQueryData(TENANT_KEY, after)
+  queryClient.setQueryData(TENANT_KEY, { ...before, ...change })
   const { error } = await authClient.organization.update({
     organizationId: before.id,
     data: {
@@ -74,11 +73,8 @@ async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
       ...(change.rates && { metadata: { rates: change.rates } }),
     },
   })
-  if (!error) return null
-  const server = await queryClient.fetchQuery({ ...tenantQuery, staleTime: 0 }).catch(() => before)
-  queryClient.setQueryData(TENANT_KEY, server)
-  applyTenantFigures(server.name, server.rates)
-  return error.message ?? 'it was not saved'
+  void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
+  return error ? (error.message ?? 'it was not saved') : null
 }
 
 /** The partner's name on "Suggested by …": the tenant's name. */

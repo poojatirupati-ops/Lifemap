@@ -84,6 +84,7 @@ async function acceptInvitation(rt = '/') {
  */
 export async function enterApp(user: User) {
   useShell.setState({ authed: true }) // signed in now; the session hook catches up after
+  rememberSignedIn(true)
   const rt = await acceptInvitation(redirectTarget())
   // the session (and maybe its tenant) changed: GET /api/tenant again for branding, flags and SSO
   void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
@@ -92,8 +93,29 @@ export async function enterApp(user: User) {
   return land(rt)
 }
 
+const SIGNED_IN = 'lm-signed-in'
+
+/** Whether this browser had a confirmed session, kept across reloads (an offline reload still passes the wall). */
+export function rememberSignedIn(signedIn: boolean) {
+  try {
+    if (signedIn) localStorage.setItem(SIGNED_IN, '1')
+    else localStorage.removeItem(SIGNED_IN)
+  } catch {
+    // private mode: an offline reload goes to sign-in
+  }
+}
+
+export function wasSignedIn() {
+  try {
+    return localStorage.getItem(SIGNED_IN) === '1'
+  } catch {
+    return false
+  }
+}
+
 /** Forgets everything this browser holds for the user: query cache, plan, topic pages, wall pass. */
 function clearLocal() {
+  rememberSignedIn(false)
   queryClient.removeQueries({ queryKey: PLAN_KEY })
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())

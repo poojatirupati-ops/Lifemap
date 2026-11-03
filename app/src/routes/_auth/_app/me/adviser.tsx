@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { authClient } from '../../../../auth/client.ts'
-import AdviserForm, { ADVISER_FORM_ID, isAdviser } from '../../../../components/me/AdviserForm.tsx'
+import { isAdviser } from '../../../../bookings/bookings.ts'
+import AdviserForm, { ADVISER_FORM_ID } from '../../../../components/me/AdviserForm.tsx'
 import AppScreen from '../../../../components/frame/AppScreen.tsx'
 import { backToMe } from '../../../../state/finances.ts'
 

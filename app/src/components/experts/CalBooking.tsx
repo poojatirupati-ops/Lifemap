@@ -6,6 +6,7 @@ import {
   BOOKINGS,
   CAL_ORIGIN,
   EMBED_JS,
+  newestPending,
   useAdvisers,
   useBookings,
 } from '../../bookings/bookings.ts'
@@ -16,10 +17,18 @@ const POLL_MS = 2000
 /** How long to wait for Cal.com's webhook before leaving it to the confirmation email. */
 const WAIT_MS = 2 * 60_000
 
+/** Booked on Cal.com, waiting for its webhook to confirm it here (c3 and the Experts tab's home). */
+export const confirmingCard = (
+  <div className="card" role="status">
+    <p className="small">We're confirming your booking, we'll email you.</p>
+  </div>
+)
+
 /**
  * Step c3: the adviser's Cal.com calendar, inline, in the app's colours and prefilled with the user's name and email. It is for the newest
  * pending booking (with its adviser) and carries its id (metadata[bookingId]) so Cal.com's webhook can confirm it. Cal.com's success
- * message is only a cue to refetch: the booking counts once the webhook has confirmed it on the server.
+ * message is only a cue to refetch: the booking counts once the webhook has confirmed it on the server. A pending booking that Cal.com
+ * has booked already (it has a calUid) is not offered again.
  */
 export default function CalBooking() {
   const advisers = useAdvisers()
@@ -27,7 +36,7 @@ export default function CalBooking() {
   const [calUid, setCalUid] = useState<string>()
   const [waitedOut, setWaitedOut] = useState(false)
   const bookings = useBookings(calUid && !waitedOut ? POLL_MS : false)
-  const pending = bookings.find((b) => b.status === 'pending')
+  const pending = newestPending(bookings)
   const adviser = advisers.find((a) => a.id === pending?.adviserId)
   const confirmed = !!calUid && bookings.some((b) => b.calUid === calUid && b.status === 'booked')
 
@@ -58,12 +67,7 @@ export default function CalBooking() {
     return () => void api.then((cal) => cal('off', { action: 'bookingSuccessfulV2', callback }))
   }, [])
 
-  if (waitedOut && !confirmed)
-    return (
-      <div className="card" role="status">
-        <p className="small">We're confirming your booking, we'll email you.</p>
-      </div>
-    )
+  if (pending?.calUid || (waitedOut && !confirmed)) return confirmingCard
   if (!adviser || !pending || !user) return null
   return (
     <Cal

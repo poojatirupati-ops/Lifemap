@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-// The sign-in wall when the API cannot be reached: a user whose plan is loaded carries on, anyone else signs in.
+// The sign-in wall when the API cannot be reached: a browser that had a session carries on, anyone else signs in.
 import { act } from 'react'
 import { afterEach, expect, test, vi } from 'vitest'
-import { PLAN_KEY, queryClient } from '../../src/auth/planSync.ts'
+import { rememberSignedIn, wasSignedIn } from '../../src/auth/session.ts'
 import { useShell } from '../../src/state/shell.ts'
 import { appRouter as router } from '../../src/shell/appRouter.ts'
 import { path, renderAt } from '../renderAt.tsx'
@@ -25,24 +25,25 @@ async function openWhileOffline(href: string) {
   await act(() => router.navigate({ href }))
 }
 
-afterEach(() => queryClient.removeQueries({ queryKey: PLAN_KEY }))
+afterEach(() => localStorage.clear())
 
-test('offline with the plan loaded: the page opens', async () => {
+test('offline after a session on this browser (even a reload): the page opens', async () => {
   session.get = () => Promise.reject(new TypeError('Failed to fetch'))
-  queryClient.setQueryData(PLAN_KEY, { version: 1, plan: null })
+  rememberSignedIn(true)
   await openWhileOffline('/me/privacy')
   expect(path()).toBe('/me/privacy')
 })
 
-test('offline without a plan: sign in', async () => {
+test('offline, never signed in here: sign in', async () => {
   session.get = () => Promise.reject(new TypeError('Failed to fetch'))
   await openWhileOffline('/me/privacy')
   expect(path()).toBe('/sign-in')
 })
 
-test('a 401 signs out even with the plan loaded', async () => {
+test('a 401 signs out and forgets the session', async () => {
   session.get = async () => ({ data: null, error: { status: 401 } })
-  queryClient.setQueryData(PLAN_KEY, { version: 1, plan: null })
+  rememberSignedIn(true)
   await openWhileOffline('/me/privacy')
   expect(path()).toBe('/sign-in')
+  expect(wasSignedIn()).toBe(false)
 })

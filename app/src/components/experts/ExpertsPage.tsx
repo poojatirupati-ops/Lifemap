@@ -1,10 +1,10 @@
 import BookedCard from './BookedCard.tsx'
-import CalBooking from './CalBooking.tsx'
+import CalBooking, { confirmingCard } from './CalBooking.tsx'
 import ExpertsFoot from './ExpertsFoot.tsx'
 import SharePicks from './SharePicks.tsx'
 import { headOf, STAGES } from './stages.ts'
 import { preload } from 'react-dom'
-import { EMBED_JS, useActiveBooking, useAdviser } from '../../bookings/bookings.ts'
+import { EMBED_JS, useActiveBooking, useAdviser, useConfirming } from '../../bookings/bookings.ts'
 import { useLiveSessions } from '../../content/cms.tsx'
 import { discoverAnswered } from '../../domain/discovery/profileQuestions.ts'
 import { EXPERTS, type ExpertKind } from '../../domain/identity/advisers.data.ts'
@@ -74,10 +74,10 @@ function useSpecialist() {
 /** The Experts tab: its home (before or after booking) or a booking step, from the URL (/experts or /experts/c0 to c4). */
 export default function ExpertsPage({ step }: { step?: Stage }) {
   const stage = useStore((store) => stageOf(step ?? 'home', store.plan.booking.done))
-  const { kind } = useSpecialist()
+  const specialist = useSpecialist()
   const hasResults = useStore((store) => store.plan.hasResults)
   const adviserName = useAdviser()?.name
-  const head = headOf(stage, { kind, hasResults, adviserName })
+  const head = headOf(stage, { kind: specialist.kind, hasResults, adviserName })
   const showStage = useStore((store) => store.showStage)
   return (
     <AppScreen
@@ -90,7 +90,7 @@ export default function ExpertsPage({ step }: { step?: Stage }) {
       // the original has no foot once booked
       foot={stage === 'booked' ? undefined : <ExpertsFoot stage={stage} />}
     >
-      <Body stage={stage} />
+      <Body stage={stage} specialist={specialist} />
     </AppScreen>
   )
 }
@@ -189,14 +189,14 @@ function LiveSessions() {
 }
 
 /** The step's content (also checked against the original on its own). */
-export function Body({ stage }: { stage: Stage }) {
+export function Body({ stage, specialist }: { stage: Stage; specialist: Specialist }) {
   useActiveBooking() // loads the saved booking; a booking made or cancelled elsewhere shows here
+  const confirming = useConfirming()
   const adviser = useAdviser()
   const hasResults = useStore((store) => store.plan.hasResults)
   const profileNeeded = useStore(({ plan }) => needsProfile(plan))
   const answered = useStore((store) => discoverAnswered(store.plan.answers))
   const { nextAdviser, checkProfile } = useStore.getState()
-  const specialist = useSpecialist()
   const adviserFirstName = firstName(adviser?.name ?? '')
 
   const planNudge = hasResults ? null : (
@@ -327,6 +327,7 @@ export function Body({ stage }: { stage: Stage }) {
     case 'home':
       return (
         <>
+          {confirming ? confirmingCard : null}
           {planNudge}
           {profileNudge}
           {adviserCard}

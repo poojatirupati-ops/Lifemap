@@ -56,8 +56,9 @@ function ours(state: any) {
   const { plan } = useStore.getState()
   // the original's S.exp is the URL now (/experts or /experts/c0 to c4)
   const stage = stageOf(state.exp ?? 'home', plan.booking.done)
+  const specialist = specialistOf(plan)
   const { title, sub, back } = headOf(stage, {
-    kind: specialistOf(plan).kind,
+    kind: specialist.kind,
     hasResults: plan.hasResults,
     adviserName: advisers[plan.booking.adviser].name,
   })
@@ -70,7 +71,7 @@ function ours(state: any) {
   return {
     id: STAGES[stage].id,
     head: shape(rendered(head)),
-    body: shape(rendered(<Body stage={stage} />)),
+    body: shape(rendered(<Body stage={stage} specialist={specialist} />)),
     foot: shape(stage === 'booked' ? '' : rendered(<ExpertsFoot stage={stage} />)),
   }
 }

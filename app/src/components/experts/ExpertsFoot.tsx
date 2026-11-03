@@ -1,4 +1,4 @@
-import { useAdviser, useBook } from '../../bookings/bookings.ts'
+import { useAdviser, useBook, useConfirming } from '../../bookings/bookings.ts'
 import { useFeature } from '../../shell/tenant.ts'
 import { firstName, type Stage } from '../../domain/identity/booking.ts'
 import { useStore } from '../../state/store.ts'
@@ -9,6 +9,7 @@ export default function ExpertsFoot({ stage }: { stage: Stage }) {
   const adviser = useAdviser()
   const canBook = useFeature('adviserBooking')
   const start = useBook()
+  const confirming = useConfirming()
   const { showStage, answerProfileFirst, switchTab, bookAdviser } = useStore.getState()
   // tenant without adviserBooking or without advisers: no way into the booking steps
   if (
@@ -56,6 +57,8 @@ export default function ExpertsFoot({ stage }: { stage: Stage }) {
         </button>
       )
     case 'home':
+      // booked on Cal.com already, waiting for its confirmation
+      if (confirming) return null
       return (
         <button className="btn sun" onClick={bookAdviser}>
           📅 Book my adviser meeting

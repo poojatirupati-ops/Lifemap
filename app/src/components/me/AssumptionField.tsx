@@ -25,6 +25,7 @@ import {
   typedFigure,
   valueInUse,
 } from '../../domain/planning/assumptionText.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const UNIT = {
   pct: '%',
@@ -46,6 +47,7 @@ function rateMissing({ figures }: Plan, key: string, balances: string[]) {
 
 /** M4: an unknown card or loan rate is never a dead end: the legal cap, or a planning rate left for the adviser. */
 function UnknownRateChips({ rate, field }: { rate: string; field: AdviserRateField }) {
+  useFigures()
   const { leftForAdviser, mine, missing, value } = useStore(
     useShallow(({ plan }) => ({
       leftForAdviser: !!plan.ratesForAdviser?.[rate] && plan.assumptions[rate] != null,
@@ -88,6 +90,7 @@ function UnknownRateChips({ rate, field }: { rate: string; field: AdviserRateFie
 
 /** One assumption: label and tag, a number box or chips, a way back, and how LifeMap sets it. */
 export default function AssumptionField({ name }: { name: string }) {
+  useFigures()
   const field = ASSUMPTIONS[name]
   const view = useStore(
     useShallow(({ plan }) => ({

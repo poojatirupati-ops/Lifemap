@@ -1,6 +1,7 @@
 // Adviser bookings on the server: GET /api/advisers, POST/GET /api/bookings. Cal.com books, moves and cancels the meeting; its webhook
 // updates the server, and the app refetches. The adviserBooking flag is useFeature in shell/tenant.ts.
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { authClient } from '../auth/client.ts'
 import { queryClient, send } from '../auth/planSync.ts'
 import { slotLabel } from '../domain/identity/booking.ts'
 import { toast } from '../state/shell.ts'
@@ -36,6 +37,12 @@ export interface Booking {
   startsAt: string | null
 }
 
+/** A member role is the tenant role adviser (Better Auth keeps several roles comma-separated). */
+export const isAdviser = (role = '') => role.split(',').includes('adviser')
+
+/** The session's member has the tenant role adviser. */
+export const useIsAdviser = () => isAdviser(authClient.useActiveMember().data?.role)
+
 export const BOOKINGS = ['bookings']
 export const ADVISERS = ['advisers']
 
@@ -66,7 +73,7 @@ export function useAdviser(): Adviser | undefined {
 
 /**
  * The caller's bookings, newest first. Keeps plan.booking in step with the server (so Me sees it too): done and the time of the confirmed
- * booking; once it is no longer booked (cancelled on Cal.com, ended or a no-show) the share picks and agreement clear.
+ * booking; once it is over (cancelled on Cal.com, ended or a no-show) the share picks and agreement clear too.
  */
 export function useBookings(refetchInterval: number | false = false) {
   return (
@@ -78,8 +85,9 @@ export function useBookings(refetchInterval: number | false = false) {
           const active = bookings.find((b) => b.status === 'booked')
           const { plan, update, bookingOver } = useStore.getState()
           const slot = active?.startsAt ? slotLabel(new Date(active.startsAt)) : plan.booking.slot
-          if (!active && plan.booking.done)
-            bookingOver(bookings.find((b) => b.status !== 'pending')?.status === 'cancelled')
+          // with no booked one, the newest that is not pending was cancelled, ended or a no-show
+          const over = bookings.find((b) => b.status !== 'pending')
+          if (!active && plan.booking.done && over) bookingOver(over.status === 'cancelled')
           else if (plan.booking.done !== !!active || plan.booking.slot !== slot)
             update((p) => void Object.assign(p.booking, { done: !!active, slot }))
           return bookings
@@ -90,6 +98,12 @@ export function useBookings(refetchInterval: number | false = false) {
     ).data ?? []
   )
 }
+
+/** The newest pending booking, if any. */
+export const newestPending = (bookings: Booking[]) => bookings.find((b) => b.status === 'pending')
+
+/** Booked on Cal.com (it has a calUid) but its webhook has not confirmed it here yet. */
+export const useConfirming = () => !!newestPending(useBookings())?.calUid
 
 /** The live (confirmed, not cancelled) booking, or null. */
 export const useActiveBooking = () => useBookings().find((b) => b.status === 'booked') ?? null

@@ -10,6 +10,7 @@ import {
 import { isMine, valueInUse } from '../../domain/planning/assumptionText.ts'
 import GrowthSetToggle from './GrowthSetToggle.tsx'
 import { rememberOpenGroup } from '../../state/assumptions.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const BUDGET = ['budgetNeeds', 'budgetWants', 'budgetSave']
 
@@ -22,6 +23,7 @@ function budgetOff(plan: Parameters<typeof valueInUse>[0]) {
 
 /** One folding group of Your assumptions. */
 export default function AssumptionGroup({ group, title }: { group: Group; title: string }) {
+  useFigures()
   const { open, budgetTotal } = useStore(
     useShallow(({ plan, openAssumption }) => ({
       open: (openAssumption === undefined ? 'prices' : openAssumption) === group,
