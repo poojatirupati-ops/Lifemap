@@ -349,7 +349,19 @@
     '.lmr-roadcard svg,.lmr-cv-road svg,.lmr-card svg{display:block}',
     '.lmr-ap{margin-top:12px}.lmr-arrow{display:inline-block;vertical-align:middle;margin:0 18px}',
     '@media print{.lmr-pg{break-after:page;page-break-after:always}}',
-    '@page{size:A4;margin:0}'
+    '@page{size:A4;margin:0}',
+    /* current style: light aqua glass pages, white cards */
+    '.lmr-pg{background:radial-gradient(520px 340px at 100% 0%,rgba(8,217,184,.16),rgba(8,217,184,0) 70%),linear-gradient(180deg,#f1fbf9 0%,#f7fbfc 60%)}',
+    '.lmr-rf{background:transparent}',
+    '.lmr-gcards{gap:18px}',
+    '.lmr-gcard{background:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.95);border-radius:26px;box-shadow:0 10px 28px rgba(24,42,84,.08);padding:20px 26px 22px 12px;overflow:hidden}',
+    '.lmr-gcard .lmx-rl{position:absolute;left:34px;top:0;width:54px;height:5px;flex:none;margin:0;border-radius:0 0 6px 6px}',
+    '.lmr-gcard .lmx-l{flex:0 0 156px;padding:6px 0 0 18px}',
+    '.lmr-gcard .lmx-l .lmr-chip{padding:5px 10px;margin-top:8px;background:rgba(24,42,84,.05)}',
+    '.lmr-gcard .lmx-l .lmr-chip .lmr-circ{background:none!important}',
+    '.lmr-gcard .lmx-rr2{padding:4px 0 0 10px}',
+    '.lmr-bar .lmr-track{height:12px;background:#e6f0f2}',
+    '.lmr-gcard .lmx-ph{border-radius:18px}',
   ].join('\n');
 
   // ---------- page frame ----------
@@ -571,9 +583,9 @@
     function bar(l, v, p, c) {
       return '<div class="lmr-bar"><div class="lmx-t"><span>' + esc(l) + '</span><b>' + esc(v) + '</b></div><div class="lmr-track"><div class="lmr-fill" style="width:' + clamp(num(p), 0, 100) + '%;background:' + c + '"></div></div></div>'; }
     if (b.type === 'retire') {
-      h += bar(b.costLabel, b.costValue, b.costPct, COL.navy) + bar(b.coverLabel, b.coverValue, b.coverPct, col === COL.tealMid ? COL.teal : col);
+      h += bar(b.costLabel, b.costValue, b.costPct, '#9fd9d1') + bar(b.coverLabel, b.coverValue, b.coverPct, col === COL.tealMid ? COL.teal : col);
     } else if (b.type === 'saving') {
-      h += bar(b.needLabel, b.needValue, b.needPct, COL.navy) + bar(b.putLabel, b.putValue, b.putPct, col === COL.tealMid ? COL.teal : col);
+      h += bar(b.needLabel, b.needValue, b.needPct, '#9fd9d1') + bar(b.putLabel, b.putValue, b.putPct, col === COL.tealMid ? COL.teal : col);
     }
     if (has(b.note)) h += '<div class="lmr-note">' + esc(b.note) + '</div>';
     var y = g.years;
