@@ -3131,6 +3131,21 @@ html body #screen .chead .chip.sm{height:36px;min-height:36px;padding:0 14px 0 1
 html body #screen .chead .chip.sm::before{content:"";width:14px;height:14px;border-radius:50%;border:1.6px solid #079E98;box-sizing:border-box}
 html body #screen .chead .chip.sm.sel{background:#E4F6F3;border-color:#079E98;color:#086A74}
 html body #screen .chead .chip.sm.sel::before{background:#079E98;box-shadow:inset 0 0 0 2.5px #E4F6F3}
+/* v164 Detail year card, legend and plain-English note */
+html body #screen .cdet{background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.95);box-shadow:0 8px 22px rgba(24,42,84,.07);border-radius:20px;padding:14px 16px 8px;margin-top:10px}
+.cdet .cdh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-bottom:8px;margin-bottom:2px;border-bottom:1px solid rgba(8,217,184,.25)}
+.cdet .cdh b{font-family:var(--fh);font-size:17px;color:#182A54}.cdet .cdh b span{font-weight:600;color:#51627a;font-size:14px}
+.cdet .cdh .small{font-size:12px;color:#51627a;text-align:right}
+.cdet .mini{padding:7px 0;border-bottom:1px solid rgba(8,217,184,.15);font-size:14px}
+.cdet .mini:last-child{border:0;padding-top:9px}
+.cdet .mini b{color:#182A54}
+.cdet .csub{border-left:2px solid rgba(8,217,184,.4);margin:2px 0 6px;padding-left:12px}
+.legend.lg2{grid-template-columns:1fr 1fr;gap:9px 14px;margin-top:14px;padding:0 4px;font-size:12.5px;color:#51627a}
+.lg2 .sw{width:12px;height:12px;border-radius:4px}
+.lg2 .lgm{font-size:10px;font-weight:800;color:#182A54;min-width:14px;text-align:center}
+.lg2 .lgp{width:12px;height:12px;border-radius:50%;border:1.4px solid #079E98;background:#fff;display:inline-block;min-width:12px}
+html body #screen .pnote{background:linear-gradient(135deg,#E4F6F3,#EEF8F8);border:1px solid rgba(8,217,184,.3);border-radius:20px;padding:14px 16px;font-size:14px;line-height:1.55;color:#182A54}
+html body #screen .pnote .pn-l{display:block;font-weight:800;font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#086A74;margin-bottom:4px}
 </style></head><body>
 <aside class="side" aria-label="Prototype controls">
 <h1><span class="mark"></span>LifeMap</h1>
@@ -4712,8 +4727,9 @@ function glanceHTML(P){ const v = S.view;
   return tabs + '<div role="tabpanel">' + body + '</div>'; }
 function journeyNote(P){ const bad = P.rows.find(isShort); return '<div class="jkey"><span><i style="background:var(--good)"></i>Income covers it</span><span><i style="background:var(--nudge)"></i>Using savings</span><span><i style="background:var(--alert)"></i>Shortfall</span></div>' + (bad ? '<p class="pnote">⛈️ Around <b>age ' + bad.a + '</b>' + (bad.due && bad.due.length ? ', money for ' + esc(bad.due.join(' and ').toLowerCase()) + ' falls short.' : ', your money falls short.') + '</p>' : '<p class="pnote">☀️ Every year of your road is covered.</p>'); }
 function journeyNoteOld(P){ const bad = P.rows.find(isShort); return '<p class="pnote"><b>Reading your road:</b> ☀️ teal means your income covers life; 🌦️ gold means you\'re drawing on savings, which is what they\'re for. ' + (bad ? (bad.goalGap > 0 && !(bad.shortLiving > 1) && bad.due && bad.due.length ? 'Around <b>age ' + bad.a + '</b>, money for ' + esc(bad.due.join(' and ').toLowerCase()) + ' falls short, so the road turns ⛈️ coral there.' : 'The road turns ⛈️ coral around <b>age ' + bad.a + '</b>: money runs short there unless the plan changes.') : 'There\'s no ⛈️ coral on your road: you don\'t run out of money before 90.') + ' Each milestone ring shows its goal\'s status the same way.' + '</p>'; }
-function chartLegend(){ return '<div class="legend"><span><i class="sw" style="background:var(--good)"></i>☀️ Teal: paid from income</span><span><i class="sw" style="background:var(--nudge);box-shadow:inset 0 0 0 1px var(--nudge-edge)"></i>🌦️ Gold: paid from savings</span><span><i class="sw" style="background:var(--alert)"></i>⛈️ Coral: shortfall, not covered</span><span><i class="sw" style="background:none;border-top:2px dashed var(--ink);height:0;border-radius:0"></i>Your income each year</span>' + (S.csave ? '<span><i class="sw" style="background:none;border-top:2px solid #6E8AA6;height:0;border-radius:0"></i>Savings left</span>' : '') + (retireGoal() ? '<span><i class="sw" style="background:var(--ink)"></i>▼ Retirement starts</span>' : '') + '<span><b style="font-size:10px;margin-right:4px">SP</b>State Pension from ' + AS.spAge + '</span><span>Emoji = a goal that year</span></div>'; }
-function chartNote(P){ const n = P.rows.filter(isShort).length; return '<p class="pnote"><b>In plain English:</b> ' + (n ? 'in ' + n + ' year' + (n > 1 ? 's' : '') + ' of your plan, your income and savings don\'t fully cover what you\'ll need, including goals that fall short (the ⛈️ purple bars). These are the gaps to close, by saving more, changing timing, or rethinking a goal.' : 'every year of your plan is covered by your income and savings. No ⛈️ purple bars. That\'s what "on track" looks like.') + '</p>'; }
+function chartLegend(){ const d = (bg, extra) => '<i class="sw" style="background:' + bg + (extra || '') + '"></i>', ln = (st) => '<i class="sw" style="background:none;border-top:2px ' + st + ' var(--ink);height:0;border-radius:0"></i>';
+  return '<div class="legend lg2"><span>' + d('var(--good)') + 'Paid from income</span><span>' + d('var(--nudge)', ';box-shadow:inset 0 0 0 1px var(--nudge-edge)') + 'Paid from savings</span><span>' + d('var(--alert)') + 'Shortfall</span><span>' + ln('dashed') + 'Your income</span>' + (S.csave ? '<span><i class="sw" style="background:none;border-top:2px solid #6E8AA6;height:0;border-radius:0"></i>Savings left</span>' : '') + (retireGoal() ? '<span><b class="lgm">▼</b>Retirement starts</span>' : '') + '<span><b class="lgm">SP</b>State Pension from ' + AS.spAge + '</span><span><b class="lgm">●</b>Top icon = a goal</span></div>'; }
+function chartNote(P){ const n = P.rows.filter(isShort).length; return '<p class="pnote"><span class="pn-l">In plain English</span> ' + (n ? 'in ' + n + ' year' + (n > 1 ? 's' : '') + ' of your plan, your income and savings don\'t fully cover what you\'ll need, including goals that fall short (the ⛈️ purple bars). These are the gaps to close, by saving more, changing timing, or rethinking a goal.' : 'every year of your plan is covered by your income and savings. No ⛈️ purple bars. That\'s what "on track" looks like.') + '</p>'; }
 let _mcv = null;
 function textW(t, px){ // width of a bold label, measured with whatever font is rendering now
   try { _mcv = _mcv || document.createElement('canvas').getContext('2d'); _mcv.font = '700 ' + px + 'px Figtree, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'; return _mcv.measureText(t).width * 1.06 + 4; } catch (e) { return t.length * px * 0.62 + 4; } }
@@ -5989,14 +6005,14 @@ function chartSVG(rows, W, opts){
 }
 function chartDetail(r){ const p = rowParts(r), gl = (r.dueG || []);
   const li = (l, v, c) => '<div class="mini"><span>' + (c ? '<i class="sw" style="background:' + c + ';margin-right:6px"></i>' : '') + l + '</span><b>' + eur(v) + '</b></div>';
-  return '<div class="cdet" id="r-cdet" aria-live="polite"><div class="row" style="justify-content:space-between"><b style="font-size:15px">Age ' + r.a + ' (' + r.yr + ')' + (r.rmark && retireGoal() ? ' · retirement starts' : '') + '</b><span class="small">Tap a bar or use ← →</span></div>' +
+  return '<div class="cdet" id="r-cdet" aria-live="polite"><div class="cdh"><b>Age ' + r.a + ' <span>(' + r.yr + ')</span>' + (r.rmark && retireGoal() ? ' · retirement starts' : '') + '</b><span class="small">Tap a bar or use ← →</span></div>' +
     li('Income', r.inflow) + '<div class="mini"><span>Spending</span><b>' + eur(p.spend) + '</b></div>' +
-    '<div class="csub">' + li('Living costs', r.living) + li('Loans & mortgage', r.fixed) + (r.goalCost > 0.5 ? li('Goals: ' + gl.map(x => x.e + ' ' + esc(x.name)).join(', '), r.goalCost) : '') + '</div>' +
+    '<div class="csub">' + li('Living costs', r.living) + li('Loans & mortgage', r.fixed) + (r.goalCost > 0.5 ? li('Goals: ' + gl.map(x => esc(x.name)).join(', '), r.goalCost) : '') + '</div>' +
     li('Paid from income', p.fromIncome, 'var(--good)') + li('Paid from savings', p.fromSavings, 'var(--nudge)') + li('Shortfall', p.short, 'var(--alert)') + li('Savings left at year end', r.liquid) + '</div>'; }
 function chartSummary(P){ const rows = P.rows, s = rows.filter(chartShort), dip = rows.filter(r => !chartShort(r) && rowParts(r).fromSavings > 0.5).length;
-  if (!s.length) return '<p class="pnote"><b>In plain English:</b> every year is covered by your income and savings' + (dip ? ', and in ' + dip + ' year' + (dip > 1 ? 's' : '') + ' you use savings, which is what they are for' : '') + '. No coral on the chart.</p>';
+  if (!s.length) return '<p class="pnote"><span class="pn-l">In plain English</span> every year is covered by your income and savings' + (dip ? ', and in ' + dip + ' year' + (dip > 1 ? 's' : '') + ' you use savings, which is what they are for' : '') + '. No coral on the chart.</p>';
   const f = s[0], fp = rowParts(f), gs = [...new Set(s.flatMap(r => (r.dueG || []).filter(x => x.paid < x.cost - 1).map(x => x.name)))], liv = s.filter(r => r.shortLiving > 0.5);
-  return '<p class="pnote"><b>In plain English:</b> the first shortfall is at <b>age ' + f.a + '</b>, about <b>' + eur(fp.short) + '</b>' + (f.goalGap > 0.5 && f.dueG && f.dueG.length ? ' (' + esc(f.dueG.filter(x => x.paid < x.cost - 1).map(x => x.name).join(' and ').toLowerCase()) + ')' : '') + '. ' +
+  return '<p class="pnote"><span class="pn-l">In plain English</span> the first shortfall is at <b>age ' + f.a + '</b>, about <b>' + eur(fp.short) + '</b>' + (f.goalGap > 0.5 && f.dueG && f.dueG.length ? ' (' + esc(f.dueG.filter(x => x.paid < x.cost - 1).map(x => x.name).join(' and ').toLowerCase()) + ')' : '') + '. ' +
     'Across your plan there ' + (s.length > 1 ? 'are ' + s.length + ' years' : 'is 1 year') + ' with a gap, about ' + eur(s.reduce((t, r) => t + rowParts(r).short, 0)) + ' in total' + (gs.length ? '. Goals involved: ' + esc(gs.join(', ').toLowerCase()) : '') + (liv.length ? '. Everyday costs run short in ' + liv.length + ' year' + (liv.length > 1 ? 's' : '') + (liv[0] ? ', from age ' + liv[0].a : '') : '') + '. Saving more, changing timing or rethinking a goal closes it.</p>'; }
 
 function saveCtl(){ const P = project(), y = P.save.saveM, k = S.ans['6'];
