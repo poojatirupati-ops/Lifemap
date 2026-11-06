@@ -1,4 +1,5 @@
 // A partner's own figure for a LifeMap standard: what is allowed and how a typed or picked entry is read.
+import { readPoints } from '../../lib/format.ts'
 import type { Settings } from './settings.ts'
 import type { Standard, StandardKey, StandardValue } from './settings.data.ts'
 
@@ -50,14 +51,14 @@ export function readEntry(key: StandardKey, standard: Standard, raw: string, ite
   if (standard.unit === 'pct3') {
     const base = standard.value
     const list = [...(standard.partnerValue ?? base)]
-    const typed = parseFloat(text)
-    list[item] = Number.isNaN(typed) ? base[item] : Math.max(0, typed) / 100
+    const typed = readPoints(text)
+    list[item] = typed == null ? base[item] : Math.max(0, typed) / 100
     const unchanged = list.every((rate, i) => Math.abs(rate - base[i]) < EPSILON)
     return { figure: unchanged ? null : list }
   }
 
-  const typed = parseFloat(text.replace(/,/g, ''))
-  if (Number.isNaN(typed)) return { figure: null }
+  const typed = readPoints(text)
+  if (typed == null) return { figure: null }
   const figure = standard.unit === 'pct' ? typed / 100 : typed
   const limits = LIMITS[key]
   if (limits && (figure < limits[0] - EPSILON || figure > limits[1] + EPSILON)) {

@@ -27,11 +27,16 @@ const SESSION_NOTE = [
   'apply to this session only.',
 ] as const
 
+// and a 2027 rate shows in its box as a percent (0.35 reads 35%), on purpose
+const RATE_BOX = /( data-taxov=\S+ .*value=)(0\.\d+)>$/
+const asPercent = (_: string, before: string, rate: string) =>
+  `${before}${Number((Number(rate) * 100).toFixed(2))}%>`
+
 function originalView() {
   original.setState(original.fresh())
   original.applyAssume()
   return shape(original.settingsHTML(), IGNORED).map((line) =>
-    line.replace(SESSION_NOTE[0], SESSION_NOTE[1]),
+    line.replace(SESSION_NOTE[0], SESSION_NOTE[1]).replace(RATE_BOX, asPercent),
   )
 }
 

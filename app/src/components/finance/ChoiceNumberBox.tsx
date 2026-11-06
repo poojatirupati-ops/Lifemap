@@ -1,7 +1,7 @@
 import type { KeyboardEvent } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { euro } from '../../lib/format.ts'
+import { euro, readPoints } from '../../lib/format.ts'
 
 type Unit = 'age' | '%' | '€' | 'yrs' | ''
 
@@ -37,12 +37,6 @@ interface Props {
 const format = (value: number) => (+value.toFixed(4)).toLocaleString('en-IE')
 const width = (text: string) => `${Math.max(2, text.length) + 0.6}ch`
 
-function parse(text: string) {
-  const digits = text.replace(/[^\d.,-]/g, '').replace(/,/g, '')
-  const value = parseFloat(digits)
-  return Number.isFinite(value) ? value : null
-}
-
 /** The original's .nbox: a typed number kept between min and max; onHint says when it was changed. */
 export default function ChoiceNumberBox(props: Props) {
   const { name, value, unit, labelledBy, id, min, max, whole, onCommit, onHint, onClear } = props
@@ -59,7 +53,7 @@ export default function ChoiceNumberBox(props: Props) {
   const { ref } = register('typed')
 
   function commit(text: string) {
-    const typed = parse(text)
+    const typed = readPoints(text)
     if (typed == null) return
     // the first limit a typed value breaks is the hint
     const limits = z

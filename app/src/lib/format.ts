@@ -42,6 +42,20 @@ export const toNumber = (value: unknown) => (isNumber(value) ? Number(value) : 0
 export const sum = <T>(items: T[], amount: (item: T, index: number) => number) =>
   items.reduce((total, item, index) => total + amount(item, index), 0)
 
+const TYPED_NUMBER = /^[-+]?(\d+\.?\d*|\.\d+)$/
+
+/** A typed number: "€1,200" -> 1200, "+25" -> 25, "35%" -> 0.35; null when it is not a number. */
+export function readNumber(text: string) {
+  const typed = text.replace(/[€\s,]/g, '')
+  const rate = typed.endsWith('%')
+  const figure = rate ? typed.slice(0, -1) : typed
+  if (!TYPED_NUMBER.test(figure)) return null
+  return Number(figure) / (rate ? 100 : 1)
+}
+
+/** A number typed in a box that already counts in percent points: "5%" and "5" are both 5. */
+export const readPoints = (text: string) => readNumber(text.replace(/%\s*$/, ''))
+
 /** The digits typed in a euro box, as a whole number ("€1,200" is 1200); null when there are none. */
 export function parseWholeEuros(text: string) {
   const whole = parseInt(text.replace(/\D/g, ''))

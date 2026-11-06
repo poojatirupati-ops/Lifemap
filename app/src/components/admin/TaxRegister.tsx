@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore as useVanilla } from 'zustand'
-import { percent } from '../../lib/format.ts'
+import { percent, readNumber } from '../../lib/format.ts'
 import { taxSession, type TaxOverride, type TaxSession } from '../../domain/planning/rates.ts'
 import { RULES_2027, TAX_STATUS, type TaxStatus } from '../../domain/planning/rules2027.data.ts'
 import { taxRegister, type TaxRegisterRow } from '../../domain/planning/taxRegister.ts'
@@ -58,25 +58,33 @@ function overrideRule(path: string, change: TaxOverride) {
   taxSession.setState({ overrides: { ...overrides, [path]: override } })
 }
 
-const PLAIN_NUMBER = /^\d+(\.\d+)?$/
+/** A rule whose 2027 value is a rate (below 1): shown and typed as a percent. */
+const isRate = (path: string) => {
+  const { value } = RULES_2027[path]
+  return typeof value === 'number' && value < 1
+}
 
 /**
- * A typed 2027 value, or undefined when refused. Blank is no value. A number rule takes only a number:
- * "€46,500" -> 46500, "35%" -> 0.35. A text rule (a date) keeps the text.
+ * A typed 2027 value, or undefined when refused. Blank is no value. A number rule takes only a
+ * number at or above 0: "€46,500" -> 46500, "35%" -> 0.35, and for a rate "35" is 35% too.
+ * A text rule (a date) keeps the text.
  */
 function readValue(path: string, text: string) {
   const typed = text.trim()
   if (typed === '') return null
   if (typeof RULES_2027[path].value !== 'number') return typed
-  const digits = typed.replace(/^€\s*/, '').replace(/,/g, '')
-  const rate = digits.endsWith('%')
-  const figure = rate ? digits.slice(0, -1).trim() : digits
-  if (!PLAIN_NUMBER.test(figure)) return undefined
-  return rate ? Number(figure) / 100 : Number(figure)
+  const figure = readNumber(typed)
+  if (figure == null || figure < 0) return undefined
+  return isRate(path) && !typed.endsWith('%') && figure >= 1 ? figure / 100 : figure
+}
+
+/** What the box shows: a rate as a percent ("35%"), anything else as it is. */
+function boxText(path: string, value: unknown) {
+  return isRate(path) && typeof value === 'number' ? percent(value) : String(value)
 }
 
 function RuleEditor({ row, override }: { row: TaxRegisterRow; override?: TaxOverride }) {
-  const shown = String(override?.value ?? RULES_2027[row.path].value)
+  const shown = boxText(row.path, override?.value ?? RULES_2027[row.path].value)
   const [refused, setRefused] = useState(false)
   return (
     <>

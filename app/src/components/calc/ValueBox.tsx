@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { euro } from '../../lib/format.ts'
+import { euro, readPoints } from '../../lib/format.ts'
 import type { CalcInput } from '../../domain/calc/types.ts'
 
 interface Props {
@@ -25,13 +25,6 @@ const formatFigure = (value: number) =>
     : Math.round(value).toLocaleString('en-IE')
 
 const width = (text: string) => `${Math.max(2, text.length) + 0.6}ch`
-
-function parse(text: string) {
-  const digits = text.replace(/[^\d.,-]/g, '').replace(/,/g, '')
-  if (['', '-', '.'].includes(digits)) return null
-  const value = parseFloat(digits)
-  return Number.isFinite(value) ? value : null
-}
 
 /** A typed figure kept within the tool's limits, and why it was changed (Max €2,500,000). */
 function limit(input: CalcInput, typed: number) {
@@ -74,7 +67,7 @@ export default function ValueBox({ input, value, onCommit, onHint }: Props) {
 
   function commit(final: boolean) {
     const element = box.current!
-    const typed = parse(element.value)
+    const typed = readPoints(element.value)
     if (typed == null) {
       if (final) element.value = shown
       return

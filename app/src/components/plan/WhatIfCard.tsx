@@ -9,7 +9,7 @@ import {
   whatIfTotal,
 } from '../../domain/planning/saving.ts'
 import type { Projection } from '../../hooks/useProjection.ts'
-import { euro } from '../../lib/format.ts'
+import { euro, readNumber } from '../../lib/format.ts'
 import { useStore } from '../../state/store.ts'
 import type { Goal, Plan } from '../../state/types.ts'
 import InflationChoice from '../finance/InflationChoice.tsx'
@@ -43,11 +43,6 @@ const shown = (amount: number, signed?: boolean) =>
   (signed && amount > 0 ? '+' : '') + Math.round(amount).toLocaleString('en-IE')
 const width = (text: string) => `${Math.max(2, text.length) + 0.6}ch`
 
-function parse(text: string) {
-  const amount = parseFloat(text.replace(/[^\d.,-]/g, '').replace(/,/g, ''))
-  return Number.isFinite(amount) ? amount : null
-}
-
 /** The original's € .nbox: typed amounts apply as you type, kept between min and max. */
 function MoneyBox(props: MoneyBoxProps) {
   const { name, id, labelledBy, value, min, max, maxMessage, signed, onValue, onHint } = props
@@ -62,7 +57,7 @@ function MoneyBox(props: MoneyBoxProps) {
   }, [value, signed])
 
   function commit(box: HTMLInputElement, final: boolean) {
-    const typed = parse(box.value)
+    const typed = readNumber(box.value)
     if (typed == null) {
       if (final) box.value = shown(value, signed)
       return

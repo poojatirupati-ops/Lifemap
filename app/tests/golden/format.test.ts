@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { euro, euroShort, euroWeekly, percent, hasValue } from '../../src/lib/format'
+import { euro, euroShort, euroWeekly, percent, hasValue, readNumber } from '../../src/lib/format'
 import { origSlice } from './origSlice'
 
 const original = origSlice()
@@ -32,4 +32,12 @@ test.each(amounts)('money and percent text equal the original for %d', (amount) 
 test('hasValue', () => {
   expect([0, 'a', false].map(hasValue)).toEqual([true, true, true])
   expect([null, undefined, '', NaN].map(hasValue)).toEqual([false, false, false, false])
+})
+
+test('readNumber reads euros, signs and percents, and refuses anything else', () => {
+  expect(readNumber(' €1,200 ')).toBe(1200)
+  expect(readNumber('+25')).toBe(25)
+  expect(readNumber('-12.5')).toBe(-12.5)
+  expect(readNumber('35%')).toBe(0.35)
+  for (const text of ['', '-', '.', 'abc', '12 yrs', '1e3']) expect(readNumber(text)).toBeNull()
 })

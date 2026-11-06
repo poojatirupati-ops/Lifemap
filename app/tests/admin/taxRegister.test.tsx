@@ -29,6 +29,17 @@ test('a number rule takes only numbers: euros, commas and percents are read, any
   expect(valueOf('sav.exit')).toBe(0.36)
 })
 
+test('a rate shows as a percent, and a bare number of 1 or more is read as a percent', () => {
+  render(<TaxRegister />)
+  const box = () => screen.getByLabelText<HTMLInputElement>(/^2027 value for Exit tax/)
+  expect(box().value).toBe('35%')
+  enter(/^2027 value for Exit tax/, '33')
+  expect(valueOf('sav.exit')).toBe(0.33)
+  expect(box().value).toBe('33%')
+  enter(/^2027 value for Exit tax/, '0.3')
+  expect(valueOf('sav.exit')).toBe(0.3)
+})
+
 test('a text rule keeps the text', () => {
   render(<TaxRegister />)
   enter(/^2027 value for Investment Account: start date/, '2027-09-01')
