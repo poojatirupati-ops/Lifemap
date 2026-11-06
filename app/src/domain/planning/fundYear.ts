@@ -17,7 +17,15 @@ export interface YearContext {
   prices: number
   payRise: number
   working: boolean
+  /** the stress test's year: pension pots and invested money fall instead of growing */
+  stressed: boolean
 }
+
+/** The stress test: pension pots and invested money fall by this share in the year before retirement. */
+export const STRESS_FALL = 0.2
+
+/** One year's growth factor, or the stress test's fall. */
+export const grownBy = (stressed: boolean, rate: number) => (stressed ? 1 - STRESS_FALL : 1 + rate)
 
 /** How spare money is saved: the Q6 rule, the customer's own choice and a what-if. */
 export interface SavingPlan {
@@ -112,7 +120,7 @@ function saveExtra(pot: GoalPot, wallet: Wallet, extra: number, year: YearContex
   if (year.first) pot.savedFirstYear += given
 }
 
-/** A short year is covered by unallocated money, the emergency fund, then goal pots (latest first). */
+/** A short year is covered by unallocated money (assets sold after tax), the emergency fund, then goal pots (latest first). */
 function coverShortfall(pots: GoalPot[], wallet: Wallet, shortfall: number, year: YearContext) {
   for (const pot of pots) {
     if (pot.done) continue
@@ -127,7 +135,9 @@ function coverShortfall(pots: GoalPot[], wallet: Wallet, shortfall: number, year
     used += taken
     return taken
   }
-  for (const holding of HOLDINGS) wallet.held[holding] -= take(wallet.held[holding])
+  const raised = sell(wallet, short, HOLDINGS)
+  short -= raised
+  used += raised
   wallet.emergency -= take(wallet.emergency)
   for (const pot of pots.toReversed()) {
     if (short <= 0) break

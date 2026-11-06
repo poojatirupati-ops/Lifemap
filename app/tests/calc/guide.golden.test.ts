@@ -6,9 +6,7 @@ import { TOOLS } from '../../src/components/explore/tools.data'
 import fresh from '../fixtures/fresh.json'
 import { original } from './golden'
 import { calcContext, toolPlan } from '../../src/domain/calc/context'
-import { localToday } from '../../src/lib/today'
 import { fromOriginal } from '../../src/state/migrate'
-import { TODAY } from '../golden/origSlice'
 
 const chose = {
   ...structuredClone(fresh),
@@ -25,7 +23,7 @@ describe.each([
     original.setState(structuredClone(state))
     original.applyAssume()
     const tool = toolPlan(plan as never, plan as never, id)
-    const { rules } = calcContext(tool, id, localToday(TODAY))
+    const { rules } = calcContext(tool, id)
     for (const { key } of allInputs(calculatorFor(id))) {
       const std = original.calcStd(id, key)
       const tag = original.stdTag(id, key)

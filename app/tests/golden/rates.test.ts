@@ -27,10 +27,19 @@ import {
 import { standardFor, type AssumptionPlan } from '../../src/domain/planning/assumptionText'
 
 const original = runOriginal(
-  `RULES_IE_2026, RULES_2027, LAW, SETTINGS, SV, SB, SL, SG, invNet, invBy, ruleCount, setRulesYear,
+  `RULES_IE_2026, RULES_2027, LAW, SETTINGS, SV, SB, SL, SG, invNet, invBy, ruleCount, setRulesYear, fresh,
   version: () => RULES_VERSION, b27: () => BUDGET27, snapRI: () => JSON.stringify(RI, (k, v) => (v === Infinity ? 'Inf' : v)), set: (k, v) => { SETTINGS.s[k].pv = v }`,
 )
 const fresh = structuredClone(defaultSettings)
+// the original takes its rules from the plan start year
+const startIn = (startYear: number) => {
+  original.setState({ ...original.fresh(), asm: { startYear } })
+  original.setRulesYear(startYear)
+}
+const startOver = () => {
+  startIn(2026)
+  original.setState(null)
+}
 const plain = (x: any) => JSON.parse(JSON.stringify(x, (k, v) => (v === Infinity ? 'Inf' : v)))
 
 // the original's short field names, mapped to ours
@@ -65,11 +74,11 @@ describe('rules and rates equal the original', () => {
     const { n, vf } = original.ruleCount()
     expect(ruleCount()).toEqual({ total: n, toVerify: vf })
     expect(guideSource('cardCap')).toBe('Central Bank of Ireland')
-    original.setRulesYear(2027)
+    startIn(2027)
     expect(plain(rulesFor(2027))).toEqual(JSON.parse(original.snapRI()))
     expect(rulesVersion(2027)).toBe(original.version())
     expect(budget2027Note(2027)).toBe(original.b27())
-    original.setRulesYear(2026)
+    startOver()
   })
   it('later years reuse the 2027 rules', () => {
     expect(rulesFor(2028)).toBe(rulesFor(2027))
@@ -122,14 +131,14 @@ describe('settings equal the original', () => {
     charges.v = keep
   })
   it('a plan starting in 2027 takes the 2027 rules', () => {
-    original.setRulesYear(2027)
+    startIn(2027)
     const rules = rulesFor(2027)
     const plan = { assumptions: { startYear: 2027 }, about: { partner: false }, figures: {} }
     expect(standardFor(plan as AssumptionPlan, 'inv')).toBe(original.SV('inv'))
     expect(standardValue('inv', defaultSettings, rules)).toBe(original.SV('inv'))
     expect(cautiousValue('inv', defaultSettings, rules)).toBe(original.SETTINGS.s.inv.vc)
     expect(standardSource('inv', defaultSettings, rules)).toBe(original.SB('inv'))
-    original.setRulesYear(2026)
+    startOver()
   })
   it('partner overrides', () => {
     defaultSettings.partner = 'Acme CU'

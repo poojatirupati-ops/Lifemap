@@ -2,6 +2,7 @@ import { isProfileComplete } from '../domain/discovery/profileQuestions.ts'
 import { project } from '../domain/planning/project.ts'
 import { EXTRA_MAX, EXTRA_MIN, leastCovered, stepSaving } from '../domain/planning/saving.ts'
 import { planRules } from '../domain/planning/assumptionText.ts'
+import { holdsSharesDirectly } from '../domain/planning/assumptions.ts'
 import { GROWTH_KEYS, growthRate, settingsInUse } from '../domain/planning/settings.ts'
 import { euro } from '../lib/format.ts'
 import { toast } from './shell.ts'
@@ -96,7 +97,13 @@ export function createPlanSlice(set: SetStore, get: () => Store) {
         plan.assumptionSet = set
         const rules = planRules(plan)
         for (const key of GROWTH_KEYS)
-          plan.assumptions[key] = growthRate(key, set, settingsInUse(), rules)
+          plan.assumptions[key] = growthRate(
+            key,
+            set,
+            settingsInUse(),
+            rules,
+            holdsSharesDirectly(plan),
+          )
         addVersion(plan, `Growth assumptions: ${setName(set)}`)
       })
       toast(`${setName(set)} assumptions: results updated`)

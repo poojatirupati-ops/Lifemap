@@ -44,8 +44,13 @@ describe('openReport', () => {
     expect(document.querySelector('.tabs')!.getAttribute('aria-hidden')).toBe('true')
     // the report's stylesheet comes with it (vitest loads .css?raw as empty)
     expect(report().querySelector('style')).not.toBeNull()
+    // the version keeps the tax rules the plan used, as the original's does
     expect(useStore.getState().plan.versions).toEqual([
-      { note: 'Report downloaded', date: '29 Sep 2026' },
+      {
+        note: 'Report downloaded',
+        date: '29 Sep 2026',
+        tax: expect.objectContaining({ startYear: 2026, override: null }),
+      },
     ])
 
     fireEvent.click(report().querySelector('[data-r="close"]')!)

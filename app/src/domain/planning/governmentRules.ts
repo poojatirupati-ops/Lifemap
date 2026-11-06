@@ -61,7 +61,7 @@ export function governmentRules(rules: Rules, year: number): [string, string][] 
     ],
     [
       'Capital gains tax',
-      `${percent(sav.cgt)} on gains above ${euro(sav.cgtExempt)} a year (disposals from 7 October 2026). In your plan it is taken off sales of other assets, crypto, gold and art, on the share of their value you treat as a gain. The yearly exemption is not counted.`,
+      `${percent(sav.cgt)} on gains above ${euro(sav.cgtExempt)} a year for each person (33% for disposals before 7 October 2026). Tax is due when you sell, not while you hold. Losses come off first. Development land stays at 33%.`,
     ],
     [
       'Gift and inheritance tax (CAT)',

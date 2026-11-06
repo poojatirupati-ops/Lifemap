@@ -6,10 +6,11 @@ import { fixtures, plain } from './origProfile'
 import { livingShort, project } from '../../src/domain/planning/project'
 import { planSettings } from '../../src/domain/planning/planSettings'
 import { extraNeededFor, whatIfFrom } from '../../src/domain/planning/wi'
+import { stressTest } from '../../src/domain/planning/stress'
 import { fromOriginal } from '../../src/state/migrate'
 import { chooser, prepared as preparedBy } from './helpers'
 
-const original = runOriginal('applyAssume, syncLists, autoSafety, project, extraFor')
+const original = runOriginal('applyAssume, syncLists, autoSafety, project, extraFor, stressInfo')
 
 // the original's state after what it runs before project()
 const prepared = (state: any) => preparedBy(original, state)
@@ -26,6 +27,30 @@ const ROW_NAMES: Record<string, string> = {
   pension: 'pen',
   retiresThisYear: 'rmark',
   downsized: 'downIn',
+  exitTaxDeemed: 'exitDeemed',
+  cashflow: 'cf',
+}
+const CASHFLOW_NAMES: Record<string, string> = {
+  lumpSumTax: 'lumpTax',
+  sftTax: 'sft',
+  pay: 'emp',
+  partnerPay: 'pemp',
+  statePension: 'sp',
+  drawdown: 'draw',
+  otherIncome: 'other',
+  incomeTax: 'it',
+  contributions: 'cashOut',
+  balances: 'bal',
+}
+const TAX_USED_NAMES: Record<string, string> = {
+  year: 'yr',
+  personalCredit: 'credit',
+  usc2Band: 'usc2',
+  statePensionWeek: 'sp',
+  exitTax: 'exit',
+  cgtRate: 'cgt',
+  cgtExemption: 'cgtExempt',
+  bandsIndex: 'index',
 }
 const GOAL_NAMES: Record<string, string> = {
   savedSoFar: 'saved0',
@@ -65,6 +90,9 @@ function asOriginal(result: ReturnType<typeof project>, plan: any) {
       0,
     )
     named.polIn = policyPaysOut(row.age) ? policyLumpSum : 0
+    named.cf = rename(row.cashflow, CASHFLOW_NAMES)
+    named.cf.sold = rename(row.cashflow.sold, SOURCE_NAMES)
+    named.cf.bal = rename(row.cashflow.balances, { ...SOURCE_NAMES, emergency: 'buffer' })
     return named
   })
   const { spareMonthly, savingMonthly, ruleMonthly } = result.saving
@@ -72,6 +100,8 @@ function asOriginal(result: ReturnType<typeof project>, plan: any) {
     rows,
     pct: result.percent,
     goal,
+    taxUsed: result.taxUsed.map((year) => rename(year, TAX_USED_NAMES)),
+    taxEvents: result.taxEvents,
     save: { surplusM: spareMonthly, saveM: savingMonthly, autoM: ruleMonthly },
   }
 }
@@ -95,12 +125,13 @@ function difference(ours: any, theirs: any, path = ''): string | null {
   return ours === theirs ? null : `${path}: ${JSON.stringify(ours)} vs ${JSON.stringify(theirs)}`
 }
 
-function compare(state: any) {
+function compare(state: any, stress = false) {
   const plan: any = fromOriginal(prepared(state))
-  const theirs = plain(original.project(state.wi))
+  const theirs = plain(original.project({ ...state.wi, stress }))
   // payN (saved from spare money) has no reader in the app
   for (const goal of Object.values<any>(theirs.goal)) delete goal.payN
-  const ours = plain(asOriginal(project(plan, whatIfFrom(plan.whatIf)), plan))
+  const whatIf = { ...whatIfFrom(plan.whatIf), stress }
+  const ours = plain(asOriginal(project(plan, whatIf), plan))
   expect(difference(ours, theirs)).toBeNull()
 }
 
@@ -177,6 +208,19 @@ function randomPlan(seed: number) {
   s.rank = pick(null, [], ids.slice().reverse(), ids.slice(1, 3))
   const goal = pick(...s.goals)
   s.wi = pick({ g: null, m: 0, l: 0 }, { g: goal.id, m: pick(-200, 150, 600), l: pick(0, 20000) })
+  // what was paid for each holding, losses, joint ownership, rent costs, dividends, how investments are held
+  Object.assign(s.fin, {
+    invCost: pick('', between(0, 150000)),
+    invYears: pick('', between(0, 20)),
+    othCost: pick('', between(0, 90000)),
+    altCost: pick('', between(0, 40000)),
+    capLoss: pick(0, between(0, 20000)),
+    assetsJoint: pick('Yes', 'No'),
+    rentM: pick(0, between(500, 2500)),
+    rentCostM: pick(0, between(0, 3000)),
+    divY: pick(0, between(0, 4000)),
+  })
+  Object.assign(s.asm, { invWrapper: pick(null, 'fund', 'shares'), inv: pick(null, null, 0.04) })
   return s
 }
 
@@ -185,6 +229,22 @@ describe('project() equals the original', { timeout: 30_000 }, () => {
   it.each(Array.from({ length: 200 }, (_, seed) => seed + 1))('random plan, seed %i', (seed) =>
     compare(randomPlan(seed)),
   )
+})
+
+describe('the stress test equals the original', { timeout: 30_000 }, () => {
+  it.each(Array.from({ length: 40 }, (_, seed) => seed + 1))('random plan, seed %i', (seed) => {
+    const state = randomPlan(seed)
+    compare(state, true)
+    const plan: any = fromOriginal(prepared(state))
+    const { index, potAtRetirement, potAtRetirementBase, ...ours } = stressTest(
+      plan,
+      whatIfFrom(plan.whatIf),
+    )
+    const { t, potAtRet, potAtRetBase, ...theirs } = plain(original.stressInfo(state.wi))
+    expect(
+      plain({ t: index, potAtRet: potAtRetirement, potAtRetBase: potAtRetirementBase, ...ours }),
+    ).toEqual({ t, potAtRet, potAtRetBase, ...theirs })
+  })
 })
 
 describe('the extra a month a goal needs equals the original', { timeout: 30_000 }, () => {

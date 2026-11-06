@@ -26,6 +26,7 @@ import {
   valueInUse,
 } from '../../domain/planning/assumptionText.ts'
 import { useFigures } from '../../hooks/useFigures.ts'
+import { holdsSharesDirectly } from '../../domain/planning/assumptions.ts'
 
 const UNIT = {
   pct: '%',
@@ -98,7 +99,7 @@ export default function AssumptionField({ name }: { name: string }) {
       standard: standardFor(plan, name),
       small: smallPrint(plan, name),
       tag: tagFor(plan, name),
-      note: standardNote(name, planRules(plan)),
+      note: standardNote(name, planRules(plan), holdsSharesDirectly(plan)),
     })),
   )
   const tag = TAGS[view.tag]

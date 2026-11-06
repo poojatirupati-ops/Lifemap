@@ -53,7 +53,7 @@ describe.each([
 
     const plan: any = fromOriginal(structuredClone(state))
     normalize(plan, localToday(TODAY))
-    const rules = rulesFor(assumption(plan, 'startYear', localToday(TODAY)))
+    const rules = rulesFor(assumption(plan, 'startYear'))
     confirmStatement(plan, plan, upload, rules)
     normalize(plan, localToday(TODAY))
     expect(picked(toOriginal(plan))).toEqual(picked(theirs))

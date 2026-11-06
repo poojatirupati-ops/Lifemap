@@ -70,7 +70,12 @@ function assumptionReader(plan: AssumptionPlan) {
     /** a row tagged by its source; a LifeMap standard says where it comes from */
     row: (label: string, text: string, key: string): AssumptionRow => {
       const tag = source(key)
-      return { label, value: text, tag, note: tag === SET ? standardNote(key, rules) : '' }
+      return {
+        label,
+        value: text,
+        tag,
+        note: tag === SET ? standardNote(key, rules, settings.direct) : '',
+      }
     },
     usually: (key: string) => {
       const [low, high] = ASSUMPTIONS[key].range!(rules).map((end) => euroWeekly(end))

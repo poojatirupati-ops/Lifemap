@@ -42,6 +42,12 @@ const autoEnrolmentApplies = ({ figures, about }: FieldContext) =>
   +figures.income > ae.earnMin &&
   !(+figures.pensionM > 0)
 
+const holds =
+  (...keys: string[]) =>
+  ({ figures }: FieldContext) =>
+    keys.some((key) => toNumber(figures[key]) > 0)
+const holdsInvestments = holds('invest')
+
 const otherMortgageOwed = ({ lists }: FieldContext) =>
   (lists?.mort2 ?? []).some((item) => hasValue(item.fields.owed) && +item.fields.owed > 0)
 
@@ -137,11 +143,41 @@ export const SECTION_FIELDS = {
       hint: 'Optional. Deposit, notice and fixed-term accounts, State Savings',
     },
     invest: { label: 'Investments', type: 'eur', hint: 'Shares, funds, share schemes: one total' },
+    invCost: {
+      label: 'What you paid for your investments in total',
+      type: 'eur',
+      optional: true,
+      visible: holdsInvestments,
+      hint: "Optional. Include fees and stamp duty. Leave blank if you don't know: we then assume you bought them at today's value, so no gain yet.",
+    },
+    invYears: {
+      label: 'Years you have held your investments',
+      type: 'num',
+      min: 0,
+      max: 60,
+      optional: true,
+      visible: holdsInvestments,
+      hint: 'Optional. Funds and ETFs are treated as sold every 8 years for tax. Leave blank and the 8 years start today.',
+    },
+    divY: {
+      label: 'Dividends you receive a year (shares held directly)',
+      type: 'eur',
+      optional: true,
+      visible: holdsInvestments,
+      hint: "Optional. Before tax, in today's money. Taxed as income each year. Leave blank for funds and ETFs, where exit tax covers it. If you enter dividends, your investment growth assumption should be price growth only.",
+    },
     otherAssets: {
       label: 'Other assets you would sell if needed',
       type: 'eur',
       optional: true,
       hint: 'Optional. For example land or a business share. Not your home, and not property you rent out',
+    },
+    othCost: {
+      label: 'What you paid for your other assets',
+      type: 'eur',
+      optional: true,
+      visible: holds('otherAssets'),
+      hint: "Optional. Include fees and stamp duty. Leave blank and we assume a share of today's value is gain (see Your assumptions).",
     },
     altInv: {
       label: 'Alternative investments',
@@ -149,12 +185,40 @@ export const SECTION_FIELDS = {
       optional: true,
       hint: 'Optional. Crypto, gold, art, collectables',
     },
+    altCost: {
+      label: 'What you paid for your alternative investments',
+      type: 'eur',
+      optional: true,
+      visible: holds('altInv'),
+      hint: "Optional. Include fees. Leave blank and we assume a share of today's value is gain (see Your assumptions).",
+    },
+    capLoss: {
+      label: 'Capital losses you can use against gains',
+      type: 'eur',
+      optional: true,
+      visible: holds('otherAssets', 'altInv', 'invest'),
+      hint: 'Optional. Losses you have already reported to Revenue and not yet used.',
+    },
+    assetsJoint: {
+      label: 'Do you own these assets together with your partner?',
+      type: 'ynn',
+      optional: true,
+      visible: (plan) => !!plan.about.partner && holds('otherAssets', 'altInv', 'invest')(plan),
+      hint: 'Optional. Each of you has your own yearly capital gains exemption, but only on what you own.',
+    },
     propValue: { label: 'Other property: value', type: 'eur', optional: true, hint: 'Optional' },
     rentM: {
       label: 'Other property: rent received a month (before tax)',
       type: 'eur',
       optional: true,
       hint: 'Optional. Rental profit is taxed at your marginal rate, with USC and PRSI',
+    },
+    rentCostM: {
+      label: 'Other property: costs a month',
+      type: 'eur',
+      optional: true,
+      visible: holds('rentM'),
+      hint: 'Optional. Agent fees, repairs, insurance and mortgage interest on the rented property. Tax is charged on rent less these costs. Costs above the rent are not counted.',
     },
   },
   liab: {
@@ -209,7 +273,12 @@ export const SECTION_FIELDS = {
     health: { label: 'Health insurance', type: 'ynn' },
   },
   pension: {
-    pension: { label: 'Pension value today', type: 'eur', hint: 'All pots together', fromList: true },
+    pension: {
+      label: 'Pension value today',
+      type: 'eur',
+      hint: 'All pots together',
+      fromList: true,
+    },
     pensionM: {
       label: 'Paid in each month',
       type: 'eur',

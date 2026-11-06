@@ -1,7 +1,7 @@
 // What Your assumptions shows for each field: the figure in use, its tag and the words under it.
 import { euro, euroWeekly, percent } from '../../lib/format.ts'
 import type { Plan } from '../../state/types.ts'
-import { assumption, chosenAssumption, isGrowthKey } from './assumptions.ts'
+import { assumption, chosenAssumption, holdsSharesDirectly, isGrowthKey } from './assumptions.ts'
 import { ASSUMPTIONS, type AssumptionField, type NumberKind } from './assumptionFields.data.ts'
 import { rules2026, rulesFor, type Rules } from './rates.ts'
 import { STANDARDS } from './settings.data.ts'
@@ -29,7 +29,7 @@ export function standardFor(plan: AssumptionPlan, key: string): Amount | null {
   const { standard, item, fromPlan } = ASSUMPTIONS[key]
   if (fromPlan) return assumption({ ...plan, assumptions: {} }, key)
   if (!standard) return null
-  const value = standardValue(standard, settingsInUse(), planRules(plan))
+  const value = standardValue(standard, settingsInUse(), planRules(plan), holdsSharesDirectly(plan))
   return (item == null ? value : (value as number[])[item]) as Amount
 }
 
@@ -104,8 +104,9 @@ export function tagFor(plan: AssumptionPlan, key: string): keyof typeof TAGS {
   return 'assumed'
 }
 
-const bySource = (field: AssumptionField, rules: Rules) =>
-  field.by ?? standardSource(field.standard!, settingsInUse(), rules)
+const bySource = (field: AssumptionField, plan: AssumptionPlan) =>
+  field.by ??
+  standardSource(field.standard!, settingsInUse(), planRules(plan), holdsSharesDirectly(plan))
 
 function guide(plan: AssumptionPlan, key: string) {
   const field = ASSUMPTIONS[key]
@@ -120,7 +121,7 @@ function guide(plan: AssumptionPlan, key: string) {
   }
   if (!isStandard(field)) return ''
   const figure = formatAssumption(key, standardFor(plan, key))
-  return `LifeMap uses ${figure} (${bySource(field, planRules(plan))}). Change it if you want to use your own.`
+  return `LifeMap uses ${figure} (${bySource(field, plan)}). Change it if you want to use your own.`
 }
 
 function helpFor(key: string) {
@@ -139,10 +140,10 @@ const host = (source: string) =>
   WEB_PREFIX.test(source) ? source.replace(WEB_PREFIX, '').split('/')[0] : source
 
 /** Where a LifeMap standard comes from: "… . Source: centralbank.ie (Jun 2026)." */
-export function standardNote(key: string, rules: Rules) {
+export function standardNote(key: string, rules: Rules, direct = false) {
   const standard = ASSUMPTIONS[key].standard
   const settings = standard && STANDARDS[standard]
   if (!settings) return ''
   const asOf = settings.asOf ? ` (${settings.asOf})` : ''
-  return `${standardSource(standard, settingsInUse(), rules)}. Source: ${host(settings.source)}${asOf}.`
+  return `${standardSource(standard, settingsInUse(), rules, direct)}. Source: ${host(settings.source)}${asOf}.`
 }

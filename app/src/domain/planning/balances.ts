@@ -1,5 +1,6 @@
 // What the projection carries from year to year besides savings: the pension and the debts.
 import type { GoalPot } from './fund'
+import { grownBy } from './fundYear'
 import type { HouseholdFigures } from './householdFigures'
 import { monthlyRateFromApr, repayForYear } from './loans'
 import { arfMinimum, lumpSum, pensionRelief } from './pensions'
@@ -58,6 +59,7 @@ interface IncomeYear {
   age: number
   payGrowth: number
   taxBands: number
+  stressed: boolean
 }
 
 /** Adds this year's contributions to the pension in `balances`; returns the tax relief and what
@@ -70,7 +72,7 @@ export function payIntoPension(
   pensionWhatIf: number | null,
 ) {
   const { figures, rules } = plan
-  const { age, payGrowth, taxBands } = year
+  const { age, payGrowth, taxBands, stressed } = year
   const own = (figures.monthlyOwnPension + plan.extraPension) * 12 * payGrowth
   const relief = pensionRelief(rules, salary / taxBands, own / taxBands, age) * taxBands
   let contributions = (figures.monthlyPension + plan.extraPension) * 12 * payGrowth
@@ -81,39 +83,42 @@ export function payIntoPension(
     contributions += (rules.ae.ee + rules.ae.er + rules.ae.state) * earnings
     paid += rules.ae.ee * earnings
   }
-  balances.pension = balances.pension * (1 + figures.pensionGrowth) + contributions
+  balances.pension = balances.pension * grownBy(stressed, figures.pensionGrowth) + contributions
   return { relief, paid }
 }
 
 /** Retired: the pension in `balances` stays invested until it can be drawn; at the access age the
- * threshold tax is paid and the lump sum goes into `wallet`; returns the year's drawdown. */
+ * threshold tax is paid and the lump sum goes into `wallet`. Returns the year's drawdown and the
+ * tax on the lump sum and above the Standard Fund Threshold. */
 export function drawPension(
   plan: PlanSettings,
   balances: Balances,
   wallet: Wallet,
-  age: number,
-  prices: number,
+  { age, prices, stressed }: { age: number; prices: number; stressed: boolean },
 ) {
   const { figures, rules } = plan
   const accessAge = Math.max(figures.retireAge, plan.accessAge)
+  const taken = { drawn: 0, lumpSumTax: 0, sftTax: 0 }
   if (age < accessAge) {
-    balances.pension *= 1 + figures.pensionGrowth
-    return 0
+    balances.pension *= grownBy(stressed, figures.pensionGrowth)
+    return taken
   }
   if (age === accessAge) {
     const year = plan.startYear + age - (figures.age ?? 0)
-    balances.pension -= rules.pen.sftRate * Math.max(0, balances.pension - plan.sftAt(year))
+    taken.sftTax = rules.pen.sftRate * Math.max(0, balances.pension - plan.sftAt(year))
+    balances.pension -= taken.sftTax
     if (plan.lumpShare > 0) {
       const lump = lumpSum(rules, balances.pension, plan.lumpShare)
       balances.pension -= lump.gross
       deposit(wallet, lump.net)
+      taken.lumpSumTax = lump.tax
     }
   }
   const pot = balances.pension
   const minimum = arfMinimum(rules, age, pot)
-  const drawn = Math.min(pot, wantedDrawdown(plan, pot, minimum, age, prices))
-  balances.pension = (pot - drawn) * (1 + plan.growth.pensionRetired)
-  return drawn
+  taken.drawn = Math.min(pot, wantedDrawdown(plan, pot, minimum, age, prices))
+  balances.pension = (pot - taken.drawn) * grownBy(stressed, plan.growth.pensionRetired)
+  return taken
 }
 
 function wantedDrawdown(

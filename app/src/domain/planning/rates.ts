@@ -1,7 +1,7 @@
 // Irish rules for a plan year: the register with every rule replaced by its value.
 import { wholePercent } from '../../lib/format'
 import { RULES_2026, type Rule } from './rates.data'
-import { RULES_2027, UNCHANGED_IN_2027 } from './rules2027.data'
+import { RULES_2027 } from './rules2027.data'
 
 // Rules['it']['band'] is a number, and a misspelt rule is a compile error
 type Values<T> = T extends Rule<infer V> ? V : { [K in keyof T]: Values<T[K]> }
@@ -29,25 +29,30 @@ function rules2027(): Rules {
 
 export const rules2026 = valuesOf(RULES_2026) as Rules
 
-// Budget 2027 rules apply from 2027 onwards
+// The plan start year decides the rules for every plan year: 2026 rules, or Budget 2027 rules from 2027
 const YEARS = {
   2026: {
     rules: rules2026,
     version:
-      'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes already in force (CGT, Help to Buy)',
-    note: 'This plan uses 2026 rules. Budget 2027 changes (from 1 January 2027) are available: choose 2027 as the plan start year in Your assumptions.',
+      'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates',
   },
   2027: {
     rules: rules2027(),
     version: 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending',
-    note: `This plan uses Budget 2027 rules from 1 January 2027 (announced 6 October 2026). The Finance Bill may still change some details. ${UNCHANGED_IN_2027}`,
   },
 }
-const planYear = (year: number) => YEARS[year >= 2027 ? 2027 : 2026]
+/** The tax year whose rules a plan starting in this year uses. */
+export const taxYearFor = (startYear: number) => (startYear >= 2027 ? 2027 : 2026)
+const planYear = (startYear: number) => YEARS[taxYearFor(startYear)]
 
-export const rulesFor = (year: number): Rules => planYear(year).rules
-export const rulesVersion = (year: number) => planYear(year).version
-export const budget2027Note = (year: number) => planYear(year).note
+export const rulesFor = (startYear: number): Rules => planYear(startYear).rules
+export const rulesVersion = (startYear: number) => planYear(startYear).version
+export const budget2027Note = (startYear: number) =>
+  `Tax assumptions: ${startYear}. Includes announced 2027 changes${startYear < 2027 ? ' from 1 January 2027' : ''}. Some figures are based on 2026 rates pending publication of updated rules.`
+
+/** The capital gains tax rate on a sale on this ISO date: 33% before 7 Oct 2026, 31% from then. */
+export const cgtRateOn = (rules: Rules, isoDate: string) =>
+  isoDate >= rules.sav.cgtFrom ? rules.sav.cgt : rules.sav.cgtBefore
 
 // who a guide figure comes from, as the customer sees it
 export const guideSource = (key: keyof typeof RULES_2026.guide) => RULES_2026.guide[key].by

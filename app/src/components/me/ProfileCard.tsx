@@ -18,7 +18,7 @@ export default function ProfileCard() {
       goals: plan.goals.length,
       percent: profilePercent(plan),
       type: personality(profileAnswers(plan)),
-      startYear: assumption(plan, 'startYear', localToday()),
+      startYear: assumption(plan, 'startYear'),
     })),
   )
   const startsLater = plan.startYear > localToday().getFullYear()

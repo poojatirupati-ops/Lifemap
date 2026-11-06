@@ -56,12 +56,16 @@ export function uscAndPrsi(rules: Rules, p: Person, rate: number) {
   const surcharge = p.selfEmployed
     ? rules.usc.seSurcharge * Math.max(0, p.pay - rules.usc.seSurchargeOver)
     : 0
-  // no PRSI from 66; before that, drawdown and unearned income pay it too
-  const prsiDue =
-    p.age < rules.prsi.endAge
+  const { endAge, unearnedMin, arfApplies, arfToAge } = rules.prsi
+  // no PRSI on pay or unearned income from 66
+  const earned =
+    p.age < endAge
       ? prsi(rules, p.pay, rate, p.selfEmployed) +
-        rate * p.drawdown +
-        (p.otherIncome > rules.prsi.unearnedMin ? rate * p.otherIncome : 0)
+        (p.otherIncome > unearnedMin ? rate * p.otherIncome : 0)
       : 0
+  // ARF / PRSA withdrawals: before 66, and from 66 to 70 without a contributory State Pension
+  const drawdownCharged =
+    arfApplies && p.drawdown > 0 && (p.age < endAge || (p.age < arfToAge && !(p.statePension > 0)))
+  const prsiDue = earned + (drawdownCharged ? rate * p.drawdown : 0)
   return { usc: usc(rules, uscIncome, reduced) + surcharge, prsi: prsiDue }
 }

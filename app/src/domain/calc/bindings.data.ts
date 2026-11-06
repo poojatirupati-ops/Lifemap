@@ -83,6 +83,7 @@ export const TOOL_ASSUMPTIONS: Record<string, string[]> = {
   deposit: ['buyFees'],
   rentbuy: ['rentRise', 'upkeep', 'buyFees', 'depEarn'],
   retirement: ['wage', 'retireMult', 'lumpSum', 'accessAge'],
+  contrib: ['wage'],
   lastmoney: ['ddTiming', 'planEnd'],
   drawdown: ['ddTiming', 'riskMu1', 'riskMu2', 'riskMu3'],
   riskreturn: ['riskMu1', 'riskMu2', 'riskMu3', 'riskVol1', 'riskVol2', 'riskVol3'],

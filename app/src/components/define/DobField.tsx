@@ -38,7 +38,7 @@ export default function DobField({ who }: { who: Who }) {
       dob: plan.about[id],
       partnerName: plan.partner.name,
       ageSource: plan.sources.pAge,
-      startYear: assumption(plan, 'startYear', today),
+      startYear: assumption(plan, 'startYear'),
     })),
   )
   const check = checkDob(dob, who, { today, name: partnerName, startYear })
