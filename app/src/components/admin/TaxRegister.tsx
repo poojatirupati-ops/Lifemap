@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore as useVanilla } from 'zustand'
-import { percent, readNumber } from '../../lib/format.ts'
+import { percent, readNumber, readPoints } from '../../lib/format.ts'
 import { taxSession, type TaxOverride, type TaxSession } from '../../domain/planning/rates.ts'
 import { RULES_2027, TAX_STATUS, type TaxStatus } from '../../domain/planning/rules2027.data.ts'
 import { taxRegister, type TaxRegisterRow } from '../../domain/planning/taxRegister.ts'
@@ -73,9 +73,10 @@ function readValue(path: string, text: string) {
   const typed = text.trim()
   if (typed === '') return null
   if (typeof RULES_2027[path].value !== 'number') return typed
-  const figure = readNumber(typed)
+  // a rate's box counts in percent points: "35" and "35%" are 35%, "0.5" is 0.5%
+  const figure = isRate(path) ? readPoints(typed) : readNumber(typed)
   if (figure == null || figure < 0) return undefined
-  return isRate(path) && !typed.endsWith('%') && figure >= 1 ? figure / 100 : figure
+  return isRate(path) ? figure / 100 : figure
 }
 
 /** What the box shows: a rate as a percent ("35%"), anything else as it is. */

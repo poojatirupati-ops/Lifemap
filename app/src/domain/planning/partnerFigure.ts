@@ -40,29 +40,30 @@ export const LIMITS: Partial<Record<StandardKey, [min: number, max: number]>> = 
 
 export const partnerName = (settings: Settings) => settings.partner || 'your provider'
 
-type Entry = { figure: StandardValue } | { outOfRange: true }
+// refused: not a number, or outside the allowed range
+type Entry = { figure: StandardValue } | { refused: true }
 
 const EPSILON = 1e-9
 
-/** Read a typed partner figure (item picks one rate of a list); blank means the LifeMap standard. */
+/** Read a typed partner figure (item picks one rate of a list); only a blank box means the LifeMap standard. */
 export function readEntry(key: StandardKey, standard: Standard, raw: string, item = 0): Entry {
   const text = raw.trim()
+  const typed = readPoints(text)
+  if (text && typed == null) return { refused: true }
 
   if (standard.unit === 'pct3') {
     const base = standard.value
     const list = [...(standard.partnerValue ?? base)]
-    const typed = readPoints(text)
     list[item] = typed == null ? base[item] : Math.max(0, typed) / 100
     const unchanged = list.every((rate, i) => Math.abs(rate - base[i]) < EPSILON)
     return { figure: unchanged ? null : list }
   }
 
-  const typed = readPoints(text)
   if (typed == null) return { figure: null }
   const figure = standard.unit === 'pct' ? typed / 100 : typed
   const limits = LIMITS[key]
   if (limits && (figure < limits[0] - EPSILON || figure > limits[1] + EPSILON)) {
-    return { outOfRange: true }
+    return { refused: true }
   }
   return { figure: Math.max(0, figure) }
 }

@@ -44,9 +44,10 @@ export const sum = <T>(items: T[], amount: (item: T, index: number) => number) =
 
 const TYPED_NUMBER = /^[-+]?(\d+\.?\d*|\.\d+)$/
 
-/** A typed number: "€1,200" -> 1200, "+25" -> 25, "35%" -> 0.35; null when it is not a number. */
+/** A typed number: "€1,200" -> 1200, "+25" -> 25, "25 yrs" -> 25, "35%" -> 0.35; null when it is not a number. */
 export function readNumber(text: string) {
-  const typed = text.replace(/[€\s,]/g, '')
+  // a unit word before or after the number is ignored: "25 yrs", "age 67", "2.5 pct"
+  const typed = text.replace(/^[a-z\s]+|[a-z\s]+$/gi, '').replace(/[€\s,]/g, '')
   const rate = typed.endsWith('%')
   const figure = rate ? typed.slice(0, -1) : typed
   if (!TYPED_NUMBER.test(figure)) return null

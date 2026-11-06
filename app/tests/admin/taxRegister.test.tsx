@@ -17,7 +17,7 @@ afterEach(() => taxSession.setState(taxSession.getInitialState(), true))
 
 test('a number rule takes only numbers: euros, commas and percents are read, anything else is refused', () => {
   render(<TaxRegister />)
-  enter(/^2027 value for Standard-rate band, single/, 'about 47k')
+  enter(/^2027 value for Standard-rate band, single/, '4o,000')
   expect(screen.getByRole('alert').textContent).toMatch(/not a number/)
   expect(taxSession.getState().overrides).toEqual({})
 
@@ -29,15 +29,15 @@ test('a number rule takes only numbers: euros, commas and percents are read, any
   expect(valueOf('sav.exit')).toBe(0.36)
 })
 
-test('a rate shows as a percent, and a bare number of 1 or more is read as a percent', () => {
+test('a rate shows as a percent, and a bare number in its box is percent points', () => {
   render(<TaxRegister />)
   const box = () => screen.getByLabelText<HTMLInputElement>(/^2027 value for Exit tax/)
   expect(box().value).toBe('35%')
   enter(/^2027 value for Exit tax/, '33')
   expect(valueOf('sav.exit')).toBe(0.33)
   expect(box().value).toBe('33%')
-  enter(/^2027 value for Exit tax/, '0.3')
-  expect(valueOf('sav.exit')).toBe(0.3)
+  enter(/^2027 value for Investment Account: yearly levy/, '0.5')
+  expect(valueOf('ia.levy')).toBe(0.005)
 })
 
 test('a text rule keeps the text', () => {
