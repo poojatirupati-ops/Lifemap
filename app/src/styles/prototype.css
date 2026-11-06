@@ -3140,5 +3140,32 @@ html body #screen #r-glancec .vt + p.small,html body #screen #r-glancec .vt + .r
 html body #screen #r-glancec .vt + p.small{font-size:14px;line-height:1.5}
 html body #screen #r-glancec .chapgrid{gap:12px}
 
+/* sign-in (P1): split layout, form left and a large rounded photo right; stacked on phones */
+.sip{position:absolute;inset:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:auto;background:#fff}
+.sip-photo{order:-1;margin:14px 14px 0;border-radius:24px;overflow:hidden;height:150px;background:#E6F3F1}
+.sip-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block}
+.sip-form{display:flex;justify-content:center;padding:22px 22px 28px}
+.sip-in{width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px}
+.sip-in .brand{align-self:center}
+.sip-h{margin:6px 0 0;text-align:center;font-family:var(--fh);font-weight:800;font-size:30px;letter-spacing:-.02em;color:#182A54}
+.sip-sub{margin:-8px 0 6px;text-align:center;color:#51627a;font-size:15px;line-height:1.45}
+.sip .field label{font-size:14px;font-weight:700;color:#182A54;margin-bottom:8px;display:block}
+.si-in{position:relative}
+.si-in svg{z-index:1;position:absolute;left:16px;top:50%;transform:translateY(-50%);fill:none;stroke:#079E98;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.si-in .in{width:100%;padding-left:46px!important;height:52px;font-size:16px;border-radius:14px!important;background:#fff!important;border:1.5px solid rgba(24,42,84,.14)!important;box-shadow:none!important}
+.si-in .in:focus{border-color:#079E98!important;box-shadow:0 0 0 4px rgba(8,217,184,.18)!important;outline:0}
+.sip-go{width:100%;min-height:52px;border-radius:14px!important;background:#079E98!important;color:#fff!important;box-shadow:none!important;font-weight:700}
+.sip-go:disabled{opacity:.45}
+.sip-sso{width:100%;border-radius:14px!important}
+.si-or{display:flex;align-items:center;gap:12px;color:#51627a;font-size:13px;font-weight:600}
+.si-or::before,.si-or::after{content:"";flex:1;height:1px;background:rgba(24,42,84,.12)}
+.si-pk{display:flex!important;align-items:center;justify-content:center;gap:10px;min-height:52px;width:100%;border-radius:14px;background:#fff;border:1.5px solid rgba(24,42,84,.14)!important;color:#182A54!important;font-weight:700;text-decoration:none!important}
+.si-pk svg{fill:none;stroke:#079E98;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sip-note{margin:2px 0 0;text-align:center;color:#51627a;font-size:14px}
+body.desk .sip{grid-template-columns:minmax(380px,1fr) 1.15fr;grid-template-rows:1fr;padding:28px}
+body.desk .sip-form{align-items:center;padding:0 40px}
+body.desk .sip-photo{order:0;margin:0;height:auto;border-radius:28px}
+body.desk .sip-photo img{object-position:50% 30%}
+
 /* production: the reviewer sidebar is not shown (kept in the DOM so tests/e2e/screens.spec.ts can use its jump list) */
 .side{display:none!important}
