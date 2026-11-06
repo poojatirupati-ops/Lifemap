@@ -82,7 +82,7 @@ function takeEntry(
     const entry = readEntry(id, standard, input.value, item)
     if ('figure' in entry) return onFigure(entry.figure)
     input.value = shown
-    onRefuse(refusedText(id, standard.unit))
+    onRefuse(refusedText(id, standard.unit, entry.refused))
   }
 }
 

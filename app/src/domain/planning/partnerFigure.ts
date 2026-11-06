@@ -40,8 +40,7 @@ export const LIMITS: Partial<Record<StandardKey, [min: number, max: number]>> = 
 
 export const partnerName = (settings: Settings) => settings.partner || 'your provider'
 
-// refused: not a number, or outside the allowed range
-type Entry = { figure: StandardValue } | { refused: true }
+type Entry = { figure: StandardValue } | { refused: 'notNumber' | 'outOfRange' }
 
 const EPSILON = 1e-9
 
@@ -49,7 +48,7 @@ const EPSILON = 1e-9
 export function readEntry(key: StandardKey, standard: Standard, raw: string, item = 0): Entry {
   const text = raw.trim()
   const typed = readPoints(text)
-  if (text && typed == null) return { refused: true }
+  if (text && typed == null) return { refused: 'notNumber' }
 
   if (standard.unit === 'pct3') {
     const base = standard.value
@@ -63,7 +62,7 @@ export function readEntry(key: StandardKey, standard: Standard, raw: string, ite
   const figure = standard.unit === 'pct' ? typed / 100 : typed
   const limits = LIMITS[key]
   if (limits && (figure < limits[0] - EPSILON || figure > limits[1] + EPSILON)) {
-    return { refused: true }
+    return { refused: 'outOfRange' }
   }
   return { figure: Math.max(0, figure) }
 }
