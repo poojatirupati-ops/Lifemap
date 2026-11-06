@@ -3142,11 +3142,10 @@ html body #screen #r-glancec .chapgrid{gap:12px}
 
 /* sign-in (P1): split layout, form left and a large rounded photo right; stacked on phones */
 .sip{position:absolute;inset:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:auto;background:#fff}
-.sip-photo{order:-1;margin:12px 0 0;padding:0 16px;height:136px;display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.sip-photo::-webkit-scrollbar{display:none}
-.sip-photo figure{position:relative;margin:0;flex:0 0 150px;scroll-snap-align:start;border-radius:20px;overflow:hidden;background:#E6F3F1}
+.sip-photo{order:-1;margin:14px 0 0;padding:0 16px;height:160px;display:block}
+.sip-photo figure{position:relative;margin:0;width:100%;height:100%;border-radius:22px;overflow:hidden;background:#E6F3F1}
+.sip-photo figure:nth-child(n+2),.sip-photo figcaption{display:none}
 .sip-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.sip-photo figcaption{position:absolute;left:8px;bottom:8px;background:rgba(255,255,255,.94);color:#182A54;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px}
 .sip-form{display:flex;justify-content:center;padding:16px 22px 28px}
 .sip-in{width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px}
 .sip-in .brand{align-self:center;margin-top:4px}
@@ -3167,9 +3166,9 @@ html body #screen #r-glancec .chapgrid{gap:12px}
 .sip-note{margin:2px 0 0;text-align:center;color:#51627a;font-size:14px}
 body.desk .sip{grid-template-columns:minmax(380px,1fr) 1.15fr;grid-template-rows:minmax(0,1fr);padding:28px}
 body.desk .sip-form{align-items:center;padding:0 40px}
-body.desk .sip-photo{order:0;margin:0;height:auto;padding:0;overflow:visible;scroll-snap-type:none;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;min-height:0}
-body.desk .sip-photo figure{border-radius:22px;flex:none}
-body.desk .sip-photo figcaption{left:12px;bottom:12px;font-size:12px;padding:4px 11px}
+body.desk .sip-photo{order:0;margin:0;height:auto;padding:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,minmax(0,1fr));gap:12px;min-height:0}
+body.desk .sip-photo figure{display:block!important;border-radius:22px}
+body.desk .sip-photo figcaption{display:block;position:absolute;left:12px;bottom:12px;background:rgba(255,255,255,.94);color:#182A54;font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px}
 
 /* production: the reviewer sidebar is not shown (kept in the DOM so tests/e2e/screens.spec.ts can use its jump list) */
 .side{display:none!important}
