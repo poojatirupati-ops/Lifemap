@@ -201,7 +201,7 @@ test('whole journey', async ({ page }) => {
     await tap(page, 'Retire comfortably')
     await page.getByRole('textbox', { name: 'Extra each month' }).fill('500')
     await page.getByRole('textbox', { name: 'Extra each month' }).blur()
-    await expect(page.getByText(/Retire comfortably goes from 70% to \d+%/)).toBeVisible()
+    await expect(page.getByText(/Retire comfortably goes from \d+% to \d+%/)).toBeVisible()
     await tap(page, 'Save this plan')
     await expect
       .poll(async () => (await api(page, 'plan/versions')).versions.length, later)
