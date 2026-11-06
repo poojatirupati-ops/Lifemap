@@ -264,7 +264,7 @@ export default function Results() {
           <Glance projection={withWhatIf} />
         </div>
       </div>
-      <StressCard inputs={inputs} whatIf={whatIf} />
+      <StressCard inputs={inputs} whatIf={whatIf} projection={withWhatIf} />
       <div className="ends">
         <button
           className="btn navy"

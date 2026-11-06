@@ -10,9 +10,12 @@ type Projection = ReturnType<typeof project>
 
 const runsOutAt = (projection: Projection) => projection.rows.find(livingShort)?.age ?? null
 
-/** Each goal's covered percent after the fall, the run-out age and the pension at retirement, beside the plan's. */
-export function stressTest(inputs: ProjectionInputs, whatIf?: WhatIf) {
-  const plan = project(inputs, whatIf)
+/** Each goal's covered percent after the fall (`plan`: the plan's projection with this what-if, when already worked out), the run-out age and the pension at retirement, beside the plan's. */
+export function stressTest(
+  inputs: ProjectionInputs,
+  whatIf?: WhatIf,
+  plan: Projection = project(inputs, whatIf),
+) {
   const stressed = project(inputs, {
     goalId: null,
     monthly: 0,

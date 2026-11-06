@@ -7,6 +7,7 @@
 // Missing costs use disclosed simplifications: funds bought at today's value; shares, other assets
 // and alternatives with a share of today's value as gain.
 import { formatISO } from 'date-fns/formatISO'
+import { sum } from '../../lib/format'
 import { cgtRateOn, type Rules } from './rates'
 
 export const LOT_HOLDINGS = ['invest', 'otherAssets', 'alternatives'] as const
@@ -89,7 +90,7 @@ export function makeHoldings(rules: Rules, start: HoldingsStart) {
     thisYear.sale = 0
   }
 
-  const total = (holding: LotHolding) => lots[holding].reduce((sum, lot) => sum + lot.value, 0)
+  const total = (holding: LotHolding) => sum(lots[holding], (lot) => lot.value)
 
   /** Sells one lot until `need` is received after tax; returns [received, value sold]. */
   function sellLot(lot: Lot, need: number, fund: boolean): [number, number] {

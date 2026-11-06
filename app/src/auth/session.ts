@@ -9,6 +9,7 @@ import { resetJourneyPages } from '../state/journeyPage.ts'
 import { startFrom, toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { DISCOVER_SIX } from '../domain/discovery/questions.data.ts'
+import { taxSession } from '../domain/planning/rates.ts'
 import { questionPath } from '../state/discovery.ts'
 import type { Plan } from '../state/types.ts'
 
@@ -153,6 +154,7 @@ function clearLocal() {
   forgetAccountQueries()
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())
+  taxSession.setState(taxSession.getInitialState(), true)
   resetJourneyPages()
   void goTo('/') // the wall sends a signed-out visitor to sign-in
 }

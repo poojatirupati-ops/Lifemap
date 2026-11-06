@@ -2,17 +2,21 @@ import { useMemo } from 'react'
 import type { ProjectionInputs } from '../../domain/planning/planSettings.ts'
 import { stressTest } from '../../domain/planning/stress.ts'
 import type { WhatIf } from '../../domain/planning/wi.ts'
+import type { Projection } from '../../hooks/useProjection.ts'
 import { euro } from '../../lib/format.ts'
 
 /** Stress test: the plan (with the what-if) if pensions and investments fell in the year before retirement. */
 export default function StressCard({
   inputs,
   whatIf,
+  projection,
 }: {
   inputs: ProjectionInputs
   whatIf: WhatIf
+  /** the plan with the what-if, already worked out */
+  projection: Projection
 }) {
-  const stress = useMemo(() => stressTest(inputs, whatIf), [inputs, whatIf])
+  const stress = useMemo(() => stressTest(inputs, whatIf, projection), [inputs, whatIf, projection])
   const goals = inputs.goals.toSorted((a, b) => a.age - b.age)
   const { potAtRetirement: pot, potAtRetirementBase: potBase } = stress
   return (

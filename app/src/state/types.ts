@@ -2,7 +2,6 @@
 import type { Upload } from '../domain/finances/upload.ts'
 import type { StatementUpload } from '../domain/calc/statements.ts'
 import type { ExpertKind } from '../domain/identity/advisers.data.ts'
-import type { TaxSession } from '../domain/planning/rates.ts'
 import type { TaxSnapshot } from '../domain/planning/taxRegister.ts'
 
 export type Provenance = 'typed' | 'doc' | 'pre'
@@ -196,10 +195,6 @@ export interface Ui {
   statement: StatementUpload | null
   /** The open box on Your assumptions. */
   openAssumption?: string | null
-  /** Admin Settings: one tax year forced for every plan year (a comparison), or null. Session only, never saved. */
-  taxYearOverride?: TaxSession['year']
-  /** Admin Settings: 2027 values or statuses changed for this session. Never saved. */
-  taxOverrides?: TaxSession['overrides']
 }
 
 /** Saving the plan and booking an adviser. */

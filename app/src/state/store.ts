@@ -35,6 +35,8 @@ export interface Store
   plan: Plan
   /** Which tenant figures are in use: a change re-runs every selector, so whatever reads a standard in one updates. */
   figuresKey: string
+  /** The session's tax-year choices (Admin Settings): a change re-runs every selector. */
+  taxKey: string
 
   /** Start over from a snapshot (a fixture, a jump, a restored plan); old field names are migrated. */
   load: (snapshot: Snapshot) => void
@@ -72,6 +74,7 @@ export const useStore = create<Store>()(
       ...freshUi(),
       plan: fresh(),
       figuresKey: figures.getState().key,
+      taxKey: JSON.stringify(taxSession.getState()),
 
       load: (saved) => {
         const ui = freshUi()
@@ -113,12 +116,5 @@ export const useStore = create<Store>()(
 )
 
 figures.subscribe(({ key }) => useStore.setState({ figuresKey: key }))
-// the domain reads the session's tax-year choices from taxSession
-const noTaxChoices = taxSession.getInitialState()
-useStore.subscribe(({ taxYearOverride, taxOverrides }) => {
-  const session = taxSession.getState()
-  const year = taxYearOverride ?? noTaxChoices.year
-  const overrides = taxOverrides ?? noTaxChoices.overrides
-  if (year !== session.year || overrides !== session.overrides)
-    taxSession.setState({ year, overrides })
-})
+// a change to the session's tax-year choices re-runs every selector, as the standards' key does
+taxSession.subscribe((session) => useStore.setState({ taxKey: JSON.stringify(session) }))

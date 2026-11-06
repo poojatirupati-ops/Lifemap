@@ -1,7 +1,5 @@
 import { useMemo } from 'react'
-import { useStore as useVanilla } from 'zustand'
 import { useShallow } from 'zustand/react/shallow'
-import { taxSession } from '../domain/planning/rates.ts'
 import { useStore } from '../state/store.ts'
 import type { Plan } from '../state/types.ts'
 import { useFigures } from './useFigures.ts'
@@ -12,11 +10,11 @@ import { useFigures } from './useFigures.ts'
  */
 export function usePlanFields<K extends keyof Plan>(...keys: K[]) {
   const figures = useFigures()
-  const tax = useVanilla(taxSession)
+  const taxKey = useStore((store) => store.taxKey)
   const fields = useStore(
     useShallow(
       ({ plan }) => Object.fromEntries(keys.map((key) => [key, plan[key]])) as Pick<Plan, K>,
     ),
   )
-  return useMemo(() => ({ ...fields }), [fields, figures, tax])
+  return useMemo(() => ({ ...fields }), [fields, figures, taxKey])
 }

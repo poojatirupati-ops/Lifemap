@@ -28,10 +28,6 @@ function ours(state: any, sheet: string) {
   return withoutRadixStyle(shape(rendered(<SheetHost />)))
 }
 
-// TODO(R-31): settings.ts quotes the 2026 exit tax for every plan year (see assumptions.golden.test.ts)
-const maskExitTax = (lines: string[]) =>
-  lines.map((line) => line.replace(/ less \d+% exit tax/, ''))
-
 const fixture = (name: string) => fixtures.find(([file]) => file === name)![1]
 
 // whyask and save carry the sign-in copy (the login-wall cards changed it on purpose), so they differ
@@ -63,7 +59,7 @@ describe('sheets equal the original', () => {
       if (sheet.startsWith('explain') && name === 'fresh.json') continue
       it(`${sheet} on ${name}`, () => {
         const state = fixture(name)
-        expect(maskExitTax(ours(state, sheet))).toEqual(maskExitTax(theirs(state, sheet)))
+        expect(ours(state, sheet)).toEqual(theirs(state, sheet))
       })
     }
 })

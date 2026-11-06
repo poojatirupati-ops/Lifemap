@@ -89,7 +89,5 @@ export function freshUi(): Ui {
     focusArea: undefined,
     todaysMoney: undefined,
     openAssumption: undefined,
-    taxYearOverride: undefined,
-    taxOverrides: undefined,
   }
 }

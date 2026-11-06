@@ -1,4 +1,5 @@
 // "Your assumptions": the customer's choice for an item, else the standard (or the Cautious set's) or a planning fallback.
+import { localToday } from '../../lib/today'
 import { rulesFor } from './rates'
 import { STANDARDS } from './settings.data'
 import {
@@ -57,8 +58,8 @@ function fallback(key: string, inputs: AssumptionInputs) {
   const { figures, about } = inputs
   switch (key) {
     case 'startYear':
-      // the plan starts this year, on the 2026 rules
-      return 2026
+      // the plan starts this year (2026 at the earliest, the first year with rules)
+      return Math.max(2026, localToday().getFullYear())
     case 'ownShare':
       return figures.work === 'Self-employed' ? 1 : standardValue('ownShare')
     case 'safetyMonths':

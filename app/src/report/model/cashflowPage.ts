@@ -85,7 +85,7 @@ export function cashflowPage(context: ReportContext) {
           : null,
       caption:
         (retirement ? `Pay stops at ${retireAge}. ` : '') +
-        `Costs keep rising. ${stressTest(context.plan).summary}`,
+        `Costs keep rising. ${stressTest(context.plan, undefined, context.projection).summary}`,
     },
   }
 }

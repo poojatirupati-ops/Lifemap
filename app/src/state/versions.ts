@@ -1,4 +1,5 @@
 import { assumption, type AssumptionInputs } from '../domain/planning/assumptions.ts'
+import { taxSession } from '../domain/planning/rates.ts'
 import { taxSnapshot } from '../domain/planning/taxRegister.ts'
 import type { Plan } from './types.ts'
 
@@ -8,9 +9,16 @@ const TODAY = '29 Sep 2026'
 /** The note the next plan save sends as its `snapshot`, so the server keeps that save as a version. */
 let pending: string | undefined
 
+// a version keeps the plan's own tax rules: an adviser's session comparison is never saved with it
+const NO_SESSION = taxSession.getInitialState()
+
 /** Keep a version of the plan in its history, e.g. "Goals changed", with the tax rules it used. */
 export function addVersion(plan: Pick<Plan, 'versions'> & AssumptionInputs, note: string) {
-  plan.versions.push({ note, date: TODAY, tax: taxSnapshot(assumption(plan, 'startYear')) })
+  plan.versions.push({
+    note,
+    date: TODAY,
+    tax: taxSnapshot(assumption(plan, 'startYear'), NO_SESSION),
+  })
   pending = note // several versions between two saves send only the latest note
 }
 

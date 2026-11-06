@@ -1,9 +1,9 @@
+import { useState } from 'react'
 import { useStore as useVanilla } from 'zustand'
 import { percent } from '../../lib/format.ts'
 import { taxSession, type TaxOverride, type TaxSession } from '../../domain/planning/rates.ts'
 import { RULES_2027, TAX_STATUS, type TaxStatus } from '../../domain/planning/rules2027.data.ts'
 import { taxRegister, type TaxRegisterRow } from '../../domain/planning/taxRegister.ts'
-import { useStore } from '../../state/store.ts'
 
 const YEAR_CHOICES = [
   [null, 'Automatic (by plan year)'],
@@ -47,56 +47,78 @@ function editable(path: string) {
   return !!change && !Array.isArray(change.value) && typeof change.value !== 'boolean'
 }
 
-const forceYear = (year: TaxSession['year']) => useStore.setState({ taxYearOverride: year })
+const forceYear = (year: TaxSession['year']) => taxSession.setState({ year })
 
 /** Changes one rule's 2027 value or status for this session; a typed value is announced unless a status was picked. */
 function overrideRule(path: string, change: TaxOverride) {
-  const { taxOverrides = {} } = useStore.getState()
-  const override = { ...taxOverrides[path], ...change }
+  const { overrides } = taxSession.getState()
+  const override = { ...overrides[path], ...change }
   if ('value' in change && change.value != null && !override.status)
     override.status = TAX_STATUS.announced
-  useStore.setState({ taxOverrides: { ...taxOverrides, [path]: override } })
+  taxSession.setState({ overrides: { ...overrides, [path]: override } })
 }
 
-/** "1,200" -> 1200; text that is not a number stays text; blank is no value. */
-function typedValue(text: string) {
-  const typed = text.trim().replace(/,/g, '')
+const PLAIN_NUMBER = /^\d+(\.\d+)?$/
+
+/**
+ * A typed 2027 value, or undefined when refused. Blank is no value. A number rule takes only a number:
+ * "€46,500" -> 46500, "35%" -> 0.35. A text rule (a date) keeps the text.
+ */
+function readValue(path: string, text: string) {
+  const typed = text.trim()
   if (typed === '') return null
-  return isNaN(Number(typed)) ? typed : Number(typed)
+  if (typeof RULES_2027[path].value !== 'number') return typed
+  const digits = typed.replace(/^€\s*/, '').replace(/,/g, '')
+  const rate = digits.endsWith('%')
+  const figure = rate ? digits.slice(0, -1).trim() : digits
+  if (!PLAIN_NUMBER.test(figure)) return undefined
+  return rate ? Number(figure) / 100 : Number(figure)
 }
 
 function RuleEditor({ row, override }: { row: TaxRegisterRow; override?: TaxOverride }) {
   const shown = String(override?.value ?? RULES_2027[row.path].value)
+  const [refused, setRefused] = useState(false)
   return (
-    <span className="row" style={{ gap: 6, marginTop: 4 }}>
-      <input
-        key={shown}
-        className="in"
-        style={{ maxWidth: 120 }}
-        aria-label={`2027 value for ${row.name}`}
-        data-taxov={row.path}
-        data-k="v"
-        defaultValue={shown}
-        inputMode="decimal"
-        onBlur={(event) => {
-          if (event.target.value !== shown)
-            overrideRule(row.path, { value: typedValue(event.target.value) })
-        }}
-      />
-      <select
-        className="in"
-        style={{ maxWidth: 190 }}
-        aria-label={`Status for ${row.name}`}
-        data-taxov={row.path}
-        data-k="status"
-        value={row.status2027}
-        onChange={(event) => overrideRule(row.path, { status: event.target.value as TaxStatus })}
-      >
-        {Object.values(TAX_STATUS).map((status) => (
-          <option key={status}>{status}</option>
-        ))}
-      </select>
-    </span>
+    <>
+      <span className="row" style={{ gap: 6, marginTop: 4 }}>
+        <input
+          key={shown}
+          className="in"
+          style={{ maxWidth: 120 }}
+          aria-label={`2027 value for ${row.name}`}
+          data-taxov={row.path}
+          data-k="v"
+          defaultValue={shown}
+          inputMode="decimal"
+          onBlur={(event) => {
+            const input = event.target
+            if (input.value === shown) return setRefused(false)
+            const value = readValue(row.path, input.value)
+            setRefused(value === undefined)
+            if (value === undefined) input.value = shown
+            else overrideRule(row.path, { value })
+          }}
+        />
+        <select
+          className="in"
+          style={{ maxWidth: 190 }}
+          aria-label={`Status for ${row.name}`}
+          data-taxov={row.path}
+          data-k="status"
+          value={row.status2027}
+          onChange={(event) => overrideRule(row.path, { status: event.target.value as TaxStatus })}
+        >
+          {Object.values(TAX_STATUS).map((status) => (
+            <option key={status}>{status}</option>
+          ))}
+        </select>
+      </span>
+      {refused ? (
+        <span className="small" role="alert" style={{ display: 'block', color: 'var(--alert-t)' }}>
+          That is not a number, so it was not used. Type a figure such as 46,500 or 35%.
+        </span>
+      ) : null}
+    </>
   )
 }
 
@@ -151,7 +173,9 @@ export default function TaxRegister() {
   const { year, overrides } = useVanilla(taxSession)
   const rows = taxRegister(overrides)
   const count = (status: TaxStatus) => rows.filter((row) => row.status2027 === status).length
-  const categories = Map.groupBy(rows, (row) => row.category)
+  // rows by category, in register order (Map.groupBy needs Safari 17.4)
+  const categories: Record<string, TaxRegisterRow[]> = {}
+  for (const row of rows) (categories[row.category] ??= []).push(row)
   return (
     <details className="card asmg" data-g="set-tax">
       <summary style={summary}>Tax rules register: 2026 and 2027 ({rows.length} figures)</summary>
@@ -183,9 +207,9 @@ export default function TaxRegister() {
         </div>
         <p className="small" style={{ margin: '0 0 8px' }}>
           Forcing a year is for comparing scenarios; it changes this plan only, not the register.
-          Changes made below apply to this session (the prototype has no shared database yet).
+          Changes made below apply to this session only.
         </p>
-        {[...categories].map(([category, inCategory]) => (
+        {Object.entries(categories).map(([category, inCategory]) => (
           <details
             key={category}
             className="card"
@@ -200,7 +224,7 @@ export default function TaxRegister() {
           </details>
         ))}
         {Object.keys(overrides).length ? (
-          <button className="link" onClick={() => useStore.setState({ taxOverrides: undefined })}>
+          <button className="link" onClick={() => taxSession.setState({ overrides: {} })}>
             Remove all my changes
           </button>
         ) : null}

@@ -21,10 +21,18 @@ Object.assign(globalThis, {
 // the original's dispatcher hooks, dropped on purpose; a picked option is a property in React
 const IGNORED = new Set(['data-a', 'data-p', 'data-set', 'data-setname', 'selected'])
 
+// the tax register's note drops the prototype's aside about its missing database, on purpose
+const SESSION_NOTE = [
+  'apply to this session (the prototype has no shared database yet).',
+  'apply to this session only.',
+] as const
+
 function originalView() {
   original.setState(original.fresh())
   original.applyAssume()
-  return shape(original.settingsHTML(), IGNORED)
+  return shape(original.settingsHTML(), IGNORED).map((line) =>
+    line.replace(SESSION_NOTE[0], SESSION_NOTE[1]),
+  )
 }
 
 function ourView() {
