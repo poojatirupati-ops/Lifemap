@@ -12,7 +12,7 @@ import HdrBar from '../../src/components/frame/HdrBar.tsx'
 import TitleBlock from '../../src/components/frame/TitleBlock.tsx'
 import { queryClient } from '../../src/auth/planSync.ts'
 import { ADVISERS, type Adviser } from '../../src/bookings/bookings.ts'
-import { stageOf } from '../../src/domain/identity/booking.ts'
+import { specialistOf, stageOf } from '../../src/domain/identity/booking.ts'
 import { useStore } from '../../src/state/store'
 import { seedContent } from '../content/seed'
 
@@ -56,7 +56,12 @@ function ours(state: any) {
   const { plan } = useStore.getState()
   // the original's S.exp is the URL now (/experts or /experts/c0 to c4)
   const stage = stageOf(state.exp ?? 'home', plan.booking.done)
-  const { title, sub, back } = headOf(plan, stage, advisers[plan.booking.adviser].name)
+  const specialist = specialistOf(plan)
+  const { title, sub, back } = headOf(stage, {
+    kind: specialist.kind,
+    hasResults: plan.hasResults,
+    adviserName: advisers[plan.booking.adviser].name,
+  })
   const head = (
     <>
       <HdrBar back={back && (() => {})} bell />
@@ -66,7 +71,7 @@ function ours(state: any) {
   return {
     id: STAGES[stage].id,
     head: shape(rendered(head)),
-    body: shape(rendered(<Body stage={stage} />)),
+    body: shape(rendered(<Body stage={stage} specialist={specialist} />)),
     foot: shape(stage === 'booked' ? '' : rendered(<ExpertsFoot stage={stage} />)),
   }
 }

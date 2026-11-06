@@ -5,6 +5,7 @@ import { useDialogFocus } from '../hooks/useDialogFocus.ts'
 import { closeReport } from '../shell/router.ts'
 import { toast } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
+import { useFigures } from '../hooks/useFigures.ts'
 import { localToday } from '../lib/today.ts'
 import { reportData } from './model/reportData.ts'
 import { reportPages } from '../components/report/reportPages.tsx'
@@ -33,7 +34,8 @@ function useFitScale() {
 
 export default function ReportDialog() {
   const plan = useStore((state) => state.plan)
-  const data = useMemo(() => reportData(plan, localToday()), [plan])
+  const figures = useFigures()
+  const data = useMemo(() => reportData(plan, localToday()), [plan, figures])
   const [message, setMessage] = useState<{ text: string; bad?: boolean } | null>(null)
   const [saving, setSaving] = useState(false)
   const focus = useDialogFocus(downloadButton)
@@ -70,12 +72,7 @@ export default function ReportDialog() {
           <style>{css}</style>
           <div className="rep-bar">
             <b>Your plan</b>
-            <button
-              data-r="print"
-              style={{ background: 'var(--sun)', color: 'var(--ink)' }}
-              disabled={saving}
-              onClick={download}
-            >
+            <button data-r="print" disabled={saving} onClick={download}>
               ⬇ Download my plan
             </button>
             <span
@@ -86,7 +83,7 @@ export default function ReportDialog() {
                 fontSize: 13,
                 fontWeight: 700,
                 flex: '1 1 220px',
-                color: message ? (message.bad ? '#FFD2CF' : '#C9F2DD') : undefined,
+                color: message ? (message.bad ? '#B23A1F' : '#086A74') : undefined,
               }}
             >
               {message?.text}

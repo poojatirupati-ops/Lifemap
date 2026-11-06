@@ -219,7 +219,7 @@ export const document = pgTable(
 );
 
 /** pending until Cal.com's webhook books it; then cancelled, ended or no_show (CalService). */
-export const BOOKING_STATUSES = ["pending", "booked", "cancelled", "ended", "no_show"] as const;
+const BOOKING_STATUSES = ["pending", "booked", "cancelled", "ended", "no_show"] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 // Adviser meetings, booked through Cal.com. `adviserId` = the adviser's user id (a member with role adviser). `share` = what the customer agreed to share;
@@ -245,14 +245,15 @@ export const booking = pgTable(
   ],
 );
 
-// Cal.com webhook deliveries, one row per (cal uid, trigger): a retried delivery never adds a second row. Billing reads the published events, not this table.
+// Cal.com webhook deliveries, one row per (cal uid, trigger): a retried delivery never adds a second row, and republishes only when `status` is set. Billing reads the published events, not this table.
 export const bookingEvent = pgTable(
   "booking_event",
   {
     id: serial("id").primaryKey(),
     bookingId: text("booking_id").notNull().references(() => booking.id, { onDelete: "cascade" }),
     calUid: text("cal_uid").notNull(),
-    trigger: text("trigger").notNull(),
+    trigger: text("trigger").notNull(), // BOOKING_NO_SHOW_UPDATED carries its flag and createdAt (":true:<createdAt>"), so each mark and unmark is its own delivery
+    status: text("status").$type<BookingStatus>(), // the status this delivery set; null when the transition was rejected (nothing published)
     at: timestamp("at").notNull().defaultNow(),
   },
   (t) => [unique("booking_event_cal_uid_trigger_unique").on(t.calUid, t.trigger), index("booking_event_booking_idx").on(t.bookingId)],

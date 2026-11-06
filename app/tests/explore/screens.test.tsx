@@ -13,7 +13,7 @@ beforeEach(() => {
 test('XPL-01: works before a plan, with no what-ifs', async () => {
   const { container } = await renderAt('/explore')
   expect(container.querySelector('[data-a="gowi"]')).toBeNull()
-  expect(container.querySelectorAll('[data-a="cat"]')).toHaveLength(6)
+  expect(container.querySelectorAll('[data-a="cat"]')).toHaveLength(7)
 })
 
 test('XPL-CAT: a group with statements shows the upload card above its calculators', async () => {

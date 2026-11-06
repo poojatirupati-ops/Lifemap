@@ -4,7 +4,7 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { mockClient } from "aws-sdk-client-mock";
 import { afterEach, expect, test, vi } from "vitest";
 import { buildApp } from "./app";
-import { OTP_SENDS_PER_EMAIL, createAuth, logOtp, sesOtp } from "./auth";
+import { OTP_SENDS_PER_EMAIL, createAuth, logOtp, mailOtp } from "./auth";
 import { member, organization, user } from "./db/schema";
 import { pgliteDb } from "./db/devSetup";
 import { testApp } from "./testing";
@@ -68,7 +68,9 @@ test("SES sender: to the user, from the verified sender as LifeMap, code only in
   const logs = [vi.spyOn(console, "log"), vi.spyOn(console, "info"), vi.spyOn(console, "warn"), vi.spyOn(console, "error")];
   const db = await pgliteDb();
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
-  const app = await buildApp(db, sesOtp(new SESv2Client({ region: "eu-west-1", credentials: { accessKeyId: "test", secretAccessKey: "test" } }), "noreply@lifemap.example"), devFiles(tmpdir()));
+  vi.stubEnv("OTP_SENDER", "ses");
+  vi.stubEnv("OTP_FROM", "noreply@lifemap.example");
+  const app = await buildApp(db, mailOtp, devFiles(tmpdir()));
   const res = await app.request("/api/auth/email-otp/send-verification-otp", {
     method: "POST",
     headers: { "content-type": "application/json", origin: "http://localhost:3000" },
@@ -87,6 +89,7 @@ test("SES sender: to the user, from the verified sender as LifeMap, code only in
   expect(out).not.toMatch(/ann@example/);
   logs.forEach((l) => l.mockRestore());
   ses.restore();
+  vi.unstubAllEnvs();
 });
 
 test("tenant invitation email goes through SES from the tenant, with the accept link", async () => {

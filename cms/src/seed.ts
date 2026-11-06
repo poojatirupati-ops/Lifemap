@@ -30,7 +30,7 @@ const ref = (collection: string) => (id: number | null | undefined) => (id == nu
 const relink: Partial<Record<CollectionSlug, (d: Doc) => Doc>> = {
   calculators: (d) => ({ ...d, category: ref('explore-categories')(d.category) }),
   topics: (d) => ({ ...d, category: ref('explore-categories')(d.category), tools: d.tools?.map(ref('calculators')) }),
-  videos: (d) => ({ ...d, captions: ref('media')(d.captions) }),
+  videos: (d) => ({ ...d, captions: ref('media')(d.captions), topic: ref('topics')(d.topic) }),
   journeys: (d) => ({
     ...d,
     topic: ref('topics')(d.topic),

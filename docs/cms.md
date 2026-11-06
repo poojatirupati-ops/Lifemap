@@ -22,13 +22,13 @@ Admin group "Content" (all with drafts, versions (50 per doc) and scheduled publ
 
 | Slug | What | App source it was seeded from |
 |---|---|---|
-| `videos` | title, topic (`kind`), presenter, role, calculator, video (uploaded from the browser to Vimeo, below) or Vimeo URL, captions (.vtt upload), transcript, running time; with a Vimeo URL, `vimeoId`, `thumbnailUrl` and empty `duration` are filled from Vimeo oEmbed on save | `components/explore/videos.data.ts` |
-| `topics` (Focus areas) | name, emoji, blurb, expert, category, picture, calculators, order | `components/explore/explore.data.ts` |
+| `videos` | title, topic (`kind`), the focus area it is tagged with (for focus areas that show tagged videos only), presenter, role, calculator, video (uploaded from the browser to Vimeo, below) or Vimeo URL, captions (.vtt upload), transcript, running time; with a Vimeo URL, `vimeoId`, `thumbnailUrl` and empty `duration` are filled from Vimeo oEmbed on save | `components/explore/videos.data.ts` |
+| `topics` (Focus areas) | name, emoji, blurb, expert, category, picture, calculators, tagged videos only (Loans), order | `components/explore/explore.data.ts` |
 | `explore-categories` | calculator groups | `components/explore/tools.data.ts` |
 | `calculators` | name, intro question, emoji, category, optional help (rich text) | `components/explore/tools.data.ts` |
-| `journeys` (Journeys) | Mortgages page (Buying, Switching, Borrowing more): calculator cards, story videos, reading, live sessions | `components/mortgages/mortgages.data.ts` |
+| `journeys` (Journeys) | a focus area's own page, Mortgages (Buying, Switching, Borrowing more) and Loans (Taking a loan, Credit cards, Several debts): calculator cards, story videos (with a thumbnail photo before filming), reading, live sessions | `components/mortgages/mortgages.data.ts` |
 | `live-sessions` | when, title, expert, shown on Explore | `explore.data.ts`, `mortgages.data.ts` |
-| `articles` | article / FAQ / link, body | mortgages reading lists (titles only so far) |
+| `articles` | article / FAQ / link, card photo, body | mortgages reading lists (titles only so far) |
 | `ask-answers` | key, question, answer (rich text) | `components/ask/topics.tsx` (general topics + advice guard) |
 | `personality-types` | code A/B/E/C, name, strapline, strengths, watch-out | `domain/identity/personality.data.ts` |
 | `legal-pages` | title, slug, `version` (= the app's `NOTICE_VERSION`), body | none in the app: a draft "Privacy notice" 2026-10 for legal to fill in |

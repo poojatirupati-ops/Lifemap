@@ -12,6 +12,7 @@ import { fieldInfo } from '../../domain/calc/guide.ts'
 import type { CalcInput, Calculator } from '../../domain/calc/types.ts'
 import { missingFigures, showsExample, toolFigures } from '../../domain/calc/values.ts'
 import { useStore } from '../../state/store.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 import { categoryById, toolById } from '../explore/tools.data.ts'
 
 function calculatorView(calculator: Calculator, plan: ToolPlan) {
@@ -48,5 +49,6 @@ function calculatorView(calculator: Calculator, plan: ToolPlan) {
 export function useCalculator(param: string) {
   const calculator = calculatorFor(param)
   const plan = useStore(useShallow((store) => toolPlan(store.plan, store, calculator.id)))
-  return useMemo(() => calculatorView(calculator, plan), [calculator, plan])
+  const figures = useFigures() // the standards a tool falls back on
+  return useMemo(() => calculatorView(calculator, plan), [calculator, plan, figures])
 }

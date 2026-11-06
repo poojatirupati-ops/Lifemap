@@ -1,4 +1,5 @@
 // The standards the app suggests: LifeMap's own, or a partner's figure where one is set.
+import { createStore } from 'zustand'
 import { percentToTenth, wholePercent } from '../../lib/format'
 import { rules2026, type Rules } from './rates'
 import {
@@ -28,28 +29,28 @@ export const defaultSettings: Settings = {
 export type PartnerFigures = Partial<Record<string, StandardValue>>
 
 /** LifeMap's standards with a partner's own figures over them. */
-export function withPartnerFigures(partner: string, figures: PartnerFigures = {}): Settings {
+export function withPartnerFigures(partner: string, partnerFigures: PartnerFigures = {}): Settings {
   const settings = structuredClone(defaultSettings)
   settings.partner = partner
-  for (const [key, figure] of Object.entries(figures)) {
+  for (const [key, figure] of Object.entries(partnerFigures)) {
     const standard = settings.standards[key as StandardKey]
     if (standard && figure != null) Object.assign(standard, { partnerValue: figure })
   }
   return settings
 }
 
-let current = { settings: defaultSettings, key: '' }
+/** The standards in use and the tenant figures they came from (key '' for LifeMap's own). */
+export const figures = createStore(() => ({ settings: defaultSettings, key: '' }))
 
-/** The standards the planning maths uses: LifeMap's, with the active tenant's figures over them. */
-export const settingsInUse = () => current.settings
+/** The standards the planning maths uses: LifeMap's, with the active tenant's figures over them (a new object once they change). */
+export const settingsInUse = () => figures.getState().settings
 
-/** Use the active tenant's figures from now on; false when they are the ones already in use. */
-export function applyTenantFigures(partner: string, figures: PartnerFigures = {}) {
+/** Use the active tenant's figures from now on. */
+export function applyTenantFigures(partner: string, partnerFigures: PartnerFigures = {}) {
   // the partner's name shows only beside its figures
-  const key = Object.keys(figures).length ? JSON.stringify([partner, figures]) : ''
-  if (key === current.key) return false
-  current = { settings: withPartnerFigures(partner, figures), key }
-  return true
+  const key = Object.keys(partnerFigures).length ? JSON.stringify([partner, partnerFigures]) : ''
+  if (key !== figures.getState().key)
+    figures.setState({ settings: withPartnerFigures(partner, partnerFigures), key })
 }
 
 const inUse = (standard?: Standard) => standard?.partnerValue ?? standard?.value

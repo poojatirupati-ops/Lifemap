@@ -37,8 +37,25 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: eu-west-1
-      - run: npx sst deploy --stage "$STAGE"
-      # Migrations run after the deploy, so they must be backwards compatible (add, then remove in a later release).
+      # The database only exists after a stage's first deploy: a new stage deploys, then migrates, before the smoke test.
+      # A deployed stage migrates first, so the code being deployed never meets an old schema.
+      - name: Is the stage deployed?
+        id: stage
+        # Exit 3 = sst shell ran but the stage links no Db (never deployed). Any other failure (credentials, sst itself) fails the job.
+        run: |
+          set +e
+          npx sst shell --stage "$STAGE" -- node -e 'process.exit(process.env.SST_RESOURCE_Db ? 0 : 3)'
+          code=$?
+          set -e
+          case $code in
+            0) echo "new=false" >> "$GITHUB_OUTPUT" ;;
+            3) echo "new=true" >> "$GITHUB_OUTPUT" ;;
+            *) exit "$code" ;;
+          esac
+      - if: steps.stage.outputs.new == 'true'
+        run: npx sst deploy --stage "$STAGE"
+      # Migrations run before the deploy, so the code still running meets the new schema: add first; drop or rename only in a later
+      # release, once no deployed code reads it. No stage had been deployed before api/drizzle/0010 dropped columns, so no old code meets that drop.
       # RDS is private: `sst tunnel` routes the VPC through the bastion (the NAT instance) for this job.
       - name: Open tunnel to the VPC
         run: |
@@ -54,6 +71,8 @@ jobs:
             npm run migrate -w api
             npm run payload -w cms -- migrate
           '
+      - if: steps.stage.outputs.new == 'false'
+        run: npx sst deploy --stage "$STAGE"
       - name: Smoke test
         id: smoke
         run: |

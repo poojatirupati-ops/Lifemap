@@ -1,6 +1,7 @@
 // Adviser bookings on the server: GET /api/advisers, POST/GET /api/bookings. Cal.com books, moves and cancels the meeting; its webhook
 // updates the server, and the app refetches. The adviserBooking flag is useFeature in shell/tenant.ts.
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { authClient } from '../auth/client.ts'
 import { queryClient, send } from '../auth/planSync.ts'
 import { slotLabel } from '../domain/identity/booking.ts'
 import { toast } from '../state/shell.ts'
@@ -12,6 +13,7 @@ export const SHARE_VERSION = '2026-11'
 
 /** Cal.com (EU by default): the embed, its script and the cancel page. */
 export const CAL_ORIGIN = import.meta.env.VITE_CAL_ORIGIN ?? 'https://app.cal.eu'
+export const EMBED_JS = `${CAL_ORIGIN}/embed/embed.js`
 
 export interface Adviser {
   id: string
@@ -34,6 +36,12 @@ export interface Booking {
   calUid: string | null
   startsAt: string | null
 }
+
+/** A member role is the tenant role adviser (Better Auth keeps several roles comma-separated). */
+export const isAdviser = (role = '') => role.split(',').includes('adviser')
+
+/** The session's member has the tenant role adviser. */
+export const useIsAdviser = () => isAdviser(authClient.useActiveMember().data?.role)
 
 export const BOOKINGS = ['bookings']
 export const ADVISERS = ['advisers']
@@ -65,7 +73,7 @@ export function useAdviser(): Adviser | undefined {
 
 /**
  * The caller's bookings, newest first. Keeps plan.booking in step with the server (so Me sees it too): done and the time of the confirmed
- * booking; a booking cancelled on Cal.com clears the share picks.
+ * booking; once it is over (cancelled on Cal.com, ended or a no-show) the share picks and agreement clear too.
  */
 export function useBookings(refetchInterval: number | false = false) {
   return (
@@ -75,10 +83,11 @@ export function useBookings(refetchInterval: number | false = false) {
         queryFn: async () => {
           const { bookings } = await call<{ bookings: Booking[] }>('GET', '/api/bookings')
           const active = bookings.find((b) => b.status === 'booked')
-          const { plan, update, bookingCancelled } = useStore.getState()
+          const { plan, update, bookingOver } = useStore.getState()
           const slot = active?.startsAt ? slotLabel(new Date(active.startsAt)) : plan.booking.slot
-          if (!active && plan.booking.done && bookings[0]?.status === 'cancelled')
-            bookingCancelled()
+          // with no booked one, the newest that is not pending was cancelled, ended or a no-show
+          const over = bookings.find((b) => b.status !== 'pending')
+          if (!active && plan.booking.done && over) bookingOver(over.status === 'cancelled')
           else if (plan.booking.done !== !!active || plan.booking.slot !== slot)
             update((p) => void Object.assign(p.booking, { done: !!active, slot }))
           return bookings
@@ -90,10 +99,16 @@ export function useBookings(refetchInterval: number | false = false) {
   )
 }
 
+/** The newest pending booking, if any. */
+export const newestPending = (bookings: Booking[]) => bookings.find((b) => b.status === 'pending')
+
+/** Booked on Cal.com (it has a calUid) but its webhook has not confirmed it here yet. */
+export const useConfirming = () => !!newestPending(useBookings())?.calUid
+
 /** The live (confirmed, not cancelled) booking, or null. */
 export const useActiveBooking = () => useBookings().find((b) => b.status === 'booked') ?? null
 
-/** Records the share picks as a pending booking, then opens the adviser's Cal.com calendar (c3) for it. */
+/** Records the share picks as the pending booking (the open one, if any), then opens the adviser's Cal.com calendar (c3) for it. */
 export const postBooking = ({ booking }: Pick<Plan, 'booking'>, adviserId: string) =>
   call<{ booking: Booking }>('POST', '/api/bookings', {
     adviserId,
@@ -110,8 +125,12 @@ export function useBook() {
   return useMutation(
     {
       mutationFn: (adviserId: string) => postBooking(useStore.getState().plan, adviserId),
+      // the server hands back the caller's open pending booking rather than a new one
       onSuccess: ({ booking }) => {
-        queryClient.setQueryData<Booking[]>(BOOKINGS, (bookings = []) => [booking, ...bookings])
+        queryClient.setQueryData<Booking[]>(BOOKINGS, (bookings = []) => [
+          booking,
+          ...bookings.filter((b) => b.id !== booking.id),
+        ])
         useStore.getState().showStage('c3')
       },
       onError: () => toast("We couldn't start the booking. Please try again."),

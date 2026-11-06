@@ -26,7 +26,7 @@ SST has no "previous version" command: deploy the previous release again.
 1. GitHub > Actions > Deploy > the run for the last good release > **Re-run all jobs** (it redeploys that commit; approve in the `production` environment).
 2. Or from a laptop: `git checkout <last-good-tag> && LIFEMAP_EMAIL_SENDER=<sender> npx sst deploy --stage production`.
 
-Migrations are not rolled back. They are additive by rule (deploy.yml runs them after the code), so old code runs on the newer schema. If a migration itself is wrong, write a new one and release it.
+Migrations are not rolled back. They are additive by rule (deploy.yml runs them before the code, except on a stage's first deploy), so old code runs on the newer schema, including after a rollback. If a migration itself is wrong, write a new one and release it.
 
 ## Restore RDS from backup
 
@@ -92,12 +92,14 @@ Secrets Manager rotation is not used: the Proxy secret is written by SST from `D
 Adviser bookings (card C-CAL) are confirmed, moved and cancelled by Cal.com, which calls the Api. Each tenant's advisers sit in one Cal.com team (EU: app.cal.eu) with one team webhook:
 
 1. Advisers: make each one a member of the tenant with role `adviser` (tenant admin: invite with that role), then the adviser sets their own Cal.com link and card with Better Auth's update-user: `POST /api/auth/update-user` `{ "calLink": "<user>/<event>", "adviserProfile": { "qualifications": "...", "languages": "...", "location": "...", "meetingMode": "..." } }`. They are listed on the Experts tab from then on.
-2. In Cal.com: the team > Settings > Webhooks > New. Subscriber URL `<appUrl>/api/webhooks/cal/<organization id>`. Triggers: Booking created, Booking rescheduled, Booking cancelled, Meeting ended, Booking no-show updated, After hosts / guests Cal Video no-show. Payload template: default. Secret: `openssl rand -hex 32`.
+2. In Cal.com: the team > Settings > Webhooks > New. Subscriber URL `<appUrl>/api/webhooks/cal/<organization id>`. Triggers: Booking requested, Booking rejected, Booking created, Booking rescheduled, Booking cancelled, Meeting ended, Booking no-show updated, After hosts / guests Cal Video no-show. Payload template: default. Secret: `openssl rand -hex 32`.
 3. Store the secret in the stage's `CalWebhookSecrets` (JSON, one entry per tenant), then redeploy:
    `npx sst secret set CalWebhookSecrets '{"lifemap-direct":"<secret>","<org id>":"<secret>"}' --stage <stage>`
 4. Check: Cal.com's "Ping test" must not get 401 (that means the secret or the organization id is wrong). A booking made through the app shows `booked` in `GET /api/bookings`.
 
-The Api answers 401 to a bad signature, 200 to a delivery it recorded or does not track, and 500 when publishing to the `Bookings` bus failed, so Cal.com retries (a retry never adds a second `booking_event` row and publishes again). Rotate a secret: add it in Cal.com, set it in `CalWebhookSecrets`, redeploy.
+The Api answers 401 to a bad signature, 200 to a delivery it recorded or does not track, 409 when a reschedule arrives before the one it follows, and 500 when publishing to the `Bookings` bus failed; Cal.com retries the last two (a retry never adds a second `booking_event` row, and publishes again only if the first delivery applied). The organizer of a requested, created or rescheduled booking must be the adviser whose `calLink` the booking was made with; otherwise the delivery is logged and not applied. Details: api/README.md. Rotate a secret: add it in Cal.com, set it in `CalWebhookSecrets`, redeploy.
+
+Known gap: a customer who opens adviser A's embed, then books adviser B before A's BOOKING_CREATED arrives, has the A booking cancelled by the B booking (only one adviser holds the share). A's later webhooks are rejected, so A's meeting, if it was booked on Cal.com, is not tracked in LifeMap; the adviser cancels it in Cal.com.
 
 ## Personal data breach (GDPR Art. 33-34)
 

@@ -138,8 +138,8 @@ const PHOTOS: Record<string, { variable: string; alt: string }> = {
     alt: 'A team of advisers around a table of charts',
   },
   'magnifier-map': {
-    variable: '--cover-photo',
-    alt: 'A hand holding a magnifying glass over a map',
+    variable: '--art-roadtrip',
+    alt: 'Feet up on a car dashboard with a road map, looking out over a bright coastline',
   },
 }
 

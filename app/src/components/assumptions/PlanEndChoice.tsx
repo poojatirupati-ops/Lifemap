@@ -5,12 +5,14 @@ import { useStore } from '../../state/store.ts'
 import AgeChoice from '../finance/AgeChoice.tsx'
 import { choosePlanEnd } from '../../state/choices.ts'
 import { planEndRange } from '../../domain/goals/retirement.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const { lifeMen65, lifeWomen65 } = GUIDANCE_FIGURES
 const HELP = `At 65, average life expectancy in Ireland is about ${lifeMen65.value} for men and ${lifeWomen65.value} for women (${lifeMen65.by}). Choose the age you want to plan to.`
 
 /** Plan until age: only the customer chooses it (step 7, Your assumptions, the calculators). */
 export default function PlanEndChoice() {
+  useFigures()
   const plan = useStore(
     useShallow(({ plan }) => ({
       assumptions: plan.assumptions,

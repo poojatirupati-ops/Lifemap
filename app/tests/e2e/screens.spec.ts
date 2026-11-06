@@ -5,7 +5,7 @@ const APP = process.env.APP ?? 'http://localhost:5173/'
 // Set with --update-snapshots to capture baselines from the original prototype.
 const baseline = !!process.env.LM_BASELINE
 
-type Step = { click: string } | { jump: string } | { scroll: string }
+type Step = { click: string } | { jump: string } | { scroll: string } | { area: string }
 // Login comes first (O-01): the test bypass passes the wall and the D0 jump is a fresh, not yet onboarded plan.
 const welcome: Step = { jump: 'D0' }
 const start: Step = { click: "Let's start" }
@@ -22,6 +22,8 @@ const screens: { name: string; steps: Step[]; maxDiffPixelRatio?: number; fromAp
   // The foundations pyramid on Results (full, with the next best step) and Home (compact).
   { name: 'results-foundations', steps: [{ jump: 'PLAN' }, { scroll: '#r-fnd' }] },
   { name: 'home-foundations', steps: [{ jump: 'HOME' }, { scroll: '#h-fnd' }] },
+  // The Loans topic page has no jump of its own in the original: Explore, the Loans focus area, then See more.
+  { name: 'loans', steps: [{ jump: 'XPL-01' }, { area: 'Loans' }, { click: 'See more' }] },
 ]
 const tweak = (name: string, options: object) =>
   Object.assign(
@@ -74,7 +76,9 @@ for (const { name, steps, maxDiffPixelRatio, fromApp } of screens) {
         // the pyramid builds itself once in view (fndWatch); wait for the rows to settle
         await expect(page.locator(`${step.scroll} .fnd2.seen`)).toBeVisible()
         await page.waitForTimeout(1500)
-      } else await page.getByText(step.click, { exact: true }).first().click()
+      } else if ('area' in step)
+        await page.getByRole('group', { name: 'Choose an area' }).getByRole('button', { name: step.area }).click()
+      else await page.getByText(step.click, { exact: true }).first().click()
     }
     await expect(page).toHaveScreenshot(
       `${name}.png`,

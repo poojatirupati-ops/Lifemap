@@ -8,7 +8,11 @@ import AppScreen from '../../../../components/frame/AppScreen.tsx'
 import Emo from '../../../../components/ui/Emo.tsx'
 import { LAW_TEXT, rulesFor } from '../../../../domain/planning/rates.ts'
 import { assumption } from '../../../../domain/planning/assumptions.ts'
-import { prsiYears, statePensionFromYears, statementKind } from '../../../../domain/calc/statements.ts'
+import {
+  prsiYears,
+  statePensionFromYears,
+  statementKind,
+} from '../../../../domain/calc/statements.ts'
 import { isExample } from '../../../../domain/finances/upload.ts'
 import { prefersReducedMotion } from '../../../../hooks/reducedMotion.ts'
 import { useStore } from '../../../../state/store.ts'

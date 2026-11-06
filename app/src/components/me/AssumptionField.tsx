@@ -25,6 +25,7 @@ import {
   typedFigure,
   valueInUse,
 } from '../../domain/planning/assumptionText.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 const UNIT = {
   pct: '%',
@@ -88,6 +89,7 @@ function UnknownRateChips({ rate, field }: { rate: string; field: AdviserRateFie
 
 /** One assumption: label and tag, a number box or chips, a way back, and how LifeMap sets it. */
 export default function AssumptionField({ name }: { name: string }) {
+  useFigures()
   const field = ASSUMPTIONS[name]
   const view = useStore(
     useShallow(({ plan }) => ({

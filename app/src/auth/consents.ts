@@ -1,3 +1,4 @@
+import { MutationObserver } from '@tanstack/react-query'
 import { queryClient, send } from './planSync.ts'
 import { toast } from '../state/shell.ts'
 
@@ -15,30 +16,65 @@ interface Choices {
 
 /**
  * Records the notice acknowledgement (`terms`, contract basis) and the optional consents, granted or withdrawn.
- * Tries 3 times; returns whether it was saved and tells the user when it was not.
+ * Returns whether it was saved.
  */
-export async function postConsents({ terms, marketing, analytics }: Choices) {
-  const body = {
+export const postConsents = ({ terms, marketing, analytics }: Choices) =>
+  saveConsents({
     notice: terms ? NOTICE_VERSION : undefined,
     marketing: { granted: marketing, version: MARKETING_VERSION },
     analytics:
       analytics === undefined ? undefined : { granted: analytics, version: ANALYTICS_VERSION },
-  }
-  for (const wait of [0, 1000, 3000]) {
-    if (wait) await new Promise((resolve) => setTimeout(resolve, wait))
-    const response = await send('POST', '/api/consents', body).catch(() => null)
-    if (response?.ok) {
-      void queryClient.invalidateQueries({ queryKey: ['consents'] }) // read by the analytics provider
-      return true
-    }
-  }
-  toast("Your privacy choice couldn't be saved. Please try again.")
-  return false
+  })
+
+/** POST /api/consents, tried 3 times; re-reads the consents when saved and tells the user when not. */
+export async function saveConsents(body: object) {
+  const saving = new MutationObserver(queryClient, {
+    mutationFn: async () => {
+      const response = await send('POST', '/api/consents', body)
+      if (!response.ok) throw new Error(`consents ${response.status}`)
+    },
+    retry: 2,
+    retryDelay: (failures) => [1000, 3000][failures],
+    networkMode: 'always', // offline it fails at once and says so, rather than waiting on the details screen
+  })
+  const saved = await saving.mutate().then(
+    () => true,
+    () => false,
+  )
+  if (saved)
+    void queryClient.invalidateQueries({ queryKey: CONSENTS_KEY }) // read by the analytics provider
+  else toast("Your privacy choice couldn't be saved. Please try again.")
+  return saved
 }
 
-/** Whether this account has acknowledged the privacy notice in this tenant: no means it is new here. */
-export async function hasAcknowledgedNotice() {
-  const response = await send('GET', '/api/consents').catch(() => null)
-  const state: { notice?: unknown } | null = response?.ok ? await response.json() : null
-  return !!state?.notice
+/** GET /api/consents: the account's consent records in this tenant, and the privacy notice version it acknowledged (none when new). */
+export interface ConsentState {
+  consents: Partial<Record<string, { granted: boolean; version: string }>>
+  notice?: string | null
+}
+
+/** Every account's consents (to remove them all); one account's are under ['consents', its email]. */
+export const CONSENTS_KEY = ['consents']
+
+/** The account's consents, so one account's answer is never read for another on the same browser. */
+export const consentsQuery = (email: string) => ({
+  queryKey: [...CONSENTS_KEY, email.toLowerCase()],
+  queryFn: async (): Promise<ConsentState> => {
+    const response = await send('GET', '/api/consents')
+    if (!response.ok) throw new Error(`consents ${response.status}`)
+    return response.json()
+  },
+  staleTime: Infinity, // changes only by setAnalyticsConsent and postConsents (which invalidates it)
+})
+
+/**
+ * Whether this account has acknowledged the privacy notice in this tenant (no means it is new here), read afresh. Offline it waits
+ * for the connection, and it keeps asking (backing off, paused while the page is hidden) until the API answers; it rejects only when
+ * cancelled (sign-out).
+ */
+export async function hasAcknowledgedNotice(email: string) {
+  const query = consentsQuery(email)
+  // a read already in flight (analytics, before an invitation switched the tenant) may be the old tenant's: don't join it
+  await queryClient.cancelQueries({ queryKey: query.queryKey })
+  return !!(await queryClient.fetchQuery({ ...query, staleTime: 0, retry: true })).notice
 }

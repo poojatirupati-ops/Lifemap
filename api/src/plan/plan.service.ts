@@ -3,7 +3,7 @@ import { and, desc, eq, notInArray } from "drizzle-orm";
 import { DB, type Db } from "../db";
 import { planRow, planVersion } from "../db/schema";
 
-export const KEPT_VERSIONS = 50; // per user per tenant; older ones are dropped
+const KEPT_VERSIONS = 50; // per user per tenant; older ones are dropped
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 const mine = (userId: string, orgId: string) => and(eq(planRow.userId, userId), eq(planRow.organizationId, orgId));

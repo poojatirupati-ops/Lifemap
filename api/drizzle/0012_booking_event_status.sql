@@ -1,0 +1,1 @@
+ALTER TABLE "booking_event" ADD COLUMN "status" text;

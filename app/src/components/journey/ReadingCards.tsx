@@ -1,13 +1,11 @@
 import clsx from 'clsx'
-import { useMortgagePage } from '../../state/mortgage.ts'
+import { useJourneyActions, useJourneyPage } from '../../state/journeyPage.ts'
 import type { Reading } from '../../content/cms.tsx'
-
-const PHOTOS = ['home-keys', 'savings-jar', 'invest-charts']
 
 /** Articles, FAQs and links; opening one shows its text below the cards (none while it has no text). */
 export default function ReadingCards({ reading }: { reading: Reading[] }) {
-  const openReading = useMortgagePage((p) => p.openReading)
-  const { toggleReading } = useMortgagePage.getState()
+  const openReading = useJourneyPage((p) => p.openReading)
+  const { actionPrefix, toggleReading } = useJourneyActions()
   const open = openReading === null ? undefined : reading[openReading]
 
   return (
@@ -22,14 +20,14 @@ export default function ReadingCards({ reading }: { reading: Reading[] }) {
             <button
               key={item.title}
               className={clsx('rd-c', { on: isOpen })}
-              data-a="mprd"
+              data-a={`${actionPrefix}rd`}
               data-p={i}
               aria-expanded={isOpen}
               onClick={() => toggleReading(i)}
             >
               <span
                 className="rd-ic rd-ph"
-                style={{ backgroundImage: `url(/media/${PHOTOS[i % PHOTOS.length]}.jpg)` }}
+                style={{ backgroundImage: `url(/media/${item.photo}.jpg)` }}
                 aria-hidden="true"
               >
                 <i>{item.emoji}</i>

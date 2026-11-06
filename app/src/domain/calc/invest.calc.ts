@@ -32,7 +32,7 @@ const growGoal = (today: number | null, term: number) =>
 /** The headline in today's money when the switch is on, and the real return. */
 function todaysMoney(future: number, term: number, growth: number, context: CalcContext) {
   const { inflation, adjustForInflation } = context
-  const today = inflation == null ? null : future / (1 + inflation) ** term
+  const today = inflation == null ? null : inTodaysMoney(future, term, inflation)
   const realReturn = inflation == null ? NO_INFLATION : (1 + growth) / (1 + inflation) - 1
   return { today, realReturn, adjusted: adjustForInflation }
 }
@@ -180,7 +180,7 @@ export const INVEST: Record<string, Calculator['run']> = {
       }
     }
     const real = (1 + rate / 100) / (1 + inflation) - 1 // exact, not growth minus inflation
-    const today = future / (1 + inflation) ** term
+    const today = inTodaysMoney(future, term, inflation)
     return {
       label: "In today's money",
       value: euro(today),

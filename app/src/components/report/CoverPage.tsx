@@ -1,23 +1,26 @@
 // Report page 1: the photo, who it is for, the road ahead and three headline tiles.
 import { CircleIcon, Logo, Photo, type PageProps } from './PageFrame.tsx'
 import Road from './Road.tsx'
-import { COLOURS } from './tones.ts'
+import { COLOURS, textOf } from './tones.ts'
 
 const ROAD = {
-  width: 794,
-  height: 282,
-  startX: 111,
-  endX: 747,
-  middleY: 148,
-  swing: 1,
-  stem: 50,
-  endLabelX: 744,
-  glow: 'rgba(255,255,255,.28)',
-  stemColor: 'rgba(255,255,255,.55)',
-  labelColor: '#fff',
-  subColor: '#cdd8e8',
-  endColor: '#cdd8e8',
+  width: 714,
+  height: 372,
+  startX: 64,
+  endX: 650,
+  middleY: 160,
+  swing: 0.8,
+  stem: 44,
+  endLabelX: 668,
+  glow: 'rgba(8,217,184,.22)',
+  stemColor: 'rgba(24,42,84,.38)',
+  labelColor: COLOURS.navy,
+  subColor: COLOURS.muted,
+  endColor: COLOURS.muted,
   labels: true,
+  dot: '#fff',
+  dotStroke: COLOURS.teal,
+  fit: true,
 }
 
 export default function CoverPage({ data, total }: PageProps) {
@@ -29,12 +32,6 @@ export default function CoverPage({ data, total }: PageProps) {
       role="group"
       aria-label={`Page 1 of ${total}: Cover`}
     >
-      <div className="lmr-cv-dark"></div>
-      <div className="lmr-cv-bar">
-        <i style={{ flex: 3, background: COLOURS.tealMid }}></i>
-        <i style={{ flex: 1, background: COLOURS.gold }}></i>
-        <i style={{ flex: 1, background: COLOURS.coral }}></i>
-      </div>
       <div className="lmr-cv-photo">
         <Photo name="magnifier-map" />
       </div>
@@ -56,7 +53,7 @@ export default function CoverPage({ data, total }: PageProps) {
           <div className="lmr-cv-tile" key={tile.small}>
             <CircleIcon name={tile.icon} tone={tile.tone} size={36} iconSize={20} />
             <div>
-              <div className="lmx-b lmr-hd" style={{ color: COLOURS.navy }}>
+              <div className="lmx-b lmr-hd" style={{ color: textOf(tile.tone) }}>
                 {tile.big}
               </div>
               <div className="lmx-s">{tile.small}</div>

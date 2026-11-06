@@ -4,6 +4,7 @@ import { useStore } from '../../../state/store.ts'
 import FlowScreen from '../../../components/frame/FlowScreen.tsx'
 import TimelineBoard from '../../../components/timeline/TimelineBoard.tsx'
 import GoalRow from '../../../components/timeline/GoalRow.tsx'
+import Sec from '../../../components/ui/Sec.tsx'
 
 export const Route = createFileRoute('/_auth/build/timeline')({ component: Timeline })
 
@@ -27,12 +28,11 @@ function Timeline() {
       }
     >
       <TimelineBoard />
-      <div className="sec">
-        <h3>Your goals</h3>
+      <Sec title="Your goals">
         <button className="link" onClick={() => goTo('/build/goals')}>
           ＋ Add a goal
         </button>
-      </div>
+      </Sec>
       {byAge.map((goal) => (
         <GoalRow key={goal.id} goal={goal} />
       ))}

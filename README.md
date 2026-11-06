@@ -50,7 +50,7 @@ Public link: https://tejalsakpal66-tech.github.io/lifemap-redesign/ . Details in
 `archive/v2.8-2026-10-10/` and the branch `archive-v2.8-final` hold a frozen copy of the final v2.8.2 version (10 Oct 2026). Never edit them. See `archive/v2.8-2026-10-10/ARCHIVE-README.md`. Older: `archive/v2.7-2026-10-08/` and the branch `archive-v2.7-final` hold a frozen copy of the final v2.7 version (8 Oct 2026). Never edit them. See `archive/v2.7-2026-10-08/ARCHIVE-README.md` to go back to it if an update goes wrong.
 
 ## Release (API and CMS on AWS)
-Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx turbo run lint typecheck test build` on Node 24, which includes the app's Playwright screen suite) and `.github/workflows/deploy.yml` (push to `main` deploys stage `staging`; a published GitHub release deploys stage `production` after approval). Each deploy runs the checks, `sst deploy`, the API (Drizzle) and CMS (Payload) migrations through `sst tunnel`, then a smoke test (`/health`, CMS `/admin`). Operations: `docs/runbook.md`.
+Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx turbo run lint typecheck test build` on Node 24, which includes the app's Playwright screen suite) and `.github/workflows/deploy.yml` (push to `main` deploys stage `staging`; a published GitHub release deploys stage `production` after approval). Each deploy runs the checks, the API (Drizzle) and CMS (Payload) migrations through `sst tunnel`, `sst deploy`, then a smoke test (`/health`, CMS `/admin`). A stage's first deploy runs `sst deploy` before the migrations, since its database does not exist until then. Operations: `docs/runbook.md`.
 
 ### One-time setup
 1. **AWS account(s)**, region eu-west-1. Best: one account for staging and one for production (AWS Organizations), so alarms, metrics and access stay apart.
@@ -85,7 +85,7 @@ Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx t
 1. Merge to `main`; the Deploy run updates `staging`. Check it.
 2. Dry run against production: `LIFEMAP_EMAIL_SENDER=<prod sender> npx sst diff --stage production` (production credentials). Read the plan: nothing in `Db`, `DataKey`, `Documents` or `CmsMedia` should be replaced or deleted.
 3. Tag and publish a release: `gh release create v1.2.3 --generate-notes` (or GitHub > Releases > Draft a new release).
-4. Approve the waiting `production` deployment in the Deploy run. It deploys, migrates and smoke-tests.
+4. Approve the waiting `production` deployment in the Deploy run. It migrates, deploys and smoke-tests.
 5. Problems: docs/runbook.md "Roll back a release".
 
 Production is protected: `removal: retain` and `protect` (SST will not remove the stage), RDS deletion protection and a final snapshot, 35-day backups, KMS key `DataKey` with yearly rotation.

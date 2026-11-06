@@ -5,6 +5,7 @@ import Strip from './Strip.tsx'
 import VideoCard from './VideoCard.tsx'
 import { videosForYou } from '../../domain/explore/picks.ts'
 import { useLiveSessions, useVideos, videoLength } from '../../content/cms.tsx'
+import Sec from '../ui/Sec.tsx'
 
 const EYEBROW: CSSProperties = {
   margin: '0 0 4px',
@@ -35,12 +36,11 @@ export default function WatchPicks({ specs, nudgeSpec, nudgeGoal }: Props) {
   } as CSSProperties
   return (
     <>
-      <div className="sec">
-        <h3>Watch · picked for you</h3>
+      <Sec title="Watch · picked for you">
         <button className="link" data-a="videos" onClick={openVideos}>
           All videos
         </button>
-      </div>
+      </Sec>
       <button
         className="vthumb vph"
         style={style}

@@ -1,4 +1,5 @@
 import type { ReactNode, SVGProps } from 'react'
+import type { ProfileSection } from '../../domain/discovery/terms.data.ts'
 
 /** The original's line icon: 24x24, round caps and joins, stroke in the text colour. */
 const lineIcon = (shapes: ReactNode, props?: SVGProps<SVGSVGElement>) => (
@@ -207,4 +208,50 @@ export const TAB_ICONS = {
     tabIconNoJoin,
   ),
   exp: lineIcon(<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.7A8 8 0 1 1 21 12Z" />, tabIconNoJoin),
+}
+
+const sectionIcon = { width: 22, height: 22 }
+
+/** Your money terms: a line icon per profile section. */
+export const SECTION_ICONS: Record<ProfileSection, ReactNode> = {
+  mindset: lineIcon(
+    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />,
+    sectionIcon,
+  ),
+  behaviour: lineIcon(
+    <>
+      <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>,
+    sectionIcon,
+  ),
+  appetite: lineIcon(
+    <>
+      <path d="M4 17a8 8 0 1 1 16 0" />
+      <path d="M12 17l4-5" />
+    </>,
+    sectionIcon,
+  ),
+  safety: lineIcon(<path d="M12 3l7 3v6c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V6z" />, sectionIcon),
+  capacity: lineIcon(
+    <>
+      <rect x="3" y="8" width="15" height="8" rx="2" />
+      <path d="M21 11v2M6 11h6" />
+    </>,
+    sectionIcon,
+  ),
+  horizon: lineIcon(
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 8v4l3 2" />
+    </>,
+    sectionIcon,
+  ),
+  experience: lineIcon(
+    <>
+      <path d="M3 9l9-5 9 5-9 5z" />
+      <path d="M7 12v4c2.5 2 7.5 2 10 0v-4" />
+    </>,
+    sectionIcon,
+  ),
 }

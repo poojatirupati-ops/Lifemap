@@ -118,32 +118,90 @@ function coverHeld({ figures, lists }: ToolPlan, income: number) {
   return total('life') + total('workCover')
 }
 
-/** The debt that takes longest to clear. */
-function debtpay({ figures, plan }: Known): Fill {
-  if (figures.debt <= 0) return { values: {} }
-  const monthsToClear = (balance: number, pay: number, rate: number) =>
-    balance > 0 ? payoff(balance, pay, monthlyFromYearly(rate * 100)).months : 0
-  const card =
-    monthsToClear(figures.cardBalance, figures.monthlyCardPayment, figures.cardRate) >=
-    monthsToClear(figures.loanBalance, figures.monthlyLoanPayment, figures.loanRate)
-  const debt = card
-    ? {
-        payKey: 'cardPayM',
-        estimated: figures.cardPaymentEstimated,
-        b: figures.cardBalance,
-        p: figures.monthlyCardPayment,
-        apr: figures.cardRateKnown ? figures.cardRate * 100 : undefined,
-      }
-    : {
-        payKey: 'loanPayM',
-        estimated: figures.loanPaymentEstimated,
-        b: figures.loanBalance,
-        p: figures.monthlyLoanPayment,
-        apr: figures.loanRateKnown ? figures.loanRate * 100 : undefined,
-      }
+/** The customer's card, and their own loans without other mortgages (the debt tools leave those out). */
+function cardAndLoan({ figures }: Known) {
   return {
-    values: { b: debt.b, p: debt.p, apr: debt.apr },
-    workedOut: debt.estimated ? { p: workedOutNote(debt.payKey, plan) } : {},
+    card: {
+      payKey: 'cardPayM',
+      estimated: figures.cardPaymentEstimated,
+      balance: figures.cardBalance,
+      payment: figures.monthlyCardPayment,
+      rate: figures.cardRate,
+      apr: figures.cardRateKnown ? figures.cardRate * 100 : undefined,
+    },
+    loan: {
+      payKey: 'ownLoanPayM',
+      estimated: figures.ownLoanPaymentEstimated,
+      balance: figures.ownLoanBalance,
+      payment: figures.monthlyOwnLoanPayment,
+      rate: figures.ownLoanRate,
+      apr: figures.loanRateKnown ? figures.ownLoanRate * 100 : undefined,
+    },
+  }
+}
+
+/** The debt that takes longest to clear. */
+function debtpay(known: Known): Fill {
+  const { card, loan } = cardAndLoan(known)
+  if (card.balance + loan.balance <= 0) return { values: {} }
+  const monthsToClear = (debt: typeof card) =>
+    debt.balance > 0
+      ? payoff(debt.balance, debt.payment, monthlyFromYearly(debt.rate * 100)).months
+      : 0
+  const debt = monthsToClear(card) >= monthsToClear(loan) ? card : loan
+  return {
+    values: { b: debt.balance, p: debt.payment, apr: debt.apr },
+    workedOut: debt.estimated ? { p: workedOutNote(debt.payKey, known.plan) } : {},
+  }
+}
+
+/** Up to three debts: the card first, then the customer's own loans; nothing else owed, no extra. */
+function debtplan(known: Known): Fill {
+  const { card, loan } = cardAndLoan(known)
+  if (card.balance + loan.balance <= 0) return { values: {} }
+  const note = (debt: typeof card) =>
+    debt.estimated && debt.balance > 0 ? workedOutNote(debt.payKey, known.plan) : ''
+  return {
+    values: {
+      b1: card.balance,
+      m1: card.payment,
+      apr1: card.apr,
+      b2: loan.balance,
+      m2: loan.payment,
+      apr2: loan.apr,
+      b3: 0,
+      m3: 0,
+      x: 0,
+    },
+    workedOut: { m1: note(card), m2: note(loan) },
+  }
+}
+
+/** The card's balance, payment and rate. */
+function creditcard(known: Known): Fill {
+  const { card } = cardAndLoan(known)
+  if (card.balance <= 0) return { values: {} }
+  return {
+    values: { b: card.balance, p: card.payment, apr: card.apr },
+    workedOut: card.estimated ? { p: workedOutNote(card.payKey, known.plan) } : {},
+  }
+}
+
+/** Spending and repayments as for the monthly surplus, the plan's saving and the loan rate. */
+function loanafford(known: Known): Fill {
+  const { has, figures, plan } = known
+  if (!has('income')) return { values: {} }
+  const { values, workedOut } = surplus(known)
+  const saving = project(plan).saving.savingMonthly
+  return {
+    values: {
+      inc: values.inc,
+      ess: values.ess,
+      debt: values.debt,
+      sav: Math.max(0, Math.round(saving / 5) * 5),
+      apr: figures.loanRateKnown ? figures.loanRate * 100 : undefined,
+    },
+    workedOut,
   }
 }
 
@@ -253,6 +311,9 @@ const FILLS: Record<string, (known: Known) => Fill> = {
   surplus,
   budget: ({ has, takeHome }) => ({ values: has('income') ? { inc: takeHome() } : {} }),
   debtpay,
+  debtplan,
+  creditcard,
+  loanafford,
 }
 
 /** Tools that start from another tool's figures. */

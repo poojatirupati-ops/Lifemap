@@ -2,10 +2,11 @@
 // The booking journey: match, share with consent (a pending booking), then the adviser's Cal.com calendar;
 // the meeting counts once the server (Cal.com's webhook) has confirmed it.
 import { act } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import sampleExp from '../fixtures/sample-exp.json'
 import { queryClient } from '../../src/auth/planSync.ts'
-import { ADVISERS } from '../../src/bookings/bookings.ts'
+import { ADVISERS, BOOKINGS, useBook, useBookings } from '../../src/bookings/bookings.ts'
 import { useStore } from '../../src/state/store'
 import { toOriginal } from '../../src/state/migrate'
 import { seedContent } from '../content/seed'
@@ -120,5 +121,107 @@ describe('booking journey', () => {
       done: true,
     })
     expect(plan.versions.at(-1)?.note).toBe('Adviser meeting booked')
+  })
+})
+
+/** GET /api/bookings answers `bookings`; POST answers the server's pending booking. */
+function stubBookings(bookings: () => unknown[], posted = pending) {
+  const fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
+    init?.method === 'POST'
+      ? Response.json({ booking: posted }, { status: 201 })
+      : Response.json({ bookings: bookings() }),
+  )
+  vi.stubGlobal('fetch', fetch)
+  return fetch
+}
+
+describe('booking with the server', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    queryClient.removeQueries({ queryKey: BOOKINGS })
+  })
+
+  it('a second trip to c3 reuses the open pending booking the server hands back', async () => {
+    stubBookings(() => [pending])
+    queryClient.setQueryData(BOOKINGS, [pending])
+    const { result } = renderHook(() => useBook())
+    await act(() => result.current.mutateAsync('ciaran'))
+    expect(queryClient.getQueryData(BOOKINGS)).toEqual([pending])
+  })
+
+  it("c3 is the newest pending booking's adviser, not the match being shown", async () => {
+    stubBookings(() => [pending])
+    queryClient.setQueryData(ADVISERS, [
+      adviser('niamh', 'Niamh Byrne'),
+      adviser('ciaran', 'Ciarán Walsh'),
+    ])
+    useStore.getState().load(structuredClone(sampleExp))
+    expect(useStore.getState().plan.booking.adviser).toBe(0) // the match shown is Niamh
+    const { container } = await renderAt('/experts/c3')
+    await vi.waitFor(() =>
+      expect(container.querySelector('[data-cal-link="ciaran/45min"]')).not.toBeNull(),
+    )
+  })
+
+  it('stops waiting for the webhook after 2 minutes and says the email will confirm it', async () => {
+    const fetch = stubBookings(() => [pending])
+    queryClient.setQueryData(ADVISERS, [adviser('ciaran', 'Ciarán Walsh')])
+    useStore.getState().load(structuredClone(sampleExp))
+    const { container } = await renderAt('/experts/c3')
+    await vi.waitFor(() => expect(container.querySelector('[data-cal-link]')).not.toBeNull())
+    vi.useFakeTimers()
+    act(() => cal.on.get('bookingSuccessfulV2')!({ detail: { data: { uid: 'cal-1' } } }))
+    await act(() => vi.advanceTimersByTimeAsync(2 * 60_000))
+    expect(container.textContent).toContain("We're confirming your booking, we'll email you")
+    const calls = fetch.mock.calls.length
+    await act(() => vi.advanceTimersByTimeAsync(60_000))
+    expect(fetch.mock.calls.length).toBe(calls)
+  })
+
+  it('a meeting that ended clears the share picks and agreement', async () => {
+    useStore.getState().load(structuredClone(sampleExp))
+    useStore.getState().update((plan) => {
+      Object.assign(plan.booking, { done: true, agree: true })
+      plan.booking.share.report = true
+    })
+    stubBookings(() => [{ ...pending, status: 'ended', calUid: 'cal-1' }])
+    renderHook(() => useBookings())
+    await vi.waitFor(() => expect(useStore.getState().plan.booking.done).toBe(false))
+    expect(useStore.getState().plan.booking).toMatchObject({
+      agree: false,
+      share: { report: false, fin: false, docs: false, um: false },
+    })
+    expect(useStore.getState().plan.versions.at(-1)?.note).toBe('Adviser meeting ended')
+  })
+
+  it('a booking Cal.com has booked but not yet confirmed is not offered again', async () => {
+    stubBookings(() => [{ ...pending, calUid: 'cal-1' }])
+    queryClient.setQueryData(ADVISERS, [adviser('ciaran', 'Ciarán Walsh')])
+    useStore.getState().load(structuredClone(sampleExp))
+    const { container, unmount } = await renderAt('/experts/c3')
+    await vi.waitFor(() => expect(container.textContent).toContain("We're confirming your booking"))
+    expect(container.querySelector('[data-cal-link]')).toBeNull()
+    unmount()
+
+    const home = await renderAt('/experts')
+    await vi.waitFor(() =>
+      expect(home.container.textContent).toContain("We're confirming your booking"),
+    )
+    expect(home.container.textContent).not.toContain('Book my adviser meeting')
+  })
+
+  it('with only pending bookings, done goes false and the picks stay', async () => {
+    useStore.getState().load(structuredClone(sampleExp))
+    useStore.getState().update((plan) => {
+      Object.assign(plan.booking, { done: true, agree: true })
+      plan.booking.share.report = true
+    })
+    const versions = useStore.getState().plan.versions.length
+    stubBookings(() => [pending])
+    renderHook(() => useBookings())
+    await vi.waitFor(() => expect(useStore.getState().plan.booking.done).toBe(false))
+    expect(useStore.getState().plan.booking).toMatchObject({ agree: true, share: { report: true } })
+    expect(useStore.getState().plan.versions.length).toBe(versions)
   })
 })

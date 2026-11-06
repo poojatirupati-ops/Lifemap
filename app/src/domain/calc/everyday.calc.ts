@@ -1,9 +1,7 @@
-// Everyday Money and Protection: net worth, surplus, budget, debt and loan repayment, life cover,
-// income protection.
+// Everyday Money and Protection: net worth, surplus, budget, life cover, income protection.
 import { euro, euroWeekly } from '../../lib/format.ts'
-import { MAX_MONTHS, monthlyFromYearly, monthsToRepay, repayment, totalInterest } from './maths.ts'
 import type { Calculator } from './types.ts'
-import { monthsText, years, yearsAndMonths } from './words.ts'
+import { monthsText } from './words.ts'
 
 const ILLNESS_BENEFIT_MONTHS = 24 // paid for at most 2 years (624 days)
 const PROTECTION_MAX_SHARE = 0.75
@@ -73,57 +71,6 @@ export const EVERYDAY: Record<string, Calculator['run']> = {
         Needs: inc * needs,
         Wants: inc * wants,
         Split_Check: check.trim(),
-      },
-    }
-  },
-
-  debtpay({ b: balance, apr, p: monthlyPayment, x: extra = 0 }) {
-    const monthlyRate = monthlyFromYearly(apr)
-    const payment = monthlyPayment + extra
-    const months = monthsToRepay(balance, monthlyRate, payment)
-    const never = months === Infinity
-    const interest = never ? null : totalInterest(balance, monthlyRate, payment, months)
-    const tooLong = !never && months > MAX_MONTHS
-    return {
-      label: 'Debt free in',
-      value: never
-        ? 'Never at this repayment'
-        : tooLong
-          ? 'Over 100 years'
-          : yearsAndMonths(months),
-      line: never
-        ? 'The payment does not cover the interest. Try a higher amount.'
-        : tooLong
-          ? 'Payment too low to clear this debt in a reasonable time.'
-          : `You would pay about ${euro(interest!)} in interest. The APR is a yearly rate: about ${(monthlyRate * 100).toFixed(2)}% a month.`,
-      rows: [['Total interest', interest == null ? '—' : euro(interest)]],
-      goal: null,
-      numbers: {
-        Months_To_Clear: never ? 'Never' : months,
-        Total_Interest: interest ?? '—',
-        Monthly_Rate: monthlyRate,
-      },
-    }
-  },
-
-  loan({ a: amount, apr, y: term }) {
-    const monthlyRate = monthlyFromYearly(apr)
-    const monthly = repayment(amount, monthlyRate, term * 12)
-    const total = monthly * term * 12
-    return {
-      label: 'Monthly repayment',
-      value: euro(monthly),
-      line: `Total interest of about ${euro(total - amount)} over ${years(term)}. The APR is treated as an effective yearly rate (as for cards and loans; mortgage tools use the nominal rate ÷ 12, so the same percentage gives a slightly different repayment).`,
-      rows: [
-        ['Total repaid', euro(total)],
-        ['Total interest', euro(total - amount)],
-      ],
-      goal: null,
-      numbers: {
-        Monthly_Repayment: monthly,
-        Total_Repaid: total,
-        Total_Interest: total - amount,
-        Monthly_Rate: monthlyRate,
       },
     }
   },

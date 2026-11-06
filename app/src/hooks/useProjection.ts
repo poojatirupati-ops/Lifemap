@@ -4,7 +4,7 @@ import { whatIfFrom } from '../domain/planning/wi.ts'
 import { useStore } from '../state/store.ts'
 import { usePlanFields } from './usePlanFields.ts'
 
-/** The plan as it stands and with the current what-if, recomputed only when an input changes. */
+/** The plan as it stands and with the current what-if, recomputed only when an input (or the standards in use) changes. */
 export function useProjection() {
   const inputs = usePlanFields(
     'figures',

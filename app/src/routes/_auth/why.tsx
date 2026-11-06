@@ -38,7 +38,7 @@ function WhyHere() {
         </button>
         <span style={{ flex: 1 }} />
       </div>
-      <div className="qbody">
+      <div className="qbody dpage">
         <div className="qeye">Before we start</div>
         <h2 tabIndex={-1}>{QUESTION}</h2>
         <p className="qsub">

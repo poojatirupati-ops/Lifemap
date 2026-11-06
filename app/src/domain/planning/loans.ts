@@ -119,13 +119,15 @@ export function debts(inputs: DebtInputs) {
   const mortgages = otherMortgages(inputs.lists?.mort2 ?? [], assumption(inputs, 'mortRate'))
   const ownLoans = toNumber(figures.loanBal) + toNumber(figures.debt)
   const cardRate = statedRate(inputs, 'cardRate')
-  const loanRate = blendedLoanRate(ownLoans, statedRate(inputs, 'loanRate'), mortgages)
+  const ownLoanRate = statedRate(inputs, 'loanRate')
+  const loanRate = blendedLoanRate(ownLoans, ownLoanRate, mortgages)
   const cardBal = toNumber(figures.cardBal)
   const loanBal = ownLoans + mortgages.balance
-  const statedLoanPay =
-    toNumber(figures.loanPayM) + toNumber(figures.debtPayM) + mortgages.repayment
+  const statedOwnLoanPay = toNumber(figures.loanPayM) + toNumber(figures.debtPayM)
   const card = debtRepayment(cardBal, toNumber(figures.cardPayM), cardRate)
-  const loan = debtRepayment(loanBal, statedLoanPay, loanRate)
+  const loan = debtRepayment(loanBal, statedOwnLoanPay + mortgages.repayment, loanRate)
+  // the customer's own loans without other mortgages (the debt tools leave mortgages out)
+  const ownLoan = debtRepayment(ownLoans, statedOwnLoanPay, ownLoanRate)
   return {
     cardRateKnown: toNumber(figures.cardRate) > 0 || isChosen(assumptions, 'cardRate'),
     loanRateKnown: toNumber(figures.loanRate) > 0 || isChosen(assumptions, 'loanRate'),
@@ -137,6 +139,11 @@ export function debts(inputs: DebtInputs) {
     loanRate,
     monthlyLoanPayment: loan.monthly,
     loanPaymentEstimated: loan.estimated,
+    hasOtherMortgages: mortgages.balance > 0,
+    ownLoanBalance: ownLoans,
+    ownLoanRate,
+    monthlyOwnLoanPayment: ownLoan.monthly,
+    ownLoanPaymentEstimated: ownLoan.estimated,
     debt: cardBal + loanBal,
     monthlyDebtPayment: card.monthly + loan.monthly,
     debtPaymentEstimated: card.estimated || loan.estimated,

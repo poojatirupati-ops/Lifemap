@@ -1,19 +1,21 @@
 import { tmpdir } from "node:os";
 import { devFiles } from "./files";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { expect, test } from "vitest";
 import { app as realApp } from "./app";
 import { createAuth } from "./auth";
 import { pgliteDb } from "./db/devSetup";
+import { member } from "./db/schema";
 import { type Env, guard } from "./guard";
 
-test("deny by default; signed-in user sees only own id", async () => {
+test("deny by default; signed-in user sees only own id; a removed member loses access at once", async () => {
   process.env.BETTER_AUTH_SECRET = "test-secret-test-secret-test-secret-123";
   const db = await pgliteDb();
   const codes: Record<string, string> = {};
   const auth = createAuth(db, (e, otp) => void (codes[e] = otp), devFiles(tmpdir()));
   const app = new Hono<Env>();
-  app.use("*", guard(auth));
+  app.use("*", guard(auth, db));
   app.get("/health", (c) => c.json({ ok: true }));
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
   app.get("/api/stub", (c) => c.json({ userId: c.var.userId }));
@@ -54,4 +56,9 @@ test("deny by default; signed-in user sees only own id", async () => {
   const [ia, ib] = [await id(a), await id(b)];
   expect(ia).toBeTruthy();
   expect(ia).not.toBe(ib);
+
+  // removed from the active tenant (here straight in the table, as DELETE /api/me does): the session still names it, the guard refuses
+  await db.delete(member).where(eq(member.userId, ia));
+  expect((await app.request("/api/stub", { headers: { cookie: a } })).status).toBe(403);
+  expect((await app.request("/api/stub", { headers: { cookie: b } })).status).toBe(200);
 });

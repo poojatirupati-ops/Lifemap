@@ -8,11 +8,13 @@ import { toolPlan } from '../domain/calc/context.ts'
 import CloseButton from './CloseButton.tsx'
 import HandoffBody from './HandoffBody.tsx'
 import SheetTitle from './SheetTitle.tsx'
+import { useFigures } from '../hooks/useFigures.ts'
 
 export const key = 'calcadd'
 
 /** "Add to my plan" from a calculator: needs an age, then every figure the result uses. */
 export function Body({ param: toolId = '' }: { param?: string }) {
+  useFigures()
   const tool = useStore(useShallow((store) => toolPlan(store.plan, store, toolId)))
   const adult = (tool.about.age ?? 0) >= 18
   const result = useMemo(() => (adult ? calcHandoff(tool, toolId) : null), [adult, tool, toolId])

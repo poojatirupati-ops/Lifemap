@@ -1,7 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import Screen from '../../../../shell/Screen.tsx'
-import MortgagesPage from '../../../../components/mortgages/MortgagesPage.tsx'
-import { expertName, STATEMENTS, withArticle } from '../../../../components/explore/explore.data.ts'
+import JourneyPage, { hasJourneyPage } from '../../../../components/journey/JourneyPage.tsx'
+import {
+  expertName,
+  STATEMENTS,
+  topicVideos,
+  withArticle,
+} from '../../../../components/explore/explore.data.ts'
 import { toolById } from '../../../../components/explore/tools.data.ts'
 import CalculatorRow from '../../../../components/explore/CalculatorRow.tsx'
 import StatementLink from '../../../../components/explore/StatementLink.tsx'
@@ -15,13 +20,14 @@ import { talkToExpert } from '../../../../state/explore.ts'
 
 export const Route = createFileRoute('/_auth/_app/explore/topic/$name')({ component: ExploreTopic })
 
-/** A topic page; Mortgages has a page of its own. */
+/** A topic page; Mortgages and Loans have pages of their own. */
 function ExploreTopic() {
   const { name } = Route.useParams()
   const topic = useTopics().find((each) => each.name === name)
-  const videos = useVideos().filter((video) => video.kind === topic?.expert)
+  const allVideos = useVideos()
+  const videos = topic ? topicVideos(topic, allVideos) : []
   const sessions = useLiveSessions().filter((session) => session.expert === topic?.expert)
-  if (name === 'Mortgages') return <MortgagesPage />
+  if (hasJourneyPage(name)) return <JourneyPage topic={name} />
   const tools = topic?.tools.map(toolById) ?? []
   const statement = topic && STATEMENTS[topic.category]
 

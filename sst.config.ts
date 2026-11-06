@@ -266,13 +266,13 @@ export default $config({
     const docReaderApiKey = new sst.Secret("DocReaderApiKey");
 
     // Booking events (card C-CAL; api/src/events/bus.ts). Cal.com webhooks -> Api -> PutEvents on this bus (source lifemap.bookings, the CloudEvent as detail).
-    // The archive keeps every booking event for replay (billing re-runs); billing consumes the Billing queue (not built here) and dedupes on the
+    // The archive keeps every booking event for replay (billing re-runs). The billing system reads the Billing queue (14 days) and dedupes on the
     // CloudEvent id (the idempotency key). Messages it fails 3 times land in BillingDeadLetter (14 days), which alarms below.
     const bookings = new sst.aws.Bus("Bookings");
     const bookingEvents = { source: ["lifemap.bookings"] };
     new aws.cloudwatch.EventArchive("BookingsArchive", { eventSourceArn: bookings.arn, eventPattern: $jsonStringify(bookingEvents), retentionDays: 90 }); // ids only (no names or emails); retention: docs/gdpr-audit.md
     const billingDeadLetter = new sst.aws.Queue("BillingDeadLetter", { transform: { queue: { messageRetentionSeconds: 14 * 24 * 3600 } } });
-    const billing = new sst.aws.Queue("Billing", { dlq: billingDeadLetter.arn });
+    const billing = new sst.aws.Queue("Billing", { dlq: billingDeadLetter.arn, transform: { queue: { messageRetentionSeconds: 14 * 24 * 3600 } } });
     bookings.subscribeQueue("Billing", billing, { pattern: bookingEvents });
     // Cal.com team webhook secrets, one per tenant: JSON { "<organization id>": "<secret>" } (docs/runbook.md#cal-com-webhooks).
     const calWebhookSecrets = new sst.Secret("CalWebhookSecrets");

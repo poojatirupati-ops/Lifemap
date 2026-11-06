@@ -1,7 +1,6 @@
 // The Experts tab's steps: their ids and notes for the reviewer panel, and their heads.
-import { EXPERTS } from '../../domain/identity/advisers.data.ts'
-import type { Plan } from '../../state/types.ts'
-import { firstName, specialistOf, type Stage } from '../../domain/identity/booking.ts'
+import { EXPERTS, type ExpertKind } from '../../domain/identity/advisers.data.ts'
+import { firstName, type Stage } from '../../domain/identity/booking.ts'
 
 export const STAGES: Record<Stage, { id: string; note: string }> = {
   c0: {
@@ -28,19 +27,21 @@ export const STAGES: Record<Stage, { id: string; note: string }> = {
   },
 }
 
-/** The step's title, subtitle and the step Back returns to. */
+/** The step's title, subtitle and the step Back returns to; `kind` is the matched kind of expert. */
 export function headOf(
-  plan: Plan,
   stage: Stage,
-  adviserName = '',
+  {
+    kind,
+    hasResults,
+    adviserName = '',
+  }: { kind: ExpertKind; hasResults: boolean; adviserName?: string },
 ): { title: string; sub?: string; back?: Stage } {
   const adviser = firstName(adviserName)
   switch (stage) {
     case 'c0':
       return { title: 'Help your adviser know you', back: 'home' }
     case 'c1': {
-      const { kind } = specialistOf(plan)
-      const fits = plan.hasResults ? 'your plan' : "what you've told us"
+      const fits = hasResults ? 'your plan' : "what you've told us"
       return {
         title: 'Your match',
         sub: `A ${EXPERTS[kind].title.toLowerCase()} who fits ${fits}.`,

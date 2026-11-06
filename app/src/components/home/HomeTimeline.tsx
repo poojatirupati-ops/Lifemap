@@ -4,11 +4,13 @@ import { euroShort } from '../../lib/format.ts'
 import type { Goal } from '../../state/types.ts'
 import { calendarYear, isPassed } from '../../domain/goals/goalTiming.ts'
 import { useTiming } from '../../hooks/useTiming.ts'
+import { useFigures } from '../../hooks/useFigures.ts'
 
 type Props = { byAge: Goal[]; profileAnswers: number }
 
 /** Your Timeline card: total planned, the next four goals as stems by age, and three stats. */
 export default function HomeTimeline({ byAge, profileAnswers }: Props) {
+  useFigures()
   const timing = useTiming()
   const planEnd = assumption(timing, 'planEnd')
   // retirement income counts for every year to the end of the plan

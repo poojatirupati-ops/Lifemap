@@ -1,25 +1,34 @@
-import type { INestApplicationContext } from "@nestjs/common";
+import { and, eq } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import type { Auth } from "./auth";
+import type { Db } from "./db";
+import { member } from "./db/schema";
 import { type Feature, isEnabled } from "./tenant";
-import { TenantService } from "./tenant/tenant.service";
 
 /** userId and the session's active tenant (organization). Every data query filters by both. */
-export type Env = { Variables: { userId: string; orgId: string } };
+export type Env = { Variables: { userId: string; orgId: string; role?: string | null } };
 
 const DOCS = ["/api/docs", "/api/openapi.json"];
 
-// Deny by default: only GET /health, GET /api/tenant, /api/auth/* and the signed POST /api/webhooks/* are public (plus the API docs outside production); everything else needs a session in a tenant.
-export const guard = (auth: Auth): MiddlewareHandler<Env> => async (c, next) => {
+/** Is the user (still) a member of the tenant? */
+export const isMember = async (db: Db, userId: string, orgId: string) =>
+  (await db.select({ id: member.id }).from(member).where(and(eq(member.userId, userId), eq(member.organizationId, orgId))).limit(1)).length > 0;
+
+// Deny by default: only GET /health, GET /api/tenant, /api/auth/* and the signed POST /api/webhooks/* are public (plus the API docs outside production); everything else needs a session in a tenant
+// the user is still a member of (a removed member's session keeps its activeOrganizationId, however the membership went).
+export const guard = (auth: Auth, db: Db): MiddlewareHandler<Env> => async (c, next) => {
   const { method, path } = c.req;
   if ((method === "GET" && (path === "/health" || path === "/api/health" || path === "/api/tenant")) || path === "/api/auth" || path.startsWith("/api/auth/")) return next();
   if (method === "POST" && path.startsWith("/api/webhooks/")) return next(); // each checks its own signature
   if (method === "GET" && DOCS.includes(path) && process.env.NODE_ENV !== "production") return next();
   const s = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!s) return c.json({ error: "unauthorized" }, 401);
-  if (!s.session.activeOrganizationId) return c.json({ error: "no active organization" }, 403);
+  const orgId = s.session.activeOrganizationId;
+  if (!orgId) return c.json({ error: "no active organization" }, 403);
+  if (!(await isMember(db, s.user.id, orgId))) return c.json({ error: "not a member of the active organization" }, 403);
   c.set("userId", s.user.id);
-  c.set("orgId", s.session.activeOrganizationId);
+  c.set("orgId", orgId);
+  c.set("role", s.user.role); // admin plugin: "admin" = platform staff
   return next();
 };
 
@@ -28,5 +37,4 @@ export const requireFeature = (flag: Feature): MiddlewareHandler<Env> => async (
   (await isEnabled({ id: c.var.orgId }, flag)) ? next() : c.json({ error: `${flag} is not enabled for this organization` }, 403);
 
 /** Route middleware: 403 unless the caller is a platform admin (user.role "admin"). */
-export const platformAdmin = (nest: INestApplicationContext): MiddlewareHandler<Env> => async (c, next) =>
-  (await nest.get(TenantService).isPlatformAdmin(c.var.userId)) ? next() : c.json({ error: "forbidden" }, 403);
+export const platformAdmin: MiddlewareHandler<Env> = async (c, next) => (c.var.role === "admin" ? next() : c.json({ error: "forbidden" }, 403));

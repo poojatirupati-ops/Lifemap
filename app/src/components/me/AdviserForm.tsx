@@ -3,20 +3,27 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { authClient } from '../../auth/client.ts'
 import { queryClient } from '../../auth/planSync.ts'
-import { ADVISERS, type Adviser } from '../../bookings/bookings.ts'
+import { ADVISERS, CAL_ORIGIN, type Adviser } from '../../bookings/bookings.ts'
 import { toast } from '../../state/shell.ts'
 
-/** The session's member has the tenant role adviser (Better Auth keeps several roles comma-separated). */
-export const useIsAdviser = () =>
-  authClient.useActiveMember().data?.role.split(',').includes('adviser') ?? false
-
 const line = (max: number) => z.string().trim().max(max)
-// the same limits as the API (api/src/auth.ts); a pasted Cal.com URL keeps only its path
+/** A pasted Cal.com link or URL as its bare path: no origin, query, hash or slashes at either end. */
+function calPath(link: string) {
+  let path = link
+  try {
+    path = new URL(link, CAL_ORIGIN).pathname
+  } catch {
+    // not a URL at all: the pattern below says what is expected
+  }
+  return path.replace(/^\/+|\/+$/g, '')
+}
+
+// the same limits as the API (api/src/auth.ts)
 const schema = z.object({
   calLink: z
     .string()
     .trim()
-    .transform((link) => link.replace(/^https?:\/\/[^/]+\//, ''))
+    .transform(calPath)
     .pipe(
       z
         .string()

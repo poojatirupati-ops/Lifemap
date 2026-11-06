@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import AppScreen from '../../../../components/frame/AppScreen.tsx'
 import { useProfileAnswers } from '../../../../hooks/useProfileAnswers.ts'
 import { backToMe } from '../../../../state/finances.ts'
-import TermsList from '../../../../components/me/TermsList.tsx'
+import { TermCards } from '../../../../components/me/TermsList.tsx'
 import { moneyTerms } from '../../../../domain/discovery/moneyTerms.ts'
 import { DISCOVERY_DISCLAIMER } from '../../../../domain/identity/personality.data.ts'
 
@@ -21,13 +21,13 @@ function MeTerms() {
       back={backToMe}
       bell
     >
-      <div className="card">
-        {terms.length ? (
-          <TermsList terms={terms} />
-        ) : (
+      {terms.length ? (
+        <TermCards terms={terms} />
+      ) : (
+        <div className="card">
           <p className="small">Answer your first questions to see your terms.</p>
-        )}
-      </div>
+        </div>
+      )}
       <p className="disc">
         These describe how you answered. They are not advice. {DISCOVERY_DISCLAIMER}
       </p>

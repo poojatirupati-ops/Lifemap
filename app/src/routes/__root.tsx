@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createRootRoute } from '@tanstack/react-router'
-import { rerender, useShell } from '../state/shell.ts'
+import { useShell } from '../state/shell.ts'
 import { useViewport } from '../hooks/useViewport.ts'
 import { useWall } from '../auth/useWall.ts'
 import { useAnalytics } from '../analytics/analytics.ts'
@@ -22,7 +22,7 @@ function App() {
   useWall()
   useAnalytics()
   useBranding()
-  useTenantFigures(rerender)
+  useTenantFigures()
   useEffect(() => {
     document.body.classList.toggle('desk', viewport.isDesk)
   }, [viewport.isDesk])

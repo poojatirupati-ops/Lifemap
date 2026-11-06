@@ -35,14 +35,14 @@ export function createBookingSlice(get: () => Store) {
       goTo('/experts/c4')
       toast('Booked. Confirmation sent by email')
     },
-    /** After a cancel on Cal.com reached the server: the share is withdrawn, so nothing stays ticked. */
-    bookingCancelled: () => {
+    /** The meeting is no longer booked (cancelled on Cal.com, ended or a no-show): the share is withdrawn, so nothing stays ticked. */
+    bookingOver: (cancelled: boolean) => {
       update((plan) => {
         Object.assign(plan.booking, { done: false, agree: false, slot: null, day: undefined })
         plan.booking.share = { report: false, fin: false, docs: false, um: false }
-        addVersion(plan, 'Adviser meeting cancelled')
+        addVersion(plan, cancelled ? 'Adviser meeting cancelled' : 'Adviser meeting ended')
       })
-      toast('Meeting cancelled. Your adviser no longer sees what you shared.')
+      if (cancelled) toast('Meeting cancelled. Your adviser no longer sees what you shared.')
     },
     /** C0's "Answer the questions": the profile, then back to the match. */
     answerProfileFirst: () => {

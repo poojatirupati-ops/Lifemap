@@ -49,24 +49,23 @@ export function useBranding() {
   }, [colors])
 }
 
-/** Puts the tenant's own figures over LifeMap's standards for the planning maths; `onChange` redraws once they change. */
-export function useTenantFigures(onChange: () => void) {
+/** Puts the tenant's own figures over LifeMap's standards for the planning maths (useFigures redraws what reads them). */
+export function useTenantFigures() {
   const tenant = useTenant()
   useEffect(() => {
-    if (tenant && applyTenantFigures(tenant.name, tenant.rates)) onChange()
-  }, [tenant, onChange])
+    if (tenant) applyTenantFigures(tenant.name, tenant.rates)
+  }, [tenant])
 }
 
 /**
- * A tenant admin's change to the active tenant, saved with Better Auth's organization update
- * (the API checks the rates). Shown at once and undone if the save fails; returns the error, if any.
+ * A tenant admin's change to the active tenant, saved with Better Auth's organization update (the API checks the rates).
+ * Shown at once; once the save settles the tenant is fetched again, so the screen ends on what the server holds whatever order
+ * saves finish in (useTenantFigures applies its figures). Returns the error, if any.
  */
 async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
   const before = queryClient.getQueryData<Tenant>(TENANT_KEY)
   if (!before) return 'the tenant has not loaded'
-  const after = { ...before, ...change }
-  applyTenantFigures(after.name, after.rates)
-  queryClient.setQueryData(TENANT_KEY, after)
+  queryClient.setQueryData(TENANT_KEY, { ...before, ...change })
   const { error } = await authClient.organization.update({
     organizationId: before.id,
     data: {
@@ -74,10 +73,8 @@ async function updateTenant(change: { name?: string; rates?: PartnerFigures }) {
       ...(change.rates && { metadata: { rates: change.rates } }),
     },
   })
-  if (!error) return null
-  applyTenantFigures(before.name, before.rates)
-  queryClient.setQueryData(TENANT_KEY, before)
-  return error.message ?? 'it was not saved'
+  void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
+  return error ? (error.message ?? 'it was not saved') : null
 }
 
 /** The partner's name on "Suggested by …": the tenant's name. */

@@ -20,7 +20,7 @@ const { erasedUser, otpEmailLimit, ssoProvider, verification } = schema;
 // Tenant roles (organization plugin). Only what is used now: tenant admins edit their tenant's branding and invite people; customers have no tenant permissions (their own data is reached by user id, not by role).
 // Advisers have none either: the role only lists them on the Experts tab (GET /api/advisers, with their calLink).
 const ac = createAccessControl(defaultStatements);
-export const tenantRoles = { admin: ac.newRole({ organization: ["update"], invitation: ["create", "cancel"] }), customer: ac.newRole({}), adviser: ac.newRole({}) };
+const tenantRoles = { admin: ac.newRole({ organization: ["update"], invitation: ["create", "cancel"] }), customer: ac.newRole({}), adviser: ac.newRole({}) };
 
 /** What an adviser's card shows (user.adviserProfile). */
 export const adviserProfile = z.strictObject({
@@ -44,14 +44,14 @@ export const SEND_OTP = "SendOtp";
 
 const mask = (email: string) => email.replace(/^(.).*(@.*)$/, "$1***$2"); // the dev log carries no full email
 
-// Dev sender: logs the code (never wire in production: codes would reach CloudWatch). Production uses sesOtp.
+// Dev sender: logs the code (never wire in production: codes would reach CloudWatch). Production uses mailOtp.
 export const logOtp: SendOtp = (email, otp) => console.log(`[otp] ${mask(email)}: ${otp}`);
 
 /** Plain-text email from `tenant` (the From display name). */
 export type SendMail = (to: string, subject: string, body: string, tenant?: string) => Promise<void>;
 
 /** SESv2 SendEmail from a verified identity (eu-west-1). Plain text, no tracking (no configuration set); never logs the address or body. */
-export const sesMail = (ses: SESv2Client, from: string): SendMail => async (to, subject, body, tenant = "LifeMap") => {
+const sesMail = (ses: SESv2Client, from: string): SendMail => async (to, subject, body, tenant = "LifeMap") => {
   await ses.send(new SendEmailCommand({
     // RFC 2047 encoded display name: safe for any tenant name (accents, quotes) without header injection.
     FromEmailAddress: `=?UTF-8?B?${Buffer.from(tenant).toString("base64")}?= <${from}>`,
@@ -60,16 +60,18 @@ export const sesMail = (ses: SESv2Client, from: string): SendMail => async (to, 
   }));
 };
 
-/** Production OTP sender. From LifeMap: a code is asked for before any tenant is known. */
-export const sesOtp = (ses: SESv2Client, from: string): SendOtp => (email, otp) =>
-  sesMail(ses, from)(email, "Your LifeMap sign-in code", `Your LifeMap sign-in code is ${otp}\n\nIt expires in 5 minutes. If you did not ask for it, you can ignore this email.`);
-
 let ses: SESv2Client | undefined;
 /** Notification emails (invitations): SES when lambda.ts set OTP_SENDER=ses, else the masked dev log (subject only). Read per call so tests can stub env. */
 export const sendMail: SendMail = (to, subject, body, tenant) =>
   process.env.OTP_SENDER === "ses"
     ? sesMail((ses ??= new SESv2Client({ region: "eu-west-1" })), process.env.OTP_FROM ?? "")(to, subject, body, tenant)
-    : Promise.resolve(console.log(`[mail] ${mask(to)}: ${subject}`));
+    : process.env.NODE_ENV === "production"
+      ? Promise.reject(new Error("mail sender not configured: set OTP_SENDER=ses and OTP_FROM")) // fail closed
+      : Promise.resolve(console.log(`[mail] ${mask(to)}: ${subject}`));
+
+/** Production OTP sender, through sendMail. From LifeMap: a code is asked for before any tenant is known. */
+export const mailOtp: SendOtp = (email, otp) =>
+  sendMail(email, "Your LifeMap sign-in code", `Your LifeMap sign-in code is ${otp}\n\nIt expires in 5 minutes. If you did not ask for it, you can ignore this email.`);
 
 /** sha256 of the lower-cased email: the only form an erased or rate-limited address is kept in. Same as Postgres `encode(sha256(convert_to(lower(email),'UTF8')),'hex')`. */
 export const emailHash = (email: string) => createHash("sha256").update(email.toLowerCase()).digest("hex");
@@ -141,7 +143,7 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) => {
     user: {
       // An adviser's own Cal.com link (`<user>/<event>`) and card, set with updateUser; listed only for members with role adviser.
       additionalFields: {
-        calLink: { type: "string", required: false, input: true, validator: { input: z.string().regex(/^[\w-]+(\/[\w-]+)*$/).max(200) } },
+        calLink: { type: "string", required: false, input: true, validator: { input: z.string().regex(/^[\w-]+\/[\w-]+$/).max(200) } },
         adviserProfile: { type: "json", required: false, input: true, validator: { input: adviserProfile } },
       },
       deleteUser: { enabled: true, beforeDelete: (user) => eraseTraces(db, files, user) },

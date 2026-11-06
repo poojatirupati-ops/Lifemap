@@ -114,19 +114,31 @@ export function workedOutNote(key: string, plan: CheckPlan) {
     const typedZero = plan.sources.mortPayM && toNumber(plan.figures.mortPayM) === 0
     return `${WORKED_OUT} about ${euro(figures.monthlyMortgage)} a month, from your balance, rate and years left${typedZero ? ", because a €0 repayment wouldn't clear it" : ''}. ${REPLACE}`
   }
-  const debts: Record<string, { owed: number; estimated: boolean; monthly: number }> = {
+  // ownLoanPayM: the customer's own loans without other mortgages (the debt tools)
+  const debts: Record<
+    string,
+    { figure: string; owed: number; estimated: boolean; monthly: number }
+  > = {
     cardPayM: {
+      figure: 'cardPayM',
       owed: figures.cardBalance,
       estimated: figures.cardPaymentEstimated,
       monthly: figures.monthlyCardPayment,
     },
     loanPayM: {
+      figure: 'loanPayM',
       owed: figures.loanBalance,
       estimated: figures.loanPaymentEstimated,
       monthly: figures.monthlyLoanPayment,
     },
+    ownLoanPayM: {
+      figure: 'loanPayM',
+      owed: figures.ownLoanBalance,
+      estimated: figures.ownLoanPaymentEstimated,
+      monthly: figures.monthlyOwnLoanPayment,
+    },
   }
   const debt = debts[key]
   if (!debt || debt.owed <= 0 || !debt.estimated) return ''
-  return `${WORKED_OUT} ${euro(debt.monthly)} a month clears it in 5 years, because ${whyWorkedOut(key, plan)}. ${REPLACE}`
+  return `${WORKED_OUT} ${euro(debt.monthly)} a month clears it in 5 years, because ${whyWorkedOut(debt.figure, plan)}. ${REPLACE}`
 }

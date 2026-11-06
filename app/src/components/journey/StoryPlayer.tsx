@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react'
 import { toolById } from '../explore/tools.data.ts'
 import { openCalculator } from '../../state/explore.ts'
-import { useMortgagePage } from '../../state/mortgage.ts'
+import { useJourneyPage } from '../../state/journeyPage.ts'
 import FilmedPlayer from '../video/FilmedPlayer.tsx'
 import type { StoryVideo } from '../../content/cms.tsx'
 
@@ -11,18 +11,21 @@ const NEXT_AT = 0.65
 /**
  * The picked story video: the filmed one when there is one, else a "coming soon" card. Playback
  * moves the chapter highlight, shows captions under the player, reveals "Up next" near the end
- * and reports the video watched when it ends.
+ * and reports the video watched when it ends. A page may leave caption, chapters and "Up next"
+ * out under a coming-soon card.
  */
-export default function MortgagePlayer({
+export default function StoryPlayer({
   story,
   number,
   count,
+  comingSoonDetails,
 }: {
   story: StoryVideo
   number: number
   count: number
+  comingSoonDetails: boolean
 }) {
-  const markWatched = useMortgagePage((page) => page.markWatched)
+  const markWatched = useJourneyPage((page) => page.markWatched)
   const [chapter, setChapter] = useState(0)
   const [caption, setCaption] = useState('')
   const [nextShown, setNextShown] = useState(false)
@@ -30,36 +33,40 @@ export default function MortgagePlayer({
   const filmed = story.video
   const stageStyle = { '--c': story.color } as CSSProperties
 
+  const stage = filmed ? (
+    <div className="mp-st real" style={stageStyle}>
+      <FilmedPlayer
+        className="mpplayer"
+        video={filmed}
+        onCaption={setCaption}
+        onProgress={(played) => {
+          setChapter(Math.min(chapters - 1, Math.floor(played * chapters)))
+          if (played > NEXT_AT) setNextShown(true)
+        }}
+        onEnded={() => {
+          setNextShown(true)
+          markWatched()
+        }}
+      />
+    </div>
+  ) : (
+    <div className="mp-st" style={stageStyle}>
+      <span className="art" aria-hidden="true">
+        {story.emoji}
+      </span>
+      <div className="tp">
+        Video {number} of {count}
+        {story.duration ? ` · ${story.duration}` : null}
+      </div>
+      <h4>{story.title}</h4>
+      <span className="soon">Coming soon</span>
+    </div>
+  )
+  if (!filmed && !comingSoonDetails) return stage
+
   return (
     <>
-      {filmed ? (
-        <div className="mp-st real" style={stageStyle}>
-          <FilmedPlayer
-            className="mpplayer"
-            video={filmed}
-            onCaption={setCaption}
-            onProgress={(played) => {
-              setChapter(Math.min(chapters - 1, Math.floor(played * chapters)))
-              if (played > NEXT_AT) setNextShown(true)
-            }}
-            onEnded={() => {
-              setNextShown(true)
-              markWatched()
-            }}
-          />
-        </div>
-      ) : (
-        <div className="mp-st" style={stageStyle}>
-          <span className="art" aria-hidden="true">
-            {story.emoji}
-          </span>
-          <div className="tp">
-            Video {number} of {count} · {story.duration}
-          </div>
-          <h4>{story.title}</h4>
-          <span className="soon">Coming soon</span>
-        </div>
-      )}
+      {stage}
       <p className="mp-cap" id="mp-cap" aria-live="polite">
         {filmed ? caption : 'We are filming this one. Check back soon.'}
       </p>

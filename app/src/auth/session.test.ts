@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, expect, test, vi } from 'vitest'
+import { onlineManager } from '@tanstack/react-query'
+import { PLAN_KEY, queryClient } from './planSync.ts'
 import { authClient } from './client.ts'
-import { enterApp } from './session.ts'
+import { enterApp, signOut } from './session.ts'
+import { JOURNEY_PAGES } from '../state/journeyPage.ts'
 import { useStore } from '../state/store.ts'
 import { fresh } from '../state/fresh.ts'
 import { startFrom, useShell } from '../state/shell.ts'
@@ -16,6 +19,7 @@ vi.mock('./client.ts', () => ({
       })),
       setActive: vi.fn(async () => ({ data: {}, error: null })),
     },
+    signOut: vi.fn(async () => ({ data: {}, error: null })),
   },
 }))
 
@@ -42,14 +46,56 @@ test('invite link: kept through sign-in, accepted, made active, then a new accou
   await enterApp(user)
   expect(authClient.organization.acceptInvitation).toHaveBeenCalledWith({ invitationId: 'inv-1' })
   expect(authClient.organization.setActive).toHaveBeenCalledWith({ organizationId: 'org-a' })
+  // the plan and consents belong to the tenant: read only once the invited one is active
+  const active = vi.mocked(authClient.organization.setActive).mock.invocationCallOrder[0]
+  for (const order of vi.mocked(fetch).mock.invocationCallOrder) expect(order).toBeGreaterThan(active)
   expect(location.search).toBe('')
-  expect(router.state.location.pathname).toBe('/account/details')
+  await vi.waitFor(() => expect(router.state.location.pathname).toBe('/account/details'))
 })
 
 test('returning user with an unfinished onboarding resumes at the next open question', async () => {
   const saved = { ...fresh(), answers: { 2: 0, 4: 1 }, why: ['track'] }
   stubApi('2026-10', saved)
-  await enterApp(user)
-  expect(router.state.location.pathname).toBe('/discover/3')
-  expect(useStore.getState().plan.discoverStep).toBe(2)
+  await enterApp({ name: '', email: 'b@c.ie' })
+  // landed at once, then again where the restored plan resumes
+  await vi.waitFor(() => expect(router.state.location.pathname).toBe('/discover/3'))
+  await vi.waitFor(() => expect(useStore.getState().plan.discoverStep).toBe(2))
+})
+
+test("sign-out forgets the topic pages' picks, watched videos and seats", async () => {
+  JOURNEY_PAGES.Mortgages.setState({
+    situation: 2,
+    video: 1,
+    watched: { '2-1': true },
+    seats: { '2-0': true },
+  })
+  await signOut()
+  expect(JOURNEY_PAGES.Mortgages.getState()).toMatchObject({
+    situation: 0,
+    video: 0,
+    watched: {},
+    seats: {},
+  })
+})
+
+test('an account is entered once: the session showing after an in-app sign-in does not enter it again', async () => {
+  stubApi('2026-10')
+  await enterApp({ name: '', email: 'Niamh@Example.ie' })
+  await enterApp({ name: '', email: 'niamh@example.ie' })
+  const consents = vi.mocked(fetch).mock.calls.filter(([url]) => url === '/api/consents')
+  expect(consents).toHaveLength(1)
+})
+
+test("another account entering drops the last one's plan version, so nothing saves until its own is read", async () => {
+  stubApi('2026-10', { ...fresh(), whyNote: 'theirs' })
+  queryClient.setQueryData(PLAN_KEY, { version: 9, plan: null }) // the account signed in before
+  onlineManager.setOnline(false)
+  const entering = enterApp({ name: '', email: 'ciara@example.ie' })
+  expect(queryClient.getQueryData(PLAN_KEY)).toBeUndefined()
+  queryClient.mount() // plan sync's client: resumes paused reads
+  onlineManager.setOnline(true)
+  await entering
+  await vi.waitFor(() => expect(useStore.getState().plan.whyNote).toBe('theirs'))
+  expect(queryClient.getQueryData(PLAN_KEY)).toMatchObject({ version: 1 })
+  queryClient.unmount()
 })

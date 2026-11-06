@@ -1,9 +1,18 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { authClient } from '../../../../auth/client.ts'
+import { isAdviser } from '../../../../bookings/bookings.ts'
 import AdviserForm, { ADVISER_FORM_ID } from '../../../../components/me/AdviserForm.tsx'
 import AppScreen from '../../../../components/frame/AppScreen.tsx'
 import { backToMe } from '../../../../state/finances.ts'
 
-export const Route = createFileRoute('/_auth/_app/me/adviser')({ component: MeAdviser })
+// advisers only: anyone else goes back to Me
+export const Route = createFileRoute('/_auth/_app/me/adviser')({
+  beforeLoad: async () => {
+    const { data } = await authClient.organization.getActiveMember().catch(() => ({ data: null }))
+    if (!isAdviser(data?.role)) throw redirect({ to: '/me' })
+  },
+  component: MeAdviser,
+})
 
 function MeAdviser() {
   return (

@@ -1,6 +1,6 @@
 // The calculator groups and the calculators Explore lists.
 
-export type CategoryId = 'home' | 'savings' | 'retire' | 'invest' | 'protect' | 'everyday'
+export type CategoryId = 'home' | 'savings' | 'retire' | 'invest' | 'protect' | 'loans' | 'everyday'
 
 export interface Category {
   id: CategoryId
@@ -17,7 +17,8 @@ export const CATEGORIES: Category[] = (
     ['retire', 'Pensions & Retirement', '🌅', 'var(--c7)', 'Projections and income'],
     ['invest', 'Investments', '📈', 'var(--c5)', 'Growth, fees, ups and downs'],
     ['protect', 'Protection', '🛡️', 'var(--c4)', 'Cover for you and your family'],
-    ['everyday', 'Everyday Money', '💶', 'var(--c1)', 'Budget, surplus, debt, net worth'],
+    ['loans', 'Loans', '💳', '#6B4E9B', 'Loans, credit cards, clearing debt'],
+    ['everyday', 'Everyday Money', '💶', 'var(--c1)', 'Budget, surplus, net worth'],
   ] as const
 ).map(([id, name, emoji, color, blurb]) => ({ id, name, emoji, color, blurb }))
 
@@ -111,8 +112,18 @@ const ROWS: [string, CategoryId, string, string, string][] = [
   ['networth', 'everyday', 'Net worth', 'What am I worth, all in?', '🧾'],
   ['surplus', 'everyday', 'Monthly surplus', 'What is left at the end of the month?', '➗'],
   ['budget', 'everyday', 'Budget (50/30/20)', 'A simple way to split your pay', '🥧'],
-  ['debtpay', 'everyday', 'Debt repayment', 'How fast can I clear my debt?', '✂️'],
-  ['loan', 'everyday', 'Loan repayment', 'What would a loan cost me?', '🚗'],
+  ['loan', 'loans', 'Loan repayment', 'What would a loan cost me?', '🚗'],
+  ['loancompare', 'loans', 'Loan comparison', 'Two offers: which one costs less?', '⚖️'],
+  ['loanafford', 'loans', 'Loan affordability', 'How much could I comfortably borrow?', '🧮'],
+  [
+    'creditcard',
+    'loans',
+    'Credit card repayment',
+    'What does the minimum payment really cost?',
+    '💳',
+  ],
+  ['debtpay', 'loans', 'Debt repayment', 'How much sooner if I pay a little extra?', '✂️'],
+  ['debtplan', 'loans', 'Debt payoff plan', 'Which debt should I pay off first?', '🪜'],
 ]
 
 /** Every calculator, in the order the groups list them. The maths lives with the calculator screen. */

@@ -24,8 +24,7 @@ describe('wall', () => {
     await act(() => router.navigate({ href: '/sign-in' }))
     useShell.setState({ authed: false })
     localStorage.removeItem('lm-test-auth')
-    // no API here: the session check finds none
-    globalThis.fetch = (async () => new Response('null')) as typeof fetch
+    // no API here: the session check can't reach one, which counts as signed out
     await act(() => router.navigate({ href: '/me/privacy' }))
     expect(path()).toBe('/sign-in')
     expect(router.state.location.search).toEqual({ redirect: '/me/privacy' })

@@ -1,5 +1,4 @@
 import { S3Client } from "@aws-sdk/client-s3";
-import { SESv2Client } from "@aws-sdk/client-sesv2";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { except } from "hono/combine";
@@ -9,7 +8,7 @@ import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 import { timeout } from "hono/timeout";
 import { createNest } from "./app.module";
-import { AUTH, type Auth, type SendOtp, logOtp, mountAuth, sesOtp } from "./auth";
+import { AUTH, type Auth, type SendOtp, logOtp, mailOtp, mountAuth } from "./auth";
 import { type Db, connect } from "./db";
 import { type Files, devFiles, s3Files } from "./files";
 import { type Env, guard, platformAdmin } from "./guard";
@@ -28,14 +27,8 @@ const required = (name: string) => {
   return v;
 };
 
-// Production sends through SES only when OTP_SENDER=ses (set by lambda.ts), never chosen by NODE_ENV alone; anything else fails closed so codes never reach CloudWatch.
-const sendOtp: SendOtp = !prod
-  ? logOtp
-  : process.env.OTP_SENDER === "ses"
-    ? sesOtp(tracer.captureAWSv3Client(new SESv2Client({ region: "eu-west-1" })), required("OTP_FROM"))
-    : () => {
-        throw new Error("OTP sender not configured: set OTP_SENDER=ses and OTP_FROM");
-      };
+// Production sends codes by email (sendMail: SES once lambda.ts set OTP_SENDER and OTP_FROM; without OTP_FROM the app fails at cold start). The code is never logged.
+const sendOtp: SendOtp = prod ? (required("OTP_FROM"), mailOtp) : logOtp;
 
 // Documents: the private S3 bucket in production; a local folder (api/.dev-files) otherwise, so uploads work without AWS.
 const files: Files = prod
@@ -75,7 +68,7 @@ export const buildApp = async (db: Db, send: SendOtp, store: Files = files) => {
   );
 
   // Registered before every route (after the headers, CORS and logging above) so every route, including unknown paths, is denied without a session.
-  app.use("*", guard(auth));
+  app.use("*", guard(auth, db));
   app.use(
     "*",
     except("/api/dev-files/*", bodyLimit({ maxSize: 1024 * 1024 })), // dev-files has its own 10 MB limit
@@ -84,7 +77,7 @@ export const buildApp = async (db: Db, send: SendOtp, store: Files = files) => {
   );
 
   // The docs list tenant and admin routes: in production only platform admins get them (the guard has already required a session).
-  if (prod) app.use("/api/docs", platformAdmin(nest)).use("/api/openapi.json", platformAdmin(nest));
+  if (prod) app.use("/api/docs", platformAdmin).use("/api/openapi.json", platformAdmin);
 
   // /api/health is the same check reachable through the single CloudFront router (which sends only /api/* to this function)
   for (const path of ["/health", "/api/health"]) app.get(path, docPublic({ tags: ["health"], summary: "Liveness", responses: { 200: { description: "`{ ok: true }`" } } }), (c) => c.json({ ok: true }));

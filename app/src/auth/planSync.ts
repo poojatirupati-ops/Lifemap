@@ -1,5 +1,5 @@
 import { MutationObserver, QueryClient } from '@tanstack/react-query'
-import { useShell } from '../state/shell.ts'
+import { toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { savedPlan } from '../state/migrate.ts'
 import type { Plan } from '../state/types.ts'
@@ -39,12 +39,28 @@ async function fetchPlan(): Promise<SavedPlan> {
 export const loadPlan = () =>
   queryClient.fetchQuery({ queryKey: PLAN_KEY, queryFn: fetchPlan, staleTime: 0 })
 
+/**
+ * The saved plan, read until it is: offline it waits for the connection, and it keeps asking (backing off, paused while the page is
+ * hidden), saying after a few tries that changes aren't saved yet (saving waits for the version it brings). Cancelled on sign-out.
+ */
+export const readSavedPlan = () =>
+  queryClient.fetchQuery({
+    queryKey: PLAN_KEY,
+    queryFn: fetchPlan,
+    staleTime: 0,
+    retry: (failures) => (failures === 3 && toast("Your changes aren't saved yet"), true),
+  })
+
 /** Saves against the last version read; on 409 (changed elsewhere) refetches and retries once, last writer wins. */
 async function putPlan(plan: object) {
   const snapshot = takeSnapshot() // kept across the 409 retry
+  // signing out or another account entering removes PLAN_KEY: a save that finishes after that must not leave its version behind
+  const plans = queryClient.getQueryCache()
+  const read = plans.find({ queryKey: PLAN_KEY })
   for (const attempt of [1, 2]) {
     const version = queryClient.getQueryData<SavedPlan>(PLAN_KEY)?.version ?? 0
     const response = await send('PUT', '/api/plan', { version, plan, snapshot })
+    if (plans.find({ queryKey: PLAN_KEY }) !== read) return
     if (response.ok) {
       const saved: { version: number } = await response.json()
       queryClient.setQueryData(PLAN_KEY, { version: saved.version, plan })
@@ -58,7 +74,7 @@ async function putPlan(plan: object) {
 /**
  * Saves the plan 1.5s after it last changed, and at once when the page is hidden.
  * Offline saves wait and go out when the browser is online again; a failed save is retried on the next change.
- * Nothing is saved once signed out, so a reset plan never goes back. Returns the stop function.
+ * Nothing is saved once signed out, so a reset plan never goes back, nor before the saved plan is restored. Returns the stop function.
  */
 export function startPlanSync() {
   queryClient.mount() // resumes paused saves when the browser comes back online
@@ -69,6 +85,8 @@ export function startPlanSync() {
   const save = () => {
     clearTimeout(timer)
     if (!useShell.getState().authed) return
+    // no server version until the saved plan is restored (session.ts): this browser's plan never saves blind over the server's
+    if (!queryClient.getQueryData(PLAN_KEY)) return
     const fields = savedFields(useStore.getState().plan)
     const json = JSON.stringify(fields)
     if (json === lastSent) return

@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import ExpertFab from './ExpertFab.tsx'
-import MortgagePlayer from './MortgagePlayer.tsx'
+import StoryPlayer from './StoryPlayer.tsx'
 import ReadingCards from './ReadingCards.tsx'
 import VideoRow from './VideoRow.tsx'
 import LiveCard from '../explore/LiveCard.tsx'
@@ -9,12 +9,44 @@ import { toolById } from '../explore/tools.data.ts'
 import { useJourneys, type CalculatorCard } from '../../content/cms.tsx'
 import { prefersReducedMotion } from '../../hooks/reducedMotion.ts'
 import { openCalculator } from '../../state/explore.ts'
-import { pageKey, useMortgagePage } from '../../state/mortgage.ts'
+import {
+  JOURNEY_PAGES,
+  JourneyPageContext,
+  pageKey,
+  useJourneyActions,
+  useJourneyPage,
+  type JourneyTopic,
+} from '../../state/journeyPage.ts'
 import { useStore } from '../../state/store.ts'
 import Screen from '../../shell/Screen.tsx'
 
-const NOTE =
-  'Mortgages topic page (Pooja, 15 Oct): your situation, upload, all 7 calculators as expanding cards, story videos, read and ask, live sessions, and a floating expert button.'
+/** How each focus area's own page differs. */
+const PAGES: Record<
+  JourneyTopic,
+  {
+    note: string
+    /** The borrowing quiz card, for the first situation. */
+    eligibility: boolean
+    /** Who runs the live sessions; by default the topic's expert. */
+    liveWith?: string
+    /** Caption, chapters and "Up next" under a video still being filmed. */
+    comingSoonDetails: boolean
+  }
+> = {
+  Mortgages: {
+    note: 'Mortgages topic page (Pooja, 15 Oct): your situation, upload, all 7 calculators as expanding cards, story videos, read and ask, live sessions, and a floating expert button.',
+    eligibility: true,
+    liveWith: 'with a mortgage broker',
+    comingSoonDetails: true,
+  },
+  Loans: {
+    note: 'Loans topic page (same pattern as Mortgages): your situation, calculators in a scrolling row, watch, read and ask, live sessions, and a floating expert button.',
+    eligibility: false,
+    comingSoonDetails: false,
+  },
+}
+
+export const hasJourneyPage = (topic: string): topic is JourneyTopic => topic in PAGES
 
 const JUMPS = [
   { sectionId: 'mp-calc', label: 'Calculators' },
@@ -28,24 +60,37 @@ const jumpTo = (sectionId: string) =>
     .getElementById(sectionId)
     ?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
 
-/** The Mortgages topic page (/explore/topic/Mortgages). */
-export default function MortgagesPage() {
+/** A focus area's own page (/explore/topic/Mortgages, /explore/topic/Loans). */
+export default function JourneyPage({ topic }: { topic: JourneyTopic }) {
   return (
-    <Screen id="XPL-TOPIC" note={NOTE}>
-      <Body />
+    <Screen id="XPL-TOPIC" note={PAGES[topic].note}>
+      <Body topic={topic} />
     </Screen>
   )
 }
 
 /** The page's content under its own head (also checked against the original on its own). */
-export function Body() {
-  const situation = useMortgagePage((p) => p.situation)
-  const video = useMortgagePage((p) => p.video)
-  const seats = useMortgagePage((p) => p.seats)
-  const { pickSituation, toggleSeat } = useMortgagePage.getState()
-  const journeys = useJourneys()
+export function Body({ topic }: { topic: JourneyTopic }) {
+  return (
+    <JourneyPageContext.Provider value={JOURNEY_PAGES[topic]}>
+      <Content topic={topic} />
+    </JourneyPageContext.Provider>
+  )
+}
+
+function Content({ topic }: { topic: JourneyTopic }) {
+  const pickedSituation = useJourneyPage((p) => p.situation)
+  const pickedVideo = useJourneyPage((p) => p.video)
+  const seats = useJourneyPage((p) => p.seats)
+  const { actionPrefix, pickSituation, toggleSeat } = useJourneyActions()
+  const journeys = useJourneys(topic)
+  // the content may have fewer situations or videos than the picks were made on
+  const situation = Math.min(pickedSituation, journeys.length - 1)
   const page = journeys[situation]
   if (!page) return null
+  const video = Math.min(pickedVideo, page.videos.length - 1)
+  const story = page.videos[video]
+  const { eligibility, liveWith, comingSoonDetails } = PAGES[topic]
 
   return (
     <>
@@ -54,7 +99,7 @@ export function Body() {
         <div className="dsheet2">
           <span className="dgrab" aria-hidden="true"></span>
           <h2 className="t" tabIndex={-1} style={{ margin: 0 }}>
-            Mortgages
+            {page.topic.name}
           </h2>
           <div className="small" style={{ marginTop: 4 }}>
             {page.topic.blurb}
@@ -64,7 +109,7 @@ export function Body() {
           {journeys.map(({ name }, i) => (
             <button
               key={name}
-              data-a="mpsit"
+              data-a={`${actionPrefix}sit`}
               data-p={i}
               aria-pressed={i === situation}
               onClick={() => pickSituation(i)}
@@ -85,16 +130,19 @@ export function Body() {
             </button>
           ))}
         </nav>
-        {situation === 0 ? <EligibilityCard /> : null}
+        {eligibility && situation === 0 ? <EligibilityCard /> : null}
         <CalculatorGrid calculators={page.calculators} />
-        <VideoRow videos={page.videos} />
+        <VideoRow videos={page.videos} situation={situation} current={video} />
         <div id="mp-player">
-          <MortgagePlayer
-            key={pageKey(situation, video)}
-            story={page.videos[video]}
-            number={video + 1}
-            count={page.videos.length}
-          />
+          {story ? (
+            <StoryPlayer
+              key={pageKey(situation, video)}
+              story={story}
+              number={video + 1}
+              count={page.videos.length}
+              comingSoonDetails={comingSoonDetails}
+            />
+          ) : null}
         </div>
         <ReadingCards reading={page.reading} />
         <div className="mp-sec" id="mp-live">
@@ -104,10 +152,10 @@ export function Body() {
         {page.live.map((session, i) => {
           const seat = pageKey(situation, i)
           return (
-            <LiveCard key={session.title} session={session} who="with a mortgage broker">
+            <LiveCard key={session.title} session={session} who={liveWith}>
               <button
                 className="mp-seat"
-                data-a="mpseat"
+                data-a={`${actionPrefix}seat`}
                 data-p={seat}
                 aria-pressed={!!seats[seat]}
                 onClick={() => toggleSeat(i)}
@@ -119,7 +167,7 @@ export function Body() {
         })}
         <p className="disc">Topics explain general ideas. They are not advice.</p>
       </div>
-      <ExpertFab />
+      <ExpertFab kind={page.topic.expert} />
     </>
   )
 }
@@ -157,7 +205,7 @@ function EligibilityCard() {
   )
 }
 
-/** Every mortgage calculator as a photo card, the most relevant one first; all are offered, so "7 of 7". */
+/** Every calculator of the area as a photo card, the most relevant one first; all are offered, so "7 of 7". */
 function CalculatorGrid({ calculators }: { calculators: CalculatorCard[] }) {
   return (
     <>

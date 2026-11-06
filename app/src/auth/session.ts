@@ -1,10 +1,11 @@
 import { authClient } from './client.ts'
-import { hasAcknowledgedNotice } from './consents.ts'
-import { PLAN_KEY, loadPlan, queryClient, send } from './planSync.ts'
+import { CONSENTS_KEY, hasAcknowledgedNotice } from './consents.ts'
+import { PLAN_KEY, queryClient, readSavedPlan, send } from './planSync.ts'
 import { testAuthOn } from '../lib/lmTestHook.ts'
-import { goTo, router } from '../shell/router.ts'
+import { currentPath, goTo, router } from '../shell/router.ts'
 import { TENANT_KEY } from '../shell/tenant.ts'
 import { fresh } from '../state/fresh.ts'
+import { resetJourneyPages } from '../state/journeyPage.ts'
 import { startFrom, toast, useShell } from '../state/shell.ts'
 import { useStore } from '../state/store.ts'
 import { DISCOVER_SIX } from '../domain/discovery/questions.data.ts'
@@ -20,9 +21,8 @@ function onboardingPath(plan: Plan) {
   return open < 0 ? '/personality' : questionPath(open)
 }
 
-/** Brings back the user's saved plan; with none, keeps this browser's and fills in the account. */
-async function restoreSavedPlan(user: User) {
-  const saved = (await loadPlan().catch(() => null))?.plan
+/** Brings back the user's saved plan once it has been read; with none, keeps this browser's and fills in the account. */
+function restore(user: User, saved: Plan | null) {
   const store = useStore.getState()
   if (!saved?.goals) {
     store.update((plan) => {
@@ -77,25 +77,83 @@ async function acceptInvitation(rt = '/') {
   return url.pathname + url.search
 }
 
+/** The email (lowercase) the app was entered with; forgotten on sign-out and when the session is found to have ended. */
+let enteredAs: string | undefined
+
+/** The session ended (expired, revoked, signed out elsewhere): the next sign-in enters again, even as the same account. */
+export const forgetEntered = () => void (enteredAs = undefined)
+
 /**
- * After any sign-in (code, passkey, organisation SSO, or a session found on load):
- * join an invited tenant, restore the plan, then ask a new account for its details or land.
+ * After any sign-in (code, passkey, organisation SSO, or a session found on load or back after an offline reload), once per account:
+ * join an invited tenant and land at once; the saved plan and the consents check follow in the background.
+ * - Plan sync saves nothing until the plan has been read (no server version), so this browser's plan never saves over the server's.
+ *   Once read it is restored, and the landing redone if the user has not moved since.
+ * - Only a confirmed "not agreed" sends the account to its details.
+ * Both reads wait for the connection and keep asking (sign-out cancels them); another account entering meanwhile ends this one.
  */
 export async function enterApp(user: User) {
+  const email = user.email.toLowerCase()
+  if (enteredAs === email) return
+  enteredAs = email
+  const stillEntering = () => enteredAs === email
   useShell.setState({ authed: true }) // signed in now; the session hook catches up after
+  rememberSignedIn(true)
+  forgetAccountQueries() // the last account's plan version and consents must not carry over
+  // an invitation switches the active tenant, and the plan and consents belong to the tenant: read them after it
   const rt = await acceptInvitation(redirectTarget())
+  if (!stillEntering()) return
+  // both reject only when cancelled (sign-out)
+  const reading = readSavedPlan().catch(() => null)
+  const agreed = hasAcknowledgedNotice(email).catch(() => null)
   // the session (and maybe its tenant) changed: GET /api/tenant again for branding, flags and SSO
   void queryClient.invalidateQueries({ queryKey: TENANT_KEY })
-  const [known] = await Promise.all([hasAcknowledgedNotice(), restoreSavedPlan(user)])
-  if (!known) return goTo(`/account/details${keepRedirect(rt)}`)
-  return land(rt)
+  await land(rt)
+  const landedAt = currentPath()
+  void agreed.then((answer) => {
+    if (stillEntering() && answer === false) void goTo(`/account/details${keepRedirect(rt)}`)
+  })
+  void reading.then((saved) => {
+    if (!saved || !stillEntering()) return
+    restore(user, saved.plan)
+    if (currentPath() === landedAt) void land(rt) // where the restored plan lands, unless the user has moved on
+  })
 }
 
-/** Forgets everything this browser holds for the user: query cache, plan, wall pass. */
-function clearLocal() {
+const SIGNED_IN = 'lm-signed-in'
+
+/** Whether this browser had a confirmed session, kept across reloads (an offline reload still passes the wall). */
+export function rememberSignedIn(signedIn: boolean) {
+  try {
+    if (signedIn) localStorage.setItem(SIGNED_IN, '1')
+    else localStorage.removeItem(SIGNED_IN)
+  } catch {
+    // private mode: an offline reload goes to sign-in
+  }
+}
+
+export function wasSignedIn() {
+  try {
+    return localStorage.getItem(SIGNED_IN) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** The plan version and consents cached for the last account. */
+function forgetAccountQueries() {
   queryClient.removeQueries({ queryKey: PLAN_KEY })
+  queryClient.removeQueries({ queryKey: CONSENTS_KEY })
+}
+
+/** Forgets everything this browser holds for the user: query cache, plan, topic pages, wall pass. */
+function clearLocal() {
+  enteredAs = undefined
+  rememberSignedIn(false)
+  void queryClient.cancelQueries()
+  forgetAccountQueries()
   useShell.setState({ authed: testAuthOn() })
   startFrom(fresh())
+  resetJourneyPages()
   void goTo('/') // the wall sends a signed-out visitor to sign-in
 }
 

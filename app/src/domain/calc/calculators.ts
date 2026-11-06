@@ -6,10 +6,11 @@ import { EVERYDAY } from './everyday.calc.ts'
 import { HOME } from './home.calc.ts'
 import { inputsOf } from './inputs.data.ts'
 import { INVEST } from './invest.calc.ts'
+import { LOANS } from './loans.calc.ts'
 import { RETIRE } from './retire.calc.ts'
 import type { Calculator } from './types.ts'
 
-const RUNS = { ...HOME, ...INVEST, emergency, ...RETIRE, ...EVERYDAY }
+const RUNS = { ...HOME, ...INVEST, emergency, ...RETIRE, ...LOANS, ...EVERYDAY }
 const TIPS: Record<string, Calculator['tip']> = { emergency: emergencyTip }
 
 const CALCULATORS = new Map(
