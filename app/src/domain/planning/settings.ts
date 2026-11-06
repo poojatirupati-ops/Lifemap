@@ -85,19 +85,22 @@ export function investmentGrowth(
   return toTenthPercent(afterTax ** (1 / years) - 1)
 }
 
+/** Opens every growth basis; screens whose help already says it drop it (assumptionText.ts). */
+export const NOT_A_PREDICTION = 'a planning assumption, not a prediction: '
+
 export function investmentGrowthBasis(
   settings = settingsInUse(),
   rules: Rules = rules2026,
   direct = false,
 ) {
   if (direct)
-    return 'a planning assumption, not a prediction: growth before fees less about 1% charges; capital gains tax is taken off when the shares are sold, not each year'
+    return `${NOT_A_PREDICTION}growth before fees less about 1% charges; capital gains tax is taken off when the shares are sold, not each year`
   const gross = percentToTenth(rateInUse(settings, 'invGross')!)
   const charges = percentToTenth(fundCharges(settings))
   const { deemed, exit } = rules.sav
   const lessCharges = `less about ${charges} charges`
   const lessTax = `less ${wholePercent(exit)} exit tax taken every ${deemed} years`
-  return `a planning assumption, not a prediction: ${gross} before fees and tax, ${lessCharges}, ${lessTax}`
+  return `${NOT_A_PREDICTION}${gross} before fees and tax, ${lessCharges}, ${lessTax}`
 }
 
 // 'inv' has no figure of its own: it is derived from the growth before fees and the charges.

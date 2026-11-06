@@ -6,6 +6,7 @@ import { ASSUMPTIONS, type AssumptionField, type NumberKind } from './assumption
 import { rules2026, rulesFor, type Rules } from './rates.ts'
 import { STANDARDS } from './settings.data.ts'
 import {
+  NOT_A_PREDICTION,
   settingsInUse,
   guidance,
   standardLabel,
@@ -108,7 +109,8 @@ const bySource = (field: AssumptionField, plan: AssumptionPlan) =>
   field.by ??
   standardSource(field.standard!, settingsInUse(), planRules(plan), holdsSharesDirectly(plan))
 
-function guide(plan: AssumptionPlan, key: string) {
+/** The first line under a field: how LifeMap sets it. */
+export function guide(plan: AssumptionPlan, key: string) {
   const field = ASSUMPTIONS[key]
   if (field.market) {
     if (!field.optional || marketSuggestion(field)) return ''
@@ -121,29 +123,36 @@ function guide(plan: AssumptionPlan, key: string) {
   }
   if (!isStandard(field)) return ''
   const figure = formatAssumption(key, standardFor(plan, key))
-  return `LifeMap uses ${figure} (${bySource(field, plan)}). Change it if you want to use your own.`
+  // the help that follows says "A planning assumption, not a prediction" for the growth rates: don't say it twice
+  const basis = (bySource(field, plan) ?? '').replace(NOT_A_PREDICTION, '')
+  return `LifeMap uses ${figure}: ${basis}. Change it to use your own.`
 }
 
-function helpFor(key: string) {
+/** The line after it: what the figure means. */
+export function helpFor(key: string) {
   const { help } = ASSUMPTIONS[key]
   if (help == null) return guidance(key)
   return typeof help === 'string' ? help : help()
 }
-
-/** The small print under a field: how LifeMap sets it, then its help. */
-export const smallPrint = (plan: AssumptionPlan, key: string) =>
-  [guide(plan, key), helpFor(key)].filter(Boolean).join(' ')
 
 const WEB_PREFIX = /^https?:\/\/(www\.)?/
 
 const host = (source: string) =>
   WEB_PREFIX.test(source) ? source.replace(WEB_PREFIX, '').split('/')[0] : source
 
-/** Where a LifeMap standard comes from: "… . Source: centralbank.ie (Jun 2026)." */
-export function standardNote(key: string, rules: Rules, direct = false) {
+/** Where a LifeMap standard's figures come from: "Source: centralbank.ie (Jun 2026)." */
+export function standardSourceLine(key: string) {
   const standard = ASSUMPTIONS[key].standard
   const settings = standard && STANDARDS[standard]
   if (!settings) return ''
   const asOf = settings.asOf ? ` (${settings.asOf})` : ''
-  return `${standardSource(standard, settingsInUse(), rules, direct)}. Source: ${host(settings.source)}${asOf}.`
+  return `Source: ${host(settings.source)}${asOf}.`
+}
+
+/** The basis and source of a LifeMap standard, for the report: "… . Source: centralbank.ie (Jun 2026)." */
+export function standardNote(key: string, rules: Rules, direct = false) {
+  const standard = ASSUMPTIONS[key].standard
+  const settings = standard && STANDARDS[standard]
+  if (!settings) return ''
+  return `${standardSource(standard, settingsInUse(), rules, direct)}. ${standardSourceLine(key)}`
 }
