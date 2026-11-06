@@ -118,6 +118,12 @@ export default function GoalRow({ goal }: { goal: Goal }) {
             />
           </label>
         )}
+        {goal.key === 'home' && (
+          <div className="full small">
+            Put the deposit plus stamp duty (1% of the price up to €1m) and buying fees. The
+            Borrowing, Deposit and Rent vs buy calculators add these for you.
+          </div>
+        )}
         {goal.key === 'safety' && <SafetyMonths goal={goal} />}
       </div>
       <div className="gr-foot">

@@ -1,14 +1,8 @@
 // The tax rules register: one row per rule with its 2026 value, its 2027 value or fallback, status,
 // source, effective date and last check (original taxRegister). Admin overrides change the 2027 side.
-import { rulesVersion } from './rates'
+import { hasOverrideValue, rulesVersion, taxSession, type TaxOverride } from './rates'
 import { RULES_2026, type Rule } from './rates.data'
 import { CANDIDATES_2027, RULES_2027, TAX_STATUS, type TaxStatus } from './rules2027.data'
-
-/** An administrator's 2027 value or status for one rule, for this session. */
-export interface TaxOverride {
-  value?: unknown
-  status?: TaxStatus
-}
 
 const CATEGORIES: Record<string, string> = {
   it: 'Income tax',
@@ -110,8 +104,6 @@ const nameOf = (path: string) =>
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (first) => first.toUpperCase())
 
-const hasValue = (override?: TaxOverride) => override?.value != null && override.value !== ''
-
 function noteOf(path: string, rule: Rule) {
   const change = RULES_2027[path]
   if (change) return change.note
@@ -129,7 +121,7 @@ function row(path: string, rule: Rule, override?: TaxOverride) {
     category: CATEGORIES[group] ?? group,
     name: nameOf(path),
     value2026: rule.value,
-    value2027: hasValue(override) ? override!.value : change ? change.value : rule.value,
+    value2027: hasOverrideValue(override) ? override!.value : change ? change.value : rule.value,
     fallback: !change && !override,
     status2026: OWNER_STATUS[path] ?? (rule.verify ? TAX_STATUS.toVerify : TAX_STATUS.verified),
     status2027:
@@ -150,7 +142,7 @@ export type TaxRegisterRow = ReturnType<typeof row>
 const isRule = (node: object): node is Rule => 'value' in node && 'source' in node
 
 /** Every rule in the register, in register order. */
-export function taxRegister(overrides: Record<string, TaxOverride> = {}) {
+export function taxRegister(overrides = taxSession.getState().overrides) {
   const rows: TaxRegisterRow[] = []
   const walk = (node: object, path: string) => {
     for (const [key, child] of Object.entries(node)) {
@@ -164,13 +156,13 @@ export function taxRegister(overrides: Record<string, TaxOverride> = {}) {
 }
 
 /** The tax rules a plan version used: kept with each version in the plan history. */
-export function taxSnapshot(startYear: number) {
-  const rows = taxRegister()
+export function taxSnapshot(startYear: number, session = taxSession.getState()) {
+  const rows = taxRegister(session.overrides)
   const count = (test: (row: TaxRegisterRow) => boolean) => rows.filter(test).length
   return {
     startYear,
-    override: null,
-    rules: rulesVersion(startYear),
+    override: session.year,
+    rules: rulesVersion(startYear, session),
     announced: count((row) => row.status2027 === TAX_STATUS.announced),
     fallback: count((row) => row.status2027 === TAX_STATUS.fallback),
     needsCheck: count(

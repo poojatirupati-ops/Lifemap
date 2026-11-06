@@ -6,6 +6,7 @@ import { discoverQuestion } from '../../discovery/questions.data.ts'
 import { retirementGoal } from '../../goals/goals.ts'
 import { governmentRules } from '../governmentRules.ts'
 import { planSettings, type ProjectionInputs } from '../planSettings.ts'
+import { prsiRate } from '../levies.ts'
 import { project } from '../project.ts'
 import { rules2026, rulesVersion } from '../rates.ts'
 import { standardValue } from '../settings.ts'
@@ -20,9 +21,13 @@ export const ASSUMED = TAGS.assumed.text
 const NOT_CHOSEN = 'Not chosen yet'
 
 const KNOWN_LIMITS =
-  "Living costs stay the same through the plan. Your partner's pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn't modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn't applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Capital gains tax uses a share-of-value assumption and ignores the yearly exemption; tax on a life-policy lump sum, rental costs, the tax-free part of a bought annuity and gift or inheritance tax are not modelled yet."
+  "Living costs stay the same through the plan. Your partner's pay is counted until the retirement age you choose for them, then only their State Pension; their own pension isn't modelled. We assume drawdown from an ARF or vested PRSA. The reduced USC rate for medical-card holders under 70 isn't applied. Auto-enrolment rates after 2028 stay at the 2026 rates. Where you have not entered what you paid, capital gains tax uses a share-of-value assumption and funds are assumed bought at today's value. Not included: tax on a life-policy lump sum (enter it after tax), the tax-free part of a bought annuity, gift or inheritance tax, mortgage interest relief on rented property, Local Property Tax, stamp duty and business or farm reliefs. Fund distributions are covered by exit tax. Capital gains tax and exit tax are taken in the year of the sale or the 8-year anniversary, not on the Revenue payment date (about 10 months later)."
 const TIMING =
   'Calculators: monthly, end of the month. Pension contributions in your plan and in the Retirement tool: paid at the end of each year (a little lower than monthly). Money you save towards goals: at the start of each year. Mortgage rates are a yearly rate ÷ 12; card, loan and APR figures are effective yearly rates.'
+const TAX_YEARS =
+  'Each year of your plan uses its own rules: 2026 rules to the end of 2026, announced 2027 rules from 1 January 2027 (figures not announced keep their 2026 value)'
+const STATE_PENSION_ENTITLEMENT =
+  'Total Contributions Approach: your years of PRSI divided by 40 (nothing under 10 years). The 2025 to 2033 transition (the higher of the Yearly Average blend and the Total Contributions Approach) is not modelled: enter the weekly amount from your MyWelfare statement to use your own figure'
 const SAVING_ORDER =
   'Your order from Which goal first? (Emergency fund first unless you move it). Until you rank: must-haves, then nice-to-haves, soonest first'
 const ADVISER_RATE = " (a planning rate: you don't know your rate, so it is left for your adviser)"
@@ -236,7 +241,10 @@ function protectionNeeds({ plan }: AssumptionReader): AssumptionRow[] {
 }
 
 function savingAssumptions(reader: AssumptionReader, ready: boolean): AssumptionRow[] {
-  const { plan, value, source, shown } = reader
+  const { plan, value, source, shown, settings } = reader
+  const { sav } = settings.rules
+  const { investmentCost, otherAssetsCost, alternativesCost } = settings.figures
+  const paidAny = investmentCost != null || otherAssetsCost != null || alternativesCost != null
   const hasFund = plan.goals.some((goal) => goal.key === 'safety')
   const jointTax = plan.about.partner && plan.about.married === true
   return [
@@ -269,11 +277,30 @@ function savingAssumptions(reader: AssumptionReader, ready: boolean): Assumption
     },
     ...protectionNeeds(reader),
     { label: 'How timing is counted', value: TIMING, tag: HOW },
+    { label: 'Tax year rules', value: TAX_YEARS, tag: GOVERNMENT },
+    {
+      label: 'Investments held as',
+      value: settings.direct
+        ? 'Shares held directly: growth first; capital gains tax only when sold (no exit tax, no 8-year rule)'
+        : 'Funds or ETFs: growth first; exit tax when sold, and when the 8-year rule treats them as sold (the tax is taken from the fund and the cost resets)',
+      tag: source('invWrapper'),
+    },
     {
       label: 'Capital gains tax on sold assets',
-      value: `${percent(rules2026.sav.cgt)} on ${percent(value('cgtGain'))} of the value of other assets, crypto, gold or art when they are sold for a goal (assumed gain)`,
+      value: `${percent(sav.cgt)} on the gain when something is sold (33% for sales before 7 Oct 2026), after losses and the ${euro(sav.cgtExempt)} a year exemption (${euro(sav.cgtExempt * 2)} if you own them with your partner). The gain is the sale value less what you paid. Nothing is taxed while you hold it.`,
+      tag: GOVERNMENT,
+    },
+    {
+      label: 'What you paid for assets',
+      value: `${paidAny ? 'Your figures where you entered them. ' : ''}Where you did not: funds and shares you hold directly are assumed bought at today's value (no gain yet); other assets and alternative investments assume ${percent(value('cgtGain'))} of their value is gain`,
       tag: source('cgtGain'),
     },
+    {
+      label: 'PRSI on pension (ARF) withdrawals',
+      value: `The plan charges ${percent(prsiRate(settings.rules, settings.startYear))} PRSI on ARF / PRSA withdrawals before 66, and from 66 to 70 if you do not get the contributory State Pension`,
+      tag: ASSUMED,
+    },
+    { label: 'State Pension entitlement', value: STATE_PENSION_ENTITLEMENT, tag: HOW },
     { label: 'Known limits', value: KNOWN_LIMITS, tag: HOW },
   ]
 }

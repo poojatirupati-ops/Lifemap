@@ -4,6 +4,7 @@ import { fresh, freshUi } from './fresh.ts'
 import { OLD_SCREEN_STATE, fromOriginal } from './migrate.ts'
 import { normalize } from '../domain/plan/normalize.ts'
 import { figures } from '../domain/planning/settings.ts'
+import { taxSession } from '../domain/planning/rates.ts'
 import type { Plan, Snapshot, Ui } from './types.ts'
 import { goTo } from '../shell/router.ts'
 import { createDiscoverySlice, type DiscoveryActions } from './discovery.ts'
@@ -112,3 +113,12 @@ export const useStore = create<Store>()(
 )
 
 figures.subscribe(({ key }) => useStore.setState({ figuresKey: key }))
+// the domain reads the session's tax-year choices from taxSession
+const noTaxChoices = taxSession.getInitialState()
+useStore.subscribe(({ taxYearOverride, taxOverrides }) => {
+  const session = taxSession.getState()
+  const year = taxYearOverride ?? noTaxChoices.year
+  const overrides = taxOverrides ?? noTaxChoices.overrides
+  if (year !== session.year || overrides !== session.overrides)
+    taxSession.setState({ year, overrides })
+})

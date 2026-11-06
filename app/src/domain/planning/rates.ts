@@ -1,7 +1,8 @@
 // Irish rules for a plan year: the register with every rule replaced by its value.
 import { wholePercent } from '../../lib/format'
 import { RULES_2026, type Rule } from './rates.data'
-import { RULES_2027 } from './rules2027.data'
+import { createStore } from 'zustand'
+import { RULES_2027, type TaxStatus } from './rules2027.data'
 
 // Rules['it']['band'] is a number, and a misspelt rule is a compile error
 type Values<T> = T extends Rule<infer V> ? V : { [K in keyof T]: Values<T[K]> }
@@ -18,37 +19,62 @@ function valuesOf(register: object): object {
   return Object.fromEntries(entries)
 }
 
-function rules2027(): Rules {
+/** An administrator's 2027 value or status for one rule, for this session. */
+export interface TaxOverride {
+  value?: unknown
+  status?: TaxStatus
+}
+
+/** The session's tax-year choices (an adviser's comparison): never saved with the plan. */
+export interface TaxSession {
+  /** one tax year for every plan year, or null for the plan start year's */
+  year: 2026 | 2027 | null
+  overrides: Record<string, TaxOverride>
+}
+
+export const taxSession = createStore<TaxSession>(() => ({ year: null, overrides: {} }))
+
+/** A typed override counts once it has a value. */
+export const hasOverrideValue = (override?: TaxOverride) =>
+  override?.value != null && override.value !== ''
+
+function rules2027(overrides: Record<string, TaxOverride>): Rules {
   const rules = valuesOf(RULES_2026) as Record<string, Record<string, unknown>>
   for (const [path, change] of Object.entries(RULES_2027)) {
     const [group, key] = path.split('.')
-    rules[group][key] = structuredClone(change.value)
+    const override = overrides[path]
+    rules[group][key] = structuredClone(hasOverrideValue(override) ? override!.value : change.value)
   }
   return rules as Rules
 }
 
 export const rules2026 = valuesOf(RULES_2026) as Rules
+const announced2027 = rules2027({})
+// the 2027 rules with a session's overrides, worked out once per set of overrides
+const overridden2027 = new WeakMap<object, Rules>()
 
-// The plan start year decides the rules for every plan year: 2026 rules, or Budget 2027 rules from 2027
-const YEARS = {
-  2026: {
-    rules: rules2026,
-    version:
-      'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates',
-  },
-  2027: {
-    rules: rules2027(),
-    version: 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending',
-  },
+const VERSIONS = {
+  2026: 'Irish rules 2026 · checked 2 Oct 2026, with Budget 2027 changes applied from their dates',
+  2027: 'Irish rules 2027 · Budget 2027 (announced 6 Oct 2026), Finance Bill pending',
 }
-/** The tax year whose rules a plan starting in this year uses. */
-export const taxYearFor = (startYear: number) => (startYear >= 2027 ? 2027 : 2026)
-const planYear = (startYear: number) => YEARS[taxYearFor(startYear)]
 
-export const rulesFor = (startYear: number): Rules => planYear(startYear).rules
-export const rulesVersion = (startYear: number) => planYear(startYear).version
-export const budget2027Note = (startYear: number) =>
-  `Tax assumptions: ${startYear}. Includes announced 2027 changes${startYear < 2027 ? ' from 1 January 2027' : ''}. Some figures are based on 2026 rates pending publication of updated rules.`
+/** The tax year whose rules every plan year uses: the start year's (2026 rules, or Budget 2027 rules from 2027), unless the session forces one. */
+export const taxYearFor = (startYear: number, session = taxSession.getState()) =>
+  session.year ?? (startYear >= 2027 ? 2027 : 2026)
+
+export function rulesFor(startYear: number, session = taxSession.getState()): Rules {
+  if (taxYearFor(startYear, session) === 2026) return rules2026
+  const { overrides } = session
+  if (!Object.keys(overrides).length) return announced2027
+  if (!overridden2027.has(overrides)) overridden2027.set(overrides, rules2027(overrides))
+  return overridden2027.get(overrides)!
+}
+
+export const rulesVersion = (startYear: number, session = taxSession.getState()) =>
+  VERSIONS[taxYearFor(startYear, session)]
+
+export const budget2027Note = (startYear: number, session = taxSession.getState()) =>
+  `Tax assumptions: ${startYear}. Includes announced 2027 changes${startYear < 2027 && taxYearFor(startYear, session) !== 2027 ? ' from 1 January 2027' : ''}. Some figures are based on 2026 rates pending publication of updated rules.`
 
 /** The capital gains tax rate on a sale on this ISO date: 33% before 7 Oct 2026, 31% from then. */
 export const cgtRateOn = (rules: Rules, isoDate: string) =>

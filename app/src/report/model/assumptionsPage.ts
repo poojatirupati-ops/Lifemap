@@ -68,10 +68,7 @@ export function assumptionsPages(context: ReportContext) {
       items: [
         'Living costs stay the same through the plan, apart from prices.',
         'Drawdown is from an ARF or vested PRSA. Spare money not saved is assumed spent.',
-        settings.startYear === 2027
-          ? 'Budget 2027 rules (announced 6 Oct 2026) are used from 1 January 2027. The Finance Bill may still change some details.'
-          : 'Irish rules checked 2 Oct 2026. Your plan starts in 2026, so Budget 2027 changes (from 1 January 2027) are not used.',
-        'Capital gains tax is estimated on a share of the value of other assets, crypto, gold and art. Tax on life-policy lump sums, rental costs and gift or inheritance tax are not included yet.',
+        'Tax uses the 2026 Irish rules, without Budget 2027. Capital gains tax is taken when assets are sold. Life-policy lump sums, gift and inheritance tax are not included.',
       ],
     },
     glossary: { items: GLOSSARY(inflation, context.statePensionAge, weekly) },
