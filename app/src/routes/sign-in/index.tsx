@@ -84,7 +84,7 @@ function SignIn() {
           </div>
         </main>
         <aside className="sip-photo" aria-hidden="true">
-          <img src="/media/profile-photo.jpg" alt="" />
+          <img src="/media/retire-couple.jpg" alt="" />
         </aside>
       </div>
     </Screen>

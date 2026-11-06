@@ -3143,7 +3143,7 @@ html body #screen #r-glancec .chapgrid{gap:12px}
 /* sign-in (P1): split layout, form left and a large rounded photo right; stacked on phones */
 .sip{position:absolute;inset:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:auto;background:#fff}
 .sip-photo{order:-1;margin:14px 14px 0;border-radius:24px;overflow:hidden;height:150px;background:#E6F3F1}
-.sip-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block}
+.sip-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
 .sip-form{display:flex;justify-content:center;padding:22px 22px 28px}
 .sip-in{width:100%;max-width:420px;display:flex;flex-direction:column;gap:16px}
 .sip-in .brand{align-self:center}
@@ -3165,7 +3165,7 @@ html body #screen #r-glancec .chapgrid{gap:12px}
 body.desk .sip{grid-template-columns:minmax(380px,1fr) 1.15fr;grid-template-rows:1fr;padding:28px}
 body.desk .sip-form{align-items:center;padding:0 40px}
 body.desk .sip-photo{order:0;margin:0;height:auto;border-radius:28px}
-body.desk .sip-photo img{object-position:50% 30%}
+body.desk .sip-photo img{object-position:42% 50%}
 
 /* production: the reviewer sidebar is not shown (kept in the DOM so tests/e2e/screens.spec.ts can use its jump list) */
 .side{display:none!important}
