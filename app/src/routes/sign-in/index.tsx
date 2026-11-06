@@ -10,6 +10,16 @@ import Screen from '../../shell/Screen.tsx'
 import Brand from '../../components/frame/Brand.tsx'
 import { CODE_LENGTH, looksLikeEmail } from '../../domain/identity/signIn.ts'
 
+/** The life goals people plan for: the photo mosaic beside the sign-in form. */
+const GOAL_PHOTOS = [
+  ['family-couch.jpg', 'Family'],
+  ['home-keys.jpg', 'Your home'],
+  ['travel-suitcase.jpg', 'Travel'],
+  ['retire-couple.jpg', 'Retire well'],
+  ['graduation.jpg', 'Education'],
+  ['wedding-rings.jpg', 'Big days'],
+] as const
+
 // ?redirect: the page the login wall caught the visitor on, opened again after sign-in (auth/session.ts)
 export const Route = createFileRoute('/sign-in/')({
   validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
@@ -84,7 +94,12 @@ function SignIn() {
           </div>
         </main>
         <aside className="sip-photo" aria-hidden="true">
-          <img src="/media/retire-couple.jpg" alt="" />
+          {GOAL_PHOTOS.map(([src, label]) => (
+            <figure key={src}>
+              <img src={`/media/${src}`} alt="" />
+              <figcaption>{label}</figcaption>
+            </figure>
+          ))}
         </aside>
       </div>
     </Screen>
