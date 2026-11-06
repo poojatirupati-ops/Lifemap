@@ -15,7 +15,8 @@ class XL:
         self.doc = self.desk.loadComponentFromURL("file://" + path, "_blank", 0, (p,))
         wb = openpyxl.load_workbook(path)
         self.names = {n: wb.defined_names[n].attr_text for n in wb.defined_names}
-        mp = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'plan-meta.json')
+        mp = os.environ.get('PLAN_META') or 'plan-meta.json'
+        if not os.path.isabs(mp) and not os.path.exists(mp): mp = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.path.basename(mp))
         self.meta = json.load(open(mp)) if os.path.exists(mp) else {}
         self.touched = []
     def sh(self, name): return self.doc.Sheets.getByName(name)
