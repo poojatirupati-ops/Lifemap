@@ -8,6 +8,8 @@ export interface WhatIf {
   /** extra a month, today's money; negative saves less */
   monthly: number
   lumpSum: number
+  /** the stress test's side run: markets fall in the year before retirement */
+  stress?: boolean
 }
 
 export const whatIfFrom = (saved: Plan['whatIf']): WhatIf => ({

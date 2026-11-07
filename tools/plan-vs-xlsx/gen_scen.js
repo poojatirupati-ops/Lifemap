@@ -1,5 +1,5 @@
 const { chromium } = require('playwright'); const fs = require('fs'); const { PAGE_FNS } = require('./oracle_lib.js');
-const HTML = 'file://' + require('path').resolve(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html');
+const HTML = 'file://' + (process.env.APP_HTML ? require('path').resolve(process.env.APP_HTML) : require('path').resolve(__dirname, '../../LifeGoals-Customer-Journey-Prototype.html'));   // APP_HTML=another copy of the prototype (for example the one on main)
 // scenario list builders ---------------------------------------------------
 const SAMPLE = {name:'sample', fill:true};   // workbook: Fill example = Yes and nothing typed
 function sampleScenario(){ return {name:'sample-typed', about:{age:38, partner:true, deps:2, married:null}, retireAge:63, pRet:66, infl:0.02, assume:'standard', q6:2,
@@ -10,10 +10,11 @@ exports.sampleScenario = sampleScenario;
   const which = process.argv[2] || 'sample'; const out = process.argv[3] || 'scen.json';
   const b = await chromium.launch(); const p = await (await b.newContext()).newPage(); await p.goto(HTML); await p.waitForTimeout(300);
   await p.evaluate(PAGE_FNS + '; 1');
+  if (process.env.TAX2026) await p.evaluate("window.FORCE_TAX_YEAR = 2026; ASM.startYear.sug = () => 2026; 1");   // TAX2026=1: compare with the 2026-only workbook (plans start in 2026, 2026 rules in every year)
   let scs = [];
   if (which === 'sample') {
     // the prototype's own loadSample() as the Fill-example scenario, plus the typed copy
-    const smp = await p.evaluate(() => { loadSample(); const o = readOutputs(); return o; });
+    const smp = await p.evaluate(() => { loadSample(); if (window.FORCE_TAX_YEAR) S.taxYearOverride = window.FORCE_TAX_YEAR; const o = readOutputs(); return o; });
     scs.push({sc:{name:'sample', fill:true}, out:smp});
     const t = sampleScenario(); const o = await p.evaluate(sc => { applyScenario(sc); return readOutputs(); }, t); scs.push({sc:t, out:o});
   } else {

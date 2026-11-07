@@ -97,7 +97,7 @@ const planSchema = z.looseObject({
   lists: z.record(z.string(), z.array(z.looseObject({ id: z.number(), fields: record }))),
   moneyProfile: z.looseObject({ answers: record, chips: z.array(z.string()), done: record }),
   booking: z.looseObject({ stage: z.string().nullable(), done: z.boolean() }),
-  versions: z.array(z.object({ note: z.string(), date: z.string() })),
+  versions: z.array(z.looseObject({ note: z.string(), date: z.string() })),
 })
 
 /** A plan loaded from the API: migrated, screen state saved by older versions and the save sheet and mobile fields dropped, missing fields filled from a fresh plan, then checked. */

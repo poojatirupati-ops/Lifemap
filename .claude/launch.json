@@ -26,6 +26,24 @@
         "5173"
       ],
       "port": 5173
+    },
+    {
+      "name": "lifemap-api",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "DATABASE_URL=postgres://lifemap:lifemap-dev@localhost:5432/lifemap FEATURE_OVERRIDES=documentUpload=true,adviserBooking=true npm --prefix api run dev 2>&1 | tee /tmp/lifemap-api.log"
+      ],
+      "port": 8787
+    },
+    {
+      "name": "lifemap-cms",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "npm --prefix cms run dev 2>&1 | tee /tmp/lifemap-cms.log"
+      ],
+      "port": 3000
     }
   ]
 }

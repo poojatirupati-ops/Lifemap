@@ -38,8 +38,12 @@ export function limitsText(key: StandardKey, unit: Unit) {
   return `Allowed: ${show(limits[0])} to ${show(limits[1])}${legal}`
 }
 
-export const refusedText = (key: StandardKey, unit: Unit) =>
-  `That figure is outside the allowed range, so it was not used. ${limitsText(key, unit)}.`
+/** Why a typed figure was not used, with the allowed range when there is one. */
+export function refusedText(key: StandardKey, unit: Unit, why: 'notNumber' | 'outOfRange') {
+  if (why === 'notNumber') return 'That is not a number, so it was not used.'
+  const limits = limitsText(key, unit)
+  return `That figure is outside the allowed range, so it was not used.${limits ? ` ${limits}.` : ''}`
+}
 
 /** What a single-figure input shows: the figure, a percent as a plain number. */
 export function inputText(standard: Standard, figure?: StandardValue) {

@@ -5,7 +5,8 @@ import { fundingOrder, isSafety, newPot, SAVED_FOR_KINDS } from './fund'
 import { essentialMonthly, type HouseholdFigures } from './householdFigures'
 import { repayForYear } from './loans'
 import type { PlanSettings, ProjectionInputs } from './planSettings'
-import { EASY_ACCESS, HOLDINGS, sell, type Wallet } from './wallet'
+import { makeHoldings } from './holdings'
+import { EASY_ACCESS, HOLDINGS, noneSold, sell, type Wallet } from './wallet'
 import type { WhatIf } from './wi'
 
 /** The mortgage balance at the start of each plan year. */
@@ -40,16 +41,31 @@ export function startingPosition(plan: PlanSettings, inputs: ProjectionInputs, w
     return newPot(goal, years, rate, goalCost(goal, years, plan, mortgagePath))
   })
   const wallet: Wallet = {
-    held: {
-      cash: figures.cash,
-      savings: figures.savings,
-      invest: figures.invest,
-      otherAssets: figures.otherAssets,
-      alternatives: figures.alternativeInvestments,
-    },
+    held: { cash: figures.cash, savings: figures.savings },
+    assets: makeHoldings(plan.rules, {
+      value: {
+        invest: figures.invest,
+        otherAssets: figures.otherAssets,
+        alternatives: figures.alternativeInvestments,
+      },
+      cost: {
+        invest: figures.investmentCost,
+        otherAssets: figures.otherAssetsCost,
+        alternatives: figures.alternativesCost,
+      },
+      investYears: figures.investmentYears,
+      direct: plan.direct,
+      deemedDisposal: plan.deemedDisposal,
+      gainShare: plan.gainShare,
+      inflation: plan.growth.inflation,
+      capitalLosses: figures.capitalLosses,
+      owners: plan.assetOwners,
+      startYear: plan.startYear,
+      today: plan.today,
+    }),
     emergency: 0,
-    gainsTax: plan.gainsTax,
     investShare: plan.investShare,
+    sold: noneSold(),
   }
   for (const pot of pots) {
     pot.savedSoFar = Math.min(pot.goal.saved || 0, wallet.held.cash)

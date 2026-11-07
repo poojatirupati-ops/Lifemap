@@ -9,6 +9,9 @@ ROWFIELDS = {  # prototype row field -> (alias, workbook column key)
  'liquid': ('C', 'liquid'), 'pen': ('C', 'pen'), 'tax': ('P', 'tax'), 'gross': ('P', 'gross'), 'isShort': ('C', 'isShort')}
 MORT2_FIRST = 86
 
+STR = {'n': 0, 'chg': 0}
+
+
 def apply_sc(x, sc, out=None):
     x.clear()
     x.setname('Fill_Example', 'Yes' if sc.get('fill') else 'No')
@@ -18,6 +21,8 @@ def apply_sc(x, sc, out=None):
     x.setname('In_partner', 'Yes' if ab.get('partner') else 'No', col='C')
     if ab.get('married') is not None: x.setname('In_married', 'Yes' if ab['married'] else 'No', col='C')
     S('In_deps', ab.get('deps'))
+    if sc.get('safetyWanted'): x.setname('In_safetyWanted', 'Yes', col='C')
+    if sc.get('safetyOff'): x.setname('In_safetyOff', 'Yes', col='C')
     S('In_retireAge', sc.get('retireAge')); S('In_pRet', sc.get('pRet')); S('In_infl', sc.get('infl'))
     x.setname('In_assumeSet', 'Cautious' if sc.get('assume') == 'cautious' else 'Standard', col='C')
     S('In_q6', sc.get('q6')); S('In_saveM', sc.get('saveM'))
@@ -33,6 +38,7 @@ def apply_sc(x, sc, out=None):
     if dob.get('you'): x.setname('In_age', ser(dob['you']), col='C')
     if dob.get('partner') and ab.get('partner'): x.setname('In_pAge', ser(dob['partner']), col='C')
     for k, v in sc.get('asm', {}).items(): S('In_a_' + k, v)
+    if 'startYear' not in sc.get('asm', {}): S('In_a_startYear', 2026)   # the 2026 branch copy of the app starts plans in 2026
     pr = sc.get('prof', {})
     for k, v in pr.get('ans', {}).items(): x.setname('PA_' + k + '_Typed', v + 1)
     for k, v in pr.get('um', {}).items(): x.setname('PA_' + k + '_Typed', v + 1)
@@ -103,6 +109,23 @@ def compare(x, sc, out, tol=1.0, verbose=True):
         if v != p: bad.append(('pct', i, p, v))
         b = x.val(f'GR{i + 1}_Band')
         if b != out['bands'][i]: bad.append(('band', i, out['bands'][i], b))
+    # stress test (side run): goals covered after the fall, run-out age, pension pot, summary and goal lines
+    sx = out.get('stress')
+    if sx:
+        STR['n'] += 1
+        if any(a != b for a, b in zip(sx['pct'], sx['base'])) or sx['runOut'] != sx['runOutBase'] or sx['pot'] != sx['potBase']: STR['chg'] += 1
+        for i, p in enumerate(sx['pct']):
+            v = x.val(f'ST{i + 1}_Pct')
+            if v != p: bad.append(('stress pct', i, p, v))
+            l = x.val(f'ST{i + 1}_Line')
+            if l != sx['line'][i]: bad.append(('stress line', i, sx['line'][i], l))
+        ro = x.val('ST_RunOutAge'); ro = None if ro in ('', None) else ro
+        if ro != sx['runOut']: bad.append(('stress runOut', sx['runOut'], ro))
+        ro0 = x.val('ST_RunOutAgeBase'); ro0 = None if ro0 in ('', None) else ro0
+        if ro0 != sx['runOutBase']: bad.append(('stress runOutBase', sx['runOutBase'], ro0))
+        if abs((x.val('ST_PotAtRet') or 0) - sx['pot']) > 1: bad.append(('stress pot', sx['pot'], x.val('ST_PotAtRet')))
+        if abs((x.val('ST_PotAtRetBase') or 0) - sx['potBase']) > 1: bad.append(('stress potBase', sx['potBase'], x.val('ST_PotAtRetBase')))
+        if x.val('ST_Line') != sx['summary']: bad.append(('stress summary', sx['summary'], x.val('ST_Line')))
     # saving, gate, findings, goal lines, foundations
     sv = out['save']
     for nm, k in [('Save_SurplusM', 'surplusM'), ('Save_SaveM', 'saveM')]:
@@ -124,6 +147,9 @@ def compare(x, sc, out, tol=1.0, verbose=True):
     for i, ln in enumerate(out['lines']):
         v = x.val(f'GR{i + 1}_Line')
         if (v or '') != (ln or ''): bad.append(('line', i, ln, v))
+    for i, w in enumerate(out.get('why', [])):   # where each goal's money comes from (the app's goalWhy)
+        v = x.getcell('Plan goals', f'AC{110 + i}'); v = '' if v is None else v
+        if v != (w or ''): bad.append(('why', i, w, v))
     if out['fnd'] and not out.get('wiOn'):
         held = False
         for i, L in enumerate(out['fnd']):
@@ -284,7 +310,7 @@ def run(path, scen_json, only=None, limit=10):
         if bad:
             nfail += 1
             print('FAIL', sc.get('name', k), len(bad), bad[:limit])
-    x.close(); print('SCENARIOS', len(res), 'FAIL', nfail)
+    x.close(); print('STRESS compared', STR['n'], 'customers; the fall changed a result in', STR['chg']); print('SCENARIOS', len(res), 'FAIL', nfail)
 
 if __name__ == '__main__':
     run(sys.argv[1], sys.argv[2], limit=int(sys.argv[3]) if len(sys.argv) > 3 else 10)

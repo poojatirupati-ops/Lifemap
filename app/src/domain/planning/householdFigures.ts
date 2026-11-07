@@ -14,6 +14,9 @@ const TYPED_FIGURES = {
   cash: 'cash',
   invest: 'invest',
   monthlyRentReceived: 'rentM',
+  monthlyRentCosts: 'rentCostM',
+  yearlyDividends: 'divY',
+  capitalLosses: 'capLoss',
   savings: 'savings',
   otherAssets: 'otherAssets',
   alternativeInvestments: 'altInv',
@@ -26,8 +29,17 @@ const TYPED_FIGURES = {
   pension: 'pension',
 } as const
 
+// what was paid for each holding and the years held: blank stays unknown (null)
+const KNOWN_OR_NOT = {
+  investmentCost: 'invCost',
+  investmentYears: 'invYears',
+  otherAssetsCost: 'othCost',
+  alternativesCost: 'altCost',
+} as const
+
 type FigureKey =
   | (typeof TYPED_FIGURES)[keyof typeof TYPED_FIGURES]
+  | (typeof KNOWN_OR_NOT)[keyof typeof KNOWN_OR_NOT]
   | 'pAge'
   | 'mortBal'
   | 'mortYears'
@@ -40,7 +52,12 @@ type FigureKey =
 
 /** Everything householdFigures reads from the customer's finances. */
 export type Finances = DebtFinances &
-  Partial<Record<FigureKey, Figure>> & { home?: string; homeUse?: string; ae?: string }
+  Partial<Record<FigureKey, Figure>> & {
+    home?: string
+    homeUse?: string
+    ae?: string
+    assetsJoint?: string
+  }
 
 export interface Household extends DebtInputs {
   figures: Finances
@@ -60,6 +77,14 @@ const typedFigures = (fin: Finances) =>
   Object.fromEntries(
     Object.entries(TYPED_FIGURES).map(([name, key]) => [name, toNumber(fin[key])]),
   ) as Record<keyof typeof TYPED_FIGURES, number>
+
+const knownFigures = (fin: Finances) =>
+  Object.fromEntries(
+    Object.entries(KNOWN_OR_NOT).map(([name, key]) => [
+      name,
+      isNumber(fin[key]) ? Number(fin[key]) : null,
+    ]),
+  ) as Record<keyof typeof KNOWN_OR_NOT, number | null>
 
 /** Expects lists already synced. */
 export function householdFigures(household: Household, rules: Rules) {
@@ -111,6 +136,8 @@ export function householdFigures(household: Household, rules: Rules) {
     income,
     partnerIncome: about.partner ? toNumber(figures.pIncome) : 0,
     ...typedFigures(figures),
+    ...knownFigures(figures),
+    assetsJoint: figures.assetsJoint === 'Yes',
     homeValue: ownsHome ? toNumber(figures.homeValue) : 0,
     homeUse: ownsHome ? figures.homeUse || 'No, never' : 'No, never',
 

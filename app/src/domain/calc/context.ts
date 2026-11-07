@@ -2,7 +2,6 @@
 import { assumption } from '../planning/assumptions.ts'
 import { valueInUse, type AssumptionPlan } from '../planning/assumptionText.ts'
 import { rulesFor } from '../planning/rates.ts'
-import { localToday } from '../../lib/today.ts'
 import type { Plan, Ui } from '../../state/types.ts'
 import type { CalcContext, PensionStatement } from './types.ts'
 
@@ -67,17 +66,11 @@ export const toolPlan = (plan: Plan, ui: Ui, toolId: string): ToolPlan => ({
 })
 
 /** A "Your assumptions" value: the customer's choice, else the growth set, the standard or a planning figure. */
-export const assumptionValue = (
-  plan: AssumptionPlan,
-  key: string,
-  today = localToday(),
-): number | string =>
-  ['planEnd', 'startYear'].includes(key)
-    ? assumption(plan, key, today)
-    : (valueInUse(plan, key) ?? 0)
+export const assumptionValue = (plan: AssumptionPlan, key: string): number | string =>
+  ['planEnd', 'startYear'].includes(key) ? assumption(plan, key) : (valueInUse(plan, key) ?? 0)
 
-export function calcContext(plan: ToolPlan, toolId: string, today = localToday()): CalcContext {
-  const value = (key: string) => assumptionValue(plan, key, today)
+export function calcContext(plan: ToolPlan, toolId: string): CalcContext {
+  const value = (key: string) => assumptionValue(plan, key)
   const statedPayment = Number(plan.figures.mortPayM)
   return {
     rules: rulesFor(Number(value('startYear'))),

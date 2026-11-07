@@ -45,6 +45,14 @@ const WELFARE_BUDGET_2026 = 'https://www.inou.ie/assets/files/pdf/2026_-_inou_bu
 const STATE_PENSION_RATE =
   'https://www.gov.ie/en/publication/b6193-how-to-calculate-your-state-pension-contributory-rate'
 const SURVIVOR_PENSIONS = 'https://www.raisin.com/en-ie/pensions/widow-pensions'
+const CITIZENS_INFO_PRSI =
+  'https://www.citizensinformation.ie/en/social-welfare/irish-social-welfare-system/social-insurance-prsi/social-insurance-classes/'
+const SOCIAL_PROTECTION = 'https://www.gov.ie/en/department-of-social-protection/'
+export const CITIZENS_INFO_BUDGET_2027 =
+  'https://www.citizensinformation.ie/en/money-and-tax/budgets/budget-2027/'
+export const KPMG_INVESTMENT_ACCOUNT =
+  'https://kpmg.com/ie/en/insights/tax/budget-2027/investment-account.html'
+const REVENUE_CGT_EBRIEF = 'https://www.revenue.ie/en/tax-professionals/ebrief/2026/no-1422026.aspx'
 const MORTGAGE_MEASURES =
   'https://www.centralbank.ie/news/article/central-bank-announces-targeted-changes-to-mortgage-measures-framework'
 
@@ -120,6 +128,16 @@ export const RULES_2026 = {
     endAge: rule(66, 'https://www.oireachtas.ie/en/debates/question/2018-11-21/241/', 'Law'),
     sMinIncome: rule(5000, PRSI_CLASS_S, '2026'),
     sMin: rule(650, PRSI_CLASS_S, '2026'),
+    arfApplies: rule(
+      true,
+      CITIZENS_INFO_PRSI,
+      'PRSI on ARF / PRSA withdrawals. Deducted (Class S) before 66, and from 66 to 70 unless you receive the contributory State Pension (rule from 1 Jan 2024). Verified by the proposition owner.',
+    ),
+    arfToAge: rule(
+      70,
+      CITIZENS_INFO_PRSI,
+      'age to which PRSI on ARF withdrawals continues if you do not receive the contributory State Pension (verified)',
+    ),
     unearnedMin: rule(5000, PRSI_CLASS_S, '2026'),
   },
   pen: {
@@ -178,6 +196,20 @@ export const RULES_2026 = {
     survivor: rule(259.5, SURVIVOR_PENSIONS, '1 Jan 2026'),
     survivor66: rule(299.3, SURVIVOR_PENSIONS, '1 Jan 2026'),
     weeks: rule(52, 'Convention', '—', false),
+    iqaLimit: rule(
+      310,
+      CITIZENS_INFO_BUDGET_2027,
+      "Qualified Adult: the partner's own income must not be above this a week for the full increase (Citizens Information, as quoted in search results; the DSP page was not opened)",
+    ),
+    nonContrib: rule(288, SOCIAL_PROTECTION, '1 Jan 2026 (reference only: not used by the plan)'),
+    qaIllness: rule(168.6, SOCIAL_PROTECTION, '1 Jan 2026 (reference only: not used by the plan)'),
+  },
+  // the proposed Investment Account (Budget 2027); nothing here is used by the plan
+  ia: {
+    start: rule(null, KPMG_INVESTMENT_ACCOUNT, 'not in 2026'),
+    limit: rule(null, KPMG_INVESTMENT_ACCOUNT, 'not in 2026'),
+    taxFreeValue: rule(null, KPMG_INVESTMENT_ACCOUNT, 'not in 2026'),
+    levy: rule(null, KPMG_INVESTMENT_ACCOUNT, 'not in 2026'),
   },
   sav: {
     dirt: rule(
@@ -191,11 +223,18 @@ export const RULES_2026 = {
       '1 Jan 2026',
     ),
     deemed: rule(8, 'https://etf.ie/blog/budget-2026-etf/', '2026'),
-    cgt: rule(0.31, BUDGET_2027_SOURCE, 'disposals from 7 Oct 2026 (Budget 2027)', false),
+    cgt: rule(
+      0.31,
+      REVENUE_CGT_EBRIEF,
+      'standard rate on disposals from 7 Oct 2026 (Revenue eBrief 142/26; verified)',
+    ),
+    cgtBefore: rule(0.33, REVENUE_CGT_EBRIEF, 'standard rate on disposals before 7 Oct 2026'),
+    cgtFrom: rule('2026-10-07', REVENUE_CGT_EBRIEF, 'date the 31% rate starts'),
+    cgtDev: rule(0.33, REVENUE_CGT_EBRIEF, 'development land stays at 33% (not modelled)'),
     cgtExempt: rule(
       1270,
-      'https://www.revenue.ie/en/gains-gifts-and-inheritance/',
-      'Law (annual exemption per person)',
+      'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-19/19-07-01.pdf',
+      "annual exemption per person each tax year: stated in Revenue TDM 19-07-01 and Revenue's CGT pages as quoted in search results (losses come off first, not transferable between spouses, unused amount lost). Verified by the proposition owner",
     ),
     cat: rule(
       420000,

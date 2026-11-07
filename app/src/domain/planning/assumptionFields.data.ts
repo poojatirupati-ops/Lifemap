@@ -377,6 +377,17 @@ export const ASSUMPTIONS: Record<string, AssumptionField> = {
     ...pct(0, 100, 5),
     standard: 'investShare',
   },
+  invWrapper: {
+    group: 'safety',
+    label: 'Your investments are',
+    kind: 'choice',
+    options: [
+      ['fund', 'Funds or ETFs (exit tax, 8-year rule)'],
+      ['shares', 'Shares held directly (capital gains tax when sold)'],
+    ],
+    standard: 'invWrapper',
+    help: 'Funds and ETFs pay exit tax, and the 8-year rule treats them as sold every 8 years. Shares you hold directly pay capital gains tax only when you sell, but dividends are taxed as income each year.',
+  },
   cgtGain: {
     group: 'safety',
     label:
@@ -456,7 +467,7 @@ export const ASSUMPTIONS: Record<string, AssumptionField> = {
       [2026, '2026'],
       [2027, '2027'],
     ],
-    by: 'from October most of this year has passed',
+    by: 'the plan starts this year, on the 2026 rules',
     help: 'Choose 2027 to use the Budget 2027 tax rules (announced 6 October 2026) from 1 January 2027: higher tax bands and credits, a wider 2% USC band, a €10 higher State Pension and exit tax at 35%. The Finance Bill may still change some details.',
   },
 }

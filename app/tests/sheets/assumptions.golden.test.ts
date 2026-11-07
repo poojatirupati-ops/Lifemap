@@ -9,12 +9,6 @@ import { prepared as preparedBy } from '../golden/helpers'
 // slow when the machine is busy: the original runs in node:vm
 vi.setConfig({ testTimeout: 30000 })
 
-// TODO(R-31): settings.ts standardSource('inv') always quotes the 2026 exit tax (38%); the original
-// quotes the plan year's (35% for 2027). Owned by the planning settings; until fixed it is masked here.
-const EXIT_TAX = / less \d+% exit tax/
-const withoutExitTax = (row: string[]) =>
-  row.map((text) => text.replace(EXIT_TAX, ' less N% exit tax'))
-
 const original = runOriginal('applyAssume, syncLists, autoSafety, assumeRows, planReady')
 
 const prepared = (state: any) => fromOriginal<any>(preparedBy(original, state))
@@ -32,6 +26,6 @@ describe('planAssumptions', () => {
         row.tag,
         row.note ?? '',
       ])
-      expect(ours.map(withoutExitTax)).toEqual(theirs.map(withoutExitTax))
+      expect(ours).toEqual(theirs)
     })
 })

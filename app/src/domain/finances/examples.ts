@@ -126,6 +126,15 @@ export function fieldExamples({
       text: "Aoife and Cian don't rent out a property, so no rent comes in. They enter €0.",
       where: 'your tenancy agreement or RTB registration.',
     },
+    rentCostM: {
+      text: "Aoife and Cian don't rent out a property, so there are no rental costs.",
+      where:
+        "your agent's statements, insurance and repair bills, and the mortgage statement for the rented property.",
+    },
+    divY: {
+      text: 'Aoife holds funds, so there are no dividends to enter.',
+      where: 'your broker or share-scheme statement, or the dividend vouchers.',
+    },
     mortBal: {
       text: `Aoife and Cian owe ${sampleEuros('mortBal')} on their mortgage. They enter ${sampleEuros('mortBal')}.`,
       where: "your annual mortgage statement or your lender's app.",

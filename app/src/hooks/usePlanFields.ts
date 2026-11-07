@@ -6,14 +6,15 @@ import { useFigures } from './useFigures.ts'
 
 /**
  * These fields of the plan, re-rendering only when one of them changes. A new object too when the standards in use change,
- * so whatever is worked out from it (useMemo on it) is worked out again.
+ * or the session's tax year, so whatever is worked out from it (useMemo on it) is worked out again.
  */
 export function usePlanFields<K extends keyof Plan>(...keys: K[]) {
   const figures = useFigures()
+  const taxKey = useStore((store) => store.taxKey)
   const fields = useStore(
     useShallow(
       ({ plan }) => Object.fromEntries(keys.map((key) => [key, plan[key]])) as Pick<Plan, K>,
     ),
   )
-  return useMemo(() => ({ ...fields }), [fields, figures])
+  return useMemo(() => ({ ...fields }), [fields, figures, taxKey])
 }

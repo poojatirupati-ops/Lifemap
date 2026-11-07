@@ -1,10 +1,11 @@
 // What the projection reads that stays the same from year to year: rules, figures and assumptions.
 import type { Plan } from '../../state/types'
-import { assumedValue, assumption } from './assumptions'
+import { localToday } from '../../lib/today'
+import { assumedValue, assumption, holdsSharesDirectly, isChosen } from './assumptions'
 import { householdFigures, type Household } from './householdFigures'
 import { standardFundThreshold } from './pensions'
-import { rulesFor } from './rates'
-import { standardValue } from './settings'
+import { rulesFor, taxYearFor } from './rates'
+import { growthAfterCharges, standardValue } from './settings'
 
 export type ProjectionInputs = Household &
   Pick<Plan, 'goals' | 'rank' | 'answers' | 'monthlySaving' | 'inflation' | 'assumptionSet'> & {
@@ -18,12 +19,16 @@ export function planSettings(inputs: ProjectionInputs) {
   const choice = (key: string) => String(assumedValue(inputs, key))
   const startYear = value('startYear')
   const rules = rulesFor(startYear)
+  const figures = householdFigures(inputs, rules)
   const inflation = inputs.inflation ?? (standardValue('infl') as number)
   return {
     inputs,
     rules,
     startYear,
-    figures: householdFigures(inputs, rules),
+    /** the tax year whose rules every plan year uses */
+    taxYear: taxYearFor(startYear),
+    today: localToday(),
+    figures,
     end: value('planEnd'),
     growth: {
       inflation,
@@ -39,7 +44,13 @@ export function planSettings(inputs: ProjectionInputs) {
     statePensionGrowth: choice('spGrow'),
     flatBands: choice('bands') === 'flat',
     investShare: value('investShare'),
-    gainsTax: rules.sav.cgt * value('cgtGain'),
+    direct: holdsSharesDirectly(inputs),
+    /** the 8-year rule is modelled unless the customer set their own investment growth */
+    deemedDisposal: !isChosen(inputs.assumptions, 'inv'),
+    /** investments grow by this before tax when the 8-year rule is modelled */
+    investGrowthBeforeTax: growthAfterCharges(),
+    gainShare: value('cgtGain'),
+    assetOwners: figures.partner && figures.assetsJoint ? 2 : 1,
     retireSpend: value('retireSpend'),
     saving: { share: value('saveShare'), noAnswer: value('noAnswer') },
     bufferMonths: value('safetyMonths'),

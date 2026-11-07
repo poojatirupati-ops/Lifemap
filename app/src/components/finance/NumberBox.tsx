@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { parseWholeEuros } from '../../lib/format.ts'
+import { parseWholeEuros, readPoints } from '../../lib/format.ts'
 
 type Kind = 'eur' | 'pct' | 'num' | 'text'
 
@@ -26,8 +26,8 @@ const TYPED = {
 
 const percentUpTo = (max: number) =>
   z.string().transform((text) => {
-    const percent = parseFloat(text.replace(/[^\d.]/g, ''))
-    return isNaN(percent) ? null : Math.min(max, percent)
+    const percent = readPoints(text)
+    return percent == null ? null : Math.min(max, Math.abs(percent))
   })
 
 function shown(kind: Kind, value: unknown) {

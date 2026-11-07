@@ -61,42 +61,80 @@ const rateInUse = (settings: Settings, key: 'invGross' | 'fundChg') =>
 
 const fundCharges = (settings: Settings) => rateInUse(settings, 'fundChg') ?? DEFAULT_FUND_CHARGES
 
-// Growth after charges and after exit tax taken every 8 years (deemed disposal), as a yearly rate to 0.1%
-export function investmentGrowth(settings = settingsInUse(), cut = 0, rules: Rules = rules2026) {
+const toTenthPercent = (rate: number) => Math.round(rate * 1000) / 1000
+
+/** Growth after charges, before any tax, as a yearly rate to 0.1%. */
+export const growthAfterCharges = (settings = settingsInUse(), cut = 0) =>
+  toTenthPercent(rateInUse(settings, 'invGross')! - cut - fundCharges(settings))
+
+/**
+ * Growth after charges and, for funds and ETFs, after exit tax taken every 8 years (deemed
+ * disposal), as a yearly rate to 0.1%. Shares held directly pay capital gains tax only when sold.
+ */
+export function investmentGrowth(
+  settings = settingsInUse(),
+  cut = 0,
+  rules: Rules = rules2026,
+  direct = false,
+) {
+  if (direct) return growthAfterCharges(settings, cut)
   const gross = rateInUse(settings, 'invGross')! - cut
   const { deemed: years, exit: tax } = rules.sav
   const grown = (1 + gross - fundCharges(settings)) ** years
   const afterTax = grown - tax * (grown - 1)
-  return Math.round((afterTax ** (1 / years) - 1) * 1000) / 1000
+  return toTenthPercent(afterTax ** (1 / years) - 1)
 }
 
-export function investmentGrowthBasis(settings = settingsInUse(), rules: Rules = rules2026) {
+/** Opens every growth basis; screens whose help already says it drop it (assumptionText.ts). */
+export const NOT_A_PREDICTION = 'a planning assumption, not a prediction: '
+
+export function investmentGrowthBasis(
+  settings = settingsInUse(),
+  rules: Rules = rules2026,
+  direct = false,
+) {
+  if (direct)
+    return `${NOT_A_PREDICTION}growth before fees less about 1% charges; capital gains tax is taken off when the shares are sold, not each year`
   const gross = percentToTenth(rateInUse(settings, 'invGross')!)
   const charges = percentToTenth(fundCharges(settings))
   const { deemed, exit } = rules.sav
   const lessCharges = `less about ${charges} charges`
   const lessTax = `less ${wholePercent(exit)} exit tax taken every ${deemed} years`
-  return `a planning assumption, not a prediction: ${gross} before fees and tax, ${lessCharges}, ${lessTax}`
+  return `${NOT_A_PREDICTION}${gross} before fees and tax, ${lessCharges}, ${lessTax}`
 }
 
-// 'inv' has no figure of its own: it is derived from the growth before fees and the charges
-export function standardOf(key: StandardKey, settings: Settings, rules = rules2026): Standard {
+// 'inv' has no figure of its own: it is derived from the growth before fees and the charges.
+// rules: the plan's start-year rules ('inv' takes its exit tax and deemed-disposal years from them);
+// direct: the plan's investments are shares held directly (no exit tax)
+export function standardOf(
+  key: StandardKey,
+  settings: Settings,
+  rules = rules2026,
+  direct = false,
+): Standard {
   const standard = settings.standards[key]
   if (key !== 'inv' || standard.unit === 'pct3') return standard
   return {
     ...standard,
-    value: investmentGrowth(settings, 0, rules),
-    cautious: investmentGrowth(settings, 0.01, rules),
-    by: investmentGrowthBasis(settings, rules),
+    value: investmentGrowth(settings, 0, rules, direct),
+    cautious: investmentGrowth(settings, 0.01, rules, direct),
+    by: investmentGrowthBasis(settings, rules, direct),
   }
 }
 
-// rules: the plan's start-year rules ('inv' takes its exit tax and deemed-disposal years from them)
-export const standardValue = (key: StandardKey, settings = settingsInUse(), rules = rules2026) =>
-  inUse(standardOf(key, settings, rules))
+export const standardValue = (
+  key: StandardKey,
+  settings = settingsInUse(),
+  rules = rules2026,
+  direct = false,
+) => inUse(standardOf(key, settings, rules, direct))
 
-export const cautiousValue = (key: StandardKey, settings = settingsInUse(), rules = rules2026) =>
-  standardOf(key, settings, rules).cautious
+export const cautiousValue = (
+  key: StandardKey,
+  settings = settingsInUse(),
+  rules = rules2026,
+  direct = false,
+) => standardOf(key, settings, rules, direct).cautious
 
 const isPartnerFigure = (key: StandardKey, settings = settingsInUse()) =>
   settings.standards[key]?.partnerValue != null
@@ -104,11 +142,16 @@ const isPartnerFigure = (key: StandardKey, settings = settingsInUse()) =>
 const partnerCredit = (settings: Settings) => `Suggested by ${settings.partner || 'your provider'}`
 
 // shown as "Generally the standard is X (source)"
-export function standardSource(key: StandardKey, settings = settingsInUse(), rules = rules2026) {
+export function standardSource(
+  key: StandardKey,
+  settings = settingsInUse(),
+  rules = rules2026,
+  direct = false,
+) {
   if (!settings.standards[key]) return ''
   return isPartnerFigure(key, settings)
     ? partnerCredit(settings)
-    : standardOf(key, settings, rules).by
+    : standardOf(key, settings, rules, direct).by
 }
 
 // the suffix on a market-rate chip
@@ -143,7 +186,8 @@ export function growthRate(
   set: 'standard' | 'cautious',
   settings = settingsInUse(),
   rules = rules2026,
+  direct = false,
 ) {
-  const standard = standardOf(key, settings, rules)
+  const standard = standardOf(key, settings, rules, direct)
   return Number(set === 'cautious' ? standard.cautious : inUse(standard))
 }

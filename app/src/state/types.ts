@@ -2,6 +2,7 @@
 import type { Upload } from '../domain/finances/upload.ts'
 import type { StatementUpload } from '../domain/calc/statements.ts'
 import type { ExpertKind } from '../domain/identity/advisers.data.ts'
+import type { TaxSnapshot } from '../domain/planning/taxRegister.ts'
 
 export type Provenance = 'typed' | 'doc' | 'pre'
 
@@ -108,7 +109,8 @@ interface Goals {
   pensionExtra?: number
   /** A tool-local standard the customer picked (years you might wait, style), by tool and input. */
   toolPick?: Record<string, Record<string, number>>
-  versions: { note: string; date: string }[]
+  /** Each saved version, with the tax rules it used (versions saved before 2027 rules have none). */
+  versions: { note: string; date: string; tax?: TaxSnapshot }[]
 }
 
 /** The customer's money: totals, list items and where each value came from. */

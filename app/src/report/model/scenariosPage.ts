@@ -72,7 +72,7 @@ export function scenariosPage(context: ReportContext, scenarios: Scenarios) {
       : 'An expert can show you which changes fit your life.'
   const footnote = allOnTrack
     ? 'Results from the plan engine on your plan. An expert can confirm every figure.'
-    : `Results from the plan engine on your plan; all rows except the State Pension and combined rows assume ${share > 0 ? 'your current State Pension figure' : 'no State Pension'}. A full State Pension is not confirmed. Pension money is locked until ${settings.accessAge}, so retiring before then rests on savings alone. An expert can confirm every figure.`
+    : `Results from the plan engine; rows other than State Pension and combined rows assume ${share > 0 ? 'your current State Pension figure' : 'no State Pension'}. A full State Pension is not confirmed. Pension money is locked until ${settings.accessAge}, so retiring earlier rests on savings alone. An expert can confirm every figure.`
   return {
     fromPct: today.covered,
     toPct,

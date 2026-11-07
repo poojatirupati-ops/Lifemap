@@ -26,11 +26,11 @@ test('dragging a chip snaps to whole years and shows the year bubble while it mo
   fireEvent.pointerMove(travel, { clientX: 200 })
   expect(ageOf('Travel')).toBe(50) // 100px of 520px is 10 of the 52 years to 90
   expect(travel.className).toContain('drag')
-  expect(document.querySelector('.tl-tip b')?.textContent).toBe(String(2027 + 50 - 38))
+  expect(document.querySelector('.tl-tip b')?.textContent).toBe(String(2026 + 50 - 38)) // the plan starts in 2026
   fireEvent.pointerUp(travel)
   expect(document.querySelector('.tl-tip')).toBeNull()
   expect(useStore.getState().highlightedGoal).toBeNull()
-  expect(document.getElementById('when-2')!.textContent).toBe('in 12 yrs · age 50 · 2039')
+  expect(document.getElementById('when-2')!.textContent).toBe('in 12 yrs · age 50 · 2038')
 })
 
 test('a tap highlights the goal row instead of moving it', () => {

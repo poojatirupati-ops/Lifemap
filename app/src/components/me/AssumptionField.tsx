@@ -16,10 +16,10 @@ import {
   formatAssumption,
   isMine,
   marketSuggestion,
-  smallPrint,
+  guide,
+  helpFor,
   standardFor,
-  planRules,
-  standardNote,
+  standardSourceLine,
   TAGS,
   tagFor,
   typedFigure,
@@ -96,9 +96,10 @@ export default function AssumptionField({ name }: { name: string }) {
       mine: isMine(plan, name),
       value: valueInUse(plan, name),
       standard: standardFor(plan, name),
-      small: smallPrint(plan, name),
+      guide: guide(plan, name),
+      help: helpFor(name),
       tag: tagFor(plan, name),
-      note: standardNote(name, planRules(plan)),
+      note: standardSourceLine(name),
     })),
   )
   const tag = TAGS[view.tag]
@@ -170,9 +171,11 @@ export default function AssumptionField({ name }: { name: string }) {
           {suggestion ? suggestion.source : 'a planning figure'}) until you add yours.
         </span>
       )}
-      <span className="small" style={{ display: 'block', marginTop: 4 }}>
-        {view.small}
-      </span>
+      {[view.guide, view.help].filter(Boolean).map((line) => (
+        <span key={line} className="small" style={{ display: 'block', marginTop: 4 }}>
+          {line}
+        </span>
+      ))}
       {note && (
         <span className="small" style={{ display: 'block', marginTop: 2 }}>
           {note}

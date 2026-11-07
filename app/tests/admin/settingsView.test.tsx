@@ -21,10 +21,23 @@ Object.assign(globalThis, {
 // the original's dispatcher hooks, dropped on purpose; a picked option is a property in React
 const IGNORED = new Set(['data-a', 'data-p', 'data-set', 'data-setname', 'selected'])
 
+// the tax register's note drops the prototype's aside about its missing database, on purpose
+const SESSION_NOTE = [
+  'apply to this session (the prototype has no shared database yet).',
+  'apply to this session only.',
+] as const
+
+// and a 2027 rate shows in its box as a percent (0.35 reads 35%), on purpose
+const RATE_BOX = /( data-taxov=\S+ .*value=)(0\.\d+)>$/
+const asPercent = (_: string, before: string, rate: string) =>
+  `${before}${Number((Number(rate) * 100).toFixed(2))}%>`
+
 function originalView() {
   original.setState(original.fresh())
   original.applyAssume()
-  return shape(original.settingsHTML(), IGNORED)
+  return shape(original.settingsHTML(), IGNORED).map((line) =>
+    line.replace(SESSION_NOTE[0], SESSION_NOTE[1]).replace(RATE_BOX, asPercent),
+  )
 }
 
 function ourView() {

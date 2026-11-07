@@ -1,6 +1,7 @@
 // Report page 6: the savings chart and how each year is paid.
 import { euro } from '../../lib/format.ts'
 import { axisMax, yearSplit } from '../../components/results/chart/cashflow.ts'
+import { stressTest } from '../../domain/planning/stress.ts'
 import type { ReportContext } from './context.ts'
 
 const ticks = (max: number) => [0, 1, 2, 3, 4].map((step) => Math.round((max / 4) * step))
@@ -82,7 +83,9 @@ export function cashflowPage(context: ReportContext) {
               label: `${euro(lastShortfall)} a year at ${paid[paid.length - 1].age}`,
             }
           : null,
-      caption: (retirement ? `Pay stops at ${retireAge}. ` : '') + 'Costs keep rising.',
+      caption:
+        (retirement ? `Pay stops at ${retireAge}. ` : '') +
+        `Costs keep rising. ${stressTest(context.plan, undefined, context.projection).summary}`,
     },
   }
 }

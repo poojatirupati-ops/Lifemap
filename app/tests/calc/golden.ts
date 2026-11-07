@@ -1,5 +1,5 @@
 // Runs a calculator on both sides: the ORIGINAL's CALCS in node:vm and ours, on the same plan.
-import { runOriginal, TODAY } from '../golden/origSlice'
+import { runOriginal } from '../golden/origSlice'
 import { plain } from '../golden/origProfile'
 import fresh from '../fixtures/fresh.json'
 import complete from '../fixtures/finances-complete.json'
@@ -8,7 +8,6 @@ import { calculatorFor, allInputs } from '../../src/domain/calc/calculators'
 import { calcContext, toolPlan } from '../../src/domain/calc/context'
 import type { Plan } from '../../src/state/types'
 import type { Figures, Handoff } from '../../src/domain/calc/types'
-import { localToday } from '../../src/lib/today'
 import { fromOriginal } from '../../src/state/migrate'
 
 export const original = runOriginal(
@@ -71,7 +70,7 @@ export function runBoth(plan: Plan, id: string, figures: Figures) {
   const theirs = rounded(original.C(id).run(structuredClone(figures)))
   const result = calculatorFor(id).run(
     figures,
-    calcContext(toolPlan(fromOriginal(plan), fromOriginal(plan), id), id, localToday(TODAY)),
+    calcContext(toolPlan(fromOriginal(plan), fromOriginal(plan), id), id),
   )
   const ours = rounded({
     lbl: result.label,

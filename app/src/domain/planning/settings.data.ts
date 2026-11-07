@@ -245,6 +245,16 @@ export const STANDARDS = {
     source: 'LifeMap planning standard (a balanced cash and invested mix)',
     asOf: '2026',
   },
+  invWrapper: {
+    name: 'How your investments are held',
+    unit: 'choice',
+    group: 'Choices',
+    value: 'fund',
+    by: 'most people hold funds or ETFs',
+    source:
+      'LifeMap planning standard. Funds and ETFs pay exit tax (with the 8-year rule); shares held directly pay capital gains tax when sold.',
+    asOf: '2026',
+  },
   cgtGain: {
     name: 'Other assets and alternative investments: share of the value that is a gain',
     unit: 'pct',

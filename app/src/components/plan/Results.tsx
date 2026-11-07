@@ -10,6 +10,7 @@ import { foundations } from '../../domain/planning/foundations.ts'
 import { nextFoundation } from '../../domain/planning/nextFoundation.ts'
 import type { ProjectionInputs } from '../../domain/planning/planSettings.ts'
 import { budget2027Note } from '../../domain/planning/rates.ts'
+import { UNCHANGED_IN_2027 } from '../../domain/planning/rules2027.data.ts'
 import { useMissingChoices } from '../../hooks/useMissingChoices.ts'
 import { useProfileAnswers } from '../../hooks/useProfileAnswers.ts'
 import { useProjection, type Projection } from '../../hooks/useProjection.ts'
@@ -17,6 +18,7 @@ import { openReport, preloadReport } from '../../report/openReport.ts'
 import { useStore } from '../../state/store.ts'
 import FoundationLadder from '../home/FoundationLadder.tsx'
 import Glance from '../results/Glance.tsx'
+import StressCard from '../results/StressCard.tsx'
 import Emo from '../ui/Emo.tsx'
 import GateNote from '../ui/GateNote.tsx'
 import GoalsCard from './GoalsCard.tsx'
@@ -191,7 +193,37 @@ function FoundationsCard({ projection }: { projection: Projection }) {
   )
 }
 
-/** Your results: goals, what we found, foundations, what-if, at a glance and the three end actions. */
+/** The tax year the plan uses, its first sentence in bold, and which figures are provisional. */
+function TaxNote({ startYear }: { startYear: number }) {
+  const [first, ...rest] = budget2027Note(startYear).split('. ')
+  return (
+    <>
+      <b>{first}.</b> {rest.join('. ')}{' '}
+      <details style={{ marginTop: 4 }}>
+        <summary
+          style={{
+            minHeight: 44,
+            display: 'inline-flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            fontWeight: 700,
+          }}
+        >
+          Which figures are provisional?
+        </summary>
+        <span className="small" style={{ display: 'block' }}>
+          Announced 2027 changes are used from their start dates: income tax bands and credits, the
+          USC 2% band, the State Pension, exit tax at 35% and capital gains tax at 31%. They may
+          change when the Finance Bill is enacted. {UNCHANGED_IN_2027} PRSI on pension (ARF)
+          withdrawals is unresolved: the plan assumes it applies. Projections are illustrative, not
+          guaranteed.
+        </span>
+      </details>
+    </>
+  )
+}
+
+/** Your results: goals, what we found, foundations, what-if, at a glance, the stress test and the three end actions. */
 export default function Results() {
   const missing = useMissingChoices()
   const { inputs, whatIf, base, withWhatIf } = useProjection()
@@ -232,6 +264,7 @@ export default function Results() {
           <Glance projection={withWhatIf} />
         </div>
       </div>
+      <StressCard inputs={inputs} whatIf={whatIf} projection={withWhatIf} />
       <div className="ends">
         <button
           className="btn navy"
@@ -249,9 +282,9 @@ export default function Results() {
           ✏️ Adjust my goals
         </button>
       </div>
-      <p className="disc" id="b27-res">
-        {budget2027Note(assumption(inputs, 'startYear'))}
-      </p>
+      <div className="disc" id="b27-res">
+        <TaxNote startYear={assumption(inputs, 'startYear')} />
+      </div>
       <p className="disc">
         Guidance, not advice. Projections are illustrative, use standard assumptions and are not
         guaranteed. Only an authorised adviser who knows your full situation can give advice.{' '}

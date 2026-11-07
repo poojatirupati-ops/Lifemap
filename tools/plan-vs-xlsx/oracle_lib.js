@@ -30,13 +30,16 @@ window.applyScenario = function(sc){
   const w = sc.wi || {}; S.wi = {g:w.g != null ? S.goals[w.g].id : null, m:w.m || 0, l:w.l || 0};
   const se = sc.sess || {}; S.book = S.book || {}; S.book.done = !!se.booked; S.book.slot = se.slot || ''; S.um.rechecked = !!se.rechecked; S.pref = se.pref ? {g:null, m:100, l:0} : null;
   S.saved = {}; (sc.saved || []).forEach(k => S.saved[k] = true); S.look = {}; (sc.look || []).forEach(k => S.look[k] = 'flagged'); S.ack = {}; (sc.ack || []).forEach(k => S.ack[k] = true);
+  S.safetyWanted = !!sc.safetyWanted; S.safetyOff = !!sc.safetyOff;
+  if (window.FORCE_TAX_YEAR) S.taxYearOverride = window.FORCE_TAX_YEAR;   // the 2026-only workbook: the app is held to the 2026 rules in every year
   syncLists(); applyAssume(); syncSafety(); return true;
 };
 window.readOutputs = function(){
   applyAssume(); const out = {}; out.dob = {you:S.about.dob, partner:S.about.pdob || null}; const P0 = project(), P = project(S.wi);
   const rows = P.rows.map(r => ({t:r.t, a:r.a, inflow:r.inflow, needs:r.needs, goalPaid:r.goalPaid, living:r.living, fixed:r.fixed, goalCost:r.goalCost, short:r.short, shortLiving:r.shortLiving, goalGap:r.goalGap, used:r.used, saved:r.saved, spent:r.spent, liquid:r.liquid, pen:r.pen, tax:r.tax, gross:r.gross, isShort:isShort(r) ? 1 : 0}));
   out.rows = rows; out.N = AS.end - S.about.age;
-  out.pct = S.goals.map(g => P.pct[g.id]); out.bands = S.goals.map(g => band(P.pct[g.id]));
+  if (typeof stressInfo === 'function') { const X = stressInfo(S.wi); out.stress = {pct:S.goals.map(g => X.goals[g.id].stress), base:S.goals.map(g => X.goals[g.id].base), line:S.goals.map(g => X.goals[g.id].line), runOut:X.runOutAge, runOutBase:X.runOutAgeBase, summary:X.summary, pot:X.potAtRet, potBase:X.potAtRetBase, t:X.t}; }   // the stress test (side run)
+  out.pct = S.goals.map(g => P.pct[g.id]); out.why = S.goals.map(g => goalWhy(P, g)); out.bands = S.goals.map(g => band(P.pct[g.id]));
   out.goalNums = S.goals.map(g => P.goal[g.id] ? {needM:P.goal[g.id].needM, nowM:P.goal[g.id].nowM, avgM:P.goal[g.id].avgM} : null);
   out.save = P0.save; out.wiOn = !!(S.wi && (S.wi.m || S.wi.l));
   out.amounts = S.goals.map(g => g.amount);

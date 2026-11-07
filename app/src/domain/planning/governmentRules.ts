@@ -1,5 +1,5 @@
 // Type 1 assumptions: set by law, the same for everyone, shown but never editable.
-import type { Rules } from './rates.ts'
+import { taxYearFor, type Rules } from './rates.ts'
 import { euro, euroWeekly, percent } from '../../lib/format.ts'
 
 // en-US: en-GB writes September as "Sept"
@@ -61,13 +61,13 @@ export function governmentRules(rules: Rules, year: number): [string, string][] 
     ],
     [
       'Capital gains tax',
-      `${percent(sav.cgt)} on gains above ${euro(sav.cgtExempt)} a year (disposals from 7 October 2026). In your plan it is taken off sales of other assets, crypto, gold and art, on the share of their value you treat as a gain. The yearly exemption is not counted.`,
+      `${percent(sav.cgt)} on gains above ${euro(sav.cgtExempt)} a year for each person (33% for disposals before 7 October 2026). Tax is due when you sell, not while you hold. Losses come off first. Development land stays at 33%.`,
     ],
     [
       'Gift and inheritance tax (CAT)',
       `Group A threshold ${euro(sav.cat)} (a child from a parent), from 7 October 2026. Not in your plan yet.`,
     ],
-    ...(year >= 2027 ? [NEW_ACCOUNT_ROW] : []),
+    ...(taxYearFor(year) === 2027 ? [NEW_ACCOUNT_ROW] : []),
     [
       'Mortgage limits (Central Bank)',
       `${home.ltiFTB}× income for first-time buyers, ${home.ltiSSB}× for others; at least a ${percent(1 - home.ltv)} deposit`,

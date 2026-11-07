@@ -22,6 +22,7 @@ import {
   listItemText,
   refusedText,
 } from './partnerFigure.ts'
+import TaxRegister from './TaxRegister.tsx'
 
 const UNIT_SUFFIX: Partial<Record<Standard['unit'], string>> = { pct: '%', eur: '€', yrs: 'years' }
 
@@ -81,7 +82,7 @@ function takeEntry(
     const entry = readEntry(id, standard, input.value, item)
     if ('figure' in entry) return onFigure(entry.figure)
     input.value = shown
-    onRefuse(refusedText(id, standard.unit))
+    onRefuse(refusedText(id, standard.unit, entry.refused))
   }
 }
 
@@ -255,7 +256,7 @@ function PartnerCard({ settings }: { settings: Settings }) {
   )
 }
 
-/** The admin Settings page's content: who controls the standards, the partner's name, every standard by group, and guidance-only figures. */
+/** The admin Settings page's content: who controls the standards, the partner's name, every standard by group, the tax rules register and guidance-only figures. */
 export default function SettingsBody() {
   const settings = usePartnerSettings()
   return (
@@ -280,6 +281,7 @@ export default function SettingsBody() {
           ))}
         </StandardGroup>
       ))}
+      <TaxRegister />
       <StandardGroup name="set-guide" title="Guidance figures (no standard)">
         {Object.entries(GUIDANCE_FIGURES).map(([key, figure]) => (
           <div key={key} className="field" style={{ margin: '0 0 12px' }}>

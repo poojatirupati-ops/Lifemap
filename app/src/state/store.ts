@@ -4,6 +4,7 @@ import { fresh, freshUi } from './fresh.ts'
 import { OLD_SCREEN_STATE, fromOriginal } from './migrate.ts'
 import { normalize } from '../domain/plan/normalize.ts'
 import { figures } from '../domain/planning/settings.ts'
+import { taxSession } from '../domain/planning/rates.ts'
 import type { Plan, Snapshot, Ui } from './types.ts'
 import { goTo } from '../shell/router.ts'
 import { createDiscoverySlice, type DiscoveryActions } from './discovery.ts'
@@ -34,6 +35,8 @@ export interface Store
   plan: Plan
   /** Which tenant figures are in use: a change re-runs every selector, so whatever reads a standard in one updates. */
   figuresKey: string
+  /** The session's tax-year choices (Admin Settings): a change re-runs every selector. */
+  taxKey: string
 
   /** Start over from a snapshot (a fixture, a jump, a restored plan); old field names are migrated. */
   load: (snapshot: Snapshot) => void
@@ -71,6 +74,7 @@ export const useStore = create<Store>()(
       ...freshUi(),
       plan: fresh(),
       figuresKey: figures.getState().key,
+      taxKey: JSON.stringify(taxSession.getState()),
 
       load: (saved) => {
         const ui = freshUi()
@@ -112,3 +116,5 @@ export const useStore = create<Store>()(
 )
 
 figures.subscribe(({ key }) => useStore.setState({ figuresKey: key }))
+// a change to the session's tax-year choices re-runs every selector, as the standards' key does
+taxSession.subscribe((session) => useStore.setState({ taxKey: JSON.stringify(session) }))
