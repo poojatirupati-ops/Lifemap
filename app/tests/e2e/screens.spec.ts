@@ -38,6 +38,8 @@ tweak('jump-P1E', { fromApp: true })
 // an account already), so these two are captured from the app too.
 tweak('jump-F1', { fromApp: true })
 tweak('jump-F2', { fromApp: true })
+// Me has no subtitle under its title on purpose (product owner, Nov 2026), so its baseline is captured from the app.
+tweak('jump-ME-01', { fromApp: true })
 // The original double-escapes the apostrophe in the asked question ("kids&#39; education"), so its
 // bubble wraps to two lines and everything below sits ~21px lower; the app shows one line (6.09%).
 tweak('jump-ASK', { maxDiffPixelRatio: 0.065 })
