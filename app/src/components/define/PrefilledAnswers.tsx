@@ -68,7 +68,7 @@ function PrefilledAnswer({ entry, index }: Props) {
             className="fa-edit"
             data-a="umedit"
             data-p={key}
-            aria-label={`Change your answer to: ${question.title}`}
+            aria-label={`Edit your answer to: ${question.title}`}
             onClick={() => editProfileAnswer(entry)}
           >
             Edit

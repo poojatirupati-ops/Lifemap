@@ -83,6 +83,7 @@ Stage secrets live in SST (SSM, encrypted) and are read at deploy time, so every
 | `PayloadSecret` | same, `openssl rand -hex 32` | Signs CMS editors out. |
 | `CmsCronSecret` | same | None. |
 | `PosthogProjectKey`, `PosthogPersonalApiKey` | rotate in PostHog first, then set | None. |
+| `GoogleClientId`, `GoogleClientSecret` | add a new client secret in Google Cloud Console, set it, redeploy, then delete the old one | None; set either back to `none` to turn Google sign-in off. |
 | `CalWebhookSecrets` | see "Cal.com webhooks" | Webhooks signed with the old secret get 401 (Cal.com retries them). |
 
 Secrets Manager rotation is not used: the Proxy secret is written by SST from `DbPassword`, and an automatic rotation would leave `DatabaseUrl` stale. `DataKey` (KMS) rotates itself yearly.

@@ -79,7 +79,13 @@ Workflows: `.github/workflows/ci.yml` (every pull request: `npm ci`, then `npx t
    npx sst secret set PosthogPersonalApiKey <key> --stage <stage>
    npx sst secret set BetterAuthUrl https://<appUrl> --stage <stage>   # first deploy: deploy, read `appUrl`, set, redeploy
    ```
-6. After the first deploy: confirm the SNS email subscription, request SES production access and publish the DKIM records (api/README.md), and run the restore drill (docs/runbook.md).
+6. **Sign in with Google** (optional; the button stays hidden until both are set): in Google Cloud Console > APIs & Services > Credentials, create an OAuth client ID of type *Web application* with the authorised redirect URI `https://<appUrl>/api/auth/callback/google`, then:
+   ```
+   npx sst secret set GoogleClientId <client id> --stage <stage>
+   npx sst secret set GoogleClientSecret <client secret> --stage <stage>
+   ```
+   Locally, add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to the API's env, with `http://localhost:5173/api/auth/callback/google` as a redirect URI.
+7. After the first deploy: confirm the SNS email subscription, request SES production access and publish the DKIM records (api/README.md), and run the restore drill (docs/runbook.md).
 
 ### Release steps
 1. Merge to `main`; the Deploy run updates `staging`. Check it.

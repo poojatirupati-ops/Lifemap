@@ -75,7 +75,8 @@ export default function ChoiceNumberBox(props: Props) {
   }
 
   return (
-    <span className="nbox">
+    // the whole 44px box is the tap target, not just the few digits of the input (WCAG 2.5.8)
+    <span className="nbox" onClick={(event) => event.currentTarget.querySelector('input')?.focus()}>
       {before ? (
         <span className="nbu" aria-hidden="true">
           {before}

@@ -276,11 +276,15 @@ export default $config({
     bookings.subscribeQueue("Billing", billing, { pattern: bookingEvents });
     // Cal.com team webhook secrets, one per tenant: JSON { "<organization id>": "<secret>" } (docs/runbook.md#cal-com-webhooks).
     const calWebhookSecrets = new sst.Secret("CalWebhookSecrets");
+    // Sign in with Google: a Google Cloud OAuth web client, redirect URI https://<appUrl>/api/auth/callback/google (README one-time setup).
+    // Placeholder "none" keeps it off (and deploys working) until both are set.
+    const googleClientId = new sst.Secret("GoogleClientId", "none");
+    const googleClientSecret = new sst.Secret("GoogleClientSecret", "none");
     const api = new sst.aws.Function("Api", {
       ...fn,
       handler: "api/src/lambda.handler",
       url: { router: { instance: router, path: "/api" } },
-      link: [databaseUrl, authSecret, email, documents, posthogProjectKey, posthogPersonalApiKey, docReaderUrl, docReaderApiKey, bookings, calWebhookSecrets],
+      link: [databaseUrl, authSecret, email, documents, posthogProjectKey, posthogPersonalApiKey, docReaderUrl, docReaderApiKey, bookings, calWebhookSecrets, googleClientId, googleClientSecret],
       environment: { ...fn.environment, BETTER_AUTH_URL: router.url, CMS_URL: cms.url }, // CMS_URL: a CORS origin (api/src/app.ts)
       // X-Ray for Powertools Tracer (api/src/observe.ts).
       permissions: [{ actions: ["xray:PutTraceSegments", "xray:PutTelemetryRecords"], resources: ["*"] }, useDataKey],

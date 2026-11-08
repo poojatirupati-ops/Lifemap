@@ -16,6 +16,7 @@ import SeeLink from '../../../components/home/SeeLink.tsx'
 import RoughNote from '../../../components/plan/RoughNote.tsx'
 import { useMissingChoices } from '../../../hooks/useMissingChoices.ts'
 import Sec from '../../../components/ui/Sec.tsx'
+import Strip from '../../../components/explore/Strip.tsx'
 import GateNote from '../../../components/ui/GateNote.tsx'
 import { useStore } from '../../../state/store.ts'
 
@@ -60,11 +61,11 @@ function Body() {
       <Sec title="Your goals">
         <SeeLink section="results">See results</SeeLink>
       </Sec>
-      <div className="hstrip gcards">
+      <Strip className="gcards">
         {home.byAge.map((goal) => (
           <GoalCard key={goal.id} goal={goal} percent={home.percent[goal.id]} />
         ))}
-      </div>
+      </Strip>
       <Sec title="Shortcuts" />
       <Shortcuts />
       <p className="disc">

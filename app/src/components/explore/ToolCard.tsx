@@ -14,7 +14,7 @@ export default function ToolCard({ id }: { id: string }) {
       <b>{tool.name}</b>
       <button
         className="btn sm pc-go"
-        aria-label={`Try ${tool.name}`}
+        aria-label={`Try it: ${tool.name}`}
         data-a="calc"
         data-p={id}
         onClick={() => openCalculator(id)}

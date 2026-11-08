@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useStore } from '../../state/store.ts'
 import { sendEmailCode, setAccount, signInWithPasskey } from '../../state/account.ts'
 import { useCodeEntry } from '../../state/codeEntry.ts'
-import { signInWithOrganisation } from '../../auth/client.ts'
+import { signInWithGoogle, signInWithOrganisation } from '../../auth/client.ts'
+import { toast } from '../../state/shell.ts'
 import { useTenant } from '../../shell/tenant.ts'
 import Screen from '../../shell/Screen.tsx'
 import Brand from '../../components/frame/Brand.tsx'
@@ -22,7 +23,11 @@ const GOAL_PHOTOS = [
 
 // ?redirect: the page the login wall caught the visitor on, opened again after sign-in (auth/session.ts)
 export const Route = createFileRoute('/sign-in/')({
-  validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
+  // ?error: Google or the organisation's sign-in failed or was cancelled (auth/client.ts returnHere)
+  validateSearch: z.object({
+    redirect: z.string().optional().catch(undefined),
+    error: z.string().optional().catch(undefined),
+  }),
   component: SignIn,
 })
 
@@ -32,6 +37,12 @@ function SignIn() {
   const tenant = useTenant()
   const ready = useStore((store) => looksLikeEmail(store.plan.account.email.trim()))
   const navigate = useNavigate()
+  const { error } = Route.useSearch()
+  useEffect(() => {
+    if (!error) return
+    toast("That sign-in didn't finish. Try again, or use an email code.")
+    void navigate({ to: '.', search: (search) => ({ ...search, error: undefined }), replace: true })
+  }, [error, navigate])
   const [sending, setSending] = useState(false)
 
   const send = async () => {
@@ -54,9 +65,14 @@ function SignIn() {
           <div className="sip-in">
             <Brand />
             <h1 className="sip-h">Sign in to LifeMap</h1>
-            <p className="sip-sub">Enter your email and we&apos;ll send you a {CODE_LENGTH}-digit code.</p>
+            <p className="sip-sub">
+              Enter your email and we&apos;ll send you a {CODE_LENGTH}-digit code.
+            </p>
             {tenant?.sso ? (
-              <button className="btn ghost sip-sso" onClick={() => signInWithOrganisation(tenant.slug)}>
+              <button
+                className="btn ghost sip-sso"
+                onClick={() => signInWithOrganisation(tenant.slug)}
+              >
                 Sign in with your organisation
               </button>
             ) : null}
@@ -90,6 +106,35 @@ function SignIn() {
               </svg>
               Sign in with Face ID or a passkey
             </button>
+            {tenant?.google ? (
+              <button
+                className="link si-pk si-google"
+                onClick={async () => {
+                  const { error } = await signInWithGoogle()
+                  if (error) toast("Couldn't open Google sign-in. Use an email code instead.")
+                }}
+              >
+                <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+                  <path
+                    fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                  />
+                </svg>
+                Continue with Google
+              </button>
+            ) : null}
             <p className="sip-note">New here? The same code creates your account.</p>
           </div>
         </main>

@@ -15,6 +15,8 @@ const tenantSchema = z.object({
   colors: z.record(z.string(), z.string()),
   features: z.record(z.string(), z.boolean()),
   sso: z.boolean().optional(),
+  /** Sign in with Google is configured on the server. */
+  google: z.boolean().optional(),
   /** The tenant's own figures for LifeMap's standards, by standard key. */
   rates: z.record(z.string(), z.union([z.number(), z.string(), z.array(z.number())])).default({}),
 })
