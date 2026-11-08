@@ -74,7 +74,7 @@ function MoneyBox(props: MoneyBoxProps) {
   }
 
   return (
-    <span className="nbox">
+    <span className="nbox" onClick={(event) => event.currentTarget.querySelector('input')?.focus()}>
       <span className="nbu" aria-hidden="true">
         €
       </span>

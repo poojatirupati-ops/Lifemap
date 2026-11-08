@@ -14,7 +14,7 @@ import { z } from "zod";
 import type { Db } from "./db";
 import { schema } from "./db";
 import { type Files, removeDocuments } from "./files";
-import { DIRECT_ORG_ID, mergeTenantConfig } from "./tenant";
+import { DIRECT_ORG_ID, googleEnabled, mergeTenantConfig } from "./tenant";
 const { erasedUser, otpEmailLimit, ssoProvider, verification } = schema;
 
 // Tenant roles (organization plugin). Only what is used now: tenant admins edit their tenant's branding and invite people; customers have no tenant permissions (their own data is reached by user id, not by role).
@@ -140,6 +140,11 @@ export const createAuth = (db: Db, sendOtp: SendOtp, files: Files) => {
     advanced: { useSecureCookies: process.env.NODE_ENV === "production" },
     // The openAPI plugin's own HTTP endpoints are off: its schema is served only through GET /api/openapi.json (platform admins in production).
     disabledPaths: ["/open-api/generate-schema"],
+    // Sign in with Google: on only when both keys are set (lambda.ts reads them from SST secrets). Google-verified emails link to an existing account
+    // with the same email (Better Auth's default account linking), so a customer who first signed in with a code keeps one account and one plan.
+    // Google's tokens are never used after sign-in; kept encrypted (BETTER_AUTH_SECRET) rather than in plain text.
+    account: { encryptOAuthTokens: true },
+    socialProviders: googleEnabled() ? { google: { clientId: process.env.GOOGLE_CLIENT_ID!, clientSecret: process.env.GOOGLE_CLIENT_SECRET!, prompt: "select_account" } } : {},
     user: {
       // An adviser's own Cal.com link (`<user>/<event>`) and card, set with updateUser; listed only for members with role adviser.
       additionalFields: {

@@ -8,6 +8,11 @@ const r = Resource as unknown as Record<string, { value: string }>;
 process.env.NODE_ENV ??= "production";
 process.env.DATABASE_URL = r.DatabaseUrl.value;
 process.env.BETTER_AUTH_SECRET = r.BetterAuthSecret.value;
+// Sign in with Google (src/auth.ts): off until both secrets are set (their placeholder is "none").
+if (r.GoogleClientId.value !== "none" && r.GoogleClientSecret.value !== "none") {
+  process.env.GOOGLE_CLIENT_ID = r.GoogleClientId.value;
+  process.env.GOOGLE_CLIENT_SECRET = r.GoogleClientSecret.value;
+}
 process.env.DOCUMENTS_BUCKET = (Resource as unknown as Record<string, { name: string }>).Documents.name;
 // SES identity (sst.aws.Email): a domain or an address; codes go from noreply@<domain> for a domain.
 const sender = (Resource as unknown as Record<string, { sender: string }>).Email.sender;

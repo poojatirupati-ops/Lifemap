@@ -80,7 +80,10 @@ export const mergeTenantConfig = async (db: Db, orgId: string | undefined, chang
 const hasSso = async (db: Db, orgId: string) =>
   (await db.select({ id: ssoProvider.id }).from(ssoProvider).where(and(eq(ssoProvider.organizationId, orgId), eq(ssoProvider.domainVerified, true))).limit(1)).length > 0;
 
+/** Sign in with Google is configured (src/auth.ts); the app shows its button only then. */
+export const googleEnabled = () => !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET;
+
 export const publicConfig = async (db: Db, org: Org) => {
   const { colors = {}, rates = {} } = metadataOf(org);
-  return { id: org.id, slug: org.slug, name: org.name, logo: org.logo, colors, features: await features(org.id), rates, sso: await hasSso(db, org.id) };
+  return { id: org.id, slug: org.slug, name: org.name, logo: org.logo, colors, features: await features(org.id), rates, sso: await hasSso(db, org.id), google: googleEnabled() };
 };

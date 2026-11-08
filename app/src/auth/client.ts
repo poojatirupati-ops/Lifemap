@@ -43,6 +43,13 @@ export async function signInWithCode(email: string, otp: string) {
   return error.status === 403 || error.code === 'TOO_MANY_ATTEMPTS' ? LOCKED_OUT : WRONG_CODE
 }
 
+/** Back to this page either way: a failed or cancelled sign-in comes back with ?error= (the sign-in page says so). */
+const returnHere = () => ({ callbackURL: location.href, errorCallbackURL: location.href })
+
 /** Signs in through the tenant's identity provider; the browser leaves and comes back here (invite kept in the URL). */
 export const signInWithOrganisation = (organizationSlug: string) =>
-  authClient.signIn.sso({ organizationSlug, callbackURL: location.href })
+  authClient.signIn.sso({ organizationSlug, ...returnHere() })
+
+/** Signs in with Google (new users get an account; a matching email joins the existing one); the browser leaves and comes back here. */
+export const signInWithGoogle = () =>
+  authClient.signIn.social({ provider: 'google', ...returnHere() })

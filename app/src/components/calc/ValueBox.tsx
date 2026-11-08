@@ -87,7 +87,7 @@ export default function ValueBox({ input, value, onCommit, onHint }: Props) {
   }
 
   return (
-    <span className="nbox">
+    <span className="nbox" onClick={(event) => event.currentTarget.querySelector('input')?.focus()}>
       {before ? (
         <span className="nbu" aria-hidden="true">
           {before}

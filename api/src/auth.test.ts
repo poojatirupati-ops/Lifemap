@@ -112,3 +112,16 @@ test("tenant invitation email goes through SES from the tenant, with the accept 
   expect(mail.Content?.Simple?.Body?.Text?.Data).toContain(`?invitation=${id}`);
   ses.restore();
 });
+
+test("Google sign-in: off and hidden without keys; with keys, /api/tenant shows it and sign-in goes to Google", async () => {
+  const off = await testApp();
+  expect(((await (await off.req("/api/tenant")).json()) as { google: boolean }).google).toBe(false);
+  vi.stubEnv("GOOGLE_CLIENT_ID", "test-client.apps.googleusercontent.com");
+  vi.stubEnv("GOOGLE_CLIENT_SECRET", "test-secret");
+  const on = await testApp();
+  expect(((await (await on.req("/api/tenant")).json()) as { google: boolean }).google).toBe(true);
+  const res = await on.req("/api/auth/sign-in/social", { method: "POST", body: { provider: "google", callbackURL: "/" } });
+  const { url } = (await res.json()) as { url: string };
+  expect(new URL(url).host).toBe("accounts.google.com");
+  expect(new URL(url).searchParams.get("client_id")).toBe("test-client.apps.googleusercontent.com");
+});

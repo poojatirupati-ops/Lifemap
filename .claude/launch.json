@@ -32,7 +32,7 @@
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
-        "DATABASE_URL=postgres://lifemap:lifemap-dev@localhost:5432/lifemap FEATURE_OVERRIDES=documentUpload=true,adviserBooking=true npm --prefix api run dev 2>&1 | tee /tmp/lifemap-api.log"
+        "DATABASE_URL=postgres://lifemap:lifemap-dev@localhost:5432/lifemap GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-} GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-} FEATURE_OVERRIDES=documentUpload=true,adviserBooking=true npm --prefix api run dev 2>&1 | tee /tmp/lifemap-api.log"
       ],
       "port": 8787
     },
