@@ -49,7 +49,6 @@ function MeHub() {
         'Me = profile hub: name, partner (invite or add myself), dependants · money personality + indicative risk profile · re-check of first answers · deeper questions (feed My Plan). Not a gate.'
       }
       title="Me"
-      sub="Your profile. It shapes your plan and helps your adviser."
       bell
     >
       {view.checkProfile && (
