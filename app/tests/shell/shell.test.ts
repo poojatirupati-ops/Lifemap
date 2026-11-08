@@ -108,3 +108,13 @@ describe('Screen ids', () => {
     expect(useShell.getState().screenNote).toMatch(/^Discover question 2 of 6/)
   })
 })
+
+describe('test sign-in bypass', () => {
+  it('only opens for an automated browser on a local host with the flag set', async () => {
+    const { testAuthOn } = await import('../../src/lib/lmTestHook.ts')
+    expect(testAuthOn('localhost', '1', true)).toBe(true)
+    expect(testAuthOn('localhost', '1', false)).toBe(false) // a flag left behind in a person's browser
+    expect(testAuthOn('lifemap.ie', '1', true)).toBe(false)
+    expect(testAuthOn('localhost', null, true)).toBe(false)
+  })
+})

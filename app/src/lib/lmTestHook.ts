@@ -7,6 +7,12 @@ function readFlag() {
   }
 }
 
-/** Test-only sign-in bypass: a local dev host with localStorage lm-test-auth set. */
-export const testAuthOn = (host = globalThis.location?.hostname ?? '', flag = readFlag()) =>
-  ['localhost', '127.0.0.1', '[::1]'].includes(host) && !!flag
+/**
+ * Test-only sign-in bypass: a local dev host, localStorage lm-test-auth set, and an automated browser (Playwright sets
+ * navigator.webdriver), so a flag left behind in a person's browser never lets them past the wall.
+ */
+export const testAuthOn = (
+  host = globalThis.location?.hostname ?? '',
+  flag = readFlag(),
+  automated = !!globalThis.navigator?.webdriver,
+) => ['localhost', '127.0.0.1', '[::1]'].includes(host) && !!flag && automated
