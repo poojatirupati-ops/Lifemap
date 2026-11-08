@@ -92,7 +92,7 @@ test("tenant admin updates own tenant's branding only; customers and bad config 
 
   const brand = { name: "CU A", logo: "https://cdn.cu-a.example/logo.svg", metadata: { colors: { primary: "#0a3d62" }, rates: { growth: 0.04 } } };
   expect((await update(adm, "org-a", brand)).status).toBe(200);
-  expect(await tenantA()).toEqual({ id: "org-a", slug: "cu-a", name: "CU A", logo: brand.logo, colors: { primary: "#0a3d62" }, features: FEATURE_DEFAULTS, rates: { growth: 0.04 }, sso: false });
+  expect(await tenantA()).toEqual({ id: "org-a", slug: "cu-a", name: "CU A", logo: brand.logo, colors: { primary: "#0a3d62" }, features: FEATURE_DEFAULTS, rates: { growth: 0.04 }, sso: false, google: false });
   expect((await update(adm, "org-a", { metadata: { rates: { growth: 0.03 } } })).status).toBe(200);
   expect(await tenantA()).toMatchObject({ colors: { primary: "#0a3d62" }, rates: { growth: 0.03 } }); // a partial update keeps the other keys
 
