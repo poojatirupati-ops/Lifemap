@@ -6,6 +6,7 @@ import { authClient, sendCode } from '../auth/client.ts'
 import { postConsents } from '../auth/consents.ts'
 import { enterApp, keepRedirect, land } from '../auth/session.ts'
 import { goTo } from '../shell/router.ts'
+import { track } from '../analytics/analytics.ts'
 
 export function setAccount(patch: Partial<Plan['account']>) {
   useStore.getState().update((plan) => {
@@ -41,6 +42,7 @@ export interface Details {
 /** A new account's first name and consents: recorded on the server, then a passkey is offered. */
 export async function saveDetails({ name, terms, marketing, analytics }: Details) {
   if (!(await postConsents({ terms, marketing, analytics }))) return
+  track('account_created')
   await authClient.updateUser({ name })
   setAccount({ name, termsAccepted: terms, marketingConsent: marketing })
   void goTo(`/account/passkey${keepRedirect()}`)

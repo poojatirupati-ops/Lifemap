@@ -12,6 +12,7 @@ import { reportPages } from '../components/report/reportPages.tsx'
 import css from '../components/report/report.css?raw'
 import { saveReport } from './saveFiles.tsx'
 import { PAGE_WIDTH } from './planPdf.ts'
+import { track } from '../analytics/analytics.ts'
 
 const downloadButton = (dialog: HTMLElement) =>
   dialog.querySelector<HTMLElement>('[data-r="print"]')
@@ -45,6 +46,7 @@ export default function ReportDialog() {
   if (data.ready === false || !pages) return null
 
   const download = async () => {
+    track('report_downloaded')
     setSaving(true)
     await saveReport(data, ref.current!, (text, bad) => {
       setMessage({ text, bad })

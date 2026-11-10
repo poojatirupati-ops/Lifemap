@@ -49,3 +49,6 @@ export function stop() {
 }
 
 export const captureException = (error: unknown) => posthog.captureException(error)
+
+export const capture = (event: string, properties: Record<string, unknown>) =>
+  posthog.capture(event, properties)
