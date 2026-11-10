@@ -69,6 +69,9 @@ jobs:
             host="$(node -p "JSON.parse(process.env.SST_RESOURCE_Db).host")"
             timeout 120 bash -c "until (exec 3<>/dev/tcp/$host/5432) 2>/dev/null; do sleep 2; done"
             npm run migrate -w api
+            # the seed migration uploads its caption files: to the CMS media bucket, as the deployed CMS does (sst.config.ts)
+            export S3_BUCKET="$(node -p "JSON.parse(process.env.SST_RESOURCE_CmsMedia).name")"
+            export MEDIA_URL="$(node -p "JSON.parse(process.env.SST_RESOURCE_BetterAuthUrl).value")/media-cms"
             npm run payload -w cms -- migrate
           '
       - if: steps.stage.outputs.new == 'false'
