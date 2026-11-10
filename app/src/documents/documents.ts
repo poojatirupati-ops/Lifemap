@@ -4,6 +4,7 @@ import { z } from 'zod'
 import type { DocumentRead } from '../domain/finances/upload.ts'
 import { toast } from '../state/shell.ts'
 import { useTenant } from '../shell/tenant.ts'
+import { track } from '../analytics/analytics.ts'
 
 const UPLOAD_FAILED = "That file couldn't be uploaded. Try again, or type the figures instead."
 
@@ -29,6 +30,7 @@ export async function uploadDocument(file: File) {
     body: file,
   })
   if (!stored.ok) throw new Error(`upload ${stored.status}`)
+  track('document_uploaded', { type: contentType })
   return document.id
 }
 

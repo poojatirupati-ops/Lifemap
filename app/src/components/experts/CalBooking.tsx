@@ -11,6 +11,7 @@ import {
   useBookings,
 } from '../../bookings/bookings.ts'
 import { useStore } from '../../state/store.ts'
+import { track } from '../../analytics/analytics.ts'
 
 const NAMESPACE = 'lifemap'
 const POLL_MS = 2000
@@ -54,6 +55,7 @@ export default function CalBooking() {
     const api = getCalApi({ namespace: NAMESPACE, embedJsUrl: EMBED_JS })
     const callback = (event: { detail: { data: { uid?: string } } }) => {
       setCalUid(event.detail.data.uid)
+      track('adviser_booked')
       void queryClient.invalidateQueries({ queryKey: BOOKINGS })
     }
     void api.then((cal) => {

@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useSearch } from '@tanstack/react-router'
+import { track } from '../analytics/analytics.ts'
 
 // The pages, their model and the PDF code load only when the report is first opened.
 const ReportDialog = lazy(() => import('./ReportDialog.tsx'))
@@ -12,6 +13,9 @@ const closedReport = (
 /** #report over the app: empty and hidden until the report is opened. */
 export default function ReportHost() {
   const open = useSearch({ strict: false, select: (search) => !!search.report })
+  useEffect(() => {
+    if (open) track('report_opened')
+  }, [open])
   if (!open) return closedReport
   return (
     <Suspense fallback={closedReport}>
