@@ -120,11 +120,11 @@ export function createFinancesSlice(get: () => Store) {
       const section = currentSection(get())!
       const keys = [...section.fields, ...(HIDDEN_STATEMENT_FIGURES[section.id] ?? [])]
       const rules = rulesFor(assumption(get().plan, 'startYear'))
-      update((plan, ui) => {
+      update((plan) => {
         removeStatementFigures(plan, keys)
         const used = new Set(Object.values(plan.documentOf))
         for (const cat of Object.keys(plan.statements))
-          if (!used.has(`pst:${cat}`)) removeStatement(plan, ui, cat, rules)
+          if (!used.has(`pst:${cat}`)) removeStatement(plan, plan, cat, rules)
       })
       toast(STATEMENT_REMOVED)
     },

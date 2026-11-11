@@ -59,10 +59,10 @@ export const toolPlan = (plan: Plan, ui: Ui, toolId: string): ToolPlan => ({
   >),
   editingInflation: ui.editingInflation,
   todaysMoney: ui.todaysMoney,
-  moved: ui.calcTouched[toolId] ?? NONE,
-  stored: ui.calcValues[toolId] ?? NONE,
-  statementFigures: ui.calcStatementFigures[toolId] ?? NONE,
-  statementKeys: ui.calcStatementKeys[toolId] ?? NO_KEYS,
+  moved: plan.calcTouched[toolId] ?? NONE,
+  stored: plan.calcValues[toolId] ?? NONE,
+  statementFigures: plan.calcStatementFigures[toolId] ?? NONE,
+  statementKeys: plan.calcStatementKeys[toolId] ?? NO_KEYS,
 })
 
 /** A "Your assumptions" value: the customer's choice, else the growth set, the standard or a planning figure. */

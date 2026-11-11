@@ -93,7 +93,15 @@ export function watchFunnel() {
     if (store.plan === before.plan) return
     const [now, then] = [answersOf(store.plan), answersOf(before.plan)]
     const changed = Object.keys(now).filter((question) => now[question] !== then[question])
-    if (changed.length > ANSWERED_AT_ONCE) return
+    // calculator inputs the customer set: which tool and input, never the amount
+    const inputs = Object.entries(store.plan.calcTouched).flatMap(([calculator, touched]) =>
+      Object.keys(touched)
+        .filter((input) => !before.plan.calcTouched[calculator]?.[input])
+        .map((input) => ({ calculator, input })),
+    )
+    if (changed.length + inputs.length > ANSWERED_AT_ONCE) return
+    for (const input of inputs)
+      track('calculator_answered', { ...input, screen: useShell.getState().screenId })
     for (const question of changed)
       track('question_answered', {
         question,

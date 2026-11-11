@@ -22,7 +22,7 @@ test('a result shows live, and a typed figure above the limit is capped with a h
   )
   const box = container.querySelector<HTMLInputElement>('#co-pot')!
   fireEvent.input(box, { target: { value: '99,000,000' } })
-  expect(useStore.getState().calcValues.retirement.pot).toBe(15000000)
+  expect(useStore.getState().plan.calcValues.retirement.pot).toBe(15000000)
   expect(screen.getByText('Max €15,000,000')).toBeTruthy()
   expect(container.querySelector<HTMLInputElement>('#c-pot')!.value).toBe('15000000')
 })
@@ -35,7 +35,7 @@ test('without a mortgage rate the result waits, and the suggested rate fills it'
   )
   fireEvent.click(container.querySelector('[data-a=ckstd][data-p=rate]')!)
   expect(container.querySelector('#cgate')).toBeNull()
-  expect(useStore.getState().calcTouched.repayment).toEqual({ rate: true })
+  expect(useStore.getState().plan.calcTouched.repayment).toEqual({ rate: true })
 })
 
 test('a statement is read, confirmed into Your finances and fills in its tool', async () => {
@@ -64,5 +64,5 @@ test('a statement is read, confirmed into Your finances and fills in its tool', 
   expect(path()).toBe('/explore/calculator/repayment')
   act(() => exploreBack())
   await waitFor(() => expect(path()).toBe('/explore/category/home'))
-  expect(useStore.getState().calcStatementKeys.repayment).toEqual(['loan', 'rate', 'term'])
+  expect(useStore.getState().plan.calcStatementKeys.repayment).toEqual(['loan', 'rate', 'term'])
 })

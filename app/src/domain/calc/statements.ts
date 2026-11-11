@@ -3,7 +3,7 @@
 import { readFigure, removeStatementFigures } from '../finances/figures.ts'
 import type { Rules } from '../planning/rates.ts'
 import { allInputs, calculatorFor } from './calculators.ts'
-import type { Plan, Ui } from '../../state/types.ts'
+import type { Plan } from '../../state/types.ts'
 import { retirementGoal } from '../goals/goals.ts'
 import { assumptionValue } from './context.ts'
 import {
@@ -26,12 +26,7 @@ export const statePensionFromYears = ({ sp }: Rules, years: number) =>
   years >= sp.fullYears ? 'Expect full' : years >= sp.minYears ? 'Partly' : 'Not sure'
 
 /** What the statement fills in, tool by tool. */
-function toolFills(
-  plan: Plan,
-  cat: string,
-  read: Read,
-  rules: Rules,
-): Record<string, ToolFill> {
+function toolFills(plan: Plan, cat: string, read: Read, rules: Rules): Record<string, ToolFill> {
   if (cat === 'home') {
     const mortgage = { loan: read.bal, rate: read.rate }
     return {
@@ -91,7 +86,7 @@ function toolFills(
   }
 }
 
-type CalcFigures = Pick<Ui, 'calcStatementFigures' | 'calcStatementKeys' | 'calcTouched'>
+type CalcFigures = Pick<Plan, 'calcStatementFigures' | 'calcStatementKeys' | 'calcTouched'>
 
 export interface StatementUpload {
   cat: string

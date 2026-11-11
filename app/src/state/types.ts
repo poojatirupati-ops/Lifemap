@@ -109,6 +109,11 @@ interface Goals {
   pensionExtra?: number
   /** A tool-local standard the customer picked (years you might wait, style), by tool and input. */
   toolPick?: Record<string, Record<string, number>>
+  /** Per calculator: the inputs the customer moved, their figures, a statement's figures and keys (saved, so their answers stay). */
+  calcTouched: Record<string, Record<string, boolean>>
+  calcStatementFigures: Record<string, Record<string, number>>
+  calcStatementKeys: Record<string, string[]>
+  calcValues: Record<string, Record<string, number>>
   /** Each saved version, with the tax rules it used (versions saved before 2027 rules have none). */
   versions: { note: string; date: string; tax?: TaxSnapshot }[]
 }
@@ -182,11 +187,6 @@ export interface Ui {
   playing: boolean
   /** Calculators showing their result in today's money ("Adjust for inflation"). */
   todaysMoney?: Record<string, boolean>
-  /** Per tool: the inputs the customer moved, their figures, a statement's figures and keys. */
-  calcTouched: Record<string, Record<string, boolean>>
-  calcStatementFigures: Record<string, Record<string, number>>
-  calcStatementKeys: Record<string, string[]>
-  calcValues: Record<string, Record<string, number>>
   editingAnswers: Record<string, unknown>
   editingInflation: boolean
   financeSection: number | null

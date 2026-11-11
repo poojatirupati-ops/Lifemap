@@ -23,9 +23,9 @@ export function createCalcSlice(set: SetStore, get: () => Store) {
   return {
     /** The customer moved or typed a figure: it is theirs in this tool from now on. */
     setFigure: (toolId: string, key: string, value: number) =>
-      update((plan, ui) => {
-        ;(ui.calcValues[toolId] ??= {})[key] = value
-        ;(ui.calcTouched[toolId] ??= {})[key] = true
+      update((plan) => {
+        ;(plan.calcValues[toolId] ??= {})[key] = value
+        ;(plan.calcTouched[toolId] ??= {})[key] = true
         if (isSafetyMonthsInput(toolId, key))
           plan.assumptions.safetyMonths = clampSafetyMonths(value)
       }),
@@ -88,8 +88,8 @@ export function createCalcSlice(set: SetStore, get: () => Store) {
       if (!upload) return
       const kind = STATEMENT_KINDS[upload.cat]
       const rules = currentRules()
-      update((plan, ui) => {
-        confirmStatement(plan, ui, upload, rules)
+      update((plan) => {
+        confirmStatement(plan, plan, upload, rules)
       })
       // the statement page gives way to the tool it filled, with its group under it
       void openExplorePage(`/explore/category/${upload.cat}`, true).then(() => {
@@ -105,7 +105,7 @@ export function createCalcSlice(set: SetStore, get: () => Store) {
 
     removeUploadedStatement: (cat: string) => {
       const rules = currentRules()
-      update((plan, ui) => removeStatement(plan, ui, cat, rules))
+      update((plan) => removeStatement(plan, plan, cat, rules))
       toast(STATEMENT_REMOVED)
     },
   }
